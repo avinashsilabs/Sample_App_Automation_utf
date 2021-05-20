@@ -36,16 +36,19 @@ pipeline {
                             sh '''
                             . ../projenv.sh
                             export GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
-                            uc configuration --sdk $GECKO_SDK
+                            slc configuration --sdk $GECKO_SDK
                             ./Utils/ci/build_scripts/iot/build_test_package.sh
                             '''
+                            stash includes: 'test_package/**', name: 'test_package' 
                         }
                     }
                 }
                 stage('Run Tests') {
                     steps {
                         dir('utf_pytest') {
+                            unstash name: 'test_package'
                             sh """
+                            ls test_package
                             exit 0
                             """
                         }
