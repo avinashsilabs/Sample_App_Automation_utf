@@ -6,6 +6,11 @@ pipeline {
         GECKO_SDK = "${WORKSPACE}/mini_gecko_sdk"
     }
     stages {
+        stage('Checkout Source') {
+            steps {
+                checkout scm
+            }
+        }
         stage('Build Test Agent') {
             steps {
                 sh 'uc configuration --sdk $GECKO_SDK'
