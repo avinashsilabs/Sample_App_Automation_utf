@@ -27,20 +27,13 @@ pipeline {
                         sh './setup.sh'
                     }
                 }
-                stage('Build Test Agent') {
-                    steps {
-                        sh '''
-                        . ./projenv.sh
-                        GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
-                        uc configuration --sdk $GECKO_SDK
-                        '''
-                    }
-                }
                 stage('Build Test Package') {
                     steps {
                         dir('rs911x') {
                             sh '''
-                            export HOME=$WORKSPACE
+                            . ./projenv.sh
+                            GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
+                            uc configuration --sdk $GECKO_SDK
                             ./Utils/ci/build_scripts/iot/build_test_package.sh
                             '''
                         }
