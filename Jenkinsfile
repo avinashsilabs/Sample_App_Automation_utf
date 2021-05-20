@@ -39,7 +39,10 @@ pipeline {
                 stage('Build Test Package') {
                     steps {
                         dir('rs911x') {
-                            sh './Utils/ci/build_scripts/iot/build_test_package.sh'
+                            sh '''
+                            export HOME=$WORKSPACE
+                            ./Utils/ci/build_scripts/iot/build_test_package.sh
+                            '''
                         }
                     }
                 }
