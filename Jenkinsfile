@@ -34,12 +34,13 @@ pipeline {
                     steps {
                         dir('rs911x') {
                             sh '''
-                            . ../projenv.sh
-                            export GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
-                            slc configuration --sdk $GECKO_SDK
-                            ./Utils/ci/build_scripts/iot/build_test_package.sh
+                                . ../projenv.sh
+                                export GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
+                                slc configuration --sdk $GECKO_SDK
+                                ./Utils/ci/build_scripts/iot/build_test_package.sh
                             '''
-                            stash includes: 'test_package/**', name: 'test_package' 
+                            stash includes: 'test_package/**', name: 'test_package'
+                            archiveArtifacts 'test_package/**'
                         }
                     }
                 }
@@ -48,8 +49,9 @@ pipeline {
                         dir('utf_pytest') {
                             unstash name: 'test_package'
                             sh """
-                            ls test_package
-                            exit 0
+                                # call script to run tests on raspi "rs9116test.local"
+                                # using harness "rs9116test-joes"
+                                ./load_tests_docker.sh rs9116test.local rs9116test-joes
                             """
                         }
                     }
