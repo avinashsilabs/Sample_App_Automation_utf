@@ -3,7 +3,7 @@ pipeline {
         node 'NB00015129'
     }
     environment {
-        GECKO_SDK = ${WORKSPACE}/mini_gecko_sdk
+        GECKO_SDK = "${WORKSPACE}/mini_gecko_sdk"
     }
     stages {
         stage('Build Test Agent') {
