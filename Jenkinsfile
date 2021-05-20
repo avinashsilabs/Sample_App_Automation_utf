@@ -11,9 +11,17 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Setup Environment') {
+            steps {
+                sh './setup.sh'
+            }
+        }
         stage('Build Test Agent') {
             steps {
-                sh 'uc configuration --sdk $GECKO_SDK'
+                sh '''
+                . ./projenv.sh
+                uc configuration --sdk $GECKO_SDK
+                '''
             }
         }
         stage('Build 9116 Firmware') {

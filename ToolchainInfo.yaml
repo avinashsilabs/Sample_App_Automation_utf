@@ -1,0 +1,8 @@
+Dependencies:
+- Repo: ssh://git@stash.silabs.com/simplicity_studio/uc_cli.git
+  Tag: master
+  TagAlias: uc_cli
+
+Environment:
+  PrependPath: $env:TCM_TOOLCHAIN_ROOT/uc_cli
+

@@ -7,3 +7,6 @@
 [submodule "utf_pytest"]
 	path = utf_pytest
 	url = ../utf_python_core
+[submodule "tcmgr"]
+	path = tcmgr
+	url = ../../toolchain_internal/tcmgr.git
