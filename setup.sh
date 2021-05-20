@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tcm=./tcmgr.sh
+tcm=./tcmgr/tcmgr.sh
 inputxml=ToolchainInfo.yaml
 projfile=projenv.sh
 
