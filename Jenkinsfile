@@ -32,7 +32,7 @@ pipeline {
                         dir('rs911x') {
                             sh '''
                             . ../projenv.sh
-                            GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
+                            export GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
                             uc configuration --sdk $GECKO_SDK
                             ./Utils/ci/build_scripts/iot/build_test_package.sh
                             '''
