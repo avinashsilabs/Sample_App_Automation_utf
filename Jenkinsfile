@@ -1,6 +1,9 @@
 pipeline {
     agent {
-        node 'NB00015129'
+        docker {
+            label 'NB00015129'
+            image 'rs911x/build'
+        }
     }
     environment {
         GECKO_SDK = "${WORKSPACE}/mini_gecko_sdk"
@@ -27,7 +30,9 @@ pipeline {
         stage('Build 9116 Firmware') {
             steps {
                 dir('rs911x') {
-                    sh './Utils/ci/build_scripts/iot/build_a10_firmware.sh'
+                    sh '''
+                    ./Utils/ci/build_scripts/iot/build_a10_firmware.sh
+                    '''
                 }
             }
         }
