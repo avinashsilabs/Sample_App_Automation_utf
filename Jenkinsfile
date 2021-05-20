@@ -53,6 +53,8 @@ pipeline {
                                 # using harness "rs9116test-joes"
                                 ./load_tests_docker.sh rs9116test.local rs9116test-joes
                             """
+                            archiveArtifacts 'reports/**'
+                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                         }
                     }
                 }
