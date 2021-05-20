@@ -16,14 +16,16 @@ pipeline {
         }
         stage('Setup Environment') {
             steps {
-                sh './setup.sh'
+                //sh './setup.sh'
+                sh 'exit 0'
             }
         }
         stage('Build Test Agent') {
             steps {
                 sh '''
-                . ./projenv.sh
-                uc configuration --sdk $GECKO_SDK
+                #. ./projenv.sh
+                #uc configuration --sdk $GECKO_SDK
+                exit 0
                 '''
             }
         }
