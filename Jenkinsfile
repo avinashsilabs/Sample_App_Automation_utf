@@ -14,8 +14,7 @@ pipeline {
             steps {
                 dir('rs911x') {
                     sh '''
-                    #./Utils/ci/build_scripts/iot/build_a10_firmware.sh
-                    exit 0
+                        ./Utils/ci/build_scripts/iot/build_a10_firmware.sh
                     '''
                 }
             }
