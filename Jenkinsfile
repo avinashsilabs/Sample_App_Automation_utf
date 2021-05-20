@@ -1,8 +1,5 @@
 pipeline {
     agent none
-    environment {
-        GECKO_SDK = "${WORKSPACE}/mini_gecko_sdk"
-    }
     stages {
         stage('Build 9116 Firmware') {
             agent {
@@ -14,7 +11,8 @@ pipeline {
             steps {
                 dir('rs911x') {
                     sh '''
-                    ./Utils/ci/build_scripts/iot/build_a10_firmware.sh
+                    #./Utils/ci/build_scripts/iot/build_a10_firmware.sh
+                    exit 0
                     '''
                 }
             }
@@ -33,6 +31,7 @@ pipeline {
                     steps {
                         sh '''
                         . ./projenv.sh
+                        GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
                         uc configuration --sdk $GECKO_SDK
                         '''
                     }
