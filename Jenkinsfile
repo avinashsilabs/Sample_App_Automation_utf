@@ -7,23 +7,31 @@ pipeline {
     }
     stages {
         stage('Build Test Agent') {
-            sh 'uc configuration --sdk $GECKO_SDK'
+            steps {
+                sh 'uc configuration --sdk $GECKO_SDK'
+            }
         }
         stage('Build 9116 Firmware') {
-            dir('rs911x') {
-                sh './Utils/ci/build_scripts/iot/build_a10_firmware.sh'
+            steps {
+                dir('rs911x') {
+                    sh './Utils/ci/build_scripts/iot/build_a10_firmware.sh'
+                }
             }
         }
         stage('Build Test Package') {
-            dir('rs911x') {
-                sh './Utils/ci/build_scripts/iot/build_test_package.sh'
+            steps {
+                dir('rs911x') {
+                    sh './Utils/ci/build_scripts/iot/build_test_package.sh'
+                }
             }
         }
         stage('Run Tests') {
-            dir('utf_pytest') {
-                sh """
-                   exit 0
-                """
+            steps {
+                dir('utf_pytest') {
+                    sh """
+                    exit 0
+                    """
+                }
             }
         }
     }
