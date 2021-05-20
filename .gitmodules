@@ -1,0 +1,9 @@
+[submodule "rs911x"]
+	path = rs911x
+	url = ../../Redpine/rs911x
+[submodule "mini_gecko_sdk"]
+	path = mini_gecko_sdk
+	url = ../../Redpine/mini_gecko_sdk
+[submodule "utf_pytest"]
+	path = utf_pytest
+	url = ../utf_python_core
