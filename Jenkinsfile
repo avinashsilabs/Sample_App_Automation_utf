@@ -1,5 +1,8 @@
 pipeline {
     agent none
+    environment {
+        TCM_NEXUS_SERVER = "nexus.silabs.com"
+    }
     stages {
         stage('Build 9116 Firmware') {
             agent {

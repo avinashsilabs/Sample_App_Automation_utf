@@ -8,6 +8,6 @@ Dependencies:
 Environment:
   PrependPath: $env:TCM_TOOLCHAIN_ROOT/uc_cli
   Variables:
-  - VarName: ARM_GCC_DIR_LINUX
+  - VarName: ARM_GCC_DIR
     VarValue: $env:TCM_TOOLCHAIN_ROOT/gcc_arm_none_eabi_7_2017_q4_major_linux_rel_0
 
