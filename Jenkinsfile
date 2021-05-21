@@ -39,7 +39,7 @@ pipeline {
                                 ./Utils/ci/build_scripts/iot/build_test_package.sh
                             '''
                             stash includes: 'test_package/**', name: 'test_package'
-                            archiveArtifacts 'test_package/**'
+                            
                         }
                     }
                 }
@@ -55,6 +55,7 @@ pipeline {
                                 # using harness "rs9116test-joes"
                                 ./load_tests_docker.sh rs9116test.local rs9116test-joes
                             """
+                            archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
                             junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                         }
