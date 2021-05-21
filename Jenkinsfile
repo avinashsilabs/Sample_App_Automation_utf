@@ -49,7 +49,7 @@ pipeline {
                             unstash name: 'test_package'
                             sh """
                                 # fix problem in one of the test cases
-                                sed -i 's/test_wifi_dhcp\\(wifi_dut\\)/test_wifi_dhcp\\(wifi_dut, wifi_accesspoint\\)/' test_package/test_cases/test_wifi.py
+                                sed -i 's/test_wifi_dhcp(wifi_dut)/test_wifi_dhcp(wifi_dut, wifi_accesspoint)/' test_package/test_cases/test_wifi.py
 
                                 # call script to run tests on raspi "rs9116test.local"
                                 # using harness "rs9116test-joes"
