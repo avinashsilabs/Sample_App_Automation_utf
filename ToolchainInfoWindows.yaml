@@ -1,0 +1,21 @@
+Dependencies:
+- Repo: ssh://git@stash.silabs.com/simplicity_studio/uc_cli.git
+  Tag: master
+  TagAlias: uc_cli
+- Repo: ssh://git@stash.silabs.com/toolchain_external/python_3_9_2_x64.git
+  Tag: python_3_9_2_x64_rel_01
+- Repo: ssh://git@stash.silabs.com/toolchain_external/gcc_arm_none_eabi_7_2017_q4_major_win32.git
+  Tag: gcc_arm_none_eabi_7_2017_q4_major_win32_rel_0
+- Repo: ssh://git@stash.silabs.com/toolchain_external/mingw_6_0_2_win32.git
+  Tag: mingw_6_0_2_win32_rel_0
+- Repo: ssh://git@stash.silabs.com/toolchain_external/java_jdk_11_0_7_10_amazon_corretto_win64.git
+  Tag: java_jdk_11_0_7_10_amazon_corretto_win64_rel_1
+
+Environment:
+  PrependPath: $env:TCM_VIRTUAL_DRIVE`:\python_3_9_2_x64_rel_01;$env:TCM_VIRTUAL_DRIVE`:\python_3_9_2_x64_rel_01\Lib;$env:TCM_VIRTUAL_DRIVE`:\python_3_9_2_x64_rel_01\Scripts;$env:TCM_VIRTUAL_DRIVE`:\uc_cli;$env:TCM_VIRTUAL_DRIVE`:\java_jdk_11_0_7_10_amazon_corretto_win64_rel_1;$env:TCM_VIRTUAL_DRIVE`:\mingw_6_0_2_win32_rel_0\bin;$env:TCM_VIRTUAL_DRIVE`:\mingw_6_0_2_win32_rel_0\msys\1.0\bin
+  Variables:
+  - VarName: JAVA11_HOME
+    VarValue: $env:TCM_VIRTUAL_DRIVE`:\java_jdk_11_0_7_10_amazon_corretto_win64_rel_1
+  - VarName: ARM_GCC_DIR_WIN
+    VarValue: $env:TCM_VIRTUAL_DRIVE`:\gcc_arm_none_eabi_7_2017_q4_major_win32_rel_0
+

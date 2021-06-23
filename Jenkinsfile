@@ -14,7 +14,7 @@ pipeline {
             steps {
                 dir('rs911x') {
                     sh '''
-                        #./Utils/ci/build_scripts/iot/build_a10_firmware.sh
+                        ./Utils/ci/build_scripts/iot/build_a10_firmware.sh
                     '''
                 }
             }
@@ -26,7 +26,7 @@ pipeline {
             stages {
                 stage('Setup Environment') {
                     steps {
-                        sh './setup.sh'
+                        sh './tcm_setup.sh'
                     }
                 }
                 stage('Build Test Package') {
