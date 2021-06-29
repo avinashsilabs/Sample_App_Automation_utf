@@ -10,3 +10,6 @@
 [submodule "tcmgr"]
 	path = tcmgr
 	url = ../../toolchain_internal/tcmgr.git
+[submodule "sqa_test_application"]
+	path = sqa_test_application
+	url = ../../redpine/sqa_test_application
