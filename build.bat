@@ -7,6 +7,9 @@ if not exist projenv.bat (
 
 call projenv.bat
 
+pushd sqa_test_application
+if NOT "%1"=="gen" goto build
+
 set GECKO_SDK=%~dp0mini_gecko_sdk
 call slc configuration -s %GECKO_SDK% -gcc %ARM_GCC_DIR_WIN%
 
@@ -15,16 +18,16 @@ pushd %GECKO_SDK%\platform\radio\wifi\rs9116
 git clean -ffdx
 popd
 
-pushd rs911x\Host_MCU\test\sqa_test_agent
 :: copy files from rs911x repo to mini gecko sdk
-xcopy /s /i /q ..\..\component %GECKO_SDK%\platform\radio\wifi\rs9116\component
-xcopy /s /i /q ..\..\sapi %GECKO_SDK%\platform\radio\wifi\rs9116\sapi
-xcopy /s /i /q ..\..\platforms\efx32 %GECKO_SDK%\platform\radio\wifi\rs9116\efx32
+xcopy /s /i /q rs911x_sdk\component %GECKO_SDK%\platform\radio\wifi\rs9116\component
+xcopy /s /i /q rs911x_sdk\sapi %GECKO_SDK%\platform\radio\wifi\rs9116\sapi
+xcopy /s /i /q rs911x_sdk\platforms\efx32 %GECKO_SDK%\platform\radio\wifi\rs9116\efx32
 
 :: generate SLC project
 call slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
 
 :: build
+:build
 make -C build -f sqa_test_agent.Makefile -j
 
 popd
