@@ -1,6 +1,6 @@
 [submodule "rs911x"]
 	path = rs911x
-	url = ../../Redpine/rs911x
+	url = ../../Redpine/utf
 [submodule "mini_gecko_sdk"]
 	path = mini_gecko_sdk
 	url = ../../Redpine/mini_gecko_sdk
