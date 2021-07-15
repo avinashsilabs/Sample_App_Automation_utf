@@ -1,1 +1,1 @@
-rd /s /q sqa_test_application\build
+rd /s /q rs911x\Host_MCU\test\sqa_test_agent\build
