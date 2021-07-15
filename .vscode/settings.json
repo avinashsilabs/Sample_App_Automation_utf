@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "rsi_common_apis.h": "c",
+        "sl_cli_types.h": "c",
+        "rsi_wlan_apis.h": "c",
+        "rsi_m4.h": "c"
+    },
+    "search.exclude": {
+        "**/rs911x": true,
+        "**/sqa_test_application": true,
+        "**/tcmgr": true
+    },
+    "search.useIgnoreFiles": false
+}

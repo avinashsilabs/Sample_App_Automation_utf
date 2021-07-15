@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 if not exist projenv.bat (
     echo Calling TCMGR to get dependencies
     call tcm_setup.bat
@@ -8,7 +8,9 @@ if not exist projenv.bat (
 call projenv.bat 
 
 pushd rs911x\Host_MCU\test\sqa_test_agent
-if NOT "%1"=="gen" goto build
+if NOT "%1"=="gen" (
+    if EXIST .\build  goto build
+)
 
 set GECKO_SDK=%~dp0mini_gecko_sdk
 call slc configuration -s %GECKO_SDK% -gcc %ARM_GCC_DIR_WIN%
@@ -29,5 +31,8 @@ call slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
 :: build
 :build
 make -C build -f sqa_test_agent.Makefile -j
+if %errorlevel% equ 0 (
+    call %~dp0copy.bat
+)
 
 popd
