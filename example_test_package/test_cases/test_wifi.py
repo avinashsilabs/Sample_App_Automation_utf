@@ -1,21 +1,9 @@
 from utils.iperf.Iperf_constants import IperfConstants
 from utils.rs911x_version import parse_version
+from utils.time_measurer import TimeMeasurer
 import time
 import pytest
 from utils.logger import get_logger
-
-
-class TimeMeasurer:
-    def __enter__(self):
-        self.start_time = time.perf_counter()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__duration = time.perf_counter() - self.start_time
-
-    @property
-    def duration(self):
-        return self.__duration
 
 
 def logger():
@@ -73,6 +61,7 @@ def test_wifi_leave(wifi_networked_dut):
 @pytest.mark.skip
 def test_wifi_start_ap(wifi_dut):
     wifi_dut.interfaces.wifi.start_ap()
+
 
 # @pytest.mark.skip
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
