@@ -1,0 +1,50 @@
+import pytest
+from utils.stopwatch import Stopwatch
+from devices.rs911x import RS9116FeatureBitMap
+
+@pytest.mark.parametrize(
+    "wifi_dut",
+    [
+        {
+            "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
+        }
+    ],
+    indirect=True,
+)
+def test_power_save(wifi_dut, wifi_networked_dut, logger):
+
+    awake = wifi_networked_dut.interfaces.wifi.get_wake_gpio()
+    assert awake
+
+    wifi_networked_dut.interfaces.wifi.set_sleep_gpio(True)
+    wifi_networked_dut.interfaces.wifi.power_save(2)
+
+    # after power save mode enabled, DUT should confirm state by setting wake GPIO low
+    # (except for DTIM interval)
+    awake_sum = 0
+    for _ in range(0, 20):
+        awake_sum += 1 if wifi_networked_dut.interfaces.wifi.get_wake_gpio() else 0
+    assert awake_sum <= 5, "DUT did not go to sleep"
+
+    # Upon wake request from the host, DUT should confirm leaving of low power state by
+    # setting wake GPIO high
+    wifi_networked_dut.interfaces.wifi.set_sleep_gpio(False)
+    sw = Stopwatch()
+    while sw.elapsed_sec < 5:
+        # wait for DUT to assert wake pin 5 consecutive iterations
+        for _ in range(0, 5):
+            if not wifi_networked_dut.interfaces.wifi.get_wake_gpio():
+                break
+        else:
+            break
+    else:
+        raise AssertionError("DUT did not leave sleep state")
+
+    # after power save mode is re-enabled by asserting sleep GPIO, DUT should confirm state by setting wake GPIO low
+    # (except for DTIM interval)
+    wifi_networked_dut.interfaces.wifi.set_sleep_gpio(True)
+    awake_sum = 0
+    for _ in range(0, 20):
+        awake_sum += 1 if wifi_networked_dut.interfaces.wifi.get_wake_gpio() else 0
+    assert awake_sum <= 5, "DUT did not go to sleep"
+
