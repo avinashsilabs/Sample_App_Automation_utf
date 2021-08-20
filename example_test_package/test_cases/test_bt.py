@@ -34,13 +34,8 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
         assert bt_dut_address is not None
 
-        bt_client.interfaces.bluetooth.bt_service.restart(compact=False)
-        bt_client.interfaces.bluetooth.bt_adapter.set_ssp(0)
-        bt_client_address = bt_client.interfaces.bluetooth.bt_adapter.read_local_bd_addr()
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None
-
-        bt_client.interfaces.bluetooth.bt_agent.start_agent(pin_code=pin_code)
-        bt_client.interfaces.bluetooth.bt_device.remove_device(bt_dut_address)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
@@ -97,17 +92,8 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
         assert bt_dut_address is not None
 
-        bt_client.interfaces.bluetooth.bt_service.restart(compact=True)
-        bt_client.interfaces.bluetooth.bt_service.register_spp()
-        bt_client.interfaces.bluetooth.bt_adapter.reset()
-        bt_client.interfaces.bluetooth.bt_adapter.enable_piscan()
-        bt_client.interfaces.bluetooth.bt_adapter.set_ssp(0)
-        bt_client_address = bt_client.interfaces.bluetooth.bt_adapter.read_local_bd_addr()
-
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
         assert bt_client_address is not None
-
-        bt_client.interfaces.bluetooth.bt_agent.start_agent(pin_code=pin_code)
-        bt_client.interfaces.bluetooth.bt_device.remove_device(bt_dut_address)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
@@ -116,7 +102,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=10)
+                addr = bt_client_socket.accept(timeout=5)
                 assert addr == bt_dut_address
 
             # Initiating power save
