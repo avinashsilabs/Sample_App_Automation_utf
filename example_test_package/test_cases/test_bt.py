@@ -34,9 +34,9 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
         assert bt_dut_address is not None
 
-        bt_client.interfaces.bluetooth.bt_service.restart(compact=True)
-        bt_client.interfaces.bluetooth.bt_service.register_spp()
-        bt_client_address = bt_client.interfaces.bluetooth.bt_adapter.set_as_master()
+        bt_client.interfaces.bluetooth.bt_service.restart(compact=False)
+        bt_client.interfaces.bluetooth.bt_adapter.set_ssp(0)
+        bt_client_address = bt_client.interfaces.bluetooth.bt_adapter.read_local_bd_addr()
         assert bt_client_address is not None
 
         bt_client.interfaces.bluetooth.bt_agent.start_agent(pin_code=pin_code)
@@ -99,7 +99,11 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
 
         bt_client.interfaces.bluetooth.bt_service.restart(compact=True)
         bt_client.interfaces.bluetooth.bt_service.register_spp()
-        bt_client_address = bt_client.interfaces.bluetooth.bt_adapter.set_as_slave()
+        bt_client.interfaces.bluetooth.bt_adapter.reset()
+        bt_client.interfaces.bluetooth.bt_adapter.enable_piscan()
+        bt_client.interfaces.bluetooth.bt_adapter.set_ssp(0)
+        bt_client_address = bt_client.interfaces.bluetooth.bt_adapter.read_local_bd_addr()
+
         assert bt_client_address is not None
 
         bt_client.interfaces.bluetooth.bt_agent.start_agent(pin_code=pin_code)
