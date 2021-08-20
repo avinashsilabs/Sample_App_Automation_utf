@@ -102,6 +102,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
         ) as bt_client_socket:
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
+                bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 addr = bt_client_socket.accept(timeout=5)
                 assert addr == bt_dut_address
@@ -145,7 +146,8 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
     logger().info(f"Scan in {t.duration} seconds")
 
-def test_bt_spp_dut_as_master(wifi_dut, bt_client):
+
+def test_bt_a2dp_dut_as_src(wifi_dut, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         #wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
