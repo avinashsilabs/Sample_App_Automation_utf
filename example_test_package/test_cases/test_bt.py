@@ -6,18 +6,18 @@ from utils.logger import get_logger
 from utils.time_measurer import TimeMeasurer
 import time
 
-pytestmark = [
-    pytest.mark.parametrize(
-        "wifi_dut",
-        [
-            {
-                "oper_mode": 0,
-                "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
-            }
-        ],
-        indirect=True,
-    ),
-]
+# pytestmark = [
+#     pytest.mark.parametrize(
+#         "wifi_dut",
+#         [
+#             {
+#                 "oper_mode": 0,
+#                 "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+#             }
+#         ],
+#         indirect=True,
+#     ),
+# ]
 
 
 def logger():
@@ -147,7 +147,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
-def test_bt_a2dp_dut_as_src(wifi_dut, bt_client):
+def test_bt_a2dp_dut_as_src(bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         #wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -155,7 +155,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, bt_client):
         # bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
         # assert bt_dut_address is not None
 
-        bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address="", pin_code="4321")
+        bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address="24:4B:FE:0E:E1:81", pin_code="4321")
         assert bt_client_address is not None
 
         # with bt_client.interfaces.bluetooth.bt_socket(
