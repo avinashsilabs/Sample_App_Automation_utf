@@ -7,9 +7,6 @@ from utils.time_measurer import TimeMeasurer
 import time
 
 pytestmark = [
-    pytest.mark.framework_integration_test,
-    pytest.mark.usefixtures("parameterize_dut"),
-    pytest.mark.wifi_access_point("dlink810_ap"),
     pytest.mark.parametrize(
         "wifi_dut",
         [
