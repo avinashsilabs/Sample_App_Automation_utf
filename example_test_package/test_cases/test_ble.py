@@ -3,18 +3,16 @@ import pytest
 from devices.rs911x import RS9116CoexMode
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 
+
 @pytest.mark.skip
-@pytest.mark.parametrize(
+@pytest.mark.config(
     "wifi_dut",
-    [
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        }
-    ],
-    indirect=True,
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
 )
-def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
+def test_ble_advertisement(wifi_dut, ble_client):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -22,7 +20,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
         )
 
     # Join Wi-Fi Access Point
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Set up DUT for BLE advertising
     wifi_dut.interfaces.wifi.ble_start()
@@ -45,15 +43,12 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     )
 
 
-@pytest.mark.parametrize(
+@pytest.mark.config(
     "wifi_dut",
-    [
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        }
-    ],
-    indirect=True,
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
 )
 def test_ble_advertisement(wifi_dut, bluez_client):
 
