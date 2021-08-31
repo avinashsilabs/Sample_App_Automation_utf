@@ -14,7 +14,7 @@ from interfaces.cli.rs_sapi_commands import RSSAPICommands
     ],
     indirect=True,
 )
-def test_ble_advertisement(wifi_dut, ble_client):
+def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -22,7 +22,7 @@ def test_ble_advertisement(wifi_dut, ble_client):
         )
 
     # Join Wi-Fi Access Point
-    #wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Set up DUT for BLE advertising
     wifi_dut.interfaces.wifi.ble_start()
@@ -44,35 +44,38 @@ def test_ble_advertisement(wifi_dut, ble_client):
         == wifi_dut.interfaces.wifi.ble_advertising_data
     )
 
-# @pytest.mark.parametrize(
-#     "wifi_dut",
-#     [
-#         {
-#             "oper_mode": 0,
-#             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         }
-#     ],
-#     indirect=True,
-# )
-def test_ble_scanning(ble_client):
-    p = True
-    assert p
-    # if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-    #     raise NotImplementedError(
-    #         "This test case is only currently implemented for SAPI"
-    #     )
 
-    # # # Join Wi-Fi Access Point
-    # # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    #
-    # # Set up DUT for BLE advertising
-    # wifi_dut.interfaces.wifi.ble_start()
-    # wifi_dut.interfaces.wifi.ble_start_scanning()
-    #
-    # # Begin Scanning for BLE devices
-    # ble_client.interfaces.bluetooth.start_scanning()
-    # time.sleep(5)
-    #
+@pytest.mark.parametrize(
+    "wifi_dut",
+    [
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        }
+    ],
+    indirect=True,
+)
+def test_ble_advertisement(wifi_dut, bluez_client):
+
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    # Join Wi-Fi Access Point
+    # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    #Set up DUT for BLE advertising
+    wifi_dut.interfaces.wifi.ble_start()
+
+    # Begin Scanning for BLE devices
+    bluez_client.interfaces.bluetooth.start_advertising()
+    bluez_client.interfaces.bluetooth.start()
+
+    wifi_dut.interfaces.wifi.ble_start_scanning()
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address= "B8:27:EB:8E:A9:99")
+    wifi_dut.interfaces.wifi.ble_get_device_state()
+
     # # Stop advertising and quit scanning
     # wifi_dut.interfaces.wifi.ble_stop_advertising()
     # ble_client.interfaces.bluetooth.stop_scanning()
