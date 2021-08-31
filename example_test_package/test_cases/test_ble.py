@@ -8,7 +8,7 @@ from utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
-@pytest.mark.skip
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
