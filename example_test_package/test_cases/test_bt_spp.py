@@ -68,7 +68,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
             assert data is not None
             assert data.decode() == send_text
 
-            # # Ping dut
+            # Ping dut
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
