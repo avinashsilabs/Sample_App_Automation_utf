@@ -7,16 +7,14 @@ from utils.time_measurer import TimeMeasurer
 import time
 
 pytestmark = [
-    pytest.mark.parametrize(
+    pytest.mark.config(
         "wifi_dut",
-        [
+        wifi=
             {
                 "oper_mode": 0,
                 "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
             }
-        ],
-        indirect=True,
-    ),
+    )
 ]
 
 def logger():
@@ -70,7 +68,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
             assert data is not None
             assert data.decode() == send_text
 
-            # Ping dut
+            # # Ping dut
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
@@ -100,7 +98,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=5)
+                addr = bt_client_socket.accept(timeout=10)
                 assert addr == bt_dut_address
 
             # Initiating power save

@@ -9,18 +9,15 @@ import time
 def logger():
     return get_logger(__name__)
 
-@pytest.mark.parametrize(
+@pytest.mark.config(
     "wifi_dut",
-    [
-        {
+    wifi={
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
             "bt_features": RS9116BTFeatureBitMap.Default |
                            RS9116BTFeatureBitMap.A2DPProfileEnable |
                            RS9116BTFeatureBitMap.A2DPSourceRoleEnable
         }
-    ],
-    indirect=True,
 )
 def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
