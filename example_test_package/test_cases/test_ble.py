@@ -16,7 +16,7 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
+def test_ble_advertisement(wifi_dut, wifi_access_point, bluez_client):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -27,19 +27,21 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Set up DUT for BLE advertising
-    wifi_dut.interfaces.wifi.ble_start()
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
-    ble_client.interfaces.bluetooth.start_scanning()
+    bt_client_address = bluez_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
     time.sleep(5)
 
     # Stop advertising and quit scanning
     wifi_dut.interfaces.wifi.ble_stop_advertising()
-    ble_client.interfaces.bluetooth.stop_scanning()
+    bluez_client.interfaces.bluetooth.stop_scanning()
 
     # See that we found our device
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    found_devices = bluez_client.interfaces.bluetooth.get_devices()
     assert wifi_dut.interfaces.wifi.ble_address in found_devices
     assert (
         found_devices[wifi_dut.interfaces.wifi.ble_address]
@@ -69,11 +71,11 @@ def test_ble_scanning(wifi_dut, wifi_access_point, bluez_client):
     assert bt_dut_address is not None
 
     # Start ble client
-    bt_client_address = bluez_client.interfaces.bluetooth.start_smp_adv_slave(bt_dut_address=bt_dut_address)
+    bt_client_address = bluez_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(timeout=15)
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
