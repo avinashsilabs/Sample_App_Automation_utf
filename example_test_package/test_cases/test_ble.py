@@ -34,7 +34,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     # Begin Scanning for BLE devices
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
-    time.sleep(10)
+    time.sleep(5)
 
     # Stop advertising and quit scanning
     wifi_dut.interfaces.wifi.ble_stop_advertising()
