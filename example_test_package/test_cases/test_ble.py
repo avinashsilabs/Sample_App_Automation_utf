@@ -16,7 +16,7 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_advertisement(wifi_dut, wifi_access_point, bluez_client):
+def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -32,16 +32,16 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, bluez_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
-    bt_client_address = bluez_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
-    time.sleep(5)
+    time.sleep(10)
 
     # Stop advertising and quit scanning
     wifi_dut.interfaces.wifi.ble_stop_advertising()
-    bluez_client.interfaces.bluetooth.stop_scanning()
+    ble_client.interfaces.bluetooth.stop_scanning()
 
     # See that we found our device
-    found_devices = bluez_client.interfaces.bluetooth.get_devices()
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert wifi_dut.interfaces.wifi.ble_address in found_devices
     assert (
         found_devices[wifi_dut.interfaces.wifi.ble_address]
@@ -56,7 +56,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, bluez_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_scanning(wifi_dut, wifi_access_point, bluez_client):
+def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -71,7 +71,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, bluez_client):
     assert bt_dut_address is not None
 
     # Start ble client
-    bt_client_address = bluez_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
     # Start scanning and connect to ble client
