@@ -27,11 +27,13 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Set up DUT for BLE advertising
-    wifi_dut.interfaces.wifi.ble_start()
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
-    ble_client.interfaces.bluetooth.start_scanning()
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
     time.sleep(5)
 
     # Stop advertising and quit scanning
@@ -54,7 +56,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_scanning(wifi_dut, wifi_access_point, bluez_client):
+def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -69,7 +71,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, bluez_client):
     assert bt_dut_address is not None
 
     # Start ble client
-    bt_client_address = bluez_client.interfaces.bluetooth.start_smp_adv_slave(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
     # Start scanning and connect to ble client
