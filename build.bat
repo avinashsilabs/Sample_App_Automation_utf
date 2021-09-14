@@ -24,6 +24,7 @@ popd
 xcopy /s /i /q ..\..\component %GECKO_SDK%\platform\radio\wifi\rs9116\component
 xcopy /s /i /q ..\..\sapi %GECKO_SDK%\platform\radio\wifi\rs9116\sapi
 xcopy /s /i /q ..\..\platforms\efx32 %GECKO_SDK%\platform\radio\wifi\rs9116\efx32
+xcopy /s /i /q ..\..\third_party %GECKO_SDK%\platform\radio\wifi\rs9116\third_party
 
 :: generate SLC project
 call slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
