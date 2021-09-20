@@ -39,7 +39,7 @@ pipeline {
                                             url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                             refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                             sh '''
-                               cp sqa_test_agent.hex ../example_test_package/
+                               cp ./sqa_test_agent.hex ../example_test_package/
                             '''
                         }
                     }
@@ -49,15 +49,15 @@ pipeline {
                         sh '''
                             git submodule update --init --recursive utf_pytest
                             #alias python=python3
-                            python3 ./jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex
                         '''
                     }
                 }
                 stage('Run Tests') {
                     steps {
                         sh '''
-                            rm -rf ./utf_pytest/test_package
-                            cp -r example_test_package/ ./utf_pytest/test_package
+                            rm -rf utf_pytest/test_package
+                            cp -r example_test_package/ utf_pytest/test_package
                         '''
                     }
                     steps{
