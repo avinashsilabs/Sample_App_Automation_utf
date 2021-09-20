@@ -11,23 +11,25 @@ pipeline {
             stages{
                 stage('Get rs9116 binary') {
                     steps{
-                        if(FLASH_RS9116){
-                            dir('rs9116_binary'){
-                                checkout changelog: false,
-                                        poll: false,
-                                        scm: [$class: 'GitSCM',
-                                                branches: [[name: '*/${RS9116_FIRMWARE}']],
-                                                extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
-                                                url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
-                                sh  '''
-                                    unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                    cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
-                                '''
+                        script{
+                            if(FLASH_RS9116){
+                                dir('rs9116_binary'){
+                                    checkout changelog: false,
+                                            poll: false,
+                                            scm: [$class: 'GitSCM',
+                                                    branches: [[name: '*/${RS9116_FIRMWARE}']],
+                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+                                                    userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
+                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
+                                    sh  '''
+                                        unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
+                                        cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                    '''
+                                }
+                            } else {
+                                echo "Skipping release package checkout for RS9116 firmware."
                             }
-                        } else {
-                            echo "Skipping release package checkout for RS9116 firmware."
                         }
                     }
                 }
