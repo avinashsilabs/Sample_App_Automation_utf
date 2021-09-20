@@ -15,14 +15,14 @@ pipeline {
                             checkout changelog: false,
                                     poll: false,
                                     scm: [$class: 'GitSCM',
-                                            branches: [[name: '*/${RS9116_RELEASE_PACKAGE_BRANCH}']],
+                                            branches: [[name: '*/${RS9116_FIRMWARE}']],
                                             extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
                                             userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
                                             url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                            refspec: '+refs/heads/${RS9116_RELEASE_PACKAGE_BRANCH}:refs/remotes/origin/${RS9116_RELEASE_PACKAGE_BRANCH}']]]
+                                            refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
                             sh  '''
-                                unzip ${RS9116_RELEASE_PACKAGE_BRANCH}.zip "${RS9116_RELEASE_PACKAGE_BRANCH}/firmware/${RS9116_RELEASE_PACKAGE_BRANCH}.rps"
-                                cp ${RS9116_RELEASE_PACKAGE_BRANCH}/firmware/${RS9116_RELEASE_PACKAGE_BRANCH}.rps ../example_test_package
+                                unzip ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
+                                cp ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package
                             '''
                         }
                     }
@@ -33,11 +33,11 @@ pipeline {
                             checkout changelog: false,
                                     poll: false,
                                     scm: [$class: 'GitSCM',
-                                            branches: [[name: '*/${SQA_TEST_AGENT_BRANCH}']],
+                                            branches: [[name: '*/${SQA_TEST_AGENT}']],
                                             extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
                                             userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
                                             url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                            refspec: '+refs/heads/${SQA_TEST_AGENT_BRANCH}:refs/remotes/origin/${SQA_TEST_AGENT_BRANCH}']]]
+                                            refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                             sh '''
                                cp sqa_test_agent.hex ../example_test_package/
                             '''
@@ -49,7 +49,7 @@ pipeline {
                         sh '''
                             git submodule update --init --recursive utf_pytest
                             #alias python=python3
-                            python3 ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
+                            python3 ./jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex
                         '''
                     }
                 }
