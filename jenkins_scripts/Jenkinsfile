@@ -22,7 +22,7 @@ pipeline {
                                             refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
                             sh  '''
                                 unzip ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                cp ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package
+                                cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package
                             '''
                         }
                     }
@@ -39,7 +39,7 @@ pipeline {
                                             url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                             refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                             sh '''
-                               cp ./sqa_test_agent.hex ../example_test_package/
+                               cp -f ./sqa_test_agent.hex ../example_test_package/
                             '''
                         }
                     }
@@ -57,7 +57,7 @@ pipeline {
                     steps {
                         sh '''
                             rm -rf utf_pytest/test_package
-                            cp -r example_test_package/ utf_pytest/test_package
+                            cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
                             sh '''
