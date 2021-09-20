@@ -12,7 +12,7 @@ pipeline {
                 stage('Get rs9116 binary') {
                     steps{
                         script{
-                            if(FLASH_RS9116){
+                            if(FLASH_RS9116.toBoolean()){
                                 dir('rs9116_binary'){
                                     checkout changelog: false,
                                             poll: false,
@@ -36,7 +36,7 @@ pipeline {
                 stage('Get sqa test agent binary') {
                     steps{
                         script{
-                            if(FLASH_EFR32){
+                            if(FLASH_EFR32.toBoolean()){
                                 dir('sqa_binary'){
                                     checkout changelog: false,
                                             poll: false,
