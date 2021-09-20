@@ -11,25 +11,21 @@ pipeline {
             stages{
                 stage('Update submodules'){
                     steps {
-                        dir('utf_wifi') {
-                            sh '''
+                        sh  '''
                                 git submodule update --init --recursive utf_pytest
                             '''
-                            sh '''
+                        sh  '''
                                 python ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
                             '''
-                        }
                     }
                 }
                 stage('Pull rs9116 release package') {
                     steps{
-                        dir('utf_wifi'){
-                            git branch: '${RS9116_RELEASE_PACKAGE_BRANCH}',
-                                changelog: false,
-                                credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
-                                poll: false,
-                                url: 'ssh://git@stash.silabs.com/redpine/release_packages.git'
-                        }
+                        git branch: '${RS9116_RELEASE_PACKAGE_BRANCH}',
+                            changelog: false,
+                            credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
+                            poll: false,
+                            url: 'ssh://git@stash.silabs.com/redpine/release_packages.git'
                     }
                 }
             }
