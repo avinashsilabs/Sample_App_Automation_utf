@@ -1,5 +1,3 @@
-agentName = '${AGENT_NAME}'
-
 pipeline {
     agent none
     environment {
@@ -8,7 +6,7 @@ pipeline {
     stages {
         stage('Run') {
             agent {
-                label agentName
+                label 'hyd_sqa_jenkins_nodes'
             }
             stages{
                 stage('Update submodules'){
