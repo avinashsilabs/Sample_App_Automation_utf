@@ -46,9 +46,9 @@ pipeline {
                                 sh '''
                                    cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
                                 '''
-                            } else {
-                                echo "Skipping release package checkout for SQA test agent."
                             }
+                        } else {
+                            echo "Skipping release package checkout for SQA test agent."
                         }
                     }
                 }
