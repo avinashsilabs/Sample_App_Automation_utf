@@ -15,7 +15,10 @@ pipeline {
                                 git submodule update --init --recursive utf_pytest
                             '''
                         sh  '''
-                                alias python=python3 && python ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
+                                alias python=python3
+                            '''
+                        ssh '''
+                                python ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
                             '''
                     }
                 }
