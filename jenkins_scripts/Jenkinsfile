@@ -1,13 +1,9 @@
 pipeline {
-    agent none
     environment {
         TCM_NEXUS_SERVER = "nexus.silabs.com"
     }
     stages {
         stage('Run') {
-            agent {
-                label '${AGENT_NAME}'
-            }
             stages{
                 stage('Update submodules'){
                     steps {
