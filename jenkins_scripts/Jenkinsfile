@@ -59,8 +59,6 @@ pipeline {
                             rm -rf utf_pytest/test_package
                             cp -r example_test_package/ utf_pytest/test_package
                         '''
-                    }
-                    steps{
                         dir('utf_pytest'){
                             sh '''
                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
