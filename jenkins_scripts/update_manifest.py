@@ -4,6 +4,9 @@ import yaml
 import sys
 
 with open("./example_test_package/manifest.yaml", "r+") as f:
+    print("inside update manifest")
+    print(sys.argv[3])
+    print(sys.argv[4])
     y=yaml.safe_load(f)
     y['firmware']['rs911x'] = sys.argv[1]
     y['firmware']['efx32'] = sys.argv[2]
