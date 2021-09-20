@@ -1,4 +1,5 @@
 pipeline {
+    agent none
     environment {
         TCM_NEXUS_SERVER = "nexus.silabs.com"
     }
