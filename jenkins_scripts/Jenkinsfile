@@ -17,7 +17,7 @@ pipeline {
                         sh  '''
                                 alias python=python3
                             '''
-                        ssh '''
+                        sh '''
                                 python ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
                             '''
                     }
