@@ -63,7 +63,7 @@ pipeline {
                     steps{
                         dir('utf_pytest'){
                             sh '''
-                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME} UTF_PYTEST_COMMAND=${PYTEST_COMMAND}
                             '''
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
