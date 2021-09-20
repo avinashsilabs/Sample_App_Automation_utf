@@ -5,6 +5,9 @@ pipeline {
     }
     stages {
         stage('Run') {
+            agent {
+                label '${AGENT_NAME}'
+            }
             stages{
                 stage('Update submodules'){
                     steps {
