@@ -9,28 +9,9 @@ pipeline {
                 label 'ramakathare_jenkins_nodes'
             }
             stages{
-                stage('Update submodules'){
-                    steps {
-                        sh  '''
-                                git submodule update --init --recursive utf_pytest
-                                #alias python=python3
-                                python3 ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
-                            '''
-                    }
-                }
-                stage('Pull rs9116 release package') {
+                stage('Get rs9116 binary') {
                     steps{
-                        dir('sqa_tab'){
-                            checkout changelog: false,
-                                    poll: false,
-                                    scm: [$class: 'GitSCM',
-                                            branches: [[name: '*/${SQA_TEST_AGENT_BRANCH}']],
-                                            extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                            userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
-                                            url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                            refspec: '+refs/heads/${SQA_TEST_AGENT_BRANCH}:refs/remotes/origin/${SQA_TEST_AGENT_BRANCH}']]]
-                        }
-                        dir('rs9116_rpb'){
+                        dir('rs9116_binary'){
                             checkout changelog: false,
                                     poll: false,
                                     scm: [$class: 'GitSCM',
@@ -39,55 +20,59 @@ pipeline {
                                             userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
                                             url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                             refspec: '+refs/heads/${RS9116_RELEASE_PACKAGE_BRANCH}:refs/remotes/origin/${RS9116_RELEASE_PACKAGE_BRANCH}']]]
+                            sh  '''
+                                unzip ${RS9116_RELEASE_PACKAGE_BRANCH}.zip "${RS9116_RELEASE_PACKAGE_BRANCH}/firmware/${RS9116_RELEASE_PACKAGE_BRANCH}.rps"
+                                cp ${RS9116_RELEASE_PACKAGE_BRANCH}/firmware/${RS9116_RELEASE_PACKAGE_BRANCH}.rps ../example_test_package
+                            '''
+                        }
+                    }
+                }
+                stage('Get sqa test agent binary') {
+                    steps{
+                        dir('sqa_binary'){
+                            checkout changelog: false,
+                                    poll: false,
+                                    scm: [$class: 'GitSCM',
+                                            branches: [[name: '*/${SQA_TEST_AGENT_BRANCH}']],
+                                            extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+                                            userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
+                                            url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+                                            refspec: '+refs/heads/${SQA_TEST_AGENT_BRANCH}:refs/remotes/origin/${SQA_TEST_AGENT_BRANCH}']]]
+                            sh '''
+                               cp sqa_test_agent.hex ../example_test_package/
+                            '''
+                        }
+                    }
+                }
+                stage('Update manifest yaml'){
+                    steps {
+                        sh '''
+                            git submodule update --init --recursive utf_pytest
+                            #alias python=python3
+                            python3 ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
+                        '''
+                    }
+                }
+                stage('Run Tests') {
+                    steps {
+                        sh '''
+                            rm -rf ./utf_pytest/test_package
+                            cp -r example_test_package/ ./utf_pytest/test_package
+                        '''
+                    }
+                    steps{
+                        dir('utf_pytest'){
+                            sh '''
+                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+                            '''
+                            archiveArtifacts 'test_package/**'
+                            archiveArtifacts 'reports/**'
+                            archiveArtifacts 'utf/harness/${HARNESS_NAME}.yaml'
+                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                         }
                     }
                 }
             }
         }
-
-//         stage('Pull rs911x release package') {
-//             agent {
-//                 label 'ramakathare_jenkins_nodes'
-//             }
-//             stages {
-//                 stage('Setup Environment') {
-//                     steps {
-//                         sh './tcm_setup.sh'
-//                     }
-//                 }
-//                 stage('Build Test Package') {
-//                     steps {
-//                         dir('rs911x') {
-//                             sh '''
-//                                 . ../projenv.sh
-//                                 export GECKO_SDK="${WORKSPACE}/mini_gecko_sdk"
-//                                 slc configuration --sdk $GECKO_SDK
-//                                 ./Utils/ci/build_scripts/iot/build_test_package.sh
-//                             '''
-//                             stash includes: 'test_package/**', name: 'test_package'
-//
-//                         }
-//                     }
-//                 }
-//                 stage('Run Tests') {
-//                     steps {
-//                         dir('utf_pytest') {
-//                             unstash name: 'test_package'
-//                             sh """
-//                                 # fix problem in one of the test cases
-//                                 sed -i 's/test_wifi_dhcp(wifi_dut)/test_wifi_dhcp(wifi_accesspoint, wifi_dut)/' test_package/test_cases/test_wifi.py
-//
-//                                 # call script to run tests on raspi "rs9116test.local"
-//                                 # using harness "rs9116test-joes"
-//                                 ./load_tests_docker.sh rs9116test.local rs9116test-joes
-//                             """
-//                             archiveArtifacts 'test_package/**'
-//                             archiveArtifacts 'reports/**'
-//                             junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
-//                         }
-//                     }
-//                 }
-//             }
-//         }
     }
 }
