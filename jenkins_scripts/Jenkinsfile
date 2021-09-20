@@ -22,14 +22,14 @@ pipeline {
                     steps{
                         dir('sqa_tab'){
                             git branch: '${SQA_TEST_AGENT_BRANCH}',
-                            url: 'git@stash.silabs.com/redpine/release_packages.git --depth 1',
+                            url: 'git@stash.silabs.com/redpine/release_packages.git',
                             credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
                             poll: false,
                             changelog: false
                         }
                         dir('rs9116_rpb'){
                             git branch: '${RS9116_RELEASE_PACKAGE_BRANCH}',
-                            url: 'git@stash.silabs.com/redpine/release_packages.git --depth 1',
+                            url: 'git@stash.silabs.com/redpine/release_packages.git',
                             credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
                             poll: false,
                             changelog: false
