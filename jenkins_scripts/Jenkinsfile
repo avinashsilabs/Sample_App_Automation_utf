@@ -60,6 +60,7 @@ pipeline {
                             cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
+                            sh 'install.sh'
                             sh '''
                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             '''
