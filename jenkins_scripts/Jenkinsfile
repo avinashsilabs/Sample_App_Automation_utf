@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Run') {
             agent {
-                label 'hyd_sqa_jenkins_nodes'
+                label 'ramakathare_jenkins_nodes'
             }
             stages{
                 stage('Update submodules'){
