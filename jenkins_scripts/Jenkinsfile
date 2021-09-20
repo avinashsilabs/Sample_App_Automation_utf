@@ -62,6 +62,7 @@ pipeline {
                         dir('utf_pytest'){
                             sh '''
                                 python3 -m venv venv
+                                pip3 install wheel
                                 pip3 install -r requirements.txt
                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             '''
