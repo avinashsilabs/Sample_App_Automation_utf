@@ -35,22 +35,24 @@ pipeline {
                 }
                 stage('Get sqa test agent binary') {
                     steps{
-                        if(FLASH_EFR32){
-                            dir('sqa_binary'){
-                                checkout changelog: false,
-                                        poll: false,
-                                        scm: [$class: 'GitSCM',
-                                                branches: [[name: '*/${SQA_TEST_AGENT}']],
-                                                extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
-                                                url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
-                                sh '''
-                                   cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
-                                '''
+                        script{
+                            if(FLASH_EFR32){
+                                dir('sqa_binary'){
+                                    checkout changelog: false,
+                                            poll: false,
+                                            scm: [$class: 'GitSCM',
+                                                    branches: [[name: '*/${SQA_TEST_AGENT}']],
+                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+                                                    userRemoteConfigs: [[credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079',
+                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+                                                    refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
+                                    sh '''
+                                       cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
+                                    '''
+                                }
+                            } else {
+                                echo "Skipping release package checkout for SQA test agent."
                             }
-                        } else {
-                            echo "Skipping release package checkout for SQA test agent."
                         }
                     }
                 }
