@@ -56,11 +56,12 @@ pipeline {
                 stage('Run Tests') {
                     steps {
                         sh '''
+                            python3 -m venv
+                            pip3 install -r requirements.txt
                             rm -rf utf_pytest/test_package
                             cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
-                            sh './install.sh'
                             sh '''
                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             '''
