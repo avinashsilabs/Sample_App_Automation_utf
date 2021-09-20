@@ -13,8 +13,8 @@ pipeline {
                     steps {
                         sh  '''
                                 git submodule update --init --recursive utf_pytest
-                                alias python=python3
-                                python ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
+                                #alias python=python3
+                                python3 ./jenkins_scripts/update_manifest.py ${RS9116_RELEASE_PACKAGE_BRANCH}.rps ${SQA_TEST_AGENT_BRANCH}.hex
                             '''
                     }
                 }
