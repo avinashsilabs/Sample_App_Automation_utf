@@ -60,7 +60,6 @@ pipeline {
                     steps {
                         sh '''
                             git submodule update --init --recursive utf_pytest
-                            #alias python=python3
                             python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex ${FLASH_RS9116} ${FLASH_EFR32}
                         '''
                     }
