@@ -24,6 +24,7 @@ pipeline {
                                                     refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
                                     sh  '''
                                         unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
+                                        rm -f ../example_test_package/rs9116*.rps
                                         cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
                                     '''
                                 }
@@ -47,6 +48,7 @@ pipeline {
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                                     refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                                     sh '''
+                                       rm -f ../example_test_package/sqa_test_agent*.hex
                                        cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
                                     '''
                                 }
