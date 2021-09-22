@@ -82,7 +82,6 @@ pipeline {
                                 '''
                             } else {
                                 bat '''
-                                    #call tcm_setup.bat
                                     if not EXIST venv (
                                         python -m venv venv
                                     )
