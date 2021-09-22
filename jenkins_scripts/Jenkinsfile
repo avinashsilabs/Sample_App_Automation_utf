@@ -60,16 +60,16 @@ pipeline {
                 }
                 stage('Toolchain Setup'){
                     steps {
-//                         withCredentials([sshUserPrivateKey(credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079', \
-//                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-//                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-//                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
-//                             sh '''
-//                                 export GIT_SSH=ssh
-//                                 export GIT_SSH_COMMAND=ssh -i "${TCM_JENKINS_SSH_KEY_PATH}" -o StrictHostKeyChecking=no
-//                                 git submodule update --init --recursive utf_pytest
-//                             '''
-//                         }
+                        withCredentials([sshUserPrivateKey(credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                            sh '''
+                                export GIT_SSH=ssh
+                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                git submodule update --init --recursive utf_pytest
+                            '''
+                        }
                         script {
                             if(isUnix()) {
                                 sh '''
