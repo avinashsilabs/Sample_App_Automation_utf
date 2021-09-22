@@ -85,6 +85,7 @@ pipeline {
                                     if not EXIST venv (
                                         python -m venv venv
                                     )
+                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
                                     call venv\\scripts\\activate
                                     pushd utf_pytest
                                     pip install -r requirements.txt
