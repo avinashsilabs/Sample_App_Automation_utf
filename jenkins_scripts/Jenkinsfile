@@ -66,29 +66,28 @@ pipeline {
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                             sh '''
                                 export GIT_SSH=ssh
-                                export GIT_SSH_COMMAND=ssh -i "${TCM_JENKINS_SSH_KEY_PATH}" -o StrictHostKeyChecking=no
+                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
                                 git submodule update --init --recursive utf_pytest
                             '''
                         }
                         script {
                             if(isUnix()) {
                                 sh '''
-                                   if [ ! -d ./venv ]; then
+                                    if [ ! -d ./venv ]; then
                                       python3 -m venv venv
-                                      . venv/bin/activate
-                                      pushd utf_pytest
-                                      pip install -r requirements.txt
                                    fi
+                                    . venv/bin/activate
+                                    pushd utf_pytest
+                                    pip install -r requirements.txt
                                 '''
                             } else {
                                 bat '''
-                                    call tcm_setup.bat
                                     if not EXIST venv (
                                         python -m venv venv
-                                        call venv\\scripts\\activate
-                                        pushd utf_pytest
-                                        pip install -r utf_pytest/requirements.txt
                                     )
+                                    call venv\\scripts\\activate
+                                    pushd utf_pytest
+                                    pip install -r requirements.txt
                                 '''
                             }
                         }
