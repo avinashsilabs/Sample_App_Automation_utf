@@ -82,12 +82,12 @@ pipeline {
                                 '''
                             } else {
                                 bat '''
-                                    call tcm_setup.bat
+                                    #call tcm_setup.bat
                                     if not EXIST venv (
                                         python -m venv venv
                                         call venv\\scripts\\activate
                                         pushd utf_pytest
-                                        pip install -r utf_pytest/requirements.txt
+                                        pip install -r requirements.txt
                                     )
                                 '''
                             }
