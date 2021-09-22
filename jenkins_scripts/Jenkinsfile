@@ -119,8 +119,17 @@ pipeline {
                                 else
                                    . ../venv/Scripts/activate
                                 fi
-                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             '''
+                            script {
+                                    if(isUnix()) {
+                                        sh '''
+                                            ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+                                        '''
+                                    } else {
+                                        bat '''
+                                            ./load_tests_docker.bat ${SSH_TARGET} ${HARNESS_NAME}
+                                        '''
+                                    }
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
                             archiveArtifacts 'utf/harness/${HARNESS_NAME}.yaml'
