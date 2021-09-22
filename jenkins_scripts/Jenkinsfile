@@ -114,19 +114,24 @@ pipeline {
                         dir('utf_pytest'){
                             sh '''
                                 rm -rf reports
-                                if [ -d venv/bin ]; then
-                                   . ../venv/bin/activate
-                                else
-                                   . ../venv/Scripts/activate
-                                fi
                             '''
+//                             sh '''
+//                                 rm -rf reports
+//                                 if [ -d venv/bin ]; then
+//                                    . ../venv/bin/activate
+//                                 else
+//                                    . ../venv/Scripts/activate
+//                                 fi
+//                             '''
                             script {
                                 if(isUnix()) {
                                     sh '''
+                                        . ../venv/bin/activate
                                         ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                     '''
                                 } else {
                                     bat '''
+                                        ../venv/Scripts/activate
                                         ./load_tests_docker.bat ${SSH_TARGET} ${HARNESS_NAME}
                                     '''
                                 }
