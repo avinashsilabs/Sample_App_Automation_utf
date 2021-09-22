@@ -121,15 +121,16 @@ pipeline {
                                 fi
                             '''
                             script {
-                                    if(isUnix()) {
-                                        sh '''
-                                            ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
-                                        '''
-                                    } else {
-                                        bat '''
-                                            ./load_tests_docker.bat ${SSH_TARGET} ${HARNESS_NAME}
-                                        '''
-                                    }
+                                if(isUnix()) {
+                                    sh '''
+                                        ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+                                    '''
+                                } else {
+                                    bat '''
+                                        ./load_tests_docker.bat ${SSH_TARGET} ${HARNESS_NAME}
+                                    '''
+                                }
+                            }
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
                             archiveArtifacts 'utf/harness/${HARNESS_NAME}.yaml'
