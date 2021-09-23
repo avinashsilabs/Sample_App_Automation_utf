@@ -65,6 +65,7 @@ pipeline {
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                             sh '''
+                                apt install python3.8-venv -y
                                 export GIT_SSH=ssh
                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
                                 git submodule update --init --recursive utf_pytest
