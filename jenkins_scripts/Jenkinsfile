@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Start') {
             agent {
-                label 'swarm && linux64'
+                label 'linux64'
             }
             stages{
                 stage('Get rs9116 binary') {
@@ -65,7 +65,6 @@ pipeline {
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
 //                             sh '''
-//                                 sudo apt install python3.8-venv -y
 //                                 export GIT_SSH=ssh
 //                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
 //                                 git submodule update --init --recursive utf_pytest
@@ -76,28 +75,28 @@ pipeline {
                                 git submodule update --init --recursive utf_pytest
                             '''
                         }
-//                         script {
-//                             if(isUnix()) {
-//                                 sh '''
-//                                     if [ ! -d ./venv ]; then
-//                                       python3 -m venv venv
-//                                    fi
-//                                     . venv/bin/activate
-//                                     pushd utf_pytest
-//                                     pip install -r requirements.txt
-//                                 '''
-//                             } else {
-//                                 bat '''
-//                                     if not EXIST venv (
-//                                         python -m venv venv
-//                                     )
-//                                     copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
-//                                     call venv\\scripts\\activate
-//                                     pushd utf_pytest
-//                                     pip install -r requirements.txt
-//                                 '''
-//                             }
-//                         }
+                        script {
+                            if(isUnix()) {
+                                sh '''
+                                    if [ ! -d ./venv ]; then
+                                      python3 -m venv venv
+                                   fi
+                                    . venv/bin/activate
+                                    pushd utf_pytest
+                                    pip install -r requirements.txt
+                                '''
+                            } else {
+                                bat '''
+                                    if not EXIST venv (
+                                        python -m venv venv
+                                    )
+                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
+                                    call venv\\scripts\\activate
+                                    pushd utf_pytest
+                                    pip install -r requirements.txt
+                                '''
+                            }
+                        }
                     }
                 }
                 stage('Update manifest yaml'){
