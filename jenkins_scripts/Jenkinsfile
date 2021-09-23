@@ -14,14 +14,14 @@ pipeline {
                         script{
                             if(FLASH_RS9116.toBoolean()){
                                 dir('rs9116_binary'){
-                                    checkout changelog: false,
-                                            poll: false,
-                                            scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/${RS9116_FIRMWARE}']],
-                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'wifi-ci-agent-stash-jira',
-                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
+//                                     checkout changelog: false,
+//                                             poll: false,
+//                                             scm: [$class: 'GitSCM',
+//                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
+//                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+//                                                     userRemoteConfigs: [[credentialsId: 'wifi-ci-agent-stash-jira',
+//                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+//                                                     refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
                                     sh  '''
                                         unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
                                         rm -f ../example_test_package/rs9116*.rps
@@ -39,14 +39,19 @@ pipeline {
                         script{
                             if(FLASH_EFR32.toBoolean()){
                                 dir('sqa_binary'){
-                                    checkout changelog: false,
-                                            poll: false,
-                                            scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/${SQA_TEST_AGENT}']],
-                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'wifi-ci-agent-stash-jira',
-                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                    refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
+                                        checkout BbS(branches: [[name: '*/${SQA_TEST_AGENT}']], credentialsId: 'wifi-ci-agent-stash-jira',
+                                            extensions: [], id: '2863bd17-ed6c-48b0-b40c-f4cc610de834', mirrorName: '',
+                                            projectName: 'Redpine', repositoryName: 'release_packages',
+                                            serverId: 'stash.silabs.com', sshCredentialsId: '',
+                                            refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}')
+//                                     checkout changelog: false,
+//                                             poll: false,
+//                                             scm: [$class: 'GitSCM',
+//                                                     branches: [[name: '*/${SQA_TEST_AGENT}']],
+//                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+//                                                     userRemoteConfigs: [[credentialsId: 'wifi-ci-agent-stash-jira',
+//                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+//                                                     refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                                     sh '''
                                        rm -f ../example_test_package/sqa_test_agent*.hex
                                        cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
