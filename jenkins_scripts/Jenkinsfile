@@ -64,45 +64,51 @@ pipeline {
                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
+//                             sh '''
+//                                 sudo apt install python3.8-venv -y
+//                                 export GIT_SSH=ssh
+//                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+//                                 git submodule update --init --recursive utf_pytest
+//                             '''
                             sh '''
-                                apt install python3.8-venv -y
-                                export GIT_SSH=ssh
-                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
                                 git submodule update --init --recursive utf_pytest
                             '''
                         }
-                        script {
-                            if(isUnix()) {
-                                sh '''
-                                    if [ ! -d ./venv ]; then
-                                      python3 -m venv venv
-                                   fi
-                                    . venv/bin/activate
-                                    pushd utf_pytest
-                                    pip install -r requirements.txt
-                                '''
-                            } else {
-                                bat '''
-                                    if not EXIST venv (
-                                        python -m venv venv
-                                    )
-                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
-                                    call venv\\scripts\\activate
-                                    pushd utf_pytest
-                                    pip install -r requirements.txt
-                                '''
-                            }
-                        }
+//                         script {
+//                             if(isUnix()) {
+//                                 sh '''
+//                                     if [ ! -d ./venv ]; then
+//                                       python3 -m venv venv
+//                                    fi
+//                                     . venv/bin/activate
+//                                     pushd utf_pytest
+//                                     pip install -r requirements.txt
+//                                 '''
+//                             } else {
+//                                 bat '''
+//                                     if not EXIST venv (
+//                                         python -m venv venv
+//                                     )
+//                                     copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
+//                                     call venv\\scripts\\activate
+//                                     pushd utf_pytest
+//                                     pip install -r requirements.txt
+//                                 '''
+//                             }
+//                         }
                     }
                 }
                 stage('Update manifest yaml'){
                     steps {
+//                         sh '''
+//                             if [ -d venv/bin ]; then
+//                                . venv/bin/activate
+//                             else
+//                                . venv/Scripts/activate
+//                             fi
+//                             python jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex ${FLASH_RS9116} ${FLASH_EFR32}
+//                         '''
                         sh '''
-                            if [ -d venv/bin ]; then
-                               . venv/bin/activate
-                            else
-                               . venv/Scripts/activate
-                            fi
                             python jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex ${FLASH_RS9116} ${FLASH_EFR32}
                         '''
                     }
@@ -114,13 +120,17 @@ pipeline {
                             cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
+//                             sh '''
+//                                 rm -rf reports
+//                                 if [ -d venv/bin ]; then
+//                                    . ../venv/bin/activate
+//                                 else
+//                                    . ../venv/Scripts/activate
+//                                 fi
+//                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+//                             '''
                             sh '''
                                 rm -rf reports
-                                if [ -d venv/bin ]; then
-                                   . ../venv/bin/activate
-                                else
-                                   . ../venv/Scripts/activate
-                                fi
                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             '''
                             archiveArtifacts 'test_package/**'
