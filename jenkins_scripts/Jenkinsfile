@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Start') {
             agent {
-                label 'hyd_sqa_jenkins_nodes'
+                label 'swarm && linux64'
             }
             stages{
                 stage('Get rs9116 binary') {
