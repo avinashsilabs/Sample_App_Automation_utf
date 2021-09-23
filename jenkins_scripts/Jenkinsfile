@@ -60,7 +60,7 @@ pipeline {
                 }
                 stage('Toolchain Setup'){
                     steps {
-                        withCredentials([sshUserPrivateKey(credentialsId: 'wifi-ci-agent-stash-jira', \
+                        withCredentials([sshUserPrivateKey(credentialsId: 'stash-username-token', \
                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
