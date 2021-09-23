@@ -60,20 +60,23 @@ pipeline {
                 }
                 stage('Toolchain Setup'){
                     steps {
-                            sh '''
-                                git submodule update --init --recursive utf_pytest
-                            '''
-//                         withCredentials([sshUserPrivateKey(credentialsId: 'xyz', \
-//                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-//                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-//                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'xyz', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
 //                             sh '''
 //                                 sudo apt install python3.8-venv -y
 //                                 export GIT_SSH=ssh
 //                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
 //                                 git submodule update --init --recursive utf_pytest
 //                             '''
-//                         }
+                            sh '''
+                                sudo apt install python3.8-venv -y
+                                export GIT_SSH=ssh
+                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                git submodule update --init --recursive utf_pytest
+                            '''
+                        }
 //                         script {
 //                             if(isUnix()) {
 //                                 sh '''
