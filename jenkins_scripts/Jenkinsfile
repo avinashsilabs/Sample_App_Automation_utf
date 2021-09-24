@@ -2,6 +2,13 @@ pipeline {
     agent none
     environment {
         TCM_NEXUS_SERVER = "nexus.silabs.com"
+        RS9116_FIRMWARE = "RS9116W.2.4.1.8"
+        SQA_TEST_AGENT = "sqa_test_agent-2021-09-21-16"
+        SSH_TARGET = "10.207.8.23",
+        HARNESS_NAME = "harness_example"
+        UTF_PYTEST_COMMAND = "pytest --params=params.yaml --tb=native test_package/test_cases/test_wifi.py"
+        FLASH_RS9116 = false
+        FLASH_EFR32 = true
     }
     stages {
         stage('Start') {
@@ -75,28 +82,28 @@ pipeline {
                                 git submodule update --init --recursive utf_pytest
                             '''
                         }
-                        script {
-                            if(isUnix()) {
-                                sh '''
-                                    if [ ! -d ./venv ]; then
-                                      python3 -m venv venv
-                                   fi
-                                    . venv/bin/activate
-                                    pushd utf_pytest
-                                    pip install -r requirements.txt
-                                '''
-                            } else {
-                                bat '''
-                                    if not EXIST venv (
-                                        python -m venv venv
-                                    )
-                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
-                                    call venv\\scripts\\activate
-                                    pushd utf_pytest
-                                    pip install -r requirements.txt
-                                '''
-                            }
-                        }
+//                         script {
+//                             if(isUnix()) {
+//                                 sh '''
+//                                     if [ ! -d ./venv ]; then
+//                                       python3 -m venv venv
+//                                    fi
+//                                     . venv/bin/activate
+//                                     pushd utf_pytest
+//                                     pip install -r requirements.txt
+//                                 '''
+//                             } else {
+//                                 bat '''
+//                                     if not EXIST venv (
+//                                         python -m venv venv
+//                                     )
+//                                     copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
+//                                     call venv\\scripts\\activate
+//                                     pushd utf_pytest
+//                                     pip install -r requirements.txt
+//                                 '''
+//                             }
+//                         }
                     }
                 }
                 stage('Update manifest yaml'){
