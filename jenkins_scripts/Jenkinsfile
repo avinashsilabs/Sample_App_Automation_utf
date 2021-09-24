@@ -19,9 +19,12 @@ pipeline {
             stages{
                 stage('Toolchain Setup'){
                     steps {
-                            sh '''
-                                git submodule update --init --recursive utf_pytest
-                            '''
+                            withCredentials([usernamePassword(credentialsId: 'wifi-ci-agent-stash-jira', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                                sh '''
+                                    git config submodule.utf_pytest.url https://${USERNAME}:${PASSWORD}stash.silabs.com/scm/iot_infra_sw/utf_python_core
+                                    git submodule update --init --recursive utf_pytest
+                                '''
+                            }
 //                         withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
 //                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
 //                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
