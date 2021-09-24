@@ -8,7 +8,7 @@ pipeline {
         HARNESS_NAME = "harness_example"
         UTF_PYTEST_COMMAND = "pytest --params=params.yaml --tb=native test_package/test_cases/test_wifi.py"
         FLASH_RS9116 = false
-        FLASH_EFR32 = false
+        FLASH_EFR32 = true
     }
     stages {
         stage('Start') {
@@ -26,7 +26,7 @@ pipeline {
                                             scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'xyz',
+                                                    userRemoteConfigs: [[credentialsId: 'personal_username_ssh',
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                                     refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
                                     sh  '''
@@ -51,7 +51,7 @@ pipeline {
                                             scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/${SQA_TEST_AGENT}']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'xyz',
+                                                    userRemoteConfigs: [[credentialsId: 'personal_username_ssh',
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                                     refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                                     sh '''
@@ -67,24 +67,16 @@ pipeline {
                 }
                 stage('Toolchain Setup'){
                     steps {
-                        sh '''
-                            git submodule update --init --recursive utf_pytest
-                        '''
-//                         withCredentials([sshUserPrivateKey(credentialsId: 'xyz', \
-//                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-//                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-//                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
-// //                             sh '''
-// //                                 export GIT_SSH=ssh
-// //                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-// //                                 git submodule update --init --recursive utf_pytest
-// //                             '''
-//                             sh '''
-//                                 export GIT_SSH=ssh
-//                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-//                                 git submodule update --init --recursive utf_pytest
-//                             '''
-//                         }
+                        withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                            sh '''
+                                export GIT_SSH=ssh
+                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                git submodule update --init --recursive utf_pytest
+                            '''
+                        }
 //                         script {
 //                             if(isUnix()) {
 //                                 sh '''
