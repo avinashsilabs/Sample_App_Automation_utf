@@ -117,17 +117,14 @@ pipeline {
                 }
                 stage('Update manifest yaml'){
                     steps {
-//                         sh '''
-//                             if [ -d venv/bin ]; then
-//                                . venv/bin/activate
-//                             else
-//                                . venv/Scripts/activate
-//                             fi
-//                             python jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex ${FLASH_RS9116} ${FLASH_EFR32}
-//                         '''
-//                         sh '''
-//                             python3 jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex ${FLASH_RS9116} ${FLASH_EFR32}
-//                         '''
+                        sh '''
+                            if [ -d venv/bin ]; then
+                               . venv/bin/activate
+                            else
+                               . venv/Scripts/activate
+                            fi
+                            python jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex false true ${FLASH_RS9116} ${FLASH_EFR32}
+                        '''
                         sh '''
                             python3 jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex false true
                         '''
@@ -140,19 +137,19 @@ pipeline {
                             cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
-//                             sh '''
-//                                 rm -rf reports
-//                                 if [ -d venv/bin ]; then
-//                                    . ../venv/bin/activate
-//                                 else
-//                                    . ../venv/Scripts/activate
-//                                 fi
-//                                 ./load_tests_docker.sh 10.207.8.23 harness_example
-//                             '''
                             sh '''
                                 rm -rf reports
+                                if [ -d venv/bin ]; then
+                                   . ../venv/bin/activate
+                                else
+                                   . ../venv/Scripts/activate
+                                fi
                                 ./load_tests_docker.sh 10.207.8.23 harness_example
                             '''
+//                             sh '''
+//                                 rm -rf reports
+//                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+//                             '''
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
                             archiveArtifacts 'utf/harness/harness_example.yaml'
