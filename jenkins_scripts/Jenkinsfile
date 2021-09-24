@@ -17,6 +17,55 @@ pipeline {
                 label 'swarm && linux64'
             }
             stages{
+                stage('Toolchain Setup'){
+                    steps {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                            sh '''
+                                export GIT_SSH=ssh
+                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                git submodule update --init --recursive utf_pytest
+                            '''
+                        }
+                        script {
+                            if(isUnix()) {
+                                sh '''
+                                    pip install virtualenv
+                                    if [ ! -d ./venv ]; then
+                                      python3 -m venv venv
+                                    fi
+                                    . venv/bin/activate
+                                    pushd utf_pytest
+                                    pip install -r requirements.txt
+                                '''
+                            } else {
+                                withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                    sh '''
+                                        export GIT_SSH=ssh
+                                        export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                        git submodule update --init --recursive tcmgr
+                                    '''
+                                }
+                                bat '''
+                                    call tcm_setup.bat
+                                    pip install virtualenv
+                                    if not EXIST venv (
+                                        python -m venv venv
+                                    )
+                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
+                                    call venv\\scripts\\activate
+                                    pushd utf_pytest
+                                    pip install -r requirements.txt
+                                '''
+                            }
+                        }
+                    }
+                }
                 stage('Get rs9116 binary') {
                     steps{
                         script{
@@ -62,44 +111,6 @@ pipeline {
                                 }
                             } else {
                                 echo "Skipping release package checkout for SQA test agent."
-                            }
-                        }
-                    }
-                }
-                stage('Toolchain Setup'){
-                    steps {
-                        withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
-                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
-                            sh '''
-                                export GIT_SSH=ssh
-                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                git submodule update --init --recursive utf_pytest
-                            '''
-                        }
-                        script {
-                            if(isUnix()) {
-                                sh '''
-                                    pip install virtualenv
-                                    if [ ! -d ./venv ]; then
-                                      python3 -m venv venv
-                                    fi
-                                    . venv/bin/activate
-                                    pushd utf_pytest
-                                    pip install -r requirements.txt
-                                '''
-                            } else {
-                                bat '''
-                                    pip install virtualenv
-                                    if not EXIST venv (
-                                        python -m venv venv
-                                    )
-                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
-                                    call venv\\scripts\\activate
-                                    pushd utf_pytest
-                                    pip install -r requirements.txt
-                                '''
                             }
                         }
                     }
