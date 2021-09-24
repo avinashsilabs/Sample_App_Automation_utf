@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Start') {
             agent {
-                label 'swarm && win64'
+                label 'swarm && linux64'
             }
             stages{
                 stage('Toolchain Setup'){
@@ -32,7 +32,6 @@ pipeline {
                         script {
                             if(isUnix()) {
                                 sh '''
-                                    #pip install virtualenv
                                     if [ ! -d ./venv ]; then
                                       python3 -m venv venv
                                     fi
@@ -53,7 +52,6 @@ pipeline {
                                 }
                                 bat '''
                                     call tcm_setup.bat
-                                    #pip install virtualenv
                                     if not EXIST venv (
                                         python -m venv venv
                                     )
