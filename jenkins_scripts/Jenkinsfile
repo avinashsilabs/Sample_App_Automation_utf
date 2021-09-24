@@ -22,6 +22,7 @@ pipeline {
                             withCredentials([usernamePassword(credentialsId: 'wifi-ci-agent-stash-jira', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                                 sh '''
                                     git config submodule.utf_pytest.url https://${USERNAME}:${PASSWORD}@stash.silabs.com/scm/iot_infra_sw/utf_python_core
+                                    git submodule sync
                                     git submodule update --init --recursive utf_pytest
                                 '''
                             }
