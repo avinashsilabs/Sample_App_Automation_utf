@@ -36,7 +36,9 @@ pipeline {
                                       python3 -m venv venv
                                     fi
                                     . venv/bin/activate
-                                    cd ./utf_pytest; pip install -r requirements.txt
+                                    cd ./utf_pytest
+                                    pip install -r requirements.txt
+                                    cd ..
                                 '''
                             } else {
                                 withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
