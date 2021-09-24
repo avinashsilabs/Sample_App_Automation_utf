@@ -58,8 +58,9 @@ pipeline {
                                     )
                                     copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
                                     call venv\\scripts\\activate
-                                    pushd utf_pytest
+                                    cd .\\utf_pytest
                                     pip install -r requirements.txt
+                                    cd..
                                 '''
                             }
                         }
