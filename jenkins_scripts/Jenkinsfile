@@ -123,10 +123,7 @@ pipeline {
                             else
                                . venv/Scripts/activate
                             fi
-                            python jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex false true ${FLASH_RS9116} ${FLASH_EFR32}
-                        '''
-                        sh '''
-                            python3 jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex false true
+                            python3 jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex false true ${FLASH_RS9116} ${FLASH_EFR32}
                         '''
                     }
                 }
