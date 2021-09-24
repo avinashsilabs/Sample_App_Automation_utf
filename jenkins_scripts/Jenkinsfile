@@ -7,8 +7,8 @@ pipeline {
         SSH_TARGET = "10.207.8.23"
         HARNESS_NAME = "harness_example"
         UTF_PYTEST_COMMAND = "pytest --params=params.yaml --tb=native test_package/test_cases/test_wifi.py"
-        FLASH_RS9116 = false
-        FLASH_EFR32 = false
+        FLASH_RS9116 = true
+        FLASH_EFR32 = true
         BRANCH = "UTF-245-release_milestone8"
     }
     stages {
