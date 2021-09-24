@@ -4,7 +4,7 @@ pipeline {
         TCM_NEXUS_SERVER = "nexus.silabs.com"
         RS9116_FIRMWARE = "RS9116W.2.4.1.8"
         SQA_TEST_AGENT = "sqa_test_agent-2021-09-21-16"
-        SSH_TARGET = "10.207.8.23",
+        SSH_TARGET = "10.207.8.23"
         HARNESS_NAME = "harness_example"
         UTF_PYTEST_COMMAND = "pytest --params=params.yaml --tb=native test_package/test_cases/test_wifi.py"
         FLASH_RS9116 = false
