@@ -131,22 +131,26 @@ pipeline {
                         sh '''
                             rm -rf utf_pytest/test_package
                             cp -rf example_test_package/ utf_pytest/test_package
-                            rm -rf reports
-                            if [ -d venv/bin ]; then
-                               . venv/bin/activate
-                            else
-                               . venv/Scripts/activate
-                            fi
-                            ./run_wifi_example_tests.sh 10.207.8.23 harness_example
                         '''
+                        dir('utf_pytest'){
+                            sh '''
+                                rm -rf reports
+                                if [ -d ../venv/bin ]; then
+                                   . ../venv/bin/activate
+                                else
+                                   . ../venv/Scripts/activate
+                                fi
+                                ./load_tests_docker.sh 10.207.8.23 harness_example
+                            '''
 //                             sh '''
 //                                 rm -rf reports
 //                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
 //                             '''
-                        archiveArtifacts 'utf_pytest/test_package/**'
-                        archiveArtifacts 'utf_pytest/reports/**'
-                        archiveArtifacts 'utf_pytest/utf/harness/harness_example.yaml'
-                        junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                            archiveArtifacts 'test_package/**'
+                            archiveArtifacts 'reports/**'
+                            archiveArtifacts 'utf/harness/harness_example.yaml'
+                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                        }
                     }
                 }
             }
