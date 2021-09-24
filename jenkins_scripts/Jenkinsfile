@@ -133,9 +133,9 @@ pipeline {
                             cp -rf example_test_package/ utf_pytest/test_package
                             rm -rf reports
                             if [ -d venv/bin ]; then
-                               ../venv/bin/activate
+                               . venv/bin/activate
                             else
-                               ../venv/Scripts/activate
+                               . venv/Scripts/activate
                             fi
                             ./run_wifi_example_tests.sh 10.207.8.23 harness_example
                         '''
