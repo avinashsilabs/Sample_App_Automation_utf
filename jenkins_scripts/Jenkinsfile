@@ -1,16 +1,5 @@
 pipeline {
     agent none
-    environment {
-        TCM_NEXUS_SERVER = "nexus.silabs.com"
-        RS9116_FIRMWARE = "RS9116W.2.4.1.8"
-        SQA_TEST_AGENT = "sqa_test_agent-2021-09-21-16"
-        SSH_TARGET = "10.207.8.23"
-        HARNESS_NAME = "harness_example"
-        UTF_PYTEST_COMMAND = "pytest --params=params.yaml --tb=native test_package/test_cases/test_wifi.py"
-        FLASH_RS9116 = true
-        FLASH_EFR32 = true
-        BRANCH = "UTF-245-release_milestone8"
-    }
     stages {
         stage('Start') {
             agent {
@@ -77,15 +66,15 @@ pipeline {
                                     checkout changelog: false,
                                             poll: false,
                                             scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/RS9116W.2.4.1.8']],
+                                                    branches: [[name: '*/${RS9116_FIRMWARE}']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
                                                     userRemoteConfigs: [[credentialsId: 'IOT_Hyd_ssh_private_key',
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                    refspec: '+refs/heads/RS9116W.2.4.1.8:refs/remotes/origin/RS9116W.2.4.1.8']]]
+                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
                                     sh  '''
-                                        unzip -o RS9116W.2.4.1.8.zip "RS9116W.2.4.1.8/firmware/RS9116W.2.4.1.8.rps"
+                                        unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
                                         rm -f ../example_test_package/rs9116*.rps
-                                        cp -f RS9116W.2.4.1.8/firmware/RS9116W.2.4.1.8.rps ../example_test_package/RS9116W.2.4.1.8.rps
+                                        cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
                                     '''
                                 }
                             } else {
@@ -102,14 +91,14 @@ pipeline {
                                     checkout changelog: false,
                                             poll: false,
                                             scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/sqa_test_agent-2021-09-21-16']],
+                                                    branches: [[name: '*/${SQA_TEST_AGENT}']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
                                                     userRemoteConfigs: [[credentialsId: 'IOT_Hyd_ssh_private_key',
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                    refspec: '+refs/heads/sqa_test_agent-2021-09-21-16:refs/remotes/origin/sqa_test_agent-2021-09-21-16']]]
+                                                    refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                                     sh '''
                                        rm -f ../example_test_package/sqa_test_agent*.hex
-                                       cp -f ./sqa_test_agent.hex ../example_test_package/sqa_test_agent-2021-09-21-16.hex
+                                       cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
                                     '''
                                 }
                             } else {
@@ -126,7 +115,7 @@ pipeline {
                             else
                                . venv/Scripts/activate
                             fi
-                            python3 jenkins_scripts/update_manifest.py RS9116W.2.4.1.8.rps sqa_test_agent-2021-09-21-16.hex true true ${FLASH_RS9116} ${FLASH_EFR32}
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex ${FLASH_RS9116} ${FLASH_EFR32}
                         '''
                     }
                 }
@@ -144,9 +133,8 @@ pipeline {
                                 else
                                    . ../venv/Scripts/activate
                                 fi
-                                ./load_tests_docker.sh 10.207.8.23 harness_example
+                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             '''
-//                                 ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
                             archiveArtifacts 'utf/harness/harness_example.yaml'
