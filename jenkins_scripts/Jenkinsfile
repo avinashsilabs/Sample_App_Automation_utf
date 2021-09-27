@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Start') {
             agent {
-                label 'swarm && win64'
+                label 'swarm && linux64'
             }
             stages{
                 stage('Toolchain Setup'){
