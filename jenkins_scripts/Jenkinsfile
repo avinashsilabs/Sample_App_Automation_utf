@@ -3,8 +3,7 @@ pipeline {
     stages {
         stage('Start') {
             agent {
-//                 label 'swarm && linux64'
-                label 'hyd_sqa'
+                label 'swarm && linux64'
             }
             stages{
                 stage('Toolchain Setup'){
