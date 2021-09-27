@@ -19,7 +19,7 @@ pipeline {
             stages{
                 stage('Toolchain Setup'){
                     steps {
-                        withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
+                        withCredentials([sshUserPrivateKey(credentialsId: 'IOT_Hyd_ssh_private_key', \
                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
@@ -41,7 +41,7 @@ pipeline {
                                     cd ..
                                 '''
                             } else {
-                                withCredentials([sshUserPrivateKey(credentialsId: 'personal_username_ssh', \
+                                withCredentials([sshUserPrivateKey(credentialsId: 'IOT_Hyd_ssh_private_key', \
                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
@@ -76,7 +76,7 @@ pipeline {
                                             scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/RS9116W.2.4.1.8']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'personal_username_ssh',
+                                                    userRemoteConfigs: [[credentialsId: 'IOT_Hyd_ssh_private_key',
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                                     refspec: '+refs/heads/RS9116W.2.4.1.8:refs/remotes/origin/RS9116W.2.4.1.8']]]
                                     sh  '''
@@ -101,7 +101,7 @@ pipeline {
                                             scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/sqa_test_agent-2021-09-21-16']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'personal_username_ssh',
+                                                    userRemoteConfigs: [[credentialsId: 'IOT_Hyd_ssh_private_key',
                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
                                                     refspec: '+refs/heads/sqa_test_agent-2021-09-21-16:refs/remotes/origin/sqa_test_agent-2021-09-21-16']]]
                                     sh '''
