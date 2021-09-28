@@ -1,0 +1,145 @@
+pipeline {
+    agent none
+    stages {
+        stage('Start') {
+            agent {
+                label 'swarm && linux64'
+            }
+            stages{
+                stage('Toolchain Setup'){
+                    steps {
+                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                            sh '''
+                                export GIT_SSH=ssh
+                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                git submodule update --init --recursive utf_pytest
+                            '''
+                        }
+                        script {
+                            if(isUnix()) {
+                                sh '''
+                                    if [ ! -d ./venv ]; then
+                                      python3 -m venv venv
+                                    fi
+                                    . venv/bin/activate
+                                    cd ./utf_pytest
+                                    pip install -r requirements.txt
+                                    cd ..
+                                '''
+                            } else {
+                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                    sh '''
+                                        export GIT_SSH=ssh
+                                        export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                        git submodule update --init --recursive tcmgr
+                                    '''
+                                }
+                                bat '''
+                                    call tcm_setup.bat
+                                    if not EXIST venv (
+                                        python -m venv venv
+                                    )
+                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
+                                    call venv\\scripts\\activate
+                                    cd .\\utf_pytest
+                                    pip install -r requirements.txt
+                                    cd..
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Get rs9116 binary') {
+                    steps{
+                        script{
+                            if(FLASH_RS9116.toBoolean()){
+                                dir('rs9116_binary'){
+                                    checkout changelog: false,
+                                            poll: false,
+                                            scm: [$class: 'GitSCM',
+                                                    branches: [[name: '*/${RS9116_FIRMWARE}']],
+                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+                                                    userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
+                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
+                                    sh  '''
+                                        unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
+                                        rm -f ../example_test_package/rs9116*.rps
+                                        cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                    '''
+                                }
+                            } else {
+                                echo "Skipping release package checkout for RS9116 firmware."
+                            }
+                        }
+                    }
+                }
+                stage('Get sqa test agent binary') {
+                    steps{
+                        script{
+                            if(FLASH_EFR32.toBoolean()){
+                                dir('sqa_binary'){
+                                    checkout changelog: false,
+                                            poll: false,
+                                            scm: [$class: 'GitSCM',
+                                                    branches: [[name: '*/${SQA_TEST_AGENT}']],
+                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+                                                    userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
+                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
+                                                    refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
+                                    sh '''
+                                       rm -f ../example_test_package/sqa_test_agent*.hex
+                                       cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
+                                    '''
+                                }
+                            } else {
+                                echo "Skipping release package checkout for SQA test agent."
+                            }
+                        }
+                    }
+                }
+                stage('Update manifest yaml'){
+                    steps {
+                        sh '''
+                            if [ -d venv/bin ]; then
+                               . venv/bin/activate
+                            else
+                               . venv/Scripts/activate
+                            fi
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex ${FLASH_RS9116} ${FLASH_EFR32}
+                        '''
+                    }
+                }
+                stage('Run Tests') {
+                    steps {
+                        sh '''
+                            rm -rf utf_pytest/test_package
+                            cp -rf example_test_package/ utf_pytest/test_package
+                        '''
+                        dir('utf_pytest'){
+                            sh '''
+                                rm -rf reports
+                                if [ -d ../venv/bin ]; then
+                                   . ../venv/bin/activate
+                                else
+                                   . ../venv/Scripts/activate
+                                fi
+                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+                            '''
+                            archiveArtifacts 'test_package/**'
+                            archiveArtifacts 'reports/**'
+                            archiveArtifacts 'utf/harness/harness_example.yaml'
+                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
