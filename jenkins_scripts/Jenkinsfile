@@ -134,9 +134,9 @@ pipeline {
                                     else
                                     . ../venv/Scripts/activate
                                     fi
-                                    export TCM_JENKINS_SSH_KEY_PATH=${TCM_JENKINS_SSH_KEY_PATH}
+                                    #export TCM_JENKINS_SSH_KEY_PATH=${TCM_JENKINS_SSH_KEY_PATH}
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
-                                    unset TCM_JENKINS_SSH_KEY_PATH
+                                    #unset TCM_JENKINS_SSH_KEY_PATH
                                 '''
                             }
                             archiveArtifacts 'test_package/**'
