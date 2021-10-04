@@ -123,15 +123,22 @@ pipeline {
                             cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
-                            sh '''
-                                rm -rf reports
-                                if [ -d ../venv/bin ]; then
-                                   . ../venv/bin/activate
-                                else
-                                   . ../venv/Scripts/activate
-                                fi
-                                ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
-                            '''
+                            withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                sh '''
+                                    rm -rf reports
+                                    if [ -d ../venv/bin ]; then
+                                    . ../venv/bin/activate
+                                    else
+                                    . ../venv/Scripts/activate
+                                    fi
+                                    export TCM_JENKINS_SSH_KEY_PATH=${TCM_JENKINS_SSH_KEY_PATH}
+                                    ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
+                                    unset TCM_JENKINS_SSH_KEY_PATH
+                                '''
+                            }
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
                             archiveArtifacts 'utf/harness/harness_example.yaml'
