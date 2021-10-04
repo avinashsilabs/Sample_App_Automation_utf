@@ -25,7 +25,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, bt_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    capture_file_path = "./reports/a2dp_capture.wav"
+    capture_file_path = "./a2dp_capture.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         #wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
