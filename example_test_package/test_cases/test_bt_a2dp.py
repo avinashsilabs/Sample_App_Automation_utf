@@ -20,7 +20,7 @@ def logger():
                            RS9116BTFeatureBitMap.A2DPSourceRoleEnable
         }
 )
-def test_bt_a2dp_dut_as_src(wifi_dut, bt_client):
+def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -28,7 +28,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, bt_client):
     capture_file_path = "./a2dp_capture.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
-        #wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
         assert bt_dut_address is not None
