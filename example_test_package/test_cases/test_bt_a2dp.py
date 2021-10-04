@@ -45,7 +45,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
 
         # A2DP SBC Audio streaming to Raspi
         wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-        time.sleep(5)
+        time.sleep(7)
 
         #Power save
         wifi_dut.interfaces.wifi.set_sleep_gpio(True)
