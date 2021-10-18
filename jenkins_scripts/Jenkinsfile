@@ -61,16 +61,17 @@ pipeline {
                         script{
                             if(FLASH_RS9116.toBoolean()){
                                 dir('rs9116_binary'){
+//                                     checkout scm: [$class: 'GitSCM',
+//                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
+//                                                     extensions: [[$class: 'CheckoutOption', timeout: 1]],
+//                                                     userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
+//                                                         name: 'rs9116_binary',
+//                                                         refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
+//                                                         url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]
+                                                    ]
                                     checkout scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
-                                                    extensions: [[$class: 'CheckoutOption', timeout: 1]],
-                                                    userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
-                                                    name: 'rs9116_binary',
-                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
-                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]]
-                                    checkout scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/${RS9116_FIRMWARE}']],
-                                                    extensions: [],
+                                                    extensions: [[$class: 'CheckoutOption', timeout: 1],[$class: 'LocalBranch', localBranch: '${RS9116_FIRMWARE}']],
                                                     userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
                                                     name: 'rs9116_binary',
                                                     refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
