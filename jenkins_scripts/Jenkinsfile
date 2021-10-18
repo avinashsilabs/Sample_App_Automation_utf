@@ -142,6 +142,7 @@ pipeline {
                                     . ../venv/Scripts/activate
                                     fi
                                     ./install.sh || true
+                                    export UTF_DOCKER_FLAGS=-e DUMMY=DUMMY
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                 '''
                             }
