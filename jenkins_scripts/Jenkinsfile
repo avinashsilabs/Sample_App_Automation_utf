@@ -60,9 +60,7 @@ pipeline {
                         script{
                             if(FLASH_RS9116.toBoolean()){
                                 dir('rs9116_binary'){
-                                    checkout changelog: false,
-                                            poll: false,
-                                            scm: [$class: 'GitSCM',
+                                    checkout scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
                                                     userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
@@ -85,9 +83,7 @@ pipeline {
                         script{
                             if(FLASH_EFR32.toBoolean()){
                                 dir('sqa_binary'){
-                                    checkout changelog: false,
-                                            poll: false,
-                                            scm: [$class: 'GitSCM',
+                                    checkout scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/${SQA_TEST_AGENT}']],
                                                     extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
                                                     userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
