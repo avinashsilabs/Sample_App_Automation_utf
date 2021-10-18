@@ -61,14 +61,12 @@ pipeline {
                         script{
                             if(FLASH_RS9116.toBoolean()){
                                 dir('rs9116_binary'){
-                                    checkout changelog: false,
-                                            poll: false,
-                                            scm: [$class: 'GitSCM',
+                                    checkout scm: [$class: 'GitSCM',
                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
-                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
+                                                    extensions: [],
                                                     userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
-                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}']]]
+                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/origin/${RS9116_FIRMWARE}',
+                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]]
                                     sh  '''
                                         unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
                                         rm -f ../example_test_package/rs9116*.rps
