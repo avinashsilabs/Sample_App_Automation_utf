@@ -13,13 +13,9 @@ pipeline {
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                             sh '''
-                                cd ./utf_pytest
-                                git remote --verbose
-                                git remote remove origin
-                                git remote add origin ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
-                                cd ..
                                 export GIT_SSH=ssh
                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                git config --file=.gitmodules submodule.utf_pytest.url ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
                                 git submodule update --init --recursive utf_pytest
                             '''
                         }
