@@ -68,14 +68,13 @@ pipeline {
 //                                                         name: 'rs9116_binary',
 //                                                         refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
 //                                                         url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]
-                                                    ]
-                                    checkout scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/${RS9116_FIRMWARE}']],
-                                                    extensions: [[$class: 'CheckoutOption', timeout: 1],[$class: 'LocalBranch', localBranch: '${RS9116_FIRMWARE}']],
-                                                    userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
-                                                    name: 'rs9116_binary',
-                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
-                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]]
+//                                                     ]
+                                    checkout([$class: 'GitSCM', branches: [[name: '*/${RS9116_FIRMWARE}']],
+                                                extensions: [[$class: 'CheckoutOption', timeout: 10], [$class: 'LocalBranch', localBranch: '${RS9116_FIRMWARE}']],
+                                                userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
+                                                                    name: 'utf_pytest',
+                                                                    refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/utf_pytest/${RS9116_FIRMWARE}',
+                                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]])
                                     sh  '''
                                         unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
                                         rm -f ../example_test_package/rs9116*.rps
