@@ -14,7 +14,7 @@ pipeline {
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                             sh '''
                                 cd ./utf_pytest
-                                git remote set-url origin ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
+                                git remote add origin ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
                                 cd ..
                                 export GIT_SSH=ssh
                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
