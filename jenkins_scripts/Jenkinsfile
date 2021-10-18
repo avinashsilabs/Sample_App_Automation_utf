@@ -141,9 +141,7 @@ pipeline {
                                     else
                                     . ../venv/Scripts/activate
                                     fi
-                                    set -e
-                                    ./install.sh
-                                    set +e
+                                    ./install.sh || true
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                 '''
                             }
