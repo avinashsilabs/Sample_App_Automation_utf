@@ -72,20 +72,6 @@ pipeline {
                                     '''
                                 }
                                 dir('rs9116_binary'){
-//                                     checkout scm: [$class: 'GitSCM',
-//                                                     branches: [[name: '*/${RS9116_FIRMWARE}']],
-//                                                     extensions: [[$class: 'CheckoutOption', timeout: 1]],
-//                                                     userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
-//                                                         name: 'rs9116_binary',
-//                                                         refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
-//                                                         url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]
-//                                                     ]
-//                                     checkout([$class: 'GitSCM', branches: [[name: '*/${RS9116_FIRMWARE}']],
-//                                                 extensions: [[$class: 'CheckoutOption', timeout: 10], [$class: 'LocalBranch', localBranch: '${RS9116_FIRMWARE}']],
-//                                                 userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
-//                                                                     name: 'rs9116_binary',
-//                                                                     refspec: '+refs/heads/${RS9116_FIRMWARE}:refs/remotes/rs9116_binary/${RS9116_FIRMWARE}',
-//                                                                     url: 'ssh://git@stash.silabs.com/redpine/release_packages.git']]])
                                     sh  '''
                                         unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
                                         rm -f ../example_test_package/rs9116*.rps
@@ -102,15 +88,18 @@ pipeline {
                     steps{
                         script{
                             if(FLASH_EFR32.toBoolean()){
+                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                    sh '''
+                                        rm -rf sqa_binary
+                                        export GIT_SSH=ssh
+                                        export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                        git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${SQA_TEST_AGENT} --single-branch sqa_binary
+                                    '''
+                                }
                                 dir('sqa_binary'){
-                                    checkout changelog: false,
-                                            poll: false,
-                                            scm: [$class: 'GitSCM',
-                                                    branches: [[name: '*/${SQA_TEST_AGENT}']],
-                                                    extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-                                                    userRemoteConfigs: [[credentialsId: 'mwlabuser-ssh-username-key',
-                                                    url: 'ssh://git@stash.silabs.com/redpine/release_packages.git',
-                                                    refspec: '+refs/heads/${SQA_TEST_AGENT}:refs/remotes/origin/${SQA_TEST_AGENT}']]]
                                     sh '''
                                        rm -f ../example_test_package/sqa_test_agent*.hex
                                        cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
