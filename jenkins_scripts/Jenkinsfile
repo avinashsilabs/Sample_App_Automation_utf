@@ -14,6 +14,8 @@ pipeline {
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                             sh '''
                                 cd ./utf_pytest
+                                git remote --verbose
+                                git remote remove origin
                                 git remote add origin ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
                                 cd ..
                                 export GIT_SSH=ssh
