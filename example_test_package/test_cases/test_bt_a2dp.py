@@ -40,6 +40,11 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
         time.sleep(5)
 
+        # Ping dut
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
+
         #Start capturing audio
         bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
 
@@ -56,10 +61,6 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
 
-        # Ping dut
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-            dest_addr=bt_dut_address
-        )
         #disconnect
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
