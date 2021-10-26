@@ -27,6 +27,7 @@ pipeline {
                                     fi
                                     . venv/bin/activate
                                     cd ./utf_pytest
+                                    pip install wheel
                                     pip install -r requirements.txt
                                     cd ..
                                 '''
