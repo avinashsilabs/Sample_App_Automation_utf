@@ -20,7 +20,7 @@ from utils.time_measurer import TimeMeasurer
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 # The test case checks whether the RTC(Real time clock) functionality is working fine in DUT
-def test_wifi_set_get_rtc_testcase_7(wifi_dut, wifi_access_point):
+def test_wifi_set_get_rtc_testcase_7(wifi_dut):
     # DUT runs broadcast scan procedure when ssid is set to None
     wifi_dut.interfaces.wifi.scan(ssid=None)
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
@@ -70,7 +70,7 @@ def test_wifi_set_get_rtc_testcase_7(wifi_dut, wifi_access_point):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 # The test case checks whether the RTC(Real time clock) functionality is working fine in DUT when set RTC API called
 # multiple times
-def test_wifi_set_rtc_twice_testcase4(wifi_dut, wifi_access_point):
+def test_wifi_set_rtc_twice_testcase4(wifi_dut):
     # DUT runs broadcast scan procedure when ssid is set to None
     wifi_dut.interfaces.wifi.scan(ssid=None)
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
@@ -236,7 +236,7 @@ def test_wifi_get_rtc_after_rejoin_testcase10(wifi_dut, wifi_access_point):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 # RTC timer functionality should not work when the set RTC api is executed in wrong state. Before
 # Wireless initialization
-def test_wifi_set_rtc_incorrect_state_testcase3(wifi_dut, wifi_access_point):
+def test_wifi_set_rtc_incorrect_state_testcase3(wifi_dut):
     set_seconds = 30
     set_minutes = 6
     set_hour = 10
@@ -278,7 +278,7 @@ def test_wifi_set_rtc_incorrect_state_testcase3(wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 # RTC timer functionality when executed without enabling the RTC timer feature. RTC timer functionality should not work
-def test_wifi_set_get_feature_not_enabled_testcase9(wifi_dut, wifi_access_point):
+def test_wifi_set_get_feature_not_enabled_testcase9(wifi_dut):
     # DUT runs broadcast scan procedure when ssid is set to None
     wifi_dut.interfaces.wifi.scan(ssid=None)
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
