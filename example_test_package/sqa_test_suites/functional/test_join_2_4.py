@@ -6,10 +6,8 @@ from interfaces.wifi import WlanError
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap
 
-
 def logger():
     return get_logger(__name__)
-
 
 """setup requirement:
         1. DUT(RS9116)
@@ -61,7 +59,6 @@ def test_wifi_join_11n_security(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated and ping in {t.duration} seconds")
 
-
 # test.ID: 2.1.16.2
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -93,7 +90,6 @@ def test_wifi_join_by_rsi_psk(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-
 # test.ID: 2.1.16.5
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -104,8 +100,7 @@ def test_wifi_join_by_rsi_psk(wifi_dut, wifi_access_point):
 def test_wifi_join_pmk(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP with the pmk generated
-        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
-                                          wifi_access_point.interfaces.wifi.passphrase)
+        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,wifi_access_point.interfaces.wifi.passphrase)
 
         # This API Enables the DHCP in DUT
         result = wifi_dut.interfaces.wifi.start_ip()
@@ -124,7 +119,6 @@ def test_wifi_join_pmk(wifi_dut, wifi_access_point):
         status = ping(device_ip, 10)
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
-
 
 # test.ID: 2.1.16.7
 
@@ -142,7 +136,6 @@ def test_wifi_join_pmk_by_giving_wrong_psk(wifi_dut, wifi_access_point):
         assert exc_info.value.error_code == 0x0008
     logger().info(f"Associated in {t.duration} seconds")
 
-
 # test.ID: 2.1.16.15
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -158,7 +151,6 @@ def test_wifi_join_pmk_without_SSID(wifi_dut, wifi_access_point):
             wifi_dut.interfaces.wifi.join_pmk("\"\"", wifi_access_point.interfaces.wifi.passphrase)
             assert exc_info.value.error_code == 0x0003
     logger().info(f"Associated in {t.duration} seconds")
-
 
 # test.ID: 2.1.16.20
 
@@ -176,7 +168,6 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid(wifi_dut, wifi_access_poin
         assert exc_info.value.error_code == 0x0008
     logger().info(f"Associated in {t.duration} seconds")
 
-
 # test.ID: 2.1.16.21
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -189,8 +180,7 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid(wifi_dut, wifi_access_poin
 def test_psk_with_64_different_characters(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP with the pmk generated for the 64 characters of passphrase
-        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
-                                          wifi_access_point.interfaces.wifi.passphrase)
+        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,wifi_access_point.interfaces.wifi.passphrase)
 
         # This API Enables the DHCP in DUT
         result = wifi_dut.interfaces.wifi.start_ip()
@@ -209,7 +199,6 @@ def test_psk_with_64_different_characters(wifi_dut, wifi_access_point):
         status = ping(device_ip, 10)
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
-
 
 # test.ID: 2.1.16.22
 
@@ -244,7 +233,6 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid(wifi_dut, wifi_acces
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-
 # test.ID: 2.1.6.31
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -274,7 +262,6 @@ def test_connectivity_with_hidden_ap(wifi_dut, wifi_access_point):
         status = ping(device_ip, 10)
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
-
 
 # test.ID: 2.1.6..91.1
 
@@ -308,7 +295,6 @@ def test_pmk_connect_time(wifi_dut, wifi_access_point):
     assert status == 1
     wifi_dut.interfaces.wifi.leave()
 
-
 # test.ID: 2.1.6..91.1(a)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -339,7 +325,6 @@ def test_psk_connect_time(wifi_dut, wifi_access_point):
     status = ping(device_ip, 10)
     assert status == 1
     wifi_dut.interfaces.wifi.leave()
-
 
 # test.ID: 2.1.6.45
 
