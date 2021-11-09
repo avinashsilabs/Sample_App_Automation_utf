@@ -27,6 +27,7 @@ pipeline {
                                     fi
                                     . venv/bin/activate
                                     cd ./utf_pytest
+                                    pip install wheel
                                     pip install -r requirements.txt
                                     cd ..
                                 '''
@@ -142,7 +143,7 @@ pipeline {
                                     . ../venv/Scripts/activate
                                     fi
                                     ./install.sh || true
-                                    export UTF_DOCKER_FLAGS=-e DUMMY=DUMMY
+                                    #export UTF_DOCKER_FLAGS=-e DUMMY=DUMMY
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                 '''
                             }
