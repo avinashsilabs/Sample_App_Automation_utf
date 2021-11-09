@@ -56,7 +56,7 @@ def test_wifi_tcp_close_testcase1(wifi_dut, wifi_access_point, remote_socket):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         }
     )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks data receive functionality over tcp socket
 def test_wifi_tcp_data_receive_check_testcase14(wifi_dut, wifi_access_point, remote_socket):
@@ -104,7 +104,7 @@ def test_wifi_tcp_data_receive_check_testcase14(wifi_dut, wifi_access_point, rem
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         }
     )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks udp socket close functionality
 def test_wifi_udp_close_testcase2(wifi_dut, wifi_access_point, remote_socket):
@@ -143,7 +143,7 @@ def test_wifi_udp_close_testcase2(wifi_dut, wifi_access_point, remote_socket):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         }
     )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks data receive functionality over udp socket
 def test_wifi_udp_receive_testcase15(wifi_dut, wifi_access_point, remote_socket):
