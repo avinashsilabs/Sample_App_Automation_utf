@@ -5,11 +5,8 @@ from utils.time_measurer import TimeMeasurer
 from utils.iperf.iperf_utils import ping
 import time
 from utils.rs911x_version import parse_version
-# from utf_pytest.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utils.iperf.Iperf_constants import IperfConstants
 from utils.stopwatch import Stopwatch
-from interfaces.wifi import WlanError
-from interfaces.bluetooth import BLEConnectError
 
 
 def logger():
@@ -62,7 +59,6 @@ def test_version_testcase_id2(wifi_dut):
     assert result == expected_version
 
 
-
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
@@ -110,15 +106,20 @@ def test_wifi_connect_testcase_id6(wifi_dut, wifi_access_point):
 def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
     # Set up DUT for BLE advertising
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
-    result = wifi_dut.interfaces.wifi.power_save(2)
-    result = wifi_dut.interfaces.wifi.bt_power_save(2)
-
     # Begin Scanning for BLE devices
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=bt_dut_address
+        )
     assert bt_client_address is not None
-    time.sleep(5)
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        if wifi_dut.interfaces.wifi.ble_address in ble_client.interfaces.bluetooth.get_devices():
+            break
+    else:
+        logger.error(f"Unable to find device {wifi_dut.interfaces.wifi.ble_address} within 30 sec.")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     # See that we found our device
@@ -129,11 +130,11 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
             == wifi_dut.interfaces.wifi.ble_advertising_data
     )
 
-    ble_client.interfaces.bluetooth.connect(wifi_dut.interfaces.wifi.ble_address)
-
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     time.sleep(5)
-
-    ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
 @pytest.mark.dut("rs9116_sapi")
@@ -188,11 +189,6 @@ def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client
     assert status == 1
     time.sleep(5)
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-    # Now, we can restart advertising...
-    wifi_dut.interfaces.wifi.ble_start_advertising()
-    # ...and stop again
-    wifi_dut.interfaces.wifi.ble_stop_advertising()
-
 
 
 @pytest.mark.dut("rs9116_sapi")
