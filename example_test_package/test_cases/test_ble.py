@@ -126,7 +126,10 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_server(wifi_dut, wifi_access_point, ble_client):
+def test_ble_server(wifi_dut, ble_client):
+    service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+    char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    initial_data = "LzYL"
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -134,11 +137,16 @@ def test_ble_server(wifi_dut, wifi_access_point, ble_client):
         )
 
     # Join Wi-Fi Access Point
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    # Set up DUT for BLE advertising
+    # Set up BLE Server on DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
+    wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
+    wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=initial_data)
+
+    #Start advertising
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
@@ -155,25 +163,9 @@ def test_ble_server(wifi_dut, wifi_access_point, ble_client):
         == wifi_dut.interfaces.wifi.ble_advertising_data
     )
 
-    # Not legal to start advertising if we're already advertising...
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.ble_start_advertising()
-    assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
-
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
-
-    # Connecting will automatically stop advertising
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.ble_stop_advertising()
-    assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
-
+    time.sleep(1)
+    char, char_props = ble_client.interfaces.bluetooth.resolve_characteristic(service_uid=service_uid, char_uid=char_uid)
+    assert char is not None
+    assert len(char_props) > 0
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-
-    # Now, we can restart advertising...
-    wifi_dut.interfaces.wifi.ble_start_advertising()
-    # ...and stop again
-    wifi_dut.interfaces.wifi.ble_stop_advertising()
-
-    # we can't connect if the device is not advertising
-    with pytest.raises(BLEConnectError):
-        ble_client.interfaces.bluetooth.connect(bt_dut_address)
