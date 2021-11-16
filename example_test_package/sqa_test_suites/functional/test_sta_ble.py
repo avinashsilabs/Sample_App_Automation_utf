@@ -4,6 +4,7 @@ import time
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
 from interfaces.bluetooth import BLEDeviceState
 
+
 # this thread used for wifi join
 class WifiThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point):
@@ -47,7 +48,30 @@ class BleThread_connection_dut_as_slave(ThreadBase):
         self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
         self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
+# this thread used for sta+ble connection as a master
+class BleThread_connection_dut_as_master(ThreadBase):
+    def __init__(self, wifi_dut, ble_client):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
 
+    def run(self):
+
+        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address is not None
+
+        # Start ble client
+        bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+
+        # Start scanning and connect to ble client
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
+
+        timeout = 120
+        self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+
+        # Disconnect
+        self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 #Test case1
 @pytest.mark.config(
@@ -63,5 +87,14 @@ class BleThread_connection_dut_as_slave(ThreadBase):
 #calling testcase1 using thread
 def test_threading_sta_ble_dut_as_slave(wifi_dut, ble_client, wifi_access_point):
     with WifiThread(wifi_dut, wifi_access_point), BleThread_connection_dut_as_slave(wifi_dut, ble_client):
+        time.sleep(15)
+
+
+#testcase2 #testcase3
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.http_server("raspi_lighttpd")
+#calling testcase2/testcase3 using thread
+def test_threading_sta_ble_dut_as_master(wifi_dut, ble_client, wifi_access_point):
+    with WifiThread(wifi_dut, wifi_access_point), BleThread_connection_dut_as_master(wifi_dut, ble_client):
         time.sleep(15)
 
