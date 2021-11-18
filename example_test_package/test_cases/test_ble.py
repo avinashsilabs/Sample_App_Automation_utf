@@ -123,16 +123,17 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_server(wifi_dut, ble_client):
-    service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-    char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-    data1 = "LzY0"
-    data2 = "K09x"
-
+def test_ble_server_slave(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
+
+    service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+    char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    data1 = "LzY0"
+    data2 = "K09x"
+    data3 = "Mx3Y"
 
     # Join Wi-Fi Access Point
     # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -175,28 +176,51 @@ def test_ble_server(wifi_dut, ble_client):
     assert char is not None
     assert len(char_props) > 0
 
-    # subscribe to notifications
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
-
-    # read/notify value
+    # read value - Notifications not enabled
     result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
     assert result == data1
 
-    # write/notify/read new value
+    # subscribe to notifications
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+
+    # notify only
+    wifi_dut.interfaces.wifi.ble_notify_value()
+
+    # write/read new value - Notifications enabled
     ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data2)
     time.sleep(0.1)
     result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
     assert result == data2
 
-    # notify only
-    wifi_dut.interfaces.wifi.ble_notify_value()
 
-    # assert recieved notifications
+    # write value - Notifications enabled
+    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data3)
+
+    # auto notify
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    wifi_dut.interfaces.wifi.ble_start_notify_value(interval_ms=500, count=2)
+    time.sleep(1)
+
+    # subscribe to notifications
+    ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
+    ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+
+    # notify only - disabled notifications - should raise exception
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.ble_notify_value()
+    assert exc_info.value.error_code == 0x21
+
+    # assert received notifications
     notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-    assert len(notifications) == 3
+    logger().info(notifications)
+    assert len(notifications) == 6
     assert notifications[0] == data1
     assert notifications[1] == data2
     assert notifications[2] == data2
+    assert notifications[3] == data3
+    assert notifications[4] == data3
+    assert notifications[5] == data3
 
     # disconnecting from dut
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
