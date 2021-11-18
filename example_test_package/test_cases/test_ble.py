@@ -20,7 +20,6 @@ def logger():
     },
 )
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
-
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -44,8 +43,8 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert wifi_dut.interfaces.wifi.ble_address in found_devices
     assert (
-        found_devices[wifi_dut.interfaces.wifi.ble_address]
-        == wifi_dut.interfaces.wifi.ble_advertising_data
+            found_devices[wifi_dut.interfaces.wifi.ble_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
     )
 
     # Not legal to start advertising if we're already advertising...
@@ -80,7 +79,6 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     },
 )
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
-
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -102,7 +100,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address= bt_client_address, timeout=timeout)
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -118,7 +116,6 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
     assert not state_int == BLEDeviceState.Connected
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -129,7 +126,8 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
 def test_ble_server(wifi_dut, ble_client):
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-    initial_data = "LzYL"
+    data1 = "LzY0"
+    data2 = "K09x"
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -144,9 +142,9 @@ def test_ble_server(wifi_dut, ble_client):
     assert bt_dut_address is not None
     wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
     wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=initial_data)
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
 
-    #Start advertising
+    # Start advertising
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
@@ -159,13 +157,46 @@ def test_ble_server(wifi_dut, ble_client):
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert wifi_dut.interfaces.wifi.ble_address in found_devices
     assert (
-        found_devices[wifi_dut.interfaces.wifi.ble_address]
-        == wifi_dut.interfaces.wifi.ble_advertising_data
+            found_devices[wifi_dut.interfaces.wifi.ble_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
     )
 
+    # connecting to dut
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
     time.sleep(1)
-    char, char_props = ble_client.interfaces.bluetooth.resolve_characteristic(service_uid=service_uid, char_uid=char_uid)
+
+    # resolving charecteristic
+    bus = ble_client.interfaces.bluetooth.bus
+    servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+    char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
+                                                                                           services=servs,
+                                                                                           service_uid=service_uid,
+                                                                                           char_uid=char_uid)
     assert char is not None
     assert len(char_props) > 0
+
+    # subscribe to notifications
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+
+    # read/notify value
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+    assert result == data1
+
+    # write/notify/read new value
+    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data2)
+    time.sleep(0.1)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+    assert result == data2
+
+    # notify only
+    wifi_dut.interfaces.wifi.ble_notify_value()
+
+    # assert recieved notifications
+    notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+    assert len(notifications) == 3
+    assert notifications[0] == data1
+    assert notifications[1] == data2
+    assert notifications[2] == data2
+
+    # disconnecting from dut
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
