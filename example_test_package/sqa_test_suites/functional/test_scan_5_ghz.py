@@ -23,6 +23,7 @@ Tests Steps:
         4. Run Scan API's for the all channels and selective channels
 """
 
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -54,6 +55,7 @@ def test_scan_5Ghz_usregion(wifi_dut, wifi_access_point):
             assert len(scan_results) > 0
     logger().info(f"Scan in {t.duration} seconds")
 
+
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This Test case verifies the scan functionality in 5ghz band for all channels in EU region
 def test_scan_5Ghz_euregion(wifi_dut, wifi_access_point):
@@ -69,6 +71,7 @@ def test_scan_5Ghz_euregion(wifi_dut, wifi_access_point):
             logger().info(scan_results)
             assert len(scan_results) > 0
     logger().info(f"Scan in {t.duration} seconds")
+
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This Test case verifies the scan functionality in 5ghz band for all channels in Japan region
@@ -86,6 +89,7 @@ def test_scan_5Ghz_jp_region(wifi_dut, wifi_access_point):
             assert len(scan_results) > 0
     logger().info(f"Scan in {t.duration} seconds")
 
+
 #test scan_connect in eu for the channels 56 -- case1
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 56})
@@ -100,6 +104,7 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_euregion(wifi_dut, wifi_access_po
     logger().info(scan_results)
     assert scan_results is not None
 
+
 #test scan_connect in eu for the channels 104,104 channel is not available setting channel 64 -- case2
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 64})
@@ -112,6 +117,7 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion(wifi_dut, wifi_access_po
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         logger().info(scan_results)
         assert scan_results is not None
+
 
 #test scan_connect in eu for the channels 104, 104 channel is not available setting channel 36 -- case3
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -127,6 +133,7 @@ def test_scan_104_channel_5Ghz_DFS_euregion(wifi_dut, wifi_access_point):
     logger().info(scan_results)
     assert scan_results is not None
     logger().info(f"Associated in {t.duration} seconds")
+
 
 #test scan_connect in eu for the channels 36,48,52,100,104,149] -- case4
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -161,6 +168,7 @@ def test_scan_connect_5Ghz_DFS_euregion(wifi_dut, wifi_access_point):
             assert result
         logger().info(f"Associated in {t.duration} seconds")
 
+
 #test scan_connect in jp for the channels 56 -- case1
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 56})
@@ -175,6 +183,7 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_jpregion(wifi_dut, wifi_access_po
     logger().info(scan_results)
     assert scan_results is not None
 
+
 #test scan_connect in jp for the channels 104, 104 channel is not available setting channel 64 -- case2
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 64})
@@ -188,6 +197,7 @@ def test_scan_all_channels_connect_104_5Ghz_DFS_jpregion(wifi_dut, wifi_access_p
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     logger().info(scan_results)
 
+
 #test scan_connect in jp for the channels 104, using channel 64 as channel 104 is not available -- case3
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 64})
@@ -198,6 +208,7 @@ def test_scan_104_channel_5Ghz_DFS_jpregion(wifi_dut, wifi_access_point):
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         logger().info(scan_results)
     logger().info(f"Associated in {t.duration} seconds")
+
 
 #test scan_connect in jp for the channels 36,48,52,100,104,149] -- case4
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -221,6 +232,7 @@ def test_scan_connect_channels_36_48_52_100_149_jpregion(wifi_dut, wifi_access_p
         assert result
     logger().info(f"Associated in {t.duration} seconds")
 
+
 #test ID: 2.1.5.2, This test case verifies the scan functionality in all channels of 5ghz
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_all_channels_in_5Ghz(wifi_dut, wifi_access_point):
@@ -232,6 +244,7 @@ def test_scan_all_channels_in_5Ghz(wifi_dut, wifi_access_point):
         assert scan_results is not None
     logger().info(f"Associated in {t.duration} seconds")
 
+
 #test ID: 2.1.5.4, Verifies the scan response
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_all_channels_scan_by_giving_channel_as_zero(wifi_dut):
@@ -242,6 +255,7 @@ def test_all_channels_scan_by_giving_channel_as_zero(wifi_dut):
         assert scan_results is not None
         logger().info(scan_results)
     logger().info(f"Scan in {t.duration} seconds")
+
 
 # This Test case verifies the all channels scan in 5ghz by givig all channle in bitmap
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -271,6 +285,7 @@ def test_scan_all_channels_by_giving_channels_in_bitmap(wifi_dut, wifi_access_po
                     channel_selected = channel_selected + 1
     logger().info(f"Associated in {t.duration} seconds")
 
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -294,6 +309,7 @@ def test_scan_all_channels_in_dual_band(wifi_dut):
         assert scan_results is not None
         logger().info(scan_results)
     logger().info(f"Scan in {t.duration} seconds")
+
 
 pytestmark = [
     pytest.mark.config(
@@ -344,6 +360,7 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap(wifi_dut,wifi_acces
         assert len(scan_results) >= 1
     logger().info(f"Associated in {t.duration} seconds")
 
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -378,6 +395,7 @@ def test_scan_for_channels_36_40_48_52_100_149_157_161_165(wifi_dut, wifi_access
         logger().info(scan_results)
         assert len(scan_results) >= 1
     logger().info(f"Associated in {t.duration} seconds")
+
 
 pytestmark = [
     pytest.mark.config(
@@ -417,6 +435,7 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
                 logger().info(scan_results)
     logger().info(f"Associated in {t.duration} seconds")
 
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -451,6 +470,7 @@ def test_scan_5ghz_band_for_channels_36_40_52_56_149_161_165(wifi_dut, wifi_acce
             logger().info(scan_results)
             assert len(scan_results) >= 1
     logger().info(f"Associated in {t.duration} seconds")
+
 
 pytestmark = [
     pytest.mark.config(
@@ -495,6 +515,7 @@ def test_scan_selective_channels_in_dual_bands(wifi_dut, wifi_access_point):
                 logger().info(scan_results)
                 assert scan_results is not None
     logger().info(f"Associated in {t.duration} seconds")
+
 
 pytestmark = [
     pytest.mark.config(
