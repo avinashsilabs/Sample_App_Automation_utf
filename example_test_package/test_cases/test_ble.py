@@ -123,7 +123,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_server_slave(wifi_dut, ble_client):
+def test_ble_server_slave(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -136,7 +136,7 @@ def test_ble_server_slave(wifi_dut, ble_client):
     data3 = "Mx3Y"
 
     # Join Wi-Fi Access Point
-    # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Set up BLE Server on DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
