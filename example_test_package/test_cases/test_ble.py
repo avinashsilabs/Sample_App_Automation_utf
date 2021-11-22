@@ -164,7 +164,7 @@ def test_ble_server_slave(wifi_dut, wifi_access_point, ble_client):
 
     # connecting to dut
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
-    time.sleep(1)
+    time.sleep(2)
 
     # resolving charecteristic
     bus = ble_client.interfaces.bluetooth.bus
