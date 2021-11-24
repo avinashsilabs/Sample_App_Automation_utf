@@ -267,7 +267,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
-    time.sleep(0.5)
+    time.sleep(1)
 
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
