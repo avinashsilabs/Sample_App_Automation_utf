@@ -49,7 +49,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 wifi_dut.interfaces.wifi.bt_power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
                 )
 
             # Send data from bt_client to dut
@@ -108,7 +108,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 wifi_dut.interfaces.wifi.bt_power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
                 )
 
             # Send data from bt_client to dut
