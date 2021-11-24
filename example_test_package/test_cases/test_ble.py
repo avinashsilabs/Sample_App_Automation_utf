@@ -188,6 +188,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
@@ -210,6 +211,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
@@ -306,6 +308,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
@@ -327,6 +330,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
