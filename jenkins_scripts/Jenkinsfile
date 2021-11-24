@@ -29,7 +29,7 @@ pipeline {
                                     cd ./utf_pytest
                                     #TODO: following echo and yaml installtion to be removed after the below UTF-616 is fixed and UTF-593 is reverted
                                     echo "Skipping installing until we have permanent fix for https://jira.silabs.com/browse/UTF-616 and https://jira.silabs.com/browse/UTF-593"
-                                    pip install yaml
+                                    pip install pyyaml>=5.4
                                     #pip install wheel
                                     #pip install -r requirements.txt
                                     cd ..
