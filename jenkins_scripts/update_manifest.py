@@ -12,12 +12,14 @@ with open("./example_test_package/manifest.yaml", "r+") as f:
     y=yaml.safe_load(f)
 
     if flash_rs9116 == 'true':
-        y['firmware']['rs911x'] = sys.argv[1]
+        if rs9116_package_name != "Internal":
+            y['firmware']['rs911x'] = rs9116_package_name
     else:
         del y['firmware']['rs911x']
 
     if flash_efr32 == 'true':
-        y['firmware']['efx32'] = sys.argv[2]
+        if efr32_package_name != "Internal":
+            y['firmware']['efx32'] = efr32_package_name
     else:
         del y['firmware']['efx32']
 
