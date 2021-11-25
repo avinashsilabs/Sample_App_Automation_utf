@@ -98,7 +98,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=10)
+                addr = bt_client_socket.accept(timeout=12)
                 assert addr == bt_dut_address
 
             # Initiating power save
