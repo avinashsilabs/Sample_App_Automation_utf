@@ -84,7 +84,7 @@ def test_wifi_connect_testcase_id6(wifi_dut, wifi_access_point):
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode1)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
         status = ping(device_ip, 10)
         assert status == 1
@@ -132,7 +132,7 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
 
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode1)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     time.sleep(5)
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
@@ -182,7 +182,7 @@ def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode1)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     status = ping(device_ip, 10)
