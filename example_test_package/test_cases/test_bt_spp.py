@@ -90,6 +90,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
         assert bt_client_address is not None
+        time.sleep(0.5)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
