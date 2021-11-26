@@ -129,7 +129,7 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
             found_devices[wifi_dut.interfaces.wifi.ble_address]
             == wifi_dut.interfaces.wifi.ble_advertising_data
     )
-
+    time.sleep(1)
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -178,7 +178,7 @@ def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client
             found_devices[wifi_dut.interfaces.wifi.ble_address]
             == wifi_dut.interfaces.wifi.ble_advertising_data
     )
-
+    time.sleep(1)
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
