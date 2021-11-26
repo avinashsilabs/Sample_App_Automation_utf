@@ -27,8 +27,11 @@ pipeline {
                                     fi
                                     . venv/bin/activate
                                     cd ./utf_pytest
-                                    pip install wheel
-                                    pip install -r requirements.txt
+                                    #TODO: following echo and yaml installation to be removed after https://jira.silabs.com/browse/UTF-617 is addressed
+                                    echo "Skipping installing until we have permanent fix for https://jira.silabs.com/browse/UTF-617"
+                                    pip install pyyaml>=5.4
+                                    #pip install wheel
+                                    #pip install -r requirements.txt
                                     cd ..
                                 '''
                             } else {
@@ -61,23 +64,25 @@ pipeline {
                     steps{
                         script{
                             if(FLASH_RS9116.toBoolean()){
-                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                    sh '''
-                                        rm -rf rs9116_binary
-                                        export GIT_SSH=ssh
-                                        export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                        git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
-                                    '''
-                                }
-                                dir('rs9116_binary'){
-                                    sh  '''
-                                        unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                        rm -f ../example_test_package/rs9116*.rps
-                                        cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
-                                    '''
+                                if(RS9116_FIRMWARE != "Internal"){
+                                    withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                               keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                               passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                               usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                        sh '''
+                                            rm -rf rs9116_binary
+                                            export GIT_SSH=ssh
+                                            export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                        '''
+                                    }
+                                    dir('rs9116_binary'){
+                                        sh  '''
+                                            unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
+                                            rm -f ../example_test_package/rs9116*.rps
+                                            cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                        '''
+                                    }
                                 }
                             } else {
                                 echo "Skipping release package checkout for RS9116 firmware."
@@ -89,22 +94,24 @@ pipeline {
                     steps{
                         script{
                             if(FLASH_EFR32.toBoolean()){
-                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                    sh '''
-                                        rm -rf sqa_binary
-                                        export GIT_SSH=ssh
-                                        export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                        git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${SQA_TEST_AGENT} --single-branch sqa_binary
-                                    '''
-                                }
-                                dir('sqa_binary'){
-                                    sh '''
-                                       rm -f ../example_test_package/sqa_test_agent*.hex
-                                       cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
-                                    '''
+                                if(SQA_TEST_AGENT != "Internal"){
+                                    withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                               keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                               passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                               usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                        sh '''
+                                            rm -rf sqa_binary
+                                            export GIT_SSH=ssh
+                                            export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${SQA_TEST_AGENT} --single-branch sqa_binary
+                                        '''
+                                    }
+                                    dir('sqa_binary'){
+                                        sh '''
+                                           rm -f ../example_test_package/sqa_test_agent*.hex
+                                           cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
+                                        '''
+                                    }
                                 }
                             } else {
                                 echo "Skipping release package checkout for SQA test agent."
@@ -143,7 +150,7 @@ pipeline {
                                     . ../venv/Scripts/activate
                                     fi
                                     ./install.sh || true
-                                    #export UTF_DOCKER_FLAGS=-e DUMMY=DUMMY
+                                    export SKIP_PROCESSING_ARTIFACTS=1
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                 '''
                             }
