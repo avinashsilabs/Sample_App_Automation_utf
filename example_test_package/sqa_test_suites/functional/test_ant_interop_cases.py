@@ -69,7 +69,7 @@ class BtThread(ThreadBase):
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE | RS9116CoexMode.ANT,
     }
 )
 # Test case ID: 1.1.1.1 -- This case verifies the interop of ant,bt,ble,wifi connect to special charactered SSID
