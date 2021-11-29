@@ -18,13 +18,14 @@ def logger():
 
 
 """This function runs below test steps for DUT-RS9116
-        1. Configuration of DUT in 2G : BGN
+        1. Configuration of DUT in 2G/5G : BGN
         2. Association of Third party AP's
         3. Get the valid IP address
-        4. Create a new TCP/IP socket / AWS server
+        4. Enable Background scan
+        4. Create a new TCP/IP socket
         5. Bind the socket with DUT ip address
         6. Connect the client with server socket as specified port number.
-        7. Send message to server for long duration(12~hours) at certain interval(~55Sec)
+        7. Validate Probe response & HT information, BG scan on primary, non US & DFS channel etc. via sniffer.
 
     setup requirement:
         1. DUT(RS9116)
@@ -183,7 +184,8 @@ def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
         )
         mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == 11 and wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        packet_filter1 = f'wlan_radio.channel == 11 and wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+                         f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
         time.sleep(5)
@@ -731,6 +733,7 @@ def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
     for i in range(1, 2):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+
         time.sleep(2)
         wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

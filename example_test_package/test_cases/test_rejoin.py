@@ -18,14 +18,16 @@ def logger():
     return get_logger(__name__)
 
 
-"""This function runs below test steps for DUT-RS9116
+"""This function runs below test steps for DUT-RS9116 for Rejoin test case verification
         1. Configuration of DUT in 2G : BGN
         2. Association of Third party AP's
         3. Get the valid IP address
-        4. Create a new TCP/IP socket / AWS server
+        4. Create a new TCP/IP socket 
         5. Bind the socket with DUT ip address
-        6. Connect the client with server socket as specified port number.
-        7. Send message to server for long duration(12~hours) at certain interval(~55Sec)
+        6. Connect the client with server socket as specified port number and send data.
+        7. Disable the AP radio and check unicast Probe request packet in sniffer after some time it should start 
+           broadcast probe request packet
+        8. verify rejoin & probe request packet with different security, different channels, and for different region(US/UK/Japan) 
 
     setup requirement:
         1. DUT(RS9116)

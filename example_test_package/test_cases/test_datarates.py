@@ -21,10 +21,13 @@ def logger():
         1. Configuration of DUT in 2G : BGN
         2. Association of Third party AP's
         3. Get the valid IP address
-        4. Create a new TCP/IP socket / AWS server
+        4. Create a new TCP/IP socket
         5. Bind the socket with DUT ip address
         6. Connect the client with server socket as specified port number.
-        7. Send message to server for long duration(12~hours) at certain interval(~55Sec)
+        7. Validate all management packets in 1 Mbps data rates.
+        8. Configure data rates at on 11/12/54 Mbps and check the data rate in sniffer.
+        9. Verification of EAPOL packets for 1 Mbps data rates
+        10. Verification of Basic data rates for Association req & Probe response
 
     setup requirement:
         1. DUT(RS9116)
@@ -162,7 +165,7 @@ def test_mgmt_data_rates_rts_cts(wifi_sniffer, wifi_access_point, wifi_dut):
     send_bytes = 1000
     validation = True
     packet_filter2 = False
-    wifi_sniffer.interfaces.capture.configure_interface(channel=6)
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -178,8 +181,10 @@ def test_mgmt_data_rates_rts_cts(wifi_sniffer, wifi_access_point, wifi_dut):
     )
     mac_address = wifi_dut.interfaces.wifi.get_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
+    # Block Ack req & RTS
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate == 1'
+    # Block Ack req & CTS
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {ap_bssid} ' \
                      f'or wlan.fc.type_subtype == 0x0019 or wlan.fc.type_subtype == 0x001c and wlan_radio.data_rate == 1'
 
@@ -677,14 +682,3 @@ def test_basic_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
             f"Assoc req = {result1['packet_count']}, Probe res = {result2['packet_count']}, Probe req = {result3['packet_count']}")
         logger().info("Sniffer validation Passed")
         assert True
-
-
-
-
-
-
-
-
-
-
-
