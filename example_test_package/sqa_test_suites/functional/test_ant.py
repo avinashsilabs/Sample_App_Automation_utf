@@ -28,5 +28,6 @@ pytestmark = [
 def test_ant_init(wifi_dut):
     with TimeMeasurer() as t:
         # This API initiates the Ant in dut
-        wifi_dut.interfaces.wifi.ant_init(ant_cmd=12, ant_cmd_1=3, ant_cmd_2=1, ant_cmd_3=75, ant_cmd_4=0, ant_cmd_5=0, ant_cmd_resp=0)
+        status = wifi_dut.interfaces.wifi.ant_init(ant_cmd=12, ant_cmd_1=3, ant_cmd_2=1, ant_cmd_3=75, ant_cmd_4=0, ant_cmd_5=0, ant_cmd_resp=0)
+        assert "success" in status.decode("utf-8")
     logger().info(f"Associated in {t.duration} seconds")
