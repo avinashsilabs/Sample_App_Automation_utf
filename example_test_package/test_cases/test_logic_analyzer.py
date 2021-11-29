@@ -18,5 +18,5 @@ def test_capture_to_file(logic_analyzer):
     logic_analyzer.interfaces.logic_analyzer.set_sample_rate(sample_rate_tuple[0])
     # set sample time
     logic_analyzer.interfaces.logic_analyzer.set_capture_seconds(1)
-    # capture to file
+    # capture to file. file path /home/test should exit in NUC IP: 10.207.8.39. change this path acording to selected NUC/host
     logic_analyzer.interfaces.logic_analyzer.capture_to_file('/home/test/test5.logicdata')
