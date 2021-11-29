@@ -1,3 +1,4 @@
+from devices.rs911x import RS9116OperatingMode
 from utils.iperf.Iperf_constants import IperfConstants
 from utils.rs911x_version import parse_version
 from utils.time_measurer import TimeMeasurer
@@ -57,13 +58,22 @@ def test_wifi_leave(wifi_networked_dut):
     logger().info(f"Leave completed in {t.duration} seconds")
 
 
-# AP mode tests will fail in SAPI, possibly an actual bug?
-@pytest.mark.skip
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint
+    },
+)
 def test_wifi_start_ap(wifi_dut):
     wifi_dut.interfaces.wifi.start_ap()
 
 
-# @pytest.mark.skip
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint
+    },
+)
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
-    assert wifi_client.interfaces.wifi.ping() < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip) < 0.1
