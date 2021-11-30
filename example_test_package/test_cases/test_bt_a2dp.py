@@ -58,7 +58,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
         wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
         )
 
         #disconnect
