@@ -49,7 +49,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 wifi_dut.interfaces.wifi.bt_power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
                 )
 
             # Send data from bt_client to dut
@@ -90,6 +90,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
         assert bt_client_address is not None
+        time.sleep(0.5)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
@@ -98,7 +99,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=10)
+                addr = bt_client_socket.accept(timeout=12)
                 assert addr == bt_dut_address
 
             # Initiating power save
@@ -108,7 +109,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 wifi_dut.interfaces.wifi.bt_power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
                 )
 
             # Send data from bt_client to dut
