@@ -95,8 +95,10 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
+    time.sleep(1)
+
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
@@ -186,6 +188,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
@@ -208,6 +211,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
@@ -265,8 +269,10 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
+    time.sleep(1)
+
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
@@ -302,6 +308,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
@@ -323,6 +330,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+    time.sleep(0.5)
 
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
