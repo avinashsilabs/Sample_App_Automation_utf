@@ -1,5 +1,6 @@
 from utils.logger import get_logger
-
+import paramiko
+import os
 
 def logger():
     return get_logger(__name__)
@@ -17,6 +18,8 @@ def test_capture_to_file(logic_analyzer):
     # set sample rates
     logic_analyzer.interfaces.logic_analyzer.set_sample_rate(sample_rate_tuple[0])
     # set sample time
-    logic_analyzer.interfaces.logic_analyzer.set_capture_seconds(1)
-    # capture to file. file path /home/test should exit in NUC IP: 10.207.8.39. change this path acording to selected NUC/host
-    logic_analyzer.interfaces.logic_analyzer.capture_to_file('/home/test/test5.logicdata')
+    logic_analyzer.interfaces.logic_analyzer.set_capture_seconds(0.0001)
+    # capture to file. file directory /home/test should exit in NUC. change this path acording to NUC
+    captured_file_name = logic_analyzer.interfaces.logic_analyzer.capture_to_file('/home/test/logic_analyzer_test.logicdata')
+    file_size = os.path.getsize(captured_file_name)
+    assert file_size > 0
