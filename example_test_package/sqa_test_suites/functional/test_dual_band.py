@@ -32,18 +32,19 @@ pytestmark = [
 
 def test_dual_band_scan_with_different_regions(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
-    #wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
-    #wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    #channel = 149
-    #wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    channel = 149
+    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
     # set_region_code is used to set region code,those  values are US=1,EU=2,JP=3,WORLD=4
     set_region_code = 1
     with TimeMeasurer() as t:
             # This loop enables DUT in different regions.
             while set_region_code < 5:
                 logger().info(set_region_code)
+                #enables DUT in configured Region
                 wifi_dut.interfaces.wifi.set_region(region=1, region_code=set_region_code, module_type=1)
                 # enables the scan in DUT with the given channel bitmap value
                 scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
