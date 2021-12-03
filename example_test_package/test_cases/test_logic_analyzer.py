@@ -19,7 +19,7 @@ def test_capture_to_file(logic_analyzer):
     logic_analyzer.interfaces.logic_analyzer.set_sample_rate(sample_rate_tuple[0])
     # set sample time
     logic_analyzer.interfaces.logic_analyzer.set_capture_seconds(0.0001)
-    # capture to file. file directory /home/test should exit in NUC. change this path acording to NUC
-    captured_file_name = logic_analyzer.interfaces.logic_analyzer.capture_to_file('/home/test/logic_analyzer_test.logicdata')
+    # capture to file. specify file name. this will geenrate file app/reports
+    captured_file_name = logic_analyzer.interfaces.logic_analyzer.capture_to_file('logic_analyzer_test')
     file_size = os.path.getsize(captured_file_name)
     assert file_size > 0
