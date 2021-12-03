@@ -38,7 +38,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
 
         #A2DP Connection
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-        time.sleep(5)
+        time.sleep(10)
 
         # Ping dut
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
