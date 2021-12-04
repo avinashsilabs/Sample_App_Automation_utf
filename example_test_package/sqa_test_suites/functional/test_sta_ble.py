@@ -23,6 +23,8 @@ class WifiThread(ThreadBase):
         self.wifi_access_point = wifi_access_point
 
     def run(self):
+        # Enables the wifi power save in dut
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
         # Join Wi-Fi Access Point
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
         time.sleep(10)
@@ -38,7 +40,7 @@ class BleThread_connection(ThreadBase):
     def run(self):
 
         if ( self.mode == "ble_master"):
-
+            # Start DUT
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address is not None
 
@@ -54,8 +56,10 @@ class BleThread_connection(ThreadBase):
             timeout = 120
             logger().info(f"Initiating connection this can take upto {timeout} seconds....")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+
             # Disconnect
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
 
         if (self.mode == "ble_slave"):
             # Set up DUT for BLE advertising
@@ -96,6 +100,7 @@ class BleThread_connection(ThreadBase):
             # ...and stop again
             self.wifi_dut.interfaces.wifi.ble_stop_advertising()
 
+
 #thread for scan functionality
 class ScanThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list, select_channel_all):
@@ -110,7 +115,6 @@ class ScanThread(ThreadBase):
     def run(self):
         channel_bitmap_2_4 = 0
         channel_bitmap_5 = 0
-        scan_feature_extend = 0
 
         if len(self.channel_2_4_list):
             channel_list = self.channel_2_4_list
@@ -122,12 +126,9 @@ class ScanThread(ThreadBase):
             channel_bitmap_5 = 0
             scan_feature_extend = 0
             for channel in channel_list:
-
-                # initiates the access point with channel given in list
+               # initiates the access point with channel given in list
                 self.wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-
                 with TimeMeasurer() as t:
-
                     # enables the scan in DUT with the given channel bitmap value
                     scan_results = self.wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                                         scan_bitmap_2_4=channel_bitmap_2_4,
@@ -142,26 +143,21 @@ class ScanThread(ThreadBase):
                                if count.rf_channel == device_channel:
                                    channel_selected = channel_selected + 1
 
-                assert ( t.duration < 1 )
+                assert (t.duration < 3)
                 logger().info(f"Scan in {t.duration} seconds")
 
         if len(self.channel_5_list):
             channel_list = self.channel_5_list
             scan_expected_time = 0
-
             for count in channel_list:
                 channel_bitmap_5 += 1 << (count - 1)
                 scan_expected_time += 100
-
             channel_bitmap_2_4 = 0
             scan_feature_extend = 0
             for channel in channel_list:
-
                 # initiates the access point with channel given in list
                 self.wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-
                 with TimeMeasurer() as t:
-
                     # enables the scan in DUT with the given channel bitmap value
                     scan_results = self.wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                                             scan_bitmap_2_4=channel_bitmap_2_4,
@@ -176,16 +172,16 @@ class ScanThread(ThreadBase):
                               if count.rf_channel == device_channel:
                                     channel_selected = channel_selected + 1
 
-                assert (t.duration < 1)
+                assert (t.duration < 3)
                 logger().info(f"Scan in {t.duration} seconds")
 
         if self.select_channel_all:
-
                 with TimeMeasurer() as t:
                     # enables the scan in dut on channel 0
                     scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
                 assert (t.duration < 1.5)
                 logger().info(scan_results)
+                time.sleep(5)
 
 
 #rejoin thread for the ap when ap lost and deauth frame scenario
@@ -206,6 +202,7 @@ class RejoinThread(ThreadBase):
 
        if self.deauth_frame:
          self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+         self.wifi_dut.interfaces.wifi.leave()
 
 #tcp thoughput thread for rx adn tx packets
 class TCPPacketThread(ThreadBase):
@@ -224,9 +221,11 @@ class TCPPacketThread(ThreadBase):
             self.wifi_networked_dut,
             self.wifi_client,
         )
+        time.sleep(5)
         iperf.run()
-        time.sleep(10)
         logger().info("this is IPerf")
+
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -235,7 +234,7 @@ class TCPPacketThread(ThreadBase):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     }
 )
-
+#
 #testcase1 #testcase2 for sta+ble master functionality
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_sta_ble_dut_as_master(wifi_dut, ble_client, wifi_access_point):
@@ -243,7 +242,6 @@ def test_threading_sta_ble_dut_as_master(wifi_dut, ble_client, wifi_access_point
     with WifiThread(wifi_dut, wifi_access_point), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(15)
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -251,7 +249,6 @@ def test_threading_sta_ble_dut_as_master(wifi_dut, ble_client, wifi_access_point
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     }
 )
-
 #testcase3 for Sta+ble slave functionality
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_sta_ble_dut_as_slave(wifi_dut, ble_client, wifi_access_point):
@@ -271,9 +268,9 @@ def test_threading_sta_ble_dut_as_slave(wifi_dut, ble_client, wifi_access_point)
             "band": 0
              }
         )
-#testcase9 for for selective channels in 2.4 ghz + ble
+
+#testcase4 for for selective channels in 2.4 ghz + ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_threading_selective_channels_2_4(wifi_dut , ble_client, wifi_access_point):
     select_channel_all = False
     channel_2_4_list = [1, 6, 11]
@@ -282,9 +279,20 @@ def test_threading_selective_channels_2_4(wifi_dut , ble_client, wifi_access_poi
     with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list,select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(15)
 
-#testcase10 for all channels in 2.4 ghz +ble
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 0
+             }
+        )
+
+#testcase5 for all channels in 2.4 ghz +ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=[ 'init'])
 def test_threading_all_channels_2_4(wifi_dut, wifi_access_point, ble_client):
     select_channel_all = True
     channel_2_4_list = []
@@ -305,9 +313,9 @@ def test_threading_all_channels_2_4(wifi_dut, wifi_access_point, ble_client):
             "band": 1
             }
 )
-#testcase11 for selective channels in 5 ghz +ble
+
+#testcase6 for selective channels in 5 ghz +ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": "11g"})
 def test_threading_selective_channels_5(wifi_dut, wifi_access_point, ble_client):
     select_channel_all = False
     channel_2_4_list = []
@@ -316,10 +324,20 @@ def test_threading_selective_channels_5(wifi_dut, wifi_access_point, ble_client)
     with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list, select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(15)
 
-#testcase12 for all channels in 5 ghz +ble
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 1
+            }
+)
+#testcase7 for all channels in 5 ghz +ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config('wifi_access_point', wifi={"standard": "11g"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_all_channels_5(wifi_dut, wifi_access_point, ble_client):
     select_channel_all = True
     channel_2_4_list = []
@@ -327,7 +345,6 @@ def test_threading_all_channels_5(wifi_dut, wifi_access_point, ble_client):
     mode = "ble_slave"
     with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list, select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(15)
-
 
 @pytest.mark.config(
         "wifi_dut",
@@ -340,10 +357,9 @@ def test_threading_all_channels_5(wifi_dut, wifi_access_point, ble_client):
             "band": 0
             }
 )
-
-#testcase 13 for rejoin functionality when ap lost +ble #testcase 14 for ap user disconnection +ble  #testcase15 ap user disconnection +ble
+#testcase8 for rejoin functionality when ap lost +ble #testcase 9 for ap user disconnection +ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config(wifi = {'standard': "11g"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_sta_ble_rejoin(wifi_dut, wifi_access_point, ble_client):
     Aplost = True
     deauth_frame = False
@@ -363,38 +379,15 @@ def test_threading_sta_ble_rejoin(wifi_dut, wifi_access_point, ble_client):
             "band": 0
             }
 )
-
-#testcase16 for rejoin functionality when deauth frame
+#testcase10 for rejoin functionality when deauth frame
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={ "passphrase": 'thisisatestjyothi', 'standard': "11g"})
+@pytest.mark.config('wifi_access_point', wifi={ "passphrase": 'thisisatesthyderabad', 'standard': "11g"})
 def test_threading_sta_ble_rejoin_deauth(wifi_dut, wifi_access_point, ble_client):
     Aplost = False
     deauth_frame = True
-    mode = "ble_master"
+    mode = "ble_slave"
     with RejoinThread(wifi_dut, wifi_access_point, Aplost, deauth_frame), BleThread_connection(wifi_dut, ble_client, mode) :
         time.sleep(15)
-
-
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
-            OpenMode | RS9116FeatureBitMap.PSKSecurity,
-
-    }
- )
-#testcase17 for client mode(rx) packet throughput +ble
-@pytest.mark.config(wifi = {'standard': "11g"})
-def test_throughput_wifi_bt_1(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, ble_client):
-    mode = "ble_slave"
-    with TCPPacketThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
-        time.sleep(5)
 
 
 @pytest.mark.parametrize('run_iperf1', [
@@ -408,12 +401,149 @@ def test_throughput_wifi_bt_1(wifi_dut, wifi_networked_dut, wifi_access_point, w
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
+
     }
-)
-#testcase18 for server mode(tx) packet throughput +ble
-@pytest.mark.config(wifi = {'standard': "11g"})
+ )
+#testcase11 for server mode(tx) packet throughput +ble
 def test_throughput_wifi_bt_2(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, ble_client):
     mode = "ble_slave"
     with TCPPacketThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(5)
 
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 0
+            }
+)
+
+#testcase12 for for selective channels in 2.4 ghz + ble in bypass
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_threading_selective_channels_2_4_bypass(wifi_dut , ble_client, wifi_access_point):
+    select_channel_all = False
+    channel_2_4_list = [1, 6, 11]
+    channel_5_list = []
+    mode = "ble_slave"
+    with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list,select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(15)
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 0
+            }
+)
+#testcase13 for all channels in 2.4 ghz +ble in bypass
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_threading_all_channels_2_4_bypass(wifi_dut, wifi_access_point, ble_client):
+    select_channel_all = True
+    channel_2_4_list = []
+    channel_5_list = []
+    mode = "ble_slave"
+    with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list, select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(15)
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 1
+            }
+)
+
+
+#testcase14 for selective channels in 5 ghz +ble in in bypass
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_threading_selective_channels_5_bypass(wifi_dut, wifi_access_point, ble_client):
+    select_channel_all = False
+    channel_2_4_list = []
+    channel_5_list = {1:36, 2:44, 3:48}
+    mode = "ble_slave"
+    with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list, select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(15)
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 1
+            }
+)
+#testcase15 for all channels in 5 ghz +ble in in bypass
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_threading_all_channels_5_bypass(wifi_dut, wifi_access_point, ble_client):
+    select_channel_all = True
+    channel_2_4_list = []
+    channel_5_list = []
+    mode = "ble_slave"
+    with ScanThread(wifi_dut, wifi_access_point, channel_2_4_list, channel_5_list, select_channel_all) , BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(15)
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 0
+            }
+)
+# #testcase 16 for rejoin functionality when ap lost +ble #testcase 17 for ap user disconnection +ble
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_threading_sta_ble_rejoin_bypass(wifi_dut, wifi_access_point, ble_client):
+    Aplost = True
+    deauth_frame = False
+    mode = "ble_slave"
+    with RejoinThread(wifi_dut, wifi_access_point, Aplost, deauth_frame), BleThread_connection(wifi_dut, ble_client, mode) :
+        time.sleep(15)
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "band": 0
+            }
+)
+#testcase18 for rejoin functionality when deauth frame in bypass
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={ "passphrase": 'thisisatestjyothi', 'standard': "11n"})
+def test_threading_sta_ble_rejoin_deauth_bypass(wifi_dut, wifi_access_point, ble_client):
+    Aplost = False
+    deauth_frame = True
+    mode = "ble_slave"
+    with RejoinThread(wifi_dut, wifi_access_point, Aplost, deauth_frame), BleThread_connection(wifi_dut, ble_client, mode) :
+        time.sleep(15)
