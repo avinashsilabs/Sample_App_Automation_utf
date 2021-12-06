@@ -14,13 +14,23 @@ from devices.rs911x import (
     )
 import string
 import random
-from interfaces.wifi import WlanError
-from threading import Thread
-from utils import get_tls_certificate_dir
-from utils.stopwatch import Stopwatch
 
+"""The testcases added in this file run below test steps for DUT-RS9116
+        1. Configuration of DUT in 2G/5G : BGN
+        2. Load ssl certificates in the DUT
+        3. Association of Third party AP's
+        4. Get the valid IP address
+        5. Create a new TCP/IP server socket over ssl 
+        6. Bind the socket with DUT ip address
+        7. Connect the server socket with third party client socket 
+        8. Send and receive the data over the socket. Verify the data integrity and packet loss checks.
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+"""
 
-# Mark all tests in this module with 'framework_integration_test'
 
 @pytest.mark.config(
     "wifi_dut",
@@ -202,7 +212,6 @@ def test_ssl_server_1_2_version_testcase6(
     result = wifi_dut.interfaces.wifi.close_socket(sock)
     assert b"success" in result, "unable to close opened tcp socket"
     assert data_sent == data_receive.decode(), "data length sent and received is not matching"
-
 
 
 @pytest.mark.config(

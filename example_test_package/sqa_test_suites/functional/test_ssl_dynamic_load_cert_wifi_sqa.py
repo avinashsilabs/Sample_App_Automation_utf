@@ -13,6 +13,22 @@ from devices.rs911x import (
 from interfaces.wifi import WlanError
 from utils import get_tls_certificate_dir
 
+"""The testcases added in this file run below test steps for DUT-RS9116
+        1. Configuration of DUT in 2G/5G : BGN
+        2. Load ssl certificates in the DUT
+        3. Association of Third party AP's
+        4. Get the valid IP address
+        5. Create a new TCP/IP socket over ssl 
+        6. Bind the socket with DUT ip address
+        7. Connect the client with server socket as specified port number.
+        8. Send and receive the data over the socket. Verify the data integrity and packet loss checks.
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+"""
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -383,7 +399,7 @@ def test_dynamic_load_three_ssl_sockets_testcase4(
         for socket in socket_no:
             if ssl_server.interfaces.ssl.socket_connection_status(socket):
                 # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
-                wifi_dut.interfaces.wifi.send_data_pkts((socket-1), buffer_length, pkt_count)
+                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
                 time.sleep(10)
                 bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
                 assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
@@ -988,7 +1004,6 @@ def test_dynamic_load_powersave_enabled_testcase14(
     wifi_dut.interfaces.wifi.close_socket(sock1)
     # Close socket 3
     wifi_dut.interfaces.wifi.close_socket(sock2)
-
 
 # @pytest.mark.config(
 #     "wifi_dut",

@@ -16,6 +16,22 @@ from devices.rs911x import (
 from interfaces.wifi import WlanError
 from utils.subprocess_manager import SubprocessManager
 
+"""The testcases added in this file run below test steps for DUT-RS9116
+        1. Configuration of DUT in 2G/5G : BGN
+        2. Load ssl certificates in the DUT
+        3. Association of Third party AP's
+        4. Get the valid IP address
+        5. Create a new TCP/IP socket over ssl 
+        6. Bind the socket with DUT ip address
+        7. Connect the client with server socket as specified port number.
+        8. Check whether DUT is throwing the error as per the test case specified 
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+"""
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -167,7 +183,7 @@ def test_ssl_server_no_server_cert_testcase3(
 
     # The below api opens ssl server socket in the DUT
     sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=1)
-    assert sock == 0,  f"socket id received is wrong, expected is 0"
+    assert sock == 0, f"socket id received is wrong, expected is 0"
     # Socket binds at (device_ip, 5001) in DUT
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
     wifi_dut.interfaces.wifi.listen(sock, backlog=1)
