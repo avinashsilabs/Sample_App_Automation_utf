@@ -1,0 +1,6 @@
+#ignore everything by default
+**
+
+!rs911x/Host_MCU/test/**
+!rs911x/Host_MCU/component/**
+!mini_gecko_sdk/**
