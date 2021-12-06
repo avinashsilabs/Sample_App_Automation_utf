@@ -8,7 +8,7 @@ RUN wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-a
     tar xjf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2 -C /opt/ && \
     rm -rf xjf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
 
-ENV ARM_GCC_DIR=/opt/gcc-arm-none-eabi-7-2017-q4-major-linux
+ENV ARM_GCC_DIR=/opt/gcc-arm-none-eabi-7-2017-q4-major
 
 RUN --mount=type=ssh mkdir -p -m 0600 ~/.ssh && ssh-keyscan stash.silabs.com >> ~/.ssh/known_hosts
 RUN --mount=type=ssh \
@@ -40,8 +40,14 @@ RUN --mount=type=ssh \
      rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}.zip && rm -rf ${RELEASE_PACKAGE_VERSION}
 
 COPY rs911x/ ./rs911x/
+# Copy additional files missing from release package
+RUN cp -r rs911x/Host_MCU/component mini_gecko_sdk/platform/radio/wifi/rs9116
+RUN cp -r rs911x/Host_MCU/sapi/sbc_audio_codec mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
+RUN cp rs911x/Host_MCU/sapi/include/rsi_ant.h mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include
+
 
 WORKDIR /build/rs911x/Host_MCU/test/sqa_test_agent
+RUN rm -rf build
 RUN slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
 
 

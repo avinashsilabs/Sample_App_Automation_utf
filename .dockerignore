@@ -3,4 +3,5 @@
 
 !rs911x/Host_MCU/test/**
 !rs911x/Host_MCU/component/**
+!rs911x/Host_MCU/sapi/**
 !mini_gecko_sdk/**
