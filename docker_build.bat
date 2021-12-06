@@ -1,5 +1,6 @@
 setlocal
 
+set RELEASE_PACKAGE_VERSION=%1
 if "%1"=="" (
    set RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
 )
