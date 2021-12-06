@@ -10,6 +10,8 @@ docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION -f tes
 if [ "$?" -ne "0" ]; then
    exit 1
 fi
+rm -rf test_agent/build
+mkdir -p test_agent/build
 
-docker run --rm -it wifi_test_agent_build
+docker run --rm -it -v ${pwd}/test_agent/build:/build/rs911x/Host_MCU/test/sqa_test_agent/build/build wifi_test_agent_build
 

@@ -1,3 +1,4 @@
+@echo off
 setlocal
 
 set RELEASE_PACKAGE_VERSION=%1
@@ -9,5 +10,10 @@ docker build --build-arg RELEASE_PACKAGE_VERSION=%RELEASE_PACKAGE_VERSION% -f te
 if %errorlevel% neq 0 (
    exit /b 1
 )
-docker run --rm -it wifi_test_agent_build
+
+if exist test_agent\build (
+    rd /s /q test_agent\build
+)
+mkdir test_agent\build
+docker run --rm -it -v %CD%/test_agent/build:/build/rs911x/Host_MCU/test/sqa_test_agent/build/build wifi_test_agent_build
 
