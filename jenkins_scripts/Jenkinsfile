@@ -30,6 +30,7 @@ pipeline {
                                     #TODO: following echo and yaml installation to be removed after https://jira.silabs.com/browse/UTF-617 is addressed
                                     echo "Skipping installing until we have permanent fix for https://jira.silabs.com/browse/UTF-617"
                                     pip install pyyaml>=5.4
+                                    pip install paramiko
                                     #pip install wheel
                                     #pip install -r requirements.txt
                                     cd ..
