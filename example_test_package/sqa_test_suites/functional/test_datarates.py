@@ -34,6 +34,7 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+        5. Sniffer(NUC device)
 """
 
 
@@ -113,8 +114,8 @@ def test_mgmt_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == ' \
                      f'0x0000 ' \
@@ -179,7 +180,7 @@ def test_mgmt_data_rates_rts_cts(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     # Block Ack req & RTS
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -210,13 +211,13 @@ def test_mgmt_data_rates_rts_cts(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info("Stop Sniffer finally")
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)
-    if result1['packet_count'] is False or result2['packet_count'] is False:
+    if result1 is False or result2 is False:
         logger().info(
             f"Expected packet validation failed, Block Ack req/RTS = {result1}, Block Ack res/CTS = {result2}")
         assert False
     else:
         logger().info(
-            f"Block Ack req/RTS = {result1['packet_count']}, Block Ack res/CTS = {result2['packet_count']}")
+            f"Block Ack req/RTS = {result1}, Block Ack res/CTS = {result2}")
         logger().info("Sniffer validation Passed")
         assert True
 
@@ -254,7 +255,7 @@ def test_data_rates_for_data_packet(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or ' \
@@ -318,7 +319,7 @@ def test_data_rates_for_b_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or ' \
@@ -380,7 +381,7 @@ def test_data_rates_for_g_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
@@ -442,7 +443,7 @@ def test_data_rates_for_data_packets_12mbps(wifi_sniffer, wifi_access_point, wif
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} or ' \
                      f'wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
@@ -508,7 +509,7 @@ def test_data_rates_for_rts_cts_12mbps(wifi_sniffer, wifi_access_point, wifi_dut
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate ' \
@@ -540,7 +541,7 @@ def test_data_rates_for_rts_cts_12mbps(wifi_sniffer, wifi_access_point, wifi_dut
     # return wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -575,7 +576,7 @@ def test_data_rates_eapol(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan_rsna_eapol.keydes.key' \
                      f'_info.key_type == 1 and wlan_radio.data_rate == 1'
@@ -602,7 +603,7 @@ def test_data_rates_eapol(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -637,7 +638,7 @@ def test_basic_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     # Assoc req & Basic data rates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -669,16 +670,16 @@ def test_basic_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
         time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
-    result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)
-    result3 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+    result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)['packet_count']
+    result3 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)['packet_count']
 
-    if result1['packet_count'] is False or result2['packet_count'] is False or result3['packet_count'] is False:
+    if result1 is False or result2 is False or result3 is False:
         logger().info(
             f"Expected packet validation failed, Assoc req = {result1}, Probe req = {result3}, Probe res = {result2}")
         assert False
     else:
         logger().info(
-            f"Assoc req = {result1['packet_count']}, Probe res = {result2['packet_count']}, Probe req = {result3['packet_count']}")
+            f"Assoc req = {result1}, Probe res = {result2}, Probe req = {result3}")
         logger().info("Sniffer validation Passed")
         assert True
