@@ -34,6 +34,7 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+        5. Sniffer(NUC device)
 """
 
 
@@ -134,8 +135,8 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -296,8 +297,8 @@ def test_rejoin_scan_channel(wifi_sniffer, wifi_access_point, wifi_dut, channel_
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff and wlan.sa == {mac_address}'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -364,8 +365,8 @@ def test_rejoin_scan_other_channel(wifi_sniffer, wifi_access_point, wifi_dut, ch
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan.fc.type_subtype == 0x0004 '
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -515,8 +516,8 @@ def test_rejoin_disable(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -650,8 +651,8 @@ def test_rejoin_scan_interval_1sec(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'and wlan.ssid == ' \
                      f'{wifi_access_point.interfaces.wifi.ssid} and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
@@ -711,7 +712,7 @@ def test_rejoin_scan_interval_1sec(wifi_sniffer, wifi_access_point, wifi_dut):
         assert False
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -746,8 +747,8 @@ def test_rejoin_with_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -772,7 +773,7 @@ def test_rejoin_with_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
@@ -831,8 +832,8 @@ def test_rejoin_hidden_ssid(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -857,7 +858,7 @@ def test_rejoin_hidden_ssid(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
@@ -917,8 +918,8 @@ def test_rejoin_in_US_region(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -943,7 +944,7 @@ def test_rejoin_in_US_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
@@ -1002,8 +1003,8 @@ def test_rejoin_in_UK_region(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -1028,7 +1029,7 @@ def test_rejoin_in_UK_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
@@ -1088,8 +1089,8 @@ def test_rejoin_in_japan_region(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -1114,7 +1115,7 @@ def test_rejoin_in_japan_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
@@ -1174,8 +1175,8 @@ def test_rejoin_in_worldwide_region(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)'
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -1200,7 +1201,7 @@ def test_rejoin_in_worldwide_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
