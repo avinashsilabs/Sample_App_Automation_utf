@@ -44,14 +44,17 @@ COPY rs911x/ ./rs911x/
 RUN cp -r rs911x/Host_MCU/component mini_gecko_sdk/platform/radio/wifi/rs9116
 RUN cp -r rs911x/Host_MCU/sapi/sbc_audio_codec mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
 RUN cp rs911x/Host_MCU/sapi/include/rsi_ant.h mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include
+RUN cp -r rs911x/Host_MCU/sapi/driver mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
+RUN cp -r rs911x/Host_MCU/sapi/ant mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
 
 
+# Generate the project files to prepare for building
 WORKDIR /build/rs911x/Host_MCU/test/sqa_test_agent
 RUN rm -rf build
 RUN slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
 
 
-CMD ["make", "-C", "build", "-f", "sqa_test_agent.Makefile", "-j"]
+CMD ["make", "-C", "build", "-f", "sqa_test_agent.Makefile"]
 
 
 
