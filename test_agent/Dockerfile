@@ -1,26 +1,4 @@
-FROM ubuntu:20.04
-
-# packages
-ENV TZ America/Chicago
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN apt update && apt install -y unzip git curl wget build-essential python3 openjdk-11-jre-headless
-RUN wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2 && \
-    tar xjf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2 -C /opt/ && \
-    rm -rf xjf gcc-arm-none-eabi-7-2017-q4-major-linux.tar.bz2
-
-ENV ARM_GCC_DIR=/opt/gcc-arm-none-eabi-7-2017-q4-major
-
-RUN --mount=type=ssh mkdir -p -m 0600 ~/.ssh && ssh-keyscan stash.silabs.com >> ~/.ssh/known_hosts
-RUN --mount=type=ssh \
-     git clone ssh://git@stash.silabs.com/simplicity_studio/uc_cli.git /opt/uc_cli
-
-ENV PATH="/opt/uc_cli:$PATH"
-
-RUN slc
-
-########################
-# End base image
-########################
+FROM utfsilabs/test_agent_build_base:latest
 
 WORKDIR /build
 
@@ -28,6 +6,7 @@ COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 RUN rm -rf mini_gecko_sdk/platform/radio/wifi/rs9116 && mkdir -p mini_gecko_sdk/platform/radio/wifi/rs9116
 ENV GECKO_SDK=/build/mini_gecko_sdk
 RUN slc configuration -s $GECKO_SDK -gcc $ARM_GCC_DIR
+RUN slc signature trust --sdk $GECKO_SDK
 
 ARG RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
 RUN --mount=type=ssh \
@@ -40,23 +19,24 @@ RUN --mount=type=ssh \
      rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}.zip && rm -rf ${RELEASE_PACKAGE_VERSION}
 
 COPY rs911x/ ./rs911x/
+
 # Copy additional files missing from release package
+#    component files
 RUN cp -r rs911x/Host_MCU/component mini_gecko_sdk/platform/radio/wifi/rs9116
+#    SBC codec
 RUN cp -r rs911x/Host_MCU/sapi/sbc_audio_codec mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
+#    ANT protocol
 RUN cp rs911x/Host_MCU/sapi/include/rsi_ant.h mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include
-RUN cp -r rs911x/Host_MCU/sapi/driver mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
+RUN cp rs911x/Host_MCU/sapi/driver/rsi_ant.c mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/driver
 RUN cp -r rs911x/Host_MCU/sapi/ant mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
+# Workaround for linker error due to memory size > 96kB due to large size of sbc_data_pool
+RUN cp rs911x/Host_MCU/sapi/bluetooth/rsi_bt_sbc_codec.c mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/bluetooth
 
 
 # Generate the project files to prepare for building
 WORKDIR /build/rs911x/Host_MCU/test/sqa_test_agent
 RUN rm -rf build
 RUN slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
+RUN touch build_test_agent.sh && chmod a+x build_test_agent.sh && echo '#!/bin/bash' >> build_test_agent.sh && echo 'make -C build -f sqa_test_agent.Makefile -j' >> build_test_agent.sh
 
-
-CMD ["make", "-C", "build", "-f", "sqa_test_agent.Makefile"]
-
-
-
-
-     
+CMD ["./build_test_agent.sh"]

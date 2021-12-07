@@ -16,4 +16,8 @@ if exist test_agent\build (
 )
 mkdir test_agent\build
 docker run --rm -it -v %CD%/test_agent/build:/build/rs911x/Host_MCU/test/sqa_test_agent/build/build wifi_test_agent_build
+if %errorlevel% neq 0 (
+   exit /b 1
+)
+copy test_agent\build\debug\sqa_test_agent.hex example_test_package
 
