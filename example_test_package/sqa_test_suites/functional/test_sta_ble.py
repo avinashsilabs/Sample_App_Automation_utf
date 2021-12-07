@@ -43,23 +43,18 @@ class BleThread_connection(ThreadBase):
             # Start DUT
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address is not None
-
             # Start ble client
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
             assert bt_client_address is not None
-
             time.sleep(1)
-
             # Start scanning and connect to ble client
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
             # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
             timeout = 120
             logger().info(f"Initiating connection this can take upto {timeout} seconds....")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
-
             # Disconnect
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
 
         if (self.mode == "ble_slave"):
             # Set up DUT for BLE advertising
@@ -226,6 +221,53 @@ class TCPPacketThread(ThreadBase):
         logger().info("this is IPerf")
 
 
+# # #thread for tkip with pmk & psk ,AES with pmk & psk
+class ModesThread(ThreadBase):
+    def __init__(self, wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point=wifi_access_point
+        self.WPA_TKIP_PMK = WPA_TKIP_PMK
+        self.WPA_AES_PMK = WPA_AES_PMK
+        self.WPA_TKIP_PSK = WPA_TKIP_PSK
+        self.WPA_AES_PSK = WPA_AES_PSK
+        self.WPA_TKIP_reboot = WPA_TKIP_reboot
+
+
+    def run(self):
+            if self.WPA_TKIP_PMK | self.WPA_AES_PMK:
+                with TimeMeasurer() as t:
+                  # This API connects STA to the third party AP with the pmk generated
+                   self.wifi_dut.interfaces.wifi.join_pmk(self.wifi_access_point.interfaces.wifi.ssid,
+                                                   self.wifi_access_point.interfaces.wifi.passphrase)
+                   time.sleep(10)
+                assert(t.duration < 15)
+                logger().info(f"Associated in {t.duration} seconds")
+            elif self.WPA_TKIP_PSK | self.WPA_AES_PSK:
+                with TimeMeasurer() as t:
+                   self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+                   time.sleep(10)
+                assert (t.duration < 15)
+                logger().info(f"Associated in {t.duration} seconds")
+            elif self.WPA_TKIP_reboot:
+                with TimeMeasurer() as t:
+                   self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+                   self.wifi_access_point.interfaces.wifi.stop_ap()
+                   self.wifi_access_point.interfaces.wifi.start_ap()
+                assert (t.duration < 15)
+                logger().info(f"Associated in {t.duration} seconds")
+            #This API Enables the DHCP in DUT
+            result = self.wifi_dut.interfaces.wifi.start_ip()
+            assert isinstance(
+            result, self.wifi_dut.interfaces.wifi.IPConfig
+              ), f"Failed to get IP address. Result = {result}"
+            device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+             # Initiate ping from third party wifi-client to DUT
+            status = ping(device_ip, 3)
+            assert status == 1
+            time.sleep(1)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -241,6 +283,7 @@ def test_threading_sta_ble_dut_as_master(wifi_dut, ble_client, wifi_access_point
     mode = "ble_master"
     with WifiThread(wifi_dut, wifi_access_point), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(15)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -268,7 +311,6 @@ def test_threading_sta_ble_dut_as_slave(wifi_dut, ble_client, wifi_access_point)
             "band": 0
              }
         )
-
 #testcase4 for for selective channels in 2.4 ghz + ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_selective_channels_2_4(wifi_dut , ble_client, wifi_access_point):
@@ -290,7 +332,6 @@ def test_threading_selective_channels_2_4(wifi_dut , ble_client, wifi_access_poi
             "band": 0
              }
         )
-
 #testcase5 for all channels in 2.4 ghz +ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_all_channels_2_4(wifi_dut, wifi_access_point, ble_client):
@@ -469,8 +510,6 @@ def test_threading_all_channels_2_4_bypass(wifi_dut, wifi_access_point, ble_clie
             "band": 1
             }
 )
-
-
 #testcase14 for selective channels in 5 ghz +ble in in bypass
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_selective_channels_5_bypass(wifi_dut, wifi_access_point, ble_client):
@@ -517,7 +556,7 @@ def test_threading_all_channels_5_bypass(wifi_dut, wifi_access_point, ble_client
             "band": 0
             }
 )
-# #testcase 16 for rejoin functionality when ap lost +ble #testcase 17 for ap user disconnection +ble
+#testcase 16 for rejoin functionality when ap lost +ble #testcase 17 for ap user disconnection +ble
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_sta_ble_rejoin_bypass(wifi_dut, wifi_access_point, ble_client):
     Aplost = True
@@ -547,3 +586,86 @@ def test_threading_sta_ble_rejoin_deauth_bypass(wifi_dut, wifi_access_point, ble
     mode = "ble_slave"
     with RejoinThread(wifi_dut, wifi_access_point, Aplost, deauth_frame), BleThread_connection(wifi_dut, ble_client, mode) :
         time.sleep(15)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    }
+)
+#testcase19 for tkip with pmk +ble
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'TKIP', 'standard': "11g"})
+def test_threading_sta_ble_modes_tkip_pmk(wifi_dut, wifi_access_point, ble_client):
+    WPA_TKIP_PMK = True
+    WPA_AES_PMK  = False
+    WPA_TKIP_PSK = False
+    WPA_AES_PSK = False
+    WPA_TKIP_reboot = False
+    mode = "ble_slave"
+    with ModesThread(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) , BleThread_connection(wifi_dut, ble_client, mode) :
+        time.sleep(15)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    }
+)
+#testcase20 for AES with pmk +ble
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk',"security": "WPA2", "cipher": 'AES', 'standard': "11g"})
+def test_threading_sta_ble_modes_AES_pmk(wifi_dut, ble_client, wifi_access_point):
+    WPA_TKIP_PMK = False
+    WPA_AES_PMK = True
+    WPA_TKIP_PSK = False
+    WPA_AES_PSK = False
+    WPA_TKIP_reboot = False
+    mode = "ble_slave"
+    with ModesThread(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
+      time.sleep(15)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    }
+)
+#testcase21 for tkip with psk +ble
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point',wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk',"security": "WPA", "cipher": 'TKIP', 'standard': "11g"})
+def test_threading_sta_ble_modes_tkip_psk(wifi_dut, wifi_access_point, ble_client):
+    WPA_TKIP_PMK = False
+    WPA_AES_PMK = False
+    WPA_TKIP_PSK = True
+    WPA_AES_PSK = False
+    WPA_TKIP_reboot = False
+    mode = "ble_slave"
+    with ModesThread(wifi_dut, wifi_access_point,   WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode) :
+      time.sleep(5)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    }
+)
+#testcase22 for AES with psk +ble
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk',"security": "WPA2", "cipher": 'AES'})
+def test_threading_sta_ble_modes_AES_psk(wifi_dut, wifi_access_point, ble_client):
+    WPA_TKIP_PMK = False
+    WPA_AES_PMK = False
+    WPA_TKIP_PSK = False
+    WPA_AES_PSK = True
+    WPA_TKIP_reboot = False
+    mode = "ble_slave"
+    with ModesThread(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
+       time.sleep(15)
+
