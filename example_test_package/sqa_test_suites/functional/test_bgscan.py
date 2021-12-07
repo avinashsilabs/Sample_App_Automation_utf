@@ -32,6 +32,7 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+        5. Sniffer(NUC device)
 """
 
 
@@ -114,10 +115,10 @@ def test_bgscan_2g(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+                         f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -182,9 +183,9 @@ def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == 11 and wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == 11 and wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -248,9 +249,9 @@ def test_instant_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == 11 and wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == 11 and wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -311,8 +312,8 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=2000, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
                      f'0x0004 and wlan.da == ff:ff:ff:ff:ff:ff '
 
@@ -397,9 +398,9 @@ def test_bgscan_primary_channel(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {mac_address} ' \
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
                          f'and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff '
 
@@ -462,9 +463,9 @@ def test_bgscan_non_us_channel(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {mac_address} ' \
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
                          f'and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff '
 
@@ -533,9 +534,9 @@ def test_bgscan_5g(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} and wlan.tag.number == 61'
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {dut_mac_address} and wlan.tag.number == 61'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
         time.sleep(5)
@@ -599,10 +600,10 @@ def test_bgscan_5g_dual_band(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == ' \
-                         f'{mac_address} and wlan.tag.number == 61'
+                         f'{dut_mac_address} and wlan.tag.number == 61'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
         time.sleep(5)
@@ -663,9 +664,9 @@ def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=2000, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {dut_mac_address} ' \
                      f'and wlan.tag.number == 61'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
@@ -744,10 +745,10 @@ def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == ' \
-                         f'{mac_address} and wlan.tag.number == 61'
+                         f'{dut_mac_address} and wlan.tag.number == 61'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
         time.sleep(5)
@@ -817,9 +818,9 @@ def test_bgscan_primary_channel(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
-        mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Actual MAC_Address: {mac_address}")
-        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {mac_address} and wlan.tag.number == 61'
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} and wlan.tag.number == 61'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
         time.sleep(2)
