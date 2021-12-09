@@ -12,6 +12,7 @@ def logger():
      }], indirect=['run_iperf'])
 def test_device_as_tcp_server(run_iperf):
     logger().info("test_device_as_tcp_server completed !!")
+    assert run_iperf.iper_process_success
 
 
 @pytest.mark.parametrize('run_iperf', [
@@ -20,7 +21,7 @@ def test_device_as_tcp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_device_as_udp_server(run_iperf):
     logger().info("test_device_as_udp_server completed !!")
-
+    assert run_iperf.iper_process_success
 
 @pytest.mark.parametrize('run_iperf', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
@@ -28,6 +29,7 @@ def test_device_as_udp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_host_as_tcp_server(run_iperf):
     logger().info("test_host_as_tcp_server completed !!")
+    assert run_iperf.iper_process_success
 
 
 @pytest.mark.parametrize('run_iperf', [
@@ -36,3 +38,4 @@ def test_host_as_tcp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_host_as_udp_server(run_iperf):
     logger().info("test_host_as_udp_server completed !!")
+    assert run_iperf.iper_process_success
