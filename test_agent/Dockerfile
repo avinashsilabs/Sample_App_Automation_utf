@@ -31,6 +31,8 @@ RUN cp rs911x/Host_MCU/sapi/driver/rsi_ant.c mini_gecko_sdk/platform/radio/wifi/
 RUN cp -r rs911x/Host_MCU/sapi/ant mini_gecko_sdk/platform/radio/wifi/rs9116/sapi
 # Workaround for linker error due to memory size > 96kB due to large size of sbc_data_pool
 RUN cp rs911x/Host_MCU/sapi/bluetooth/rsi_bt_sbc_codec.c mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/bluetooth
+# Bug fix for AWS IoT
+RUN cp rs911x/Host_MCU/third_party/aws_sdk/platform/silabs/src/network_sapi_wrapper.c mini_gecko_sdk/platform/radio/wifi/rs9116/third_party/aws_sdk/platform/silabs/src
 
 
 # Generate the project files to prepare for building
