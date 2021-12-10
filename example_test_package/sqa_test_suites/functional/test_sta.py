@@ -203,7 +203,9 @@ def test_connectivity_with_WPA2_EAP_with_wrongcertificate_TLS(wifi_dut, wifi_acc
             #assert len(scan_results) < 0
             # test_wifi_join
             wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+        with pytest.raises(WlanError) as exc_info:
             result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+            assert exc_info.value.error_code == 0x45
             # assert result
 
             # Get IP through DHCP
@@ -259,8 +261,11 @@ def test_connectivity_with_WPA2_EAP_with_nocertificate_TLS(wifi_dut, wifi_access
             #assert len(scan_results) < 0
             # test_wifi_join
             wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+        with pytest.raises(WlanError) as exc_info:
             result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-            # assert result
+            assert exc_info.value.error_code == 0x45
+
+    # assert result
 
             # Get IP through DHCP
             result = wifi_dut.interfaces.wifi.start_ip()
@@ -314,7 +319,9 @@ def test_connectivity_with_WPA2_EAP_with_expireddate_TLS(wifi_dut, wifi_access_p
             #assert len(scan_results) < 0
             # test_wifi_join
             wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+        with pytest.raises(WlanError) as exc_info:
             result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+            assert exc_info.value.error_code == 0x45
             # assert result
 
             # Get IP through DHCP
