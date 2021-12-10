@@ -41,6 +41,7 @@ def logger():
 @pytest.mark.http_server("raspi_lighttpd_tls")
 def test_https_otaf_neg_subtestcase1(http_server, wifi_dut, wifi_access_point, logger):
     host_ip = get_host_ip()
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
@@ -70,6 +71,7 @@ def test_https_otaf_neg_subtestcase2(http_server, wifi_dut, wifi_access_point, l
     # Enables and assign the dhcp in DUT
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4_corrupted.rps")
@@ -85,7 +87,7 @@ def test_https_otaf_neg_subtestcase2(http_server, wifi_dut, wifi_access_point, l
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
@@ -99,6 +101,7 @@ def test_https_otaf_neg_subtestcase3(http_server, wifi_dut, wifi_access_point, l
     # Enables and assign the dhcp in DUT
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.txt")
@@ -128,6 +131,7 @@ def test_https_otaf_neg_subtestcase4(http_server, wifi_dut, wifi_access_point, l
     # Enables and assign the dhcp in DUT
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
@@ -143,7 +147,7 @@ def test_https_otaf_neg_subtestcase4(http_server, wifi_dut, wifi_access_point, l
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
@@ -157,6 +161,7 @@ def test_https_otaf_neg_subtestcase5(http_server, wifi_dut, wifi_access_point, l
     # Enables and assign the dhcp in DUT
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4_empty.rps")
