@@ -6,6 +6,8 @@ from interfaces.bluetooth import BTSocketRole
 from utils.time_measurer import TimeMeasurer
 import time
 
+"""Test Author = M.Harshitha"""
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -29,8 +31,8 @@ def logger():
         4. Access Point(Third Party AP's)
 """
 
-"""This test case is used to switch the dut as slave mode to dut as master mode"""
-def test_bt_spp_dut_as_slave_rolewitch(wifi_dut, bt_client):
+"""This test case is used to switch slave to master role"""
+def test_bt_spp_dut_as_slave_roleswitch(wifi_dut, bt_client):
     send_text = "AMFJTEJRTOLGWSGJWTJWGTL"
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
@@ -45,11 +47,13 @@ def test_bt_spp_dut_as_slave_rolewitch(wifi_dut, bt_client):
                 bt_server_socket.create_server()
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
                 assert connected
+            # Power Save Mode
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                 wifi_dut.interfaces.wifi.set_sleep_gpio(True)
                 wifi_dut.interfaces.wifi.power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
+            # Enable the Power save in bt mode
                 wifi_dut.interfaces.wifi.bt_power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
@@ -70,7 +74,7 @@ def test_bt_spp_dut_as_slave_rolewitch(wifi_dut, bt_client):
             bt_server_socket.close()
     logger().info(f"Scan in {t.duration} seconds")
 
-"""This test cases is used to switch the dut as master mode to dut as slave mode"""
+"""This test cases is used to switch the master to save role"""
 def test_bt_spp_dut_as_master_roleswitch(wifi_dut,bt_client):
     send_text = "ABCDEFRGHJ12345UIOPLKJ"
     with TimeMeasurer() as t:
