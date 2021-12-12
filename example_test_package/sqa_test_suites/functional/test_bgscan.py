@@ -368,6 +368,8 @@ def test_bgscan_primary_channel_2g(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     channel_bitmap_2_4 = 0
+    channel_bitmap_5 = 0
+    scan_feature_extend = 0
     channel_list = [1, 6, 11]
     for channel in channel_list:
         wifi_access_point.interfaces.wifi.start_ap(channel=channel)
@@ -380,9 +382,11 @@ def test_bgscan_primary_channel_2g(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_2g')
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
-        wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=wifi_access_point.interfaces.wifi.ssid,
-                                                        scan_bitmap_2_4=channel_bitmap_2_4)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
+        wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                        scan_bitmap_2_4=channel_bitmap_2_4,
+                                                        scan_bitmap_5=channel_bitmap_5,
+                                                        scan_feature=scan_feature_extend)
+        wifi_dut.interfaces.wifi.join(bgscan_flag=True)
         wifi_dut.interfaces.wifi.start_ip()
 
         logger().info(f"*****Enable Max PSP in DUT******")
@@ -784,7 +788,9 @@ def test_bgscan_primary_channel_5G(wifi_sniffer, wifi_access_point, wifi_dut):
     send_bytes = 1000
     validation = True
     packet_filter2 = False
+    channel_bitmap_2_4 = 0
     channel_bitmap_5g = 0
+    scan_feature_extend = 0
     channel_list = [36, 149, 165]
     for channel in channel_list:
         wifi_access_point.interfaces.wifi.start_ap(channel=channel)
@@ -797,9 +803,11 @@ def test_bgscan_primary_channel_5G(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_5G')
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
-        wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=wifi_access_point.interfaces.wifi.ssid,
-                                                        scan_bitmap_5=channel_bitmap_5g)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
+        wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                        scan_bitmap_2_4=channel_bitmap_2_4,
+                                                        scan_bitmap_5=channel_bitmap_5g,
+                                                        scan_feature=scan_feature_extend)
+        wifi_dut.interfaces.wifi.join(bgscan_flag=True)
         wifi_dut.interfaces.wifi.start_ip()
 
         logger().info(f"*****Enable Max PSP in DUT******")

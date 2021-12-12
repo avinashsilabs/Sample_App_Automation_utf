@@ -159,7 +159,8 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+        'packet_count']
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
