@@ -78,7 +78,6 @@ class IopTcpIpSockets:
         return connect_status
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -145,7 +144,6 @@ def test_bgscan_2g(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -210,7 +208,6 @@ def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -275,7 +272,6 @@ def test_instant_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -351,7 +347,6 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -560,7 +555,6 @@ def test_bgscan_5g(wifi_sniffer, wifi_access_point, wifi_dut):
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -627,7 +621,6 @@ def test_bgscan_5g_dual_band(wifi_sniffer, wifi_access_point, wifi_dut):
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -704,7 +697,6 @@ def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -771,7 +763,6 @@ def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
