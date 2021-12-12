@@ -98,7 +98,7 @@ def test_bgscan_2g(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_2g)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_2g')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
@@ -165,7 +165,7 @@ def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_dual_mode)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_dual_mode')
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
@@ -228,7 +228,7 @@ def test_instant_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_instant_bgscan)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_instant_bgscan')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
@@ -296,7 +296,7 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
 
     time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip(capture_file=test_bgscan_rejoin)
+    wifi_dut.interfaces.wifi.start_ip()
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
@@ -323,7 +323,7 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_rejoin')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(2)
@@ -377,7 +377,7 @@ def test_bgscan_primary_channel_2g(wifi_sniffer, wifi_access_point, wifi_dut):
         logger().info(f"channel bitmap = {channel_bitmap_2_4}")
         wifi_sniffer.interfaces.capture.configure_interface(channel)
         time.sleep(5)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_primary_channel_2g)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_2g')
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
         wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -446,7 +446,7 @@ def test_bgscan_non_us_channel(wifi_sniffer, wifi_access_point, wifi_dut):
         time.sleep(5)
         if count == 1:
             logger().info(f"*****Sniffer capture start******")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_non_us_channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_non_us_channel')
             count = count + 1
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -510,7 +510,7 @@ def test_bgscan_5g(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = 'Data Rate:'
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_5g)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
@@ -576,7 +576,7 @@ def test_bgscan_5g_dual_band(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = 'Data Rate:'
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_5g_dual_band)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_dual_band')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
@@ -674,7 +674,7 @@ def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_5g_rejoin)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_rejoin')
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(2)
     wifi_access_point.interfaces.wifi.start_ap()
@@ -718,7 +718,7 @@ def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = 'Data Rate:'
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_5g_dfs_ch)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_dfs_ch')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
@@ -794,7 +794,7 @@ def test_bgscan_primary_channel_5G(wifi_sniffer, wifi_access_point, wifi_dut):
         logger().info(f"channel bitmap = {channel_bitmap_5g}")
         wifi_sniffer.interfaces.capture.configure_interface(channel)
         time.sleep(5)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_bgscan_primary_channel_5G)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_5G')
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
         wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=wifi_access_point.interfaces.wifi.ssid,

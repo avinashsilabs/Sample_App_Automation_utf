@@ -102,7 +102,7 @@ def test_mgmt_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_mgmt_data_rates)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates')
     time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
@@ -164,7 +164,7 @@ def test_mgmt_data_rates_rts_cts(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_mgmt_data_rates_rts_cts)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates_rts_cts')
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
@@ -240,7 +240,7 @@ def test_data_rates_for_data_packet(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_data_rates_for_data_packet)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_data_packet')
     time.sleep(5)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -301,7 +301,7 @@ def test_data_rates_for_b_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_data_rates_for_b_mode)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_b_mode')
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
@@ -364,7 +364,7 @@ def test_data_rates_for_g_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_data_rates_for_g_mode)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_g_mode')
     time.sleep(5)
     wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_54)
@@ -425,7 +425,7 @@ def test_data_rates_for_data_packets_12mbps(wifi_sniffer, wifi_access_point, wif
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_data_rates_for_data_packets_12mbps)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_data_packets_12mbps')
     time.sleep(5)
     wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_12)
@@ -488,7 +488,7 @@ def test_data_rates_for_rts_cts_12mbps(wifi_sniffer, wifi_access_point, wifi_dut
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_data_rates_for_rts_cts_12mbps)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_rts_cts_12mbps')
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
@@ -551,7 +551,7 @@ def test_data_rates_eapol(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_data_rates_eapol)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_eapol')
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
@@ -611,7 +611,7 @@ def test_basic_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_basic_data_rates)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_basic_data_rates')
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
