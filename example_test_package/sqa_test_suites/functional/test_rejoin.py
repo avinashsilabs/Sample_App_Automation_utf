@@ -101,7 +101,6 @@ class IopTcpIpSockets:
         return connect_status
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -125,11 +124,10 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -156,15 +154,15 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -185,7 +183,6 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -209,11 +206,10 @@ def test_rejoin_max_retry_failure(wifi_sniffer, wifi_access_point, wifi_dut):
 
     time.sleep(2)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=4, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -236,7 +232,7 @@ def test_rejoin_max_retry_failure(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     time.sleep(2)
 
     end_time = datetime.now() + timedelta(minutes=1)
@@ -259,7 +255,6 @@ def test_rejoin_max_retry_failure(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "channel_list",
     [1, 6, 11],
@@ -291,8 +286,8 @@ def test_rejoin_scan_channel(wifi_sniffer, wifi_access_point, wifi_dut, channel_
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel_list)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -315,7 +310,7 @@ def test_rejoin_scan_channel(wifi_sniffer, wifi_access_point, wifi_dut, channel_
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_channel')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(30)
@@ -324,7 +319,6 @@ def test_rejoin_scan_channel(wifi_sniffer, wifi_access_point, wifi_dut, channel_
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "channel_list",
     [1, 6, 11],
@@ -360,7 +354,6 @@ def test_rejoin_scan_other_channel(wifi_sniffer, wifi_access_point, wifi_dut, ch
     wifi_dut.interfaces.wifi.start_ip()
 
     logger().info(f"*****Enable Max PSP in DUT******")
-
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -388,11 +381,11 @@ def test_rejoin_scan_other_channel(wifi_sniffer, wifi_access_point, wifi_dut, ch
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel_list)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_other_channel')
     time.sleep(60)
     wifi_sniffer.interfaces.capture.stop_capture()
     # Validate Broadcast Probe request packet
-    wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
     # Looking Probe request packet except current using channel and device should not broadcast any Probe req packet
     # any other channels
@@ -401,16 +394,13 @@ def test_rejoin_scan_other_channel(wifi_sniffer, wifi_access_point, wifi_dut, ch
         cha_list.remove(channel_list)
         logger().info(f'Channel list = {cha_list}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=cha_list[0])
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_other_channel')
     time.sleep(30)
     wifi_sniffer.interfaces.capture.stop_capture()
-    result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
         'packet_count']
-    if result is True:
-        assert False
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -434,11 +424,10 @@ def test_rejoin_max_retry_failure_with_security_mode_change(wifi_sniffer, wifi_a
 
     time.sleep(2)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=4, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -461,7 +450,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change(wifi_sniffer, wifi_a
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     end_time = datetime.now() + timedelta(minutes=1)
 
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -483,7 +472,6 @@ def test_rejoin_max_retry_failure_with_security_mode_change(wifi_sniffer, wifi_a
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -506,11 +494,10 @@ def test_rejoin_disable(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -534,14 +521,14 @@ def test_rejoin_disable(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_disable')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(120)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
-@pytest.mark.skip
+
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -568,6 +555,7 @@ def test_rejoin_psk_change(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
+
     logger().info(f"*****Enable Max PSP in DUT******")
 
     wifi_dut.interfaces.wifi.power_save(2, 0)
@@ -592,7 +580,7 @@ def test_rejoin_psk_change(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_psk_change')
     end_time = datetime.now() + timedelta(minutes=1)
 
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -615,7 +603,7 @@ def test_rejoin_psk_change(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
         'packet_count']
 
-@pytest.mark.skip
+
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -655,7 +643,8 @@ def test_rejoin_scan_interval_1sec(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f"DUT MAC_Address: {mac_address}")
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'and wlan.ssid == ' \
-                     f'{wifi_access_point.interfaces.wifi.ssid} and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+                     f'{wifi_access_point.interfaces.wifi.ssid} and wlan.fc.type_subtype == 0x0004 and ' \
+                     f'wlan.da == ff:ff:ff:ff:ff:ff'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
     time.sleep(5)
@@ -671,7 +660,7 @@ def test_rejoin_scan_interval_1sec(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_interval_1sec')
     end_time = datetime.now() + timedelta(minutes=1)
 
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -712,7 +701,6 @@ def test_rejoin_scan_interval_1sec(wifi_sniffer, wifi_access_point, wifi_dut):
         assert False
 
 
-# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -737,7 +725,6 @@ def test_rejoin_with_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
     logger().info(f"*****Enable Max PSP in DUT******")
@@ -768,7 +755,7 @@ def test_rejoin_with_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_bgscan')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -776,7 +763,7 @@ def test_rejoin_with_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_bgscan')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -797,7 +784,6 @@ def test_rejoin_with_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -822,11 +808,10 @@ def test_rejoin_hidden_ssid(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -853,7 +838,7 @@ def test_rejoin_hidden_ssid(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_hidden_ssid')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -861,7 +846,7 @@ def test_rejoin_hidden_ssid(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_hidden_ssid')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -882,7 +867,6 @@ def test_rejoin_hidden_ssid(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -908,11 +892,10 @@ def test_rejoin_in_US_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -939,7 +922,7 @@ def test_rejoin_in_US_region(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_US_region')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -947,7 +930,7 @@ def test_rejoin_in_US_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_US_region')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -967,7 +950,7 @@ def test_rejoin_in_US_region(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
         'packet_count']
 
-@pytest.mark.skip
+
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -993,11 +976,10 @@ def test_rejoin_in_UK_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -1024,7 +1006,7 @@ def test_rejoin_in_UK_region(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_UK_region')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -1032,7 +1014,7 @@ def test_rejoin_in_UK_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_UK_region')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -1053,7 +1035,6 @@ def test_rejoin_in_UK_region(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1079,7 +1060,6 @@ def test_rejoin_in_japan_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
     logger().info(f"*****Enable Max PSP in DUT******")
@@ -1110,7 +1090,7 @@ def test_rejoin_in_japan_region(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_japan_region')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -1118,7 +1098,7 @@ def test_rejoin_in_japan_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_japan_region')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -1139,7 +1119,6 @@ def test_rejoin_in_japan_region(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1165,11 +1144,10 @@ def test_rejoin_in_worldwide_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -1196,7 +1174,7 @@ def test_rejoin_in_worldwide_region(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_worldwide_region')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -1204,7 +1182,7 @@ def test_rejoin_in_worldwide_region(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_worldwide_region')
     time.sleep(60)
     if connect_status is False:
         logger().info("Unable to connect with Server")
