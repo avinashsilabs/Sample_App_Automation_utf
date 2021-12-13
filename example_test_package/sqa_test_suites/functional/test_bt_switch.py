@@ -74,7 +74,7 @@ def test_bt_spp_dut_as_slave_roleswitch(wifi_dut, bt_client):
             bt_server_socket.close()
     logger().info(f"Scan in {t.duration} seconds")
 
-"""This test cases is used to switch the master to save role"""
+"""This test cases is used to switch the master to slave role"""
 def test_bt_spp_dut_as_master_roleswitch(wifi_dut,bt_client):
     send_text = "ABCDEFRGHJ12345UIOPLKJ"
     with TimeMeasurer() as t:
