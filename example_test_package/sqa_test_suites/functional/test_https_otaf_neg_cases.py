@@ -17,11 +17,18 @@ from utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
-"""setup requirement:
+"""
+setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
-        4. Access Point(Third Party AP's)
+        4. Access Point(Third Party AP's)    
+Test Steps:    
+        Step1 : Configuration of DUT in BT/Wlan in 2.4Ghz
+        Step2 : Verify the connection to AP
+        Step3 : Verify the host IP for firmware upgrade
+        Step4 : Initiate the firmware upgrade (otaf) in dut
+        Step5 : Verify weather the otaf is successful or failed with the issue/error   
 """
 @pytest.mark.config(
     "wifi_dut",
