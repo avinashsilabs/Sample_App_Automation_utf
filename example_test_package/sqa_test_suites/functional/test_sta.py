@@ -26,6 +26,14 @@ setup requirement:
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Radio Server (For now running on NUC)
+Step1: 1. Configuration of DUT in 2G or 5G mode : 2G
+Step2 : Verifying EAP Connection in TTLS mode
+Step3: Verifying EAP Connection in PEAPv0v1 mode
+Step4 : Verifying EAP Connection in TLS mode
+Step5 : Verifying EAP Connection by loading wrong certificate in TLS mode
+Step6 : Verifying EAP Connection by loading no certificate in TLS mode
+Step7 : Verifying EAP Connection by setting expired date in TLS mode
+
 """
 
 pytestmark = [
