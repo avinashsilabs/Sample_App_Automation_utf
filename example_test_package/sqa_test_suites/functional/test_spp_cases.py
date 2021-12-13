@@ -14,12 +14,13 @@ from interfaces.bluetooth.bluez.ble_device import DeviceManager
 
 
 """ Author: Sirisha Ayyagari
-This test case aims to connect the WIFI AP in SPP mode and do data transfer
+This test case aims to connect the WIFI AP in SPP mode and do data transfer about 800 bytes size
 setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+    
 """
 def test_bt_dut_as_slave_800bytes_data(wifi_dut, bt_client):
     send_text = "XanthomonacampestrishyacinthiLMG73915843241XanthomonacampestrishyacinthiLMG73915843241XanthomonacampestrishyacinthiLMG73915843241XanthomonacampestrishyacinthiLMG73915843241"
