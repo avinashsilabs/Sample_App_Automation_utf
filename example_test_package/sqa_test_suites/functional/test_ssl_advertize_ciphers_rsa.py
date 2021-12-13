@@ -21,6 +21,10 @@ import random
 import os
 from utils.stopwatch import Stopwatch
 
+
+""" Test author: Vinod.G """
+
+
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
         2. Load ssl certificates in the DUT
