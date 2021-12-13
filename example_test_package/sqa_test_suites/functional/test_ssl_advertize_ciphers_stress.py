@@ -1,6 +1,5 @@
-import pytest
-from typing import Dict
-import time
+# Test author: Vinod.G
+# Test suite: Advertise CCM based more cipher suites for TLS_1.2
 import pytest
 from devices.rs911x import (
     RS9116CoexMode,
@@ -21,8 +20,6 @@ import os
 from test_ssl_advertize_ciphers_rsa import wlan_ssl_connect_disconnect
 from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
 
-
-""" Test author: Vinod.G """
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -66,7 +63,7 @@ from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [300])
-def test_advertise_all_ciphers_ssl_regression_testcase15(
+def test_advertise_all_ciphers_ssl_regression_TC5703(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -96,7 +93,7 @@ def test_advertise_all_ciphers_ssl_regression_testcase15(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [300])
-def test_advertise_all_ciphers_wlan_regression_testcase16(
+def test_advertise_all_ciphers_wlan_regression_TC5704(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -134,7 +131,7 @@ def test_advertise_all_ciphers_wlan_regression_testcase16(
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [300])
-def test_advertise_specific_ciphers_ssl_regression_testcase17(
+def test_advertise_specific_ciphers_ssl_regression_TC5705(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -171,7 +168,7 @@ def test_advertise_specific_ciphers_ssl_regression_testcase17(
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [300])
-def test_advertise_specific_ciphers_wlan_ssl_regression_testcase18(
+def test_advertise_specific_ciphers_wlan_ssl_regression_TC5706(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]

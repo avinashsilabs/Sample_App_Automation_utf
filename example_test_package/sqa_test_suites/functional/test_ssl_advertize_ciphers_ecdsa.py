@@ -1,6 +1,5 @@
-import pytest
-from typing import Dict
-import time
+# Test author: Vinod.G
+# Test suite: Advertise CCM based more cipher suites for TLS_1.2
 import pytest
 from devices.rs911x import (
     RS9116CoexMode,
@@ -19,9 +18,6 @@ from devices.rs911x import (
 
 import os
 from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
-
-
-""" Test author: Vinod.G """
 
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -71,7 +67,7 @@ from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_testcase13(
+def test_advertise_ciphers_ssl_tx_TC5701(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, cert
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -106,7 +102,7 @@ def test_advertise_ciphers_ssl_tx_testcase13(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_testcase14(
+def test_advertise_ciphers_ssl_rx_TC5702(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, cert
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]

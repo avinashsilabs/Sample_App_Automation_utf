@@ -1,4 +1,5 @@
-import pytest
+# Test author: Vinod.G
+# Test suite: Advertise CCM based more cipher suites for TLS_1.2
 from typing import Dict
 import time
 import pytest
@@ -15,15 +16,12 @@ from devices.rs911x import (
     SocketType,
     Cipher,
     DefaultCipher,
+    DeviceConstants,
     )
 import string
 import random
 import os
 from utils.stopwatch import Stopwatch
-
-
-""" Test author: Vinod.G """
-
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -80,54 +78,9 @@ def get_cipher_list(wifi_sniffer, logger, decryption_key: str, print_layers: lis
 def select_cipher_list(cipher_list):
     cipher = 0
     for count in cipher_list:
-        if count == 'TLS_RSA_WITH_AES_256_CBC_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256
-        elif count == 'TLS_RSA_WITH_AES_128_CBC_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256
-        elif count == 'TLS_RSA_WITH_AES_256_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA
-        elif count == 'TLS_RSA_WITH_AES_128_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA
-        elif count == 'TLS_RSA_WITH_AES_128_CCM_8':
-            cipher = cipher | Cipher.BIT_TLS_RSA_WITH_AES_128_CCM_8
-        elif count == 'TLS_RSA_WITH_AES_256_CCM_8':
-            cipher = cipher | Cipher.BIT_TLS_RSA_WITH_AES_256_CCM_8
-        elif count == 'TLS_DHE_RSA_WITH_AES_128_GCM_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_AES_128_GCM_SHA256
-        elif count == 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_AES_256_GCM_SHA384
-        elif count == 'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        elif count == 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
-        elif count == 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        elif count == 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
-        elif count == 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_AES_256_CBC_SHA
-        elif count == 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_AES_128_CBC_SHA
-        elif count == 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
-        elif count == 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-        elif count == 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
-        elif count == 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-        elif count == 'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
-        elif count == 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
-        elif count == 'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
-        elif count == 'TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA
-        elif count == 'TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
-        elif count == 'TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA':
-            cipher = cipher | Cipher.BIT_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA
+        for cipher_mem in Cipher:
+            if count in str(cipher_mem):
+                cipher = cipher | cipher_mem.value
     return cipher
 
 
@@ -163,7 +116,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
     if len(cipher_list):
         cipher = select_cipher_list(cipher_list)
@@ -337,7 +290,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
         wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
         # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
         if len(cipher_list):
             cipher = select_cipher_list(cipher_list)
@@ -422,7 +375,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
-def test_advertise_all_ciphers_ssl_tx_testcase1(
+def test_advertise_all_ciphers_ssl_tx_TC5689(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -451,7 +404,7 @@ def test_advertise_all_ciphers_ssl_tx_testcase1(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
-def test_advertise_all_ciphers_ssl_rx_testcase2(
+def test_advertise_all_ciphers_ssl_rx_TC5690(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -487,7 +440,7 @@ def test_advertise_all_ciphers_ssl_rx_testcase2(
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_testcase3(
+def test_advertise_ciphers_ssl_tx_TC5691(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -523,7 +476,7 @@ def test_advertise_ciphers_ssl_tx_testcase3(
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_testcase4(
+def test_advertise_ciphers_ssl_rx_TC5692(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -553,7 +506,7 @@ def test_advertise_ciphers_ssl_rx_testcase4(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_tx_testcase5(
+def test_advertise_ciphers_ssl_tx_TC5693(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -583,7 +536,7 @@ def test_advertise_ciphers_ssl_tx_testcase5(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_rx_testcase6(
+def test_advertise_ciphers_ssl_rx_TC5694(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -613,7 +566,7 @@ def test_advertise_ciphers_ssl_rx_testcase6(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_testcase7(
+def test_advertise_ciphers_ssl_tx_TC5695(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -643,7 +596,7 @@ def test_advertise_ciphers_ssl_tx_testcase7(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_testcase8(
+def test_advertise_ciphers_ssl_rx_TC5696(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -673,7 +626,7 @@ def test_advertise_ciphers_ssl_rx_testcase8(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_tx_testcase9(
+def test_advertise_ciphers_ssl_tx_TC5697(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -703,7 +656,7 @@ def test_advertise_ciphers_ssl_tx_testcase9(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_rx_testcase10(
+def test_advertise_ciphers_ssl_rx_TC5698(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -733,7 +686,7 @@ def test_advertise_ciphers_ssl_rx_testcase10(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_testcase11(
+def test_advertise_ciphers_ssl_tx_TC5699(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -763,10 +716,9 @@ def test_advertise_ciphers_ssl_tx_testcase11(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_testcase12(
+def test_advertise_ciphers_ssl_rx_TC5700(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
         ):
     capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
                          logger, 1)
-
