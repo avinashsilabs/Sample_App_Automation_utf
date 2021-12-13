@@ -62,7 +62,7 @@ from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
-@pytest.mark.parametrize("test_run_time", [120])
+@pytest.mark.parametrize("test_run_time", [300])
 def test_advertise_all_ciphers_ssl_regression_testcase15(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):
@@ -92,7 +92,7 @@ def test_advertise_all_ciphers_ssl_regression_testcase15(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
-@pytest.mark.parametrize("test_run_time", [120])
+@pytest.mark.parametrize("test_run_time", [300])
 def test_advertise_all_ciphers_wlan_regression_testcase16(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):
@@ -130,7 +130,7 @@ def test_advertise_all_ciphers_wlan_regression_testcase16(
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-@pytest.mark.parametrize("test_run_time", [120])
+@pytest.mark.parametrize("test_run_time", [300])
 def test_advertise_specific_ciphers_ssl_regression_testcase17(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, test_run_time
         ):

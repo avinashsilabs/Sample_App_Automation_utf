@@ -215,6 +215,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                         "is "
                         "not captured")
+            return
 
         logger.info(f"{len(cipher_suite)} times tls client hello message captured on sniffer log")
         for cipher in cipher_suite:
@@ -247,6 +248,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
         wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
         # ssl socket opened in DUT connects to the server
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+        # assert b"success" in result, f"socket connection is failed on socket number {sock}-> error observed {result}"
         server_socket_no = 1
         if mode == 0:
             # The api returns 100 bytes of random data
@@ -263,14 +265,14 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
             wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
         elif mode == 1:
             ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length)
-            time.sleep(60)
+            time.sleep(240)
             result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
             bytes_received = int(result.split(b":")[1])
             logger.info(f"bytes received on socket {sock} -> {bytes_received}")
             assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
         # # Close socket 1
         wifi_dut.interfaces.wifi.close_socket(sock)
-        ssl_server.interfaces.ssl.stop_server()
+        # ssl_server.interfaces.ssl.stop_server()
 
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -284,6 +286,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                         "is "
                         "not captured")
+            return
         cipher_suite = cipher_suite[0][1]
         logger.info(f"******cipher suite advertised-> {cipher_suite}*******")
         if not (cipher_suite == expected_cipher):
@@ -336,7 +339,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
             cipher = select_cipher_list(cipher_list)
             wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=cipher)
 
-            pkt_count = 100
+        pkt_count = 100
 
         if server_cert is None:
             ssl_server.interfaces.ssl.start_server()
@@ -382,6 +385,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
         logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                     "is "
                     "not captured")
+        return
 
     logger.info(f"{len(cipher_suite)} times tls client hello message captured on sniffer log")
     for cipher in cipher_suite:
