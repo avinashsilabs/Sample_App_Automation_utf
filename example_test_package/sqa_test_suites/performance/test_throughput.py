@@ -57,8 +57,6 @@ class wifiJoinThread(ThreadBase):
         time.sleep(5)
         iperf.run()
         logger().info("this is IPerf END")
-        # mac_address = self.wifi_networked_dut.interfaces.wifi.get_mac_address()
-        # logger().info(f"Actual MAC_Address: {mac_address}")
 
 
 # This Thread is used to run the dut on slave mode
@@ -77,7 +75,6 @@ class BtSppConnectThread(ThreadBase):
         bt_client_address = self.bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None
         time.sleep(2)
-
 
 
 class BtSppDataTransferThread(ThreadBase):
@@ -172,6 +169,7 @@ class BtSppDataTransferThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
                 bt_client_socket.close()
 
+
 # this thread used for sta+ble as a slave
 class BleThread_connection(ThreadBase):
     def __init__(self, wifi_dut, ble_client, mode):
@@ -183,7 +181,7 @@ class BleThread_connection(ThreadBase):
     def run(self):
         self.logger.info('this is BLE run')
         time.sleep(5)
-        if ( self.mode == "ble_master"):
+        if self.mode == "ble_master":
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address is not None
 
@@ -200,32 +198,32 @@ class BleThread_connection(ThreadBase):
             # Disconnect
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
-        if ( self.mode == "ble_slave"):
-
-        # Set up DUT for BLE advertising
+        if self.mode == "ble_slave":
+            # Set up DUT for BLE advertising
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address is not None
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
-        # Begin Scanning for BLE devices
+            # Begin Scanning for BLE devices
             time.sleep(3)
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
             assert bt_client_address is not None
             time.sleep(3)
             self.ble_client.interfaces.bluetooth.stop_scanning()
 
-        # See that we found our device
+            # See that we found our device
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
             time.sleep(3)
             assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
             assert (
-                found_devices[self.wifi_dut.interfaces.wifi.ble_address]
-                == self.wifi_dut.interfaces.wifi.ble_advertising_data
+                    found_devices[self.wifi_dut.interfaces.wifi.ble_address]
+                    == self.wifi_dut.interfaces.wifi.ble_advertising_data
             )
             self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
             time.sleep(40)
 
             self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
 
 class Ble_Data_Transfer(ThreadBase):
     def __init__(self, wifi_dut, ble_client):
@@ -274,10 +272,8 @@ class Ble_Data_Transfer(ThreadBase):
         assert len(servs) > 0
         assert len(chars) > 0
 
-        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                    services=servs,
-                                                                                                    service_uid=service_uid,
-                                                                                                    char_uid=char_uid)
+        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic\
+            (bus, services=servs, service_uid=service_uid, char_uid=char_uid)
         assert char is not None
         assert len(char_props) > 0
 
@@ -335,8 +331,7 @@ class Ble_Data_Transfer(ThreadBase):
         self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
-
-#STA standlone Test cases
+# STA standalone Test cases
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
@@ -352,10 +347,11 @@ class Ble_Data_Transfer(ThreadBase):
         "band": 2
     }
 )
-def test_throughput_wifi_alone_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
-
+def test_throughput_wifi_alone_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                      bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
-     time.sleep(15)
+        time.sleep(15)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
@@ -371,10 +367,11 @@ def test_throughput_wifi_alone_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
-def test_throughput_wifi_alone_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
-
+def test_throughput_wifi_alone_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                      bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
-     time.sleep(15)
+        time.sleep(15)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
@@ -390,10 +387,11 @@ def test_throughput_wifi_alone_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
-def test_throughput_wifi_alone_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
-
+def test_throughput_wifi_alone_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                      bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
-     time.sleep(15)
+        time.sleep(15)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
@@ -409,14 +407,13 @@ def test_throughput_wifi_alone_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
-def test_throughput_wifi_alone_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
-
+def test_throughput_wifi_alone_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                      bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
-     time.sleep(15)
+        time.sleep(15)
 
 
-#STA + BT Connected Test cases
-
+"""STA + BT Connected Test cases"""
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
@@ -496,7 +493,8 @@ def test_throughput_wifi_bt_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_poi
             wifi_dut, bt_client), wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
         time.sleep(18)
 
-#STA + BT Data transfer Test cases
+
+# STA + BT Data transfer Test cases
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
@@ -512,13 +510,14 @@ def test_throughput_wifi_bt_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_poi
         "band": 2
     }
 )
-def test_throughput_wifi_bt_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
+def test_throughput_wifi_bt_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                        bt_client):
     mode = "bt_slave"
-    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1),\
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
             BtSppDataTransferThread(wifi_dut, bt_client, mode):
-         time.sleep(15)
-#
-#
+        time.sleep(15)
+
+
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
@@ -533,13 +532,14 @@ def test_throughput_wifi_bt_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
-def test_throughput_wifi_bt_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
+def test_throughput_wifi_bt_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                        bt_client):
     mode = "bt_slave"
-    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1),\
-        BtSppDataTransferThread(wifi_dut, bt_client, mode):
-     time.sleep(15)
-#
-#
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
+            BtSppDataTransferThread(wifi_dut, bt_client, mode):
+        time.sleep(15)
+
+
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
@@ -554,13 +554,14 @@ def test_throughput_wifi_bt_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
-def test_throughput_wifi_bt_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
+def test_throughput_wifi_bt_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                        bt_client):
     mode = "bt_slave"
-    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1),\
-        BtSppDataTransferThread(wifi_dut, bt_client, mode):
-     time.sleep(15)
-#
-#
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
+            BtSppDataTransferThread(wifi_dut, bt_client, mode):
+        time.sleep(15)
+
+
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
@@ -575,13 +576,38 @@ def test_throughput_wifi_bt_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
-def test_throughput_wifi_bt_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, bt_client):
+def test_throughput_wifi_bt_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                        bt_client):
     mode = "bt_slave"
-    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1),\
-        BtSppDataTransferThread(wifi_dut, bt_client, mode):
-     time.sleep(15)
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
+            BtSppDataTransferThread(wifi_dut, bt_client, mode):
+        time.sleep(15)
+
 
 # STA + BLE CONNECTED Test cases
+@pytest.mark.parametrize('run_iperf1', [
+    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
+                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
+     }])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2
+    }
+)
+def test_threading_sta_ble_dut_tcp_rx(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
+                                      run_iperf1):
+    mode = "ble_slave"
+    # mode = "ble_master"
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
+            BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(10)
+
+
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
@@ -604,50 +630,29 @@ def test_threading_sta_ble_dut_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_
             BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-# Will verify later due to some intermittent failure
-# @pytest.mark.parametrize('run_iperf1', [
-#     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-#                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-#      }])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
-#             OpenMode | RS9116FeatureBitMap.PSKSecurity,
-#         "band": 2
-#     }
-# )
-# def test_threading_sta_ble_dut_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
-#                                       ble_client):
-#     mode = "ble_slave"
-#     # mode = "ble_master"
-#     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
-#             BleThread_connection(wifi_dut, ble_client, mode):
-#         time.sleep(10)
 
-# @pytest.mark.parametrize('run_iperf1', [
-#     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-#                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-#      }])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
-#             OpenMode | RS9116FeatureBitMap.PSKSecurity,
-#         "band": 2
-#     }
-# )
-# def test_threading_sta_ble_dut_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
-#                                       ble_client):
-#     mode = "ble_slave"
-#     # mode = "ble_master"
-#     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
-#             BleThread_connection(wifi_dut, ble_client, mode):
-#         time.sleep(10)
+@pytest.mark.parametrize('run_iperf1', [
+    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
+                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
+     }])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2
+    }
+)
+def test_threading_sta_ble_dut_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                      ble_client):
+    mode = "ble_slave"
+    # mode = "ble_master"
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
+            BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(10)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
@@ -671,6 +676,8 @@ def test_threading_sta_ble_dut_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_
             BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
+
+# WLAN + BLE DATA TRANSFER
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
@@ -686,11 +693,11 @@ def test_threading_sta_ble_dut_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_
     }
 )
 def test_threading_sta_ble_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
-                                      ble_client):
-
+                                       ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
             Ble_Data_Transfer(wifi_dut, ble_client):
         time.sleep(25)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
@@ -707,11 +714,11 @@ def test_threading_sta_ble_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access
     }
 )
 def test_threading_sta_ble_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
-                                      ble_client):
-
+                                       ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
             Ble_Data_Transfer(wifi_dut, ble_client):
         time.sleep(15)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
@@ -728,11 +735,11 @@ def test_threading_sta_ble_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access
     }
 )
 def test_threading_sta_ble_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
-                                      ble_client):
-
+                                       ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
             Ble_Data_Transfer(wifi_dut, ble_client):
         time.sleep(20)
+
 
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
@@ -749,8 +756,7 @@ def test_threading_sta_ble_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access
     }
 )
 def test_threading_sta_ble_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
-                                      ble_client):
-
+                                       ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
             Ble_Data_Transfer(wifi_dut, ble_client):
         time.sleep(15)
