@@ -36,13 +36,13 @@ def logger():
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-# verifies the otaf with with only BT mode
+# verifies the otaf failure with only BT mode with error code 0x21
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_otaf_neg_subtestcase1(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_otaf_neg_testcase1(http_server, wifi_dut, wifi_access_point, logger):
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-    time.sleep(30)
+    time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
@@ -61,10 +61,10 @@ def test_https_otaf_neg_subtestcase1(http_server, wifi_dut, wifi_access_point, l
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-# verifies the otaf with corrupted rps file
+# verifies the otaf failure with only Wlan mode and corrupted file with error code 0xBB41
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_otaf_neg_subtestcase2(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_otaf_neg_testcase2(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the access point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -72,7 +72,7 @@ def test_https_otaf_neg_subtestcase2(http_server, wifi_dut, wifi_access_point, l
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-    time.sleep(30)
+    time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4_corrupted.rps")
     assert exc_info.value.error_code == 0xBB41 , "observed wrong error code expected is 0xBB41"
@@ -91,10 +91,10 @@ def test_https_otaf_neg_subtestcase2(http_server, wifi_dut, wifi_access_point, l
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-# verifies the otaf with non rps file
+# verifies the otaf failure with Wlan only mode and a non-rps file with error code 0xBB41
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_otaf_neg_subtestcase3(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_otaf_neg_testcase3(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the access point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -102,7 +102,7 @@ def test_https_otaf_neg_subtestcase3(http_server, wifi_dut, wifi_access_point, l
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-    time.sleep(30)
+    time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.txt")
     assert exc_info.value.error_code == 0xFFFD , "observed wrong error code expected is 0xFFFD"
@@ -121,10 +121,10 @@ def test_https_otaf_neg_subtestcase3(http_server, wifi_dut, wifi_access_point, l
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-# verifies the otaf without the otaf config bitmap enabled
+# verifies the otaf failure with Wlan only mode and by disabling the otaf config bitmap, verifies the expected error code with 0xBBE2
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_otaf_neg_subtestcase4(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_otaf_neg_testcase4(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the access point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -132,7 +132,7 @@ def test_https_otaf_neg_subtestcase4(http_server, wifi_dut, wifi_access_point, l
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-    time.sleep(30)
+    time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
     assert exc_info.value.error_code == 0xFFFD , "observed wrong error code expected is 0xFFFD"
@@ -151,10 +151,10 @@ def test_https_otaf_neg_subtestcase4(http_server, wifi_dut, wifi_access_point, l
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-# verifies the otaf with empty rps file
+# verifies the otaf failure with Wlan only mode and a empty rps file with error code 0xBBE2
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_otaf_neg_subtestcase5(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_otaf_neg_testcase5(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the access point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -162,7 +162,7 @@ def test_https_otaf_neg_subtestcase5(http_server, wifi_dut, wifi_access_point, l
     wifi_dut.interfaces.wifi.start_ip()
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-    time.sleep(30)
+    time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4_empty.rps")
     assert exc_info.value.error_code == 0xBBE2 | 0xbb38 , "observed wrong error code expected is 0xBBE2"
