@@ -41,4 +41,10 @@ RUN rm -rf build
 RUN slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
 RUN touch build_test_agent.sh && chmod a+x build_test_agent.sh && echo '#!/bin/bash' >> build_test_agent.sh && echo 'make -C build -f sqa_test_agent.Makefile -j' >> build_test_agent.sh
 
+# Add in non-root user
+ENV UID_OF_DOCKERUSER 1000
+RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
+    chown -R dockerUser:users /home/dockerUser
+USER dockerUser
+
 CMD ["./build_test_agent.sh"]
