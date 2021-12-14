@@ -11,7 +11,7 @@ def logger():
 prefix = "##     "
 
 
-def print_throughput(iperf_throughput: dict):
+def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict(prefix, iperf_throughput)
 
@@ -22,7 +22,7 @@ def print_throughput(iperf_throughput: dict):
      }], indirect=['run_iperf'])
 def test_device_as_tcp_server(run_iperf):
     assert run_iperf.iper_process_success
-    print_throughput(run_iperf.iperf_throughput)
+    __print_throughput(run_iperf.iperf_throughput)
     logger().info("test_device_as_tcp_server completed !!")
 
 
@@ -32,7 +32,7 @@ def test_device_as_tcp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_device_as_udp_server(run_iperf):
     assert run_iperf.iper_process_success
-    print_throughput(run_iperf.iperf_throughput)
+    __print_throughput(run_iperf.iperf_throughput)
     logger().info("test_device_as_udp_server completed !!")
 
 
@@ -42,7 +42,7 @@ def test_device_as_udp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_host_as_tcp_server(run_iperf):
     assert run_iperf.iper_process_success
-    print_throughput(run_iperf.iperf_throughput)
+    __print_throughput(run_iperf.iperf_throughput)
     logger().info("test_host_as_tcp_server completed !!")
 
 
@@ -52,5 +52,5 @@ def test_host_as_tcp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_host_as_udp_server(run_iperf):
     assert run_iperf.iper_process_success
-    print_throughput(run_iperf.iperf_throughput)
+    __print_throughput(run_iperf.iperf_throughput)
     logger().info("test_host_as_udp_server completed !!")
