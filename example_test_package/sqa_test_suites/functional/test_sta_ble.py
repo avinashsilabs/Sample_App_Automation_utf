@@ -803,5 +803,3 @@ def test_threading_sta_ble_modes_AES_psk_bypass(wifi_dut, wifi_access_point, ble
     mode = "ble_slave"
     with ModesThread_bypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
        time.sleep(15)
-
-
