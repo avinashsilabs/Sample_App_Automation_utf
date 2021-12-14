@@ -155,12 +155,6 @@ pipeline {
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                                 sh '''
                                     rm -rf reports
-                                    if [ -d ../venv/bin ]; then
-                                    . ../venv/bin/activate
-                                    else
-                                    . ../venv/Scripts/activate
-                                    fi
-                                    ./install.sh || true
                                     export SKIP_PROCESSING_ARTIFACTS=1
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                 '''
