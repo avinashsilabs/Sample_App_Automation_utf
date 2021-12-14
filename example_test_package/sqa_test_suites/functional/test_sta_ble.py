@@ -15,6 +15,22 @@ import time
 def logger():
     return get_logger(__name__)
 
+
+"""
+setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)    
+Test Steps:    
+        Step1 : Configuration of DUT in BT/Wlan.
+        Step2 : Verify the connection to AP
+        Step3 : Verify the Bleconnection
+
+Author:
+        Jyothi Nagireddy
+"""
+
 #this thread used for wifi join
 class WifiThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point):
@@ -642,7 +658,7 @@ def test_threading_sta_ble_modes_AES_pmk(wifi_dut, ble_client, wifi_access_point
     WPA_AES_PSK = False
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThreadNonbypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
+    with ModesThreadNonbypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
       time.sleep(15)
 
 @pytest.mark.config(
@@ -662,7 +678,7 @@ def test_threading_sta_ble_modes_tkip_psk(wifi_dut, wifi_access_point, ble_clien
     WPA_AES_PSK = False
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThreadNonbypass(wifi_dut, wifi_access_point,   WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode) :
+    with ModesThreadNonbypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode) :
       time.sleep(5)
 
 @pytest.mark.config(
@@ -682,7 +698,7 @@ def test_threading_sta_ble_modes_AES_psk(wifi_dut, wifi_access_point, ble_client
     WPA_AES_PSK = True
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThreadNonbypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
+    with ModesThreadNonbypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
        time.sleep(15)
 
 @pytest.mark.config(
@@ -702,7 +718,7 @@ def test_threading_sta_ble_modes_wireless_tkip_reboot(wifi_dut, wifi_access_poin
     WPA_AES_PSK = False
     WPA_TKIP_reboot = True
     mode = "ble_slave"
-    with ModesThreadNonbypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot ), BleThread_connection(wifi_dut, ble_client, mode) :
+    with ModesThreadNonbypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot ), BleThread_connection(wifi_dut, ble_client, mode) :
        time.sleep(15)
 
 @pytest.mark.config(
@@ -727,7 +743,7 @@ def test_threading_sta_ble_modes_tkip_pmk_bypass(wifi_dut, wifi_access_point, bl
     WPA_AES_PSK = False
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThread_bypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot), BleThread_connection(wifi_dut, ble_client, mode) :
+    with ModesThread_bypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot), BleThread_connection(wifi_dut, ble_client, mode) :
         time.sleep(15)
 
 @pytest.mark.config(
@@ -752,7 +768,7 @@ def test_threading_sta_ble_modes_AES_pmk_bypass(wifi_dut, ble_client, wifi_acces
     WPA_AES_PSK = False
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThread_bypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
+    with ModesThread_bypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
       time.sleep(15)
 
 @pytest.mark.config(
@@ -777,7 +793,7 @@ def test_threading_sta_ble_modes_tkip_psk_bypass(wifi_dut, wifi_access_point, bl
     WPA_AES_PSK = False
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThread_bypass(wifi_dut, wifi_access_point,   WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode) :
+    with ModesThread_bypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode) :
       time.sleep(15)
 
 @pytest.mark.config(
@@ -801,5 +817,5 @@ def test_threading_sta_ble_modes_AES_psk_bypass(wifi_dut, wifi_access_point, ble
     WPA_AES_PSK = True
     WPA_TKIP_reboot = False
     mode = "ble_slave"
-    with ModesThread_bypass(wifi_dut, wifi_access_point,  WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
+    with ModesThread_bypass(wifi_dut, wifi_access_point, WPA_TKIP_PMK, WPA_AES_PMK, WPA_TKIP_PSK, WPA_AES_PSK, WPA_TKIP_reboot) ,BleThread_connection(wifi_dut, ble_client, mode):
        time.sleep(15)
