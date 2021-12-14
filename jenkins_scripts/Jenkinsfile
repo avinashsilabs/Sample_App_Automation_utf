@@ -17,6 +17,8 @@ pipeline {
                                 export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
                                 git config --file=.gitmodules submodule.utf_pytest.url ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
                                 git submodule update --init --recursive utf_pytest
+                                
+
                             '''
                         }
                         script {
@@ -91,7 +93,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Get sqa test agent binary') {
+                stage('Build sqa test agent binary') {
                     steps{
                         script{
                             if(FLASH_EFR32.toBoolean()){
@@ -101,16 +103,24 @@ pipeline {
                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
                                         sh '''
-                                            rm -rf sqa_binary
                                             export GIT_SSH=ssh
                                             export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${SQA_TEST_AGENT} --single-branch sqa_binary
-                                        '''
-                                    }
-                                    dir('sqa_binary'){
-                                        sh '''
-                                           rm -f ../example_test_package/sqa_test_agent*.hex
-                                           cp -f ./sqa_test_agent.hex ../example_test_package/${SQA_TEST_AGENT}.hex
+
+                                            git config --file=.gitmodules submodule.mini_gecko_sdk.url ssh://git@stash.silabs.com/Redpine/mini_gecko_sdk
+                                            git submodule update --init --recursive mini_gecko_sdk
+                                            
+                                            
+                                            #git config --file=.gitmodules submodule.rs911x.url ssh://git@stash.silabs.com/Redpine/utf
+                                            #git config --file=.gitmodules submodule.rs911x.shallow true
+                                            #git submodule update --init --recursive rs911x
+                                            
+                                            git clone --no-checkout --branch=utf/dev --depth 1 ssh://git@stash.silabs.com/Redpine/utf rs911x
+                                            cd rs911x
+                                            git checkout utf/dev
+                                            cd ..
+                                            
+                                            rm -f example_test_package/sqa_test_agent*.hex
+                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${TCM_JENKINS_SSH_KEY_PATH}
                                         '''
                                     }
                                 }
