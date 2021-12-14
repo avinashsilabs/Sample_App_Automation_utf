@@ -298,4 +298,4 @@ def test_connectivity_with_WPA2_EAP_with_expireddate_TLS(wifi_dut, wifi_access_p
             # Initiating power save
             wifi_dut.interfaces.wifi.power_save(2)
             wifi_dut.interfaces.wifi.bt_power_save(2)
-           time.sleep(2)
+            time.sleep(2)
