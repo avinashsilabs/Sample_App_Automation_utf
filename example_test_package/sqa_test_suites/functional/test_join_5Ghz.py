@@ -1,7 +1,6 @@
 import pytest
 from utils.time_measurer import TimeMeasurer
 from utils.iperf.iperf_utils import ping
-from utils.logger import logger
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap
 
 pytestmark = [
@@ -22,7 +21,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"standard": '11n', "channel": '36'})
 # This test case verifies the dut connect functionality in 5ghz mode of access point
-def test_join_11n_mode(wifi_dut, wifi_access_point):
+def test_join_11n_mode(wifi_dut, wifi_access_point, logger):
     with TimeMeasurer() as t:
         # Joins the access point with given ssid and password
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -68,7 +67,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2', "channel": 54})
 # This test case verifies the dut connect functionality in 5ghz dfs channel mode of access point
-def test_join_5ghz_dfs_channel(wifi_dut, wifi_access_point):
+def test_join_5ghz_dfs_channel(wifi_dut, wifi_access_point, logger):
     with TimeMeasurer() as t:
         # enables the rejoin feature on dut
         wifi_dut.interfaces.wifi.rejoin()
@@ -113,7 +112,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 # This test case verifies the dut connect functionality in 5ghz dfs mode of access point for channels 100 and 140
-def test_join_5ghz_dfs_channels_100_and_140(wifi_dut, wifi_access_point):
+def test_join_5ghz_dfs_channels_100_and_140(wifi_dut, wifi_access_point, logger):
     with TimeMeasurer() as t:
         channel_list = [100,140]
         for channel in channel_list:

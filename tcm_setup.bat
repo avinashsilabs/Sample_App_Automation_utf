@@ -1,5 +1,5 @@
 @echo off
-if not exist .\tcmgr (
+if not exist .\tcmgr\tcmgr.py (
   git submodule update --init --recursive
 )
 set tcm=.\tcmgr\tcmgr.ps1
@@ -33,6 +33,13 @@ echo(
 echo Activate project environment by running '%projfile%'
 echo(
 
+
+if not exist utf_pytest\venv (
+   call %projenv%
+   python -m venv utf_pytest\venv
+   call utf_pytest\venv\scripts\activate
+   pip install -r utf_pytest\test-requirements.txt
+)
 
 goto DONE
 
