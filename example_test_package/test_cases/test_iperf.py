@@ -6,7 +6,15 @@ from utils.iperf.iperf_utils import print_dict
 
 def logger():
     return get_logger(__name__)
+
+
 prefix = "##     "
+
+
+def print_throughput(iperf_throughput: dict):
+    if iperf_throughput is not None:
+        print_dict(prefix, iperf_throughput)
+
 
 @pytest.mark.parametrize('run_iperf', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
@@ -14,8 +22,7 @@ prefix = "##     "
      }], indirect=['run_iperf'])
 def test_device_as_tcp_server(run_iperf):
     assert run_iperf.iper_process_success
-    if not run_iperf.iperf_throughput is None:
-        print_dict(prefix, run_iperf.iperf_throughput)
+    print_throughput(run_iperf.iperf_throughput)
     logger().info("test_device_as_tcp_server completed !!")
 
 
@@ -25,8 +32,7 @@ def test_device_as_tcp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_device_as_udp_server(run_iperf):
     assert run_iperf.iper_process_success
-    if not run_iperf.iperf_throughput is None:
-        print_dict(prefix, run_iperf.iperf_throughput)
+    print_throughput(run_iperf.iperf_throughput)
     logger().info("test_device_as_udp_server completed !!")
 
 
@@ -36,8 +42,7 @@ def test_device_as_udp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_host_as_tcp_server(run_iperf):
     assert run_iperf.iper_process_success
-    if not run_iperf.iperf_throughput is None:
-        print_dict(prefix, run_iperf.iperf_throughput)
+    print_throughput(run_iperf.iperf_throughput)
     logger().info("test_host_as_tcp_server completed !!")
 
 
@@ -47,6 +52,5 @@ def test_host_as_tcp_server(run_iperf):
      }], indirect=['run_iperf'])
 def test_host_as_udp_server(run_iperf):
     assert run_iperf.iper_process_success
-    if not run_iperf.iperf_throughput is None:
-        print_dict(prefix, run_iperf.iperf_throughput)
+    print_throughput(run_iperf.iperf_throughput)
     logger().info("test_host_as_udp_server completed !!")
