@@ -26,7 +26,7 @@ setup requirement:
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Radio Server (For now running on NUC)
-Step1: 1. Configuration of DUT in 2G or 5G mode : 2G
+Step1: 1. Configuration of DUT in 2G mode
 Step2 : Verifying EAP Connection in TTLS mode
 Step3: Verifying EAP Connection in PEAPv0v1 mode
 Step4 : Verifying EAP Connection in TLS mode
@@ -82,7 +82,6 @@ def test_connectivity_with_WPA2_EAP_with_TTLS_Method(wifi_dut, wifi_access_point
                 result, wifi_dut.interfaces.wifi.IPConfig
             ), f"Failed to get IP address. Result = {result}"
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
             # Initiating power save
             wifi_dut.interfaces.wifi.power_save(2)
             wifi_dut.interfaces.wifi.bt_power_save(2)
@@ -106,7 +105,7 @@ def test_connectivity_with_WPA2_EAP_with_PEAPv0_v1_Method(wifi_dut, wifi_access_
             # enable rejoin
             wifi_dut.interfaces.wifi.rejoin()
             # test_wifi_join
-            wifi_dut.interfaces.wifi.eap_method(eap_method="PEAP", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+            wifi_dut.interfaces.wifi.eap_method(eap_method="peap", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
             result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
             # Get IP through DHCP
             result = wifi_dut.interfaces.wifi.start_ip()
@@ -114,7 +113,6 @@ def test_connectivity_with_WPA2_EAP_with_PEAPv0_v1_Method(wifi_dut, wifi_access_
                 result, wifi_dut.interfaces.wifi.IPConfig
             ), f"Failed to get IP address. Result = {result}"
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
             # Initiating power save
             wifi_dut.interfaces.wifi.power_save(2)
             wifi_dut.interfaces.wifi.bt_power_save(2)
@@ -247,7 +245,6 @@ def test_connectivity_with_WPA2_EAP_with_nocertificate_TLS(wifi_dut, wifi_access
                 result, wifi_dut.interfaces.wifi.IPConfig
             ), f"Failed to get IP address. Result = {result}"
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
             # Initiating power save
             wifi_dut.interfaces.wifi.power_save(2)
             wifi_dut.interfaces.wifi.bt_power_save(2)
@@ -271,8 +268,8 @@ pytestmark = [
     )
 ]
 
-# EAP Connection in TTS mode with expired date certificate
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+# # EAP Connection in TTS mode with expired date certificate
+# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_connectivity_with_WPA2_EAP_with_expireddate_TLS(wifi_dut, wifi_access_point):
     ap_user_name = "\\\"user1\\\""
     ap_password = "\\\"12345678\\\""
@@ -301,4 +298,4 @@ def test_connectivity_with_WPA2_EAP_with_expireddate_TLS(wifi_dut, wifi_access_p
             # Initiating power save
             wifi_dut.interfaces.wifi.power_save(2)
             wifi_dut.interfaces.wifi.bt_power_save(2)
-            time.sleep(2)
+           time.sleep(2)
