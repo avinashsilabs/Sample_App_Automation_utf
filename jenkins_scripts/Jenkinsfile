@@ -161,7 +161,7 @@ pipeline {
                             }
                             archiveArtifacts 'test_package/**'
                             archiveArtifacts 'reports/**'
-                            archiveArtifacts 'utf/harness/harness_example.yaml'
+                            archiveArtifacts "utf/harness/${env.HARNESS_NAME}.yaml"
                             junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                         }
                     }
