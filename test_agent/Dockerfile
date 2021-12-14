@@ -39,7 +39,11 @@ RUN cp rs911x/Host_MCU/third_party/aws_sdk/platform/silabs/src/network_sapi_wrap
 WORKDIR /build/rs911x/Host_MCU/test/sqa_test_agent
 RUN rm -rf build
 RUN slc generate --copy-sdk-sources -p sqa_test_agent.slcp -d build -o makefile
-RUN touch build_test_agent.sh && chmod a+x build_test_agent.sh && echo '#!/bin/bash' >> build_test_agent.sh && echo 'make -C build -f sqa_test_agent.Makefile -j' >> build_test_agent.sh
+RUN touch build_test_agent.sh && chmod a+x build_test_agent.sh && echo '#!/bin/bash' >> build_test_agent.sh && \
+    echo 'make -C build -f sqa_test_agent.Makefile -j' >> build_test_agent.sh && \
+    echo 'EXIT_CODE=$?' >> build_test_agent.sh && \
+    echo 'chmod -R 777 build' >> build_test_agent.sh && \
+    echo 'exit $EXIT_CODE' >> build_test_agent.sh
 
 # Add in non-root user
 ENV UID_OF_DOCKERUSER 1000
