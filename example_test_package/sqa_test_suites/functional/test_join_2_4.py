@@ -134,7 +134,8 @@ def test_wifi_join_pmk_by_giving_wrong_psk(wifi_dut, wifi_access_point):
             # This API connects STA to the third party AP with the pmk generated
             wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid, "12345678")
         assert exc_info.value.error_code == 0x0008
-    logger().info(f"Associated in {t.duration} seconds")
+    logger().info(f"Dut Tried to connect to ap with wrong password, observed error code 0x0008 which is expected")
+    logger().info(f"test executed in {t.duration} seconds")
 
 # test.ID: 2.1.16.15
 
