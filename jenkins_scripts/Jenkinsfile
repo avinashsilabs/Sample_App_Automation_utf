@@ -8,6 +8,11 @@ pipeline {
             stages{
                 stage('Toolchain Setup'){
                     steps {
+                        script {
+                            if (env.SQA_TEST_AGENT == "") {
+                                env.SQA_TEST_AGENT = env.RS9116_FIRMWARE
+                            }
+                        }
                         withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
