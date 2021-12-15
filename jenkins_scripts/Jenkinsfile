@@ -121,6 +121,7 @@ pipeline {
                                             
                                             rm -f example_test_package/sqa_test_agent*.hex
                                             ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${TCM_JENKINS_SSH_KEY_PATH}
+                                            cp -f example_test_package/sqa_test_agent.hex example_test_package/${SQA_TEST_AGENT}.hex
                                         '''
                                     }
                                 }

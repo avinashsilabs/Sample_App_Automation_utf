@@ -1,6 +1,6 @@
 @echo off
 if not exist .\tcmgr\tcmgr.py (
-  git submodule update --init --recursive
+  git submodule update --init --recursive tcmgr
 )
 set tcm=.\tcmgr\tcmgr.ps1
 IF [%1]==[] (
