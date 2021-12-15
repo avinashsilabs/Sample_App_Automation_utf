@@ -14,10 +14,25 @@ from interfaces.wifi import WlanError
 import time
 from utils.logger import get_logger
 
-
 def logger():
     return get_logger(__name__)
 
+
+"""setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+
+     Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http firmware upgrade
+        5. Verify the otaf status
+
+    Author: Ravi Nemali
+"""
 
 @pytest.mark.config(
     "wifi_dut",
