@@ -3,6 +3,21 @@ from utils.time_measurer import TimeMeasurer
 from utils.iperf.iperf_utils import ping
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap
 
+"""setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 5Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+
+    Author: Ravi Nemali
+"""
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
