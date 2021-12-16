@@ -24,17 +24,17 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-"""
 
-""" Test Steps:
+  Test Steps:
         1. Initiates the DUT Coex wlan and BT mode
         2. Initiates the DUT in master Spp mode for the capability
         3. Initiates the client in slave spp with capabilty enables
-        4. Opnes Bt socket and connects to the remote client.
+        4. Opens Bt socket and connects to the remote client.
         5. Verifies ping after the connection.
+  
+  Author: Ravi Nemali
+    
 """
-
-
 
 '''=============================== DUT AS SLAVE TEST CASES ================================='''
 

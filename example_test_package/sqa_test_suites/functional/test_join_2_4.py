@@ -14,6 +14,14 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+
+    Author: Ravi Nemali
 """
 
 pytestmark = [
@@ -28,15 +36,12 @@ pytestmark = [
         }
     )
 ]
-
-#test ID: 2.1.6.25
-
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n'})
 # The test case checks whether the DUT connection works fine in Access point 11n mode
-def test_wifi_join_11n_security(wifi_dut, wifi_access_point):
+def test_Connectivity_with_11n_only_mode_AP_T7083(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -59,14 +64,12 @@ def test_wifi_join_11n_security(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated and ping in {t.duration} seconds")
 
-# test.ID: 2.1.16.2
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"passphrase": 'test123@random'})
 # The test case checks whether the DUT connection works fine on giving the random passphrase
-def test_wifi_join_by_rsi_psk(wifi_dut, wifi_access_point):
+def test_Joining_by_rsi_psk_command_T7090(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP
         result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -90,17 +93,16 @@ def test_wifi_join_by_rsi_psk(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-# test.ID: 2.1.16.5
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": 'WPA2'})
 # The test case checks whether the DUT connects to Access point with the generated pmk with user given ssid and password
-def test_wifi_join_pmk(wifi_dut, wifi_access_point):
+def test_Joining_to_PMK_T7091(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP with the pmk generated
-        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,wifi_access_point.interfaces.wifi.passphrase)
+        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
+                                          wifi_access_point.interfaces.wifi.passphrase)
 
         # This API Enables the DHCP in DUT
         result = wifi_dut.interfaces.wifi.start_ip()
@@ -120,15 +122,13 @@ def test_wifi_join_pmk(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-# test.ID: 2.1.16.7
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "pmkwithwrongpsk", "passphrase": 'thisisatestnetwork', "security": 'WPA2'})
 # The test case checks whether the DUT connection fails with the wrong psk
-def test_wifi_join_pmk_by_giving_wrong_psk(wifi_dut, wifi_access_point):
+def test_Joining_to_PMK_in_module_by_wrong_PSK_T7092(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         with pytest.raises(WlanError) as exc_info:
             # This API connects STA to the third party AP with the pmk generated
@@ -137,15 +137,13 @@ def test_wifi_join_pmk_by_giving_wrong_psk(wifi_dut, wifi_access_point):
         logger().info(f"Dut Tried to connect to ap with wrong password, observed error code 0x0008 which is expected")
     logger().info(f"test executed in {t.duration} seconds")
 
-# test.ID: 2.1.16.15
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testwithnossid", "passphrase": 'Testing_pmk', "security": "WPA2"})
 # The test case checks whether the DUT connection fails with empty ssid in pmk
-def test_wifi_join_pmk_without_SSID(wifi_dut, wifi_access_point):
+def test_wifi_join_PMK_without_SSID_T7093(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         with pytest.raises(WlanError) as exc_info:
             # This API connects STA to the third party AP with the pmk generated
@@ -155,14 +153,12 @@ def test_wifi_join_pmk_without_SSID(wifi_dut, wifi_access_point):
     logger().info(f"test executed in {t.duration} seconds")
 
 
-# test.ID: 2.1.16.20
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "redpine", "passphrase": 'Testing_pmk', "security": "WPA2"})
 # The test case checks whether the DUT connection fails with space before the redpine ssid in pmk
-def test_wifi_join_pmk_with_space_before_redpine_ssid(wifi_dut, wifi_access_point):
+def test_wifi_join_pmk_with_space_before_redpine_ssid_T7094(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         ssid = " redpine"
         with pytest.raises(WlanError) as exc_info:
@@ -172,8 +168,6 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid(wifi_dut, wifi_access_poin
         logger().info(f"Dut Tried to connect to ap with wrong password, observed error code 0x0008 which is expected")
     logger().info(f"test executed in {t.duration} seconds")
 
-# test.ID: 2.1.16.21
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -181,10 +175,11 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid(wifi_dut, wifi_access_poin
 {"ssid": "Testssid", "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnmkloirgrgrtyuio1234567890o", "security": "WPA2"}
                     )
 # The test case checks whether the DUT connection works with 64 characters of passphrase in pmk
-def test_psk_with_64_different_characters(wifi_dut, wifi_access_point):
+def test_psk_with_64_different_characters_T7095(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP with the pmk generated for the 64 characters of passphrase
-        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,wifi_access_point.interfaces.wifi.passphrase)
+        wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
+                                          wifi_access_point.interfaces.wifi.passphrase)
 
         # This API Enables the DHCP in DUT
         result = wifi_dut.interfaces.wifi.start_ip()
@@ -204,8 +199,6 @@ def test_psk_with_64_different_characters(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-# test.ID: 2.1.16.22
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -213,7 +206,7 @@ def test_psk_with_64_different_characters(wifi_dut, wifi_access_point):
                                                "passphrase": "123456789qwertyuio123456789qwertyuio123456789zxcvbnm123456789zx",
                                                "security": "WPA2"})
 # The test case checks whether the DUT connection works with 64 bytes of passphrase and 32 bytes of ssid in pmk
-def test_join_pmk_with_64_characters_psk_32_characters_ssid(wifi_dut, wifi_access_point):
+def test_join_pmk_with_64_characters_psk_32_characters_ssid_T7096(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP with the pmk generated for the 64 characters of passphrase and 32 bytes of ssid
         wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
@@ -237,14 +230,12 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid(wifi_dut, wifi_acces
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-# test.ID: 2.1.6.31
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"broadcast_ssid": False})
 # The test case checks whether the DUT connection works with AP hidden mode
-def test_connectivity_with_hidden_ap(wifi_dut, wifi_access_point):
+def test_Connectivity_with_hidden_mode_AP_T7084(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP in hidden mode feature
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -267,14 +258,12 @@ def test_connectivity_with_hidden_ap(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated in {t.duration} seconds")
 
-# test.ID: 2.1.6..91.1
-
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 # The test case checks whether the DUT connection Time on the joining the AP with pmk
-def test_pmk_connect_time(wifi_dut, wifi_access_point):
+def test_Join_time_providing_PMK_T7087(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP with the pmk generated
         wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
@@ -299,13 +288,12 @@ def test_pmk_connect_time(wifi_dut, wifi_access_point):
     assert status == 1
     wifi_dut.interfaces.wifi.leave()
 
-# test.ID: 2.1.6..91.1(a)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 # The test case checks whether the DUT connection Time on the joining the AP
-def test_psk_connect_time(wifi_dut, wifi_access_point):
+def test_Join_time_providing_PSK_T7088(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # This API connects STA to the third party AP
         result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -330,14 +318,12 @@ def test_psk_connect_time(wifi_dut, wifi_access_point):
     assert status == 1
     wifi_dut.interfaces.wifi.leave()
 
-# test.ID: 2.1.6.45
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"ssid": 'testing', "channel": 7})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'testing', "security": 'WPA2', "channel": 7})
 # The test case checks whether the DUT connection and disconnection  to AP for 30 iterations
-def test_wifi_join_and_repeat_in_loop_for_30_times(wifi_dut, wifi_access_point):
+def test_Init_Scan_Join_Disconnect_30min_T7086(wifi_dut, wifi_access_point):
     for iteration in range(0, 30):
         # This API connects STA to the third party AP
         result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

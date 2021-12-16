@@ -14,8 +14,19 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+    
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. ANT stack initiation with ant thread
+        3. Join the access point and enable the dhcp with wifi thread
+        4. Start ble scan and advertise in module with ble thread
+        5. Start bt inquiry in DUT with bt thread
+    
+    NOTE: Use the ANT supported EVK(v1.5) with ANT supported rs9116 firmware
+    
+    Author: Ravi Nemali
+ 
 """
-"NOTE: Use the ANT supported EVK(v1.5) with ANT supported rs9116 firmware"
 
 # this thread used for Ant initialization
 class AntThread(ThreadBase):
