@@ -1,6 +1,6 @@
 @echo off
-if not exist .\tcmgr (
-  git submodule update --init --recursive
+if not exist .\tcmgr\tcmgr.py (
+  git submodule update --init --recursive tcmgr
 )
 set tcm=.\tcmgr\tcmgr.ps1
 IF [%1]==[] (
@@ -19,20 +19,27 @@ if %errorlevel% neq 0 (
     goto TCM_ERROR
     )
 
-echo(
-echo Contents of %projfile%:
-echo ---------------------------
-type %projfile%
-echo ---------------------------
-echo(
-echo Contents of %projproperties%:
-echo ---------------------------
-type %projproperties%
-echo ---------------------------
-echo(
-echo Activate project environment by running '%projfile%'
-echo(
+echo Toolchains downloadeded successfully.
 
+if not exist utf_pytest\test-requirements.txt (
+   git submodule update --init --recursive utf_pytest
+)
+
+if not exist utf_pytest\utf\utils\utf_queue_client\test-requirements.txt (
+   cd utf_pytest
+   git submodule update --init --recursive
+   cd ..
+)
+
+if not exist utf_pytest\venv\pyvenv.cfg (
+   call %projfile%
+   python -m venv utf_pytest\venv
+   call utf_pytest\venv\scripts\activate
+   pip install wheel
+   pushd utf_pytest
+   pip install -r test-requirements.txt
+   popd
+)
 
 goto DONE
 

@@ -1,14 +1,25 @@
 Dependencies:
-- Repo: ssh://git@stash.silabs.com/simplicity_studio/uc_cli.git
+  # use ssh or https urls based on your git config in dev machine.
+- Repo: https://stash.silabs.com/scm/simplicity_studio/uc_cli.git
+  #https://stash.silabs.com/scm/simplicity_studio/uc_cli.git
+  #ssh://git@stash.silabs.com/simplicity_studio/uc_cli.git
   Tag: master
   TagAlias: uc_cli
-- Repo: ssh://git@stash.silabs.com/toolchain_external/python_3_9_2_x64.git
+- Repo: https://stash.silabs.com/scm/toolchain_external/python_3_9_2_x64.git
+  #https://stash.silabs.com/scm/toolchain_external/python_3_9_2_x64.git
+  #ssh://git@stash.silabs.com/toolchain_external/python_3_9_2_x64.git
   Tag: python_3_9_2_x64_rel_01
-- Repo: ssh://git@stash.silabs.com/toolchain_external/gcc_arm_none_eabi_7_2017_q4_major_win32.git
+- Repo: https://stash.silabs.com/scm/toolchain_external/gcc_arm_none_eabi_7_2017_q4_major_win32.git
+  #https://stash.silabs.com/scm/toolchain_external/gcc_arm_none_eabi_7_2017_q4_major_win32.git
+  #ssh://git@stash.silabs.com/toolchain_external/gcc_arm_none_eabi_7_2017_q4_major_win32.git
   Tag: gcc_arm_none_eabi_7_2017_q4_major_win32_rel_0
-- Repo: ssh://git@stash.silabs.com/toolchain_external/mingw_6_0_2_win32.git
+- Repo: https://stash.silabs.com/scm/toolchain_external/mingw_6_0_2_win32.git
+  #https://stash.silabs.com/scm/toolchain_external/mingw_6_0_2_win32.git
+  #ssh://git@stash.silabs.com/toolchain_external/mingw_6_0_2_win32.git
   Tag: mingw_6_0_2_win32_rel_0
-- Repo: ssh://git@stash.silabs.com/toolchain_external/java_jdk_11_0_7_10_amazon_corretto_win64.git
+- Repo: https://stash.silabs.com/scm/toolchain_external/java_jdk_11_0_7_10_amazon_corretto_win64.git
+  #https://stash.silabs.com/scm/toolchain_external/java_jdk_11_0_7_10_amazon_corretto_win64.git
+  #ssh://git@stash.silabs.com/toolchain_external/java_jdk_11_0_7_10_amazon_corretto_win64.git
   Tag: java_jdk_11_0_7_10_amazon_corretto_win64_rel_1
 
 Environment:
