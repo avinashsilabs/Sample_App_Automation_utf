@@ -12,14 +12,7 @@ ECHO Using inputxml: %inputxml%
 set projfile=projenv.bat
 set projproperties=projenv.properties
 
-
 PowerShell -inputformat none -ExecutionPolicy Bypass -File  %tcm% %inputxml% %projfile%
-if %errorlevel% neq 0 (
-    set exitcode=%errorlevel%
-    goto TCM_ERROR
-    )
-
-echo Toolchains downloadeded successfully.
 
 if not exist utf_pytest\test-requirements.txt (
    git submodule update --init --recursive utf_pytest
@@ -35,11 +28,19 @@ if not exist utf_pytest\venv\pyvenv.cfg (
    call %projfile%
    python -m venv utf_pytest\venv
    call utf_pytest\venv\scripts\activate
-   pip install wheel
    pushd utf_pytest
-   pip install -r test-requirements.txt
+   call venv\scripts\activate
+   echo installing requirements...
+   call .\install.bat
    popd
 )
+
+if %errorlevel% neq 0 (
+    set exitcode=%errorlevel%
+    goto TCM_ERROR
+    )
+
+echo Toolchains downloadeded successfully.
 
 goto DONE
 
