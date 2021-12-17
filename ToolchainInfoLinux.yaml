@@ -2,12 +2,12 @@ Dependencies:
 - Repo: ssh://git@stash.silabs.com/simplicity_studio/uc_cli.git
   Tag: master
   TagAlias: uc_cli
-- Repo: ssh://git@stash.silabs.com/toolchain_external/gcc_arm_none_eabi_7_2017_q4_major_linux.git
-  Tag: gcc_arm_none_eabi_7_2017_q4_major_linux_rel_0
+- Repo: ssh://git@stash.silabs.com/toolchain_external/gcc_arm_none_eabi_10_2020_q4_major_win32.git
+  Tag: gcc_arm_none_eabi_10_2020_q4_major_win32_rel_1
 
 Environment:
   PrependPath: $env:TCM_TOOLCHAIN_ROOT/uc_cli
   Variables:
   - VarName: ARM_GCC_DIR
-    VarValue: $env:TCM_TOOLCHAIN_ROOT/gcc_arm_none_eabi_7_2017_q4_major_linux_rel_0
+    VarValue: $env:TCM_TOOLCHAIN_ROOT/gcc_arm_none_eabi_10_2020_q4_major_win32_rel_1
 
