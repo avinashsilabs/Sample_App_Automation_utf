@@ -18,4 +18,4 @@ Environment:
     VarValue: $env:TCM_VIRTUAL_DRIVE`:\java_jdk_11_0_7_10_amazon_corretto_win64_rel_1
   - VarName: ARM_GCC_DIR_WIN
     VarValue: $env:TCM_VIRTUAL_DRIVE`:\gcc_arm_none_eabi_7_2017_q4_major_win32_rel_0
-    
+
