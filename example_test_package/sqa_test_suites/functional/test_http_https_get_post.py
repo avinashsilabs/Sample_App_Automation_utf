@@ -148,9 +148,7 @@ def test_http_get_with_100_mb_file(http_server, wifi_dut, wifi_access_point, log
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     # API used to get the http data
-    status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
-
+    wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -194,9 +192,207 @@ def test_http_get_functionality_comparison(http_server, wifi_dut,http_client, wi
     logger.info(content)
     assert content == content1
 
+#================== HTTP Post test cases ====================
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+#This test case verifies the Https post functionality
+def test_http_post_functionality(http_server, wifi_dut,http_client, wifi_access_point, logger, index_path):
 
+    # Initiates scan in dut
+    wifi_dut.interfaces.wifi.scan(ssid=None)
 
+    # Joins the access point with given ssid and the passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
+    # starts the dhcp in dut
+    wifi_dut.interfaces.wifi.start_ip()
 
+    # Enables the wifi power save in dut
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
+    # Enables the bt power save in dut
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    # API used to post the http data
+    status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                                         post_data="helloravi")
+
+    logger.info(status)
+    logger.info(content)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+#This test case verifies the Https post functionality
+def test_http_post_functionality_for_50mb_data(http_server, wifi_dut,http_client, wifi_access_point, logger, index_path):
+
+    # Initiates scan in dut
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    # Joins the access point with given ssid and the passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # starts the dhcp in dut
+    wifi_dut.interfaces.wifi.start_ip()
+
+    # Enables the wifi power save in dut
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+    # Enables the bt power save in dut
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    # API used to post the http data
+    status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                                         post_data="hellohvbsjvhkjsdhvhksdhvksjdvravvjvdhi"
+                                                                   "jhdvbjhbjdhjvjdbjbsdwfbkjdhkdhfkk"
+                                                                   "jhdvjdjhddjhjgfjhjfdkhfhhfkhjhkfhjkfhkhfhak")
+
+    logger.info(status)
+    logger.info(content)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py","index_long_crlf.html"})
+#This test case verifies the Http post functionality for different urls
+def test_http_post_functionality_different_urls(http_server, wifi_dut,http_client, wifi_access_point, logger, index_path):
+
+    # Initiates scan in dut
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    # Joins the access point with given ssid and the passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # starts the dhcp in dut
+    wifi_dut.interfaces.wifi.start_ip()
+
+    # Enables the wifi power save in dut
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+    # Enables the bt power save in dut
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    # API used to post the http data
+    status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http,index_path ,
+                                                         post_data="helloravifordifferenturlsusedtopostthed"
+                                                                   "atoverthehttppostprotocol")
+
+    logger.info(status)
+    logger.info(content)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+#This test case verifies the Https post functionality for 5 iterations
+def test_http_post_functionality_for_5_iterations(http_server, wifi_dut,http_client, wifi_access_point, logger, index_path):
+
+    for i in range(0,5):
+        # Initiates scan in dut
+        wifi_dut.interfaces.wifi.scan(ssid=None)
+
+        # Joins the access point with given ssid and the passphrase
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        # starts the dhcp in dut
+        wifi_dut.interfaces.wifi.start_ip()
+
+        # Enables the wifi power save in dut
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+        # Enables the bt power save in dut
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+        # API used to post the http data
+        status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                                         post_data="helloravi")
+
+        logger.info(status)
+    logger.info(content)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+#This test case verifies the Https post functionality
+def test_http_post_functionality_invalid_ip(http_server, wifi_dut,http_client, wifi_access_point, logger):
+
+    # Initiates scan in dut
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    # Joins the access point with given ssid and the passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # starts the dhcp in dut
+    wifi_dut.interfaces.wifi.start_ip()
+
+    # Enables the wifi power save in dut
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+    # Enables the bt power save in dut
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    # API used to post the http data
+    with pytest.raises(WlanError) as exc_info:
+        status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                                             server_ip='192.168.9.99',
+                                                             post_data="helloravi")
+    assert exc_info.value.error_code == 0xBB38, "observed wrong error code expected is 0xBB38"
+
+    logger.info(status)
+    logger.info(content)
