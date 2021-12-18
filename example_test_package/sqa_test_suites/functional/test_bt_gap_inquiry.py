@@ -36,7 +36,7 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
-def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client):  # T3561 in testrail
+def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client):
     inq_type = 1
     duration = 10000
     max_no_dev = 10
@@ -153,7 +153,7 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client):  # T3561 in testrail
             assert True
     logger().info(f"Test case executed in {t.duration} seconds")
 
-def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):    #T3563 in testrail
+def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):
     inq_type = 0
     duration = 10000
     max_no_dev = 10
@@ -195,7 +195,7 @@ def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):    #T3563 in testrail
                 assert False
     logger().info(f"Test case executed in {t.duration} seconds")
 
-def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):  # T3564 in testrail
+def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):
         inq_type = 1
         duration = 10000
         max_no_dev = 10
@@ -230,7 +230,7 @@ def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):  # T3564 in testrail
                 assert False, logger().info(f"inquiry complete event not found")
         logger().info(f"Test case executed in {t.duration} seconds")
 
-def test_bt_inq_complete_no_dev_C19985(wifi_dut, bt_client):  # T3565 in testrail
+def test_bt_inq_complete_no_dev_C19985(wifi_dut, bt_client):
         inq_type = 1
         duration = 10000
         max_no_dev = 10
