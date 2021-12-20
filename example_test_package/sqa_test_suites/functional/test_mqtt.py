@@ -20,6 +20,8 @@ import filecmp
 import os
 import random
 from threading import Thread
+from utils import mac_address_to_string
+from typing import Dict
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -34,9 +36,26 @@ from threading import Thread
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+        5. NUC Wifi Sniffer 
         
 Note: The test cases added in the file works only in AT mode
 """
+
+
+def get_mqtt_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) -> Dict[str, int]:
+    mqtt_capture_list = []
+    for packet in wifi_sniffer.interfaces.capture.iter_packets(
+            decrypt_packets=True,
+            encryption_type="WPA-PWD",
+            decryption_key=decryption_key,
+            ):
+        for layer in packet.layers:
+            layer_name = layer.layer_name.lower()
+
+            if layer_name in print_layers:
+                mqtt_layer = str(layer)
+                mqtt_capture_list.append(tuple([mqtt_layer, packet.sniff_timestamp]))
+    return mqtt_capture_list
 
 
 @pytest.mark.config(
@@ -1337,3 +1356,368 @@ def test_mqtt_rx_testcase43(
     if os.path.exists("temp.txt"):
         os.remove("temp.txt")
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 300)])
+def test_mqtt_keep_alive_60_testcase_8(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
+        ):
+    capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+    # DUT connects to MQTT server
+    wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,
+                                                           keepalive_interval=keep_alive_time)
+    time.sleep(idle_time)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(1)
+    timestamp = []
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    mqtt_capture_list = get_mqtt_list(wifi_sniffer, decryption_key, ["mqtt"])
+    if not len(mqtt_capture_list):
+        logger.info(f"MQTT packets are not captured or one of the 4-way handshake pkts are not captured in the "
+                    f"sniffer file")
+    for count in mqtt_capture_list:
+        if "Ping Request" in count[0]:
+            timestamp.append(count[1])
+
+    if (not len(timestamp)) and (len(mqtt_capture_list)):
+        logger.info(f"MQTT-ping packets are not captured in the sniffer")
+
+    if len(timestamp):
+        for count in range(0, len(timestamp) - 1):
+            time_diff = float(timestamp[count + 1]) - float(timestamp[count])
+            if time_diff > (4 + keep_alive_time):
+                logger.info(f"MQTT-KEEP alive packets are not sending every {keep_alive_time}sec on {count} time")
+            logger.info(
+                f"Number of MQTT-KEEP alive packets sent->{len(timestamp)}, while the test has been running for {idle_time} sec")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 600)])
+def test_mqtt_keep_alive_120_testcase_9(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
+        ):
+    capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+    # DUT connects to MQTT server
+    wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,
+                                                           keepalive_interval=keep_alive_time)
+    time.sleep(idle_time)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(1)
+    timestamp = []
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    mqtt_capture_list = get_mqtt_list(wifi_sniffer, decryption_key, ["mqtt"])
+    if not len(mqtt_capture_list):
+        logger.info(f"MQTT packets are not captured or one of the 4-way handshake pkts are not captured in the "
+                    f"sniffer file")
+    for count in mqtt_capture_list:
+        if "Ping Request" in count[0]:
+            timestamp.append(count[1])
+
+    if (not len(timestamp)) and (len(mqtt_capture_list)):
+        logger.info(f"MQTT-ping packets are not captured in the sniffer")
+
+    if len(timestamp):
+        for count in range(0, len(timestamp) - 1):
+            time_diff = float(timestamp[count + 1]) - float(timestamp[count])
+            if time_diff > (4 + keep_alive_time):
+                logger.info(f"MQTT-KEEP alive packets are not sending every {keep_alive_time}sec on {count} time")
+            logger.info(
+                f"Number of MQTT-KEEP alive packets sent->{len(timestamp)}, while the test has been running for {idle_time} sec")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(300, 1200)])
+def test_mqtt_keep_alive_300_testcase_10(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
+        ):
+    capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+    # DUT connects to MQTT server
+    wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,
+                                                           keepalive_interval=keep_alive_time)
+    time.sleep(idle_time)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(1)
+    timestamp = []
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    mqtt_capture_list = get_mqtt_list(wifi_sniffer, decryption_key, ["mqtt"])
+    if not len(mqtt_capture_list):
+        logger.info(f"MQTT packets are not captured or one of the 4-way handshake pkts are not captured in the "
+                    f"sniffer file")
+    for count in mqtt_capture_list:
+        if "Ping Request" in count[0]:
+            timestamp.append(count[1])
+
+    if (not len(timestamp)) and (len(mqtt_capture_list)):
+        logger.info(f"MQTT-ping packets are not captured in the sniffer")
+
+    if len(timestamp):
+        for count in range(0, len(timestamp) - 1):
+            time_diff = float(timestamp[count + 1]) - float(timestamp[count])
+            if time_diff > (4 + keep_alive_time):
+                logger.info(f"MQTT-KEEP alive packets are not sending every {keep_alive_time}sec on {count} time")
+            logger.info(
+                f"Number of MQTT-KEEP alive packets sent->{len(timestamp)}, while the test has been running for {idle_time} sec")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
+def test_mqtt_keep_alive_disable_testcase_11(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
+        ):
+    capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+    # DUT connects to MQTT server
+    wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,
+                                                           keepalive_interval=keep_alive_time)
+    time.sleep(idle_time)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(1)
+    timestamp = []
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    mqtt_capture_list = get_mqtt_list(wifi_sniffer, decryption_key, ["mqtt"])
+    if not len(mqtt_capture_list):
+        logger.info(f"MQTT packets are not captured or one of the 4-way handshake pkts are not captured in the "
+                    f"sniffer file")
+    for count in mqtt_capture_list:
+        if "Ping Request" in count[0]:
+            timestamp.append(count[1])
+    assert len(timestamp) == 0, f"DUT is sending MQTT-KEEP alive packets even though feature is disabled"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+def test_mqtt_connect_clean_session_0_testcase_49(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
+        ):
+    capture_filename = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+    # DUT connects to MQTT server
+    wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt, clean_session=0
+                                                           )
+    time.sleep(2)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(1)
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    mqtt_capture_list = get_mqtt_list(wifi_sniffer, decryption_key, ["mqtt"])
+    if not len(mqtt_capture_list):
+        logger.info(f"MQTT packets are not captured or one of the 4-way handshake pkts are not captured in the "
+                    f"sniffer file")
+        return
+    flag = False
+    clean_session = False
+    for count in mqtt_capture_list:
+        if "Connect Command" in count[0]:
+            flag = True
+            mqtt_fields = count[0].split("\n")
+            for field in mqtt_fields:
+                if "Clean Session Flag:" in field:
+                    field.split(":")[1].strip() == "Set"
+                    clean_session = True
+                    break
+    if not flag:
+        logger.info(f"MQTT-CONNECT packet is not captured")
+        return
+    assert clean_session == True, f"DUT is not sending MQTT-CONNECT PKT with clean session flag in mqtt header"
