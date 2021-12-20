@@ -77,7 +77,7 @@ class BleThread_connection(ThreadBase):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     }
 )
-# testcase2 for Sta+ble slave functionality
+# Sta+ble slave functionality
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_threading_sta_ble_dut_C20184(wifi_dut, ble_client, wifi_access_point):
     mode = "ble_slave"
