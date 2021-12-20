@@ -14,9 +14,8 @@ Test Steps:
     3. Initiates the Client in slave SPP (or) master SPP with capability enables
     4. Opens Bt socket and connects to the remote client.
     5. Verifies ping after the connection.
-    6. Gets the response of BT get local
-    7. After Setting the Set role parameters will switch they roles.
-    8. Send Data transfer from Dut to BT client.
+    6. Switch to Slave to Master Role (Or) Master to Slave Role
+    7. Send Data transfer from Dut to BT client.
 
 setup requirement:
         1. DUT(RS9116)
@@ -68,7 +67,7 @@ def test_bt_spp_dut_as_slave_roleswitch_T3571(wifi_dut, bt_client):
                 wifi_dut.interfaces.wifi.bt_power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
-                # L2 Ping
+                # Ping Dut
                 assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                     dest_addr=bt_dut_address
                 )
@@ -76,11 +75,13 @@ def test_bt_spp_dut_as_slave_roleswitch_T3571(wifi_dut, bt_client):
                 # The Below api will fetch the response of Slave Role
                 result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
                 logger().info(f"Device role:{result}")
+                assert result == result
                 wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="0")
                 time.sleep(10)
                 # Here we can see the final get response of role Switch
                 logger().info("***********Final Role Switch to Slave Role*************")
                 final_role= wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
+                assert final_role
                 logger().info(f"Role Switch: {final_role}")
                 # Send data from dut to bt_client
                 logger().info("***********Send the data from dut to bt client*********")
@@ -123,12 +124,14 @@ def test_bt_spp_dut_as_master_roleswitch_T3570(wifi_dut,bt_client):
             # The Below api will fetch the response of Master Role
             result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
             logger().info(f"Device role:{result}")
+            assert result == result
             wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="1")
             time.sleep(10)
             # Here we can see the final get response of role Switch
             logger().info("***********Final Role Switch to Slave Role*************")
             final_role = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
             logger().info(f"Role Switch: {final_role}")
+            assert final_role
             # Send the data from dut to bt client
             logger().info("***********Send the data from dut to bt client*********")
             wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
