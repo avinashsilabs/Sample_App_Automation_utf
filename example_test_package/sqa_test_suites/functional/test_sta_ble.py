@@ -6,18 +6,32 @@ from interfaces.iperf.fixtures import IPerfFixture, iperf
 from utils.iperf.Iperf_constants import IperfConstants
 from utils.iperf.iperf_utils import ping
 from interfaces.wifi import WlanError
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
-    RS9116TCPIPFeatureBitMap
+from devices.rs911x import (
+    RS9116CoexMode,
+    RS9116TCPIPFeatureBitMap,
+    RS9116ExtTCPIPFeatureBitMap,
+    RS9116CertificateType,
+    RS9116FeatureBitMap,
+    RS9116ConfigFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap,
+    RS9116PowerSaveModes,
+    SocketOptions,
+    SocketType,
+    Cipher,
+    DeviceConstants
+    )
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utils.thread_base import ThreadBase
 import time
+import string
+import random
+from random import randint
 
 
 def logger():
     return get_logger(__name__)
 
 
-# this thread used for wifi join
 # this thread used for wifi join
 class WifiThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point, ssl_server=None, ssl_client=None, remote_socket=None,
@@ -30,138 +44,132 @@ class WifiThread(ThreadBase):
         self.remote_socket = remote_socket
         self.protocol = protocol
 
+    def run_ssl_server(self, device_ip):
+        pkt_count = self.ssl_server.interfaces.ssl.config['no_of_pkts']
+        buffer_length = self.ssl_server.interfaces.ssl.config['buffer_length']
+        port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+        bytes_sent = (pkt_count * buffer_length)
+
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        self.ssl_server.interfaces.ssl.start_server()
+        # Open ssl client socket in the DUT
+        sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock == 0
+        # Enable ssl option for socket opened
+        self.wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                        SocketOptions.SSL_ENABLE)
+
+        # Socket binds at (device_ip, 5001) in DUT
+        self.wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+        # ssl socket opened in DUT connects to the server
+        self.wifi_dut.interfaces.wifi.connect_to_server(sock, self.ssl_server.interfaces.ssl, server_port=port1)
+
+        # The api returns 100 bytes of random data
+        data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        data_length = len(data_sent)
+        # DUT sends 100 bytes of data over ssl socket
+        self.wifi_dut.interfaces.wifi.send_data(sock, data_length, data_sent)
+        server_socket_no = 1
+        # SSL server receives the data over ssl socket
+        data_receive = self.ssl_server.interfaces.ssl.data_recv_content(server_socket_no, data_length)
+        assert data_sent == data_receive.decode(), "data length sent and received is not matching"
+
+        if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+            self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+        self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+
+        bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
+        assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                             f"not matched on socket {server_socket_no} "
+        # Close socket 1
+        result = self.wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, f"ssl socket close is failed"
+
+    def run_ssl_client(self, device_ip):
+        # The below api opens ssl server socket in the DUT
+        sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=1)
+        assert sock == 0
+        # Socket binds at (device_ip, 5001) in DUT
+        self.wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
+        self.wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+        # Connect from third party device to the socket opened in the DUT
+        self.ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5001)
+        # DUT
+        socket_id = self.wifi_dut.interfaces.wifi.accept(sock)
+        # The api returns 100 bytes of random data
+        data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        data_length = len(data_sent)
+        # DUT sends 100 bytes of data over ssl socket
+        self.wifi_dut.interfaces.wifi.send_data(socket_id, data_length, data_sent)
+        # SSL client socket opened in third-party device receives the data
+        data_receive = self.ssl_client.interfaces.ssl.data_recv(data_length)
+        # DUT closes the tcp socket
+        result = self.wifi_dut.interfaces.wifi.close_socket(socket_id)
+        assert b"success" in result, "unable to close opened tcp socket"
+        # DUT closes the tcp socket
+        result = self.wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, "unable to close opened tcp socket"
+        assert data_sent == data_receive.decode(), "data length sent and received is not matching"
+
+    def run_traffic_tcp_udp(self, device_ip):
+        if self.protocol == "TCP":
+            self.remote_socket.interfaces.socket.start_server()
+            # DUT opens tcp client socket
+            sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            assert sock == 0, f"socket id received is wrong, expected is 0"
+            # Socket binds at (device_ip, 5001) in DUT
+            self.wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
+            # tcp socket opened in DUT connects to the tcp server
+            self.wifi_dut.interfaces.wifi.connect_to_server(sock, self.remote_socket.interfaces.socket)
+        elif self.protocol == "UDP":
+            # Open UDP socket remotely
+            self.remote_socket.interfaces.socket.start_server(socket_type=1)
+            # Open UDP socket in the DUT
+            sock = self.wifi_dut.interfaces.wifi.open_udp_client_socket()
+            assert sock == 0, "socket id received is not matched. Expected is 0"
+            # DUT binds to socket(device_ip, 5001)
+            self.wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
+        for count in range(0, 10):
+            k = randint(20, 220)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=k))
+            buffer_length = len(tx_buffer)
+            if self.protocol == "TCP":
+                # send 50 bytes of data from tcp server opened remotely
+                self.remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
+
+            elif self.protocol == "UDP":
+                self.remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
+            # DUT receives data over tcp socket after execution of below api
+            buffer_length_rx, buffer_rx = self.wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                     data_len=buffer_length)
+            assert buffer_length == buffer_length_rx, f"buffer length sent and received is not matched when sending {k} bytes "
+            assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
+        # DUT closes the tcp socket
+        result = self.wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, "unable to close opened tcp socket in the dut"
+        if self.protocol == "TCP":
+            self.remote_socket.interfaces.socket.socket_close_indication(1)
+
     def run(self):
         # Join Wi-Fi Access Point
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
         time.sleep(10)
+        # DUT gets ipaddress through DHCP process after start_ip API is executed
+        self.wifi_dut.interfaces.wifi.start_ip()
+        # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called
+        # to put DUT to power save in Wifi+bluetooth mode
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        # The below api parses DUTs IP address
+        device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         if self.ssl_server:
-            pkt_count = self.ssl_server.interfaces.ssl.config['no_of_pkts']
-            buffer_length = self.ssl_server.interfaces.ssl.config['buffer_length']
-            port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-            bytes_sent = (pkt_count * buffer_length)
-            # DUT gets ipaddress through DHCP process after start_ip API is executed
-            self.wifi_dut.interfaces.wifi.start_ip()
-            # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called
-            # to put DUT to power save in Wifi+bluetooth mode
-            self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-            self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-            # The below api parses DUTs IP address
-            device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            # Open ssl server socket in remote device(Raspberry pi or static device)
-            self.ssl_server.interfaces.ssl.start_server()
-            # Open ssl client socket in the DUT
-            sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-            assert sock == 0
-            # Enable ssl option for socket opened
-            self.wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                                            SocketOptions.SSL_ENABLE)
+            self.run_ssl_server(device_ip)
 
-            # Socket binds at (device_ip, 5001) in DUT
-            self.wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
-            # ssl socket opened in DUT connects to the server
-            self.wifi_dut.interfaces.wifi.connect_to_server(sock, self.ssl_server.interfaces.ssl, server_port=port1)
-
-            # The api returns 100 bytes of random data
-            data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-            data_length = len(data_sent)
-            # DUT sends 100 bytes of data over ssl socket
-            self.wifi_dut.interfaces.wifi.send_data(sock, data_length, data_sent)
-            server_socket_no = 1
-            # SSL server receives the data over ssl socket
-            data_receive = self.ssl_server.interfaces.ssl.data_recv_content(server_socket_no, data_length)
-            assert data_sent == data_receive.decode(), "data length sent and received is not matching"
-
-            if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-                self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-            self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
-
-            bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
-            assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                                 f"not matched on socket {server_socket_no} "
-            # Close socket 1
-            result = self.wifi_dut.interfaces.wifi.close_socket(sock)
-            assert b"success" in result, f"ssl socket close is failed"
         elif self.ssl_client:
-            # DUT gets ipaddress through DHCP process after start_ip API is executed
-            self.wifi_dut.interfaces.wifi.start_ip()
-            # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called
-            # to put DUT to power save in Wifi+bluetooth mode
-            self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-            self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-            # The below api parses DUTs IP address
-            device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+            self.run_ssl_client(device_ip)
 
-            # The below api opens ssl server socket in the DUT
-            sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=1)
-            assert sock == 0
-            # Socket binds at (device_ip, 5001) in DUT
-            self.wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-            self.wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-            # Connect from third party device to the socket opened in the DUT
-            self.ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5001)
-            # DUT
-            socket_id = self.wifi_dut.interfaces.wifi.accept(sock)
-            # The api returns 100 bytes of random data
-            data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-            data_length = len(data_sent)
-            # DUT sends 100 bytes of data over ssl socket
-            self.wifi_dut.interfaces.wifi.send_data(socket_id, data_length, data_sent)
-            # SSL client socket opened in third-party device receives the data
-            data_receive = self.ssl_client.interfaces.ssl.data_recv(data_length)
-            # DUT closes the tcp socket
-            result = self.wifi_dut.interfaces.wifi.close_socket(socket_id)
-            assert b"success" in result, "unable to close opened tcp socket"
-            # DUT closes the tcp socket
-            result = self.wifi_dut.interfaces.wifi.close_socket(sock)
-            assert b"success" in result, "unable to close opened tcp socket"
-            assert data_sent == data_receive.decode(), "data length sent and received is not matching"
         elif self.remote_socket:
-            # DUT gets ipaddress through DHCP process after start_ip API is executed
-            self.wifi_dut.interfaces.wifi.start_ip()
-            # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called
-            # to put DUT to power save in Wifi+bluetooth mode
-            self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-            self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-            # The below api parses DUTs IP address
-            device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-            if self.protocol == "TCP":
-                self.remote_socket.interfaces.socket.start_server()
-                # DUT opens tcp client socket
-                sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket()
-                assert sock == 0, f"socket id received is wrong, expected is 0"
-                # Socket binds at (device_ip, 5001) in DUT
-                self.wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-                # tcp socket opened in DUT connects to the tcp server
-                self.wifi_dut.interfaces.wifi.connect_to_server(sock, self.remote_socket.interfaces.socket)
-            elif self.protocol == "UDP":
-                # Open UDP socket remotely
-                self.remote_socket.interfaces.socket.start_server(socket_type=1)
-                # Open UDP socket in the DUT
-                sock = self.wifi_dut.interfaces.wifi.open_udp_client_socket()
-                assert sock == 0, "socket id received is not matched. Expected is 0"
-                # DUT binds to socket(device_ip, 5001)
-                self.wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-            for count in range(0, 10):
-                k = randint(20, 220)
-                tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=k))
-                buffer_length = len(tx_buffer)
-                if self.protocol == "TCP":
-                    # send 50 bytes of data from tcp server opened remotely
-                    self.remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-
-                elif self.protocol == "UDP":
-                    self.remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
-                # DUT receives data over tcp socket after execution of below api
-                buffer_length_rx, buffer_rx = self.wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
-                                                                                         data_len=buffer_length)
-                assert buffer_length == buffer_length_rx, f"buffer length sent and received is not matched when sending {k} bytes "
-                assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
-            # DUT closes the tcp socket
-            result = self.wifi_dut.interfaces.wifi.close_socket(sock)
-            assert b"success" in result, "unable to close opened tcp socket in the dut"
-            if self.protocol == "TCP":
-                self.remote_socket.interfaces.socket.socket_close_indication(1)
+            self.run_traffic_tcp_udp(device_ip)
 
 
 # this thread used for sta+ble as a slave
