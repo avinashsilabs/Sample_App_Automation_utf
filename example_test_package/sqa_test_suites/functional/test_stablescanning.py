@@ -38,11 +38,11 @@ class WifiThread(ThreadBase):
         self.wifi_access_point = wifi_access_point
 
     def run(self):
-        # Enables the wifi power save in dut
-        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
         # Join Wi-Fi Access Point
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
         time.sleep(10)
+        # Enables the wifi power save in dut
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
 #this thread used for sta+ble as a slave
 class BleThread_connection(ThreadBase):
@@ -57,7 +57,6 @@ class BleThread_connection(ThreadBase):
         bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address is not None
         self.wifi_dut.interfaces.wifi.ble_start_advertising()
-
         # Begin Scanning for BLE devices
         bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
         assert bt_client_address is not None

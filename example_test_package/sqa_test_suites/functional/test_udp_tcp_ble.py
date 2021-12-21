@@ -212,7 +212,7 @@ def test_threading_sta_ble_dut_udp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_
         "band": 2
     }
 )
-#throughput functionality in open mode
+#rx throughput functionality in open mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "OPEN", "cipher": 'AES'})
 def test_threading_sta_ble_dut_tcp_rx_C20203(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1):
     mode = "ble_slave"
@@ -233,7 +233,7 @@ def test_threading_sta_ble_dut_tcp_rx_C20203(ble_client, wifi_dut, wifi_networke
         "band": 2
     }
 )
-#throughput functionality in open mode
+#tcp tx throughput functionality in open mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "OPEN", "cipher": 'AES'})
 def test_threading_sta_ble_dut_tcp_tx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                       ble_client):
