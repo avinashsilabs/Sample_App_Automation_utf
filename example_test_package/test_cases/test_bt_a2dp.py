@@ -50,7 +50,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
 
         # A2DP SBC Audio streaming to Raspi
         wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-        time.sleep(7)
+        time.sleep(2)
 
         #Power save
         wifi_dut.interfaces.wifi.set_sleep_gpio(True)
@@ -65,5 +65,5 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
         #assert the captured audio size
-        assert os.path.getsize(capture_file_path) == 22092
+        assert os.path.getsize(capture_file_path) == 220524
     logger().info(f"Scan in {t.duration} seconds")
