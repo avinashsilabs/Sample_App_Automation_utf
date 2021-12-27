@@ -85,7 +85,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    capture_file_path = "./reports/a2dp_capture.wav"
+    capture_file_path = "./a2dp_capture.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -106,7 +106,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         )
 
         #Start capturing audio
-        # bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
+        bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
 
         # A2DP SBC Audio streaming to Raspi
         wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
