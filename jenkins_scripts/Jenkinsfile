@@ -149,6 +149,18 @@ pipeline {
                             cp -rf example_test_package/ utf_pytest/test_package
                         '''
                         dir('utf_pytest'){
+                                echo BUILD_URL
+                                echo BUILD_NUMBER
+                                echo GIT_BRANCH
+                                echo RUN_TESTS_DISPLAY_URL
+                                echo RS9116_FIRMWARE
+                                withEnv(['BUILD_URL='+BUILD_URL, 'BUILD_NUMBER='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'RUN_TESTS_DISPLAY_URL='+RUN_TESTS_DISPLAY_URL, 'INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
+                                      sh "echo \$BUILD_URL"
+                                      sh "echo \$BUILD_NUMBER"
+                                      sh "echo \$GIT_BRANCH"
+                                      sh "echo \$RUN_TESTS_DISPLAY_URL"
+                                      sh "echo \$INSTALLER_URL_SDK"
+                                }
                             withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
                                                            keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
