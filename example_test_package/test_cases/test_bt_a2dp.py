@@ -10,7 +10,6 @@ import os
 def logger():
     return get_logger(__name__)
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -146,5 +145,5 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         #assert the captured audio size
         captured_audio_size = os.path.getsize(capture_file_path)
         logger().info(f"captured_audio_size : {captured_audio_size}")
-        assert 8 <= int(captured_audio_size/100000) <= 10
+        assert 8 <= int(captured_audio_size/100000) <= 11
     logger().info(f"Scan in {t.duration} seconds")
