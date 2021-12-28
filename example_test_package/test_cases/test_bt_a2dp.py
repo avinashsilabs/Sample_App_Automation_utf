@@ -66,7 +66,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
         #assert the captured audio size
-        assert os.path.getsize(capture_file_path) == 132332
+        assert os.path.getsize(capture_file_path) == 639436
     logger().info(f"Scan in {t.duration} seconds")
 
 
@@ -97,6 +97,7 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
 
         #A2DP Connection
+        # wifi_dut.interfaces.wifi.bt_disconnect_dummy(bt_client_address)
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
         time.sleep(10)
 
@@ -110,8 +111,23 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         bt_client.interfaces.bluetooth.bt_service.start_blue_alsa_play()
 
         # A2DP SBC Audio streaming to Raspi
-        wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-        time.sleep(5)
+        # wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
+        bt_client.interfaces.bluetooth.bt_media_player.play(bt_dut_address)
+        time.sleep(2)
+        bt_client.interfaces.bluetooth.bt_media_player.pause(bt_dut_address)
+        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.play(bt_dut_address)
+        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.next(bt_dut_address)
+        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.volume(bt_dut_address,0)
+        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.previous(bt_dut_address)
+        time.sleep(2)
+        bt_client.interfaces.bluetooth.bt_media_player.volume(bt_dut_address,127)
+        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.pause(bt_dut_address)
+
 
         #Power save
         wifi_dut.interfaces.wifi.set_sleep_gpio(True)
