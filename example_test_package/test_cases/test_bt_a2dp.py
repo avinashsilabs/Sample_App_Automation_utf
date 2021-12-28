@@ -26,7 +26,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    capture_file_path = "./a2dp_capture.wav"
+    capture_file_path = "./a2dp_capture_test_bt_a2dp_dut_as_src.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -38,6 +38,8 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
 
         #A2DP Connection
+        wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address, expect="")
+        time.sleep(0.5)
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
         time.sleep(10)
 
@@ -65,8 +67,10 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         #disconnect
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
-        #assert the captured audio size
-        assert os.path.getsize(capture_file_path) == 639436
+        # assert the captured audio size
+        captured_audio_size = os.path.getsize(capture_file_path)
+        logger().info(f"captured_audio_size : {captured_audio_size}")
+        assert 5 <= int(captured_audio_size / 100000) <= 6
     logger().info(f"Scan in {t.duration} seconds")
 
 
@@ -85,7 +89,7 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    capture_file_path = "./a2dp_capture.wav"
+    capture_file_path = "./a2dp_capture_test_bt_avrcp_dut_as_src.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -97,7 +101,8 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
 
         #A2DP Connection
-        # wifi_dut.interfaces.wifi.bt_disconnect_dummy(bt_client_address)
+        wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address, expect="")
+        time.sleep(0.5)
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
         time.sleep(10)
 
@@ -107,27 +112,24 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         )
 
         #Start capturing audio
-        # bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-        bt_client.interfaces.bluetooth.bt_service.start_blue_alsa_play()
+        bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
 
-        # A2DP SBC Audio streaming to Raspi
-        # wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
+        # Playback and volume control from Raspi
         bt_client.interfaces.bluetooth.bt_media_player.play(bt_dut_address)
-        time.sleep(2)
+        time.sleep(1)
         bt_client.interfaces.bluetooth.bt_media_player.pause(bt_dut_address)
         time.sleep(1)
         bt_client.interfaces.bluetooth.bt_media_player.play(bt_dut_address)
         time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.set_volume(bt_dut_address, volume=7)
         bt_client.interfaces.bluetooth.bt_media_player.next(bt_dut_address)
         time.sleep(1)
-        bt_client.interfaces.bluetooth.bt_media_player.volume(bt_dut_address,0)
-        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.set_volume(bt_dut_address, volume=60)
         bt_client.interfaces.bluetooth.bt_media_player.previous(bt_dut_address)
-        time.sleep(2)
-        bt_client.interfaces.bluetooth.bt_media_player.volume(bt_dut_address,127)
+        time.sleep(1)
+        bt_client.interfaces.bluetooth.bt_media_player.set_volume(bt_dut_address, volume=127)
         time.sleep(1)
         bt_client.interfaces.bluetooth.bt_media_player.pause(bt_dut_address)
-
 
         #Power save
         wifi_dut.interfaces.wifi.set_sleep_gpio(True)
@@ -142,5 +144,7 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
         #assert the captured audio size
-        # assert os.path.getsize(capture_file_path) == 220524
+        captured_audio_size = os.path.getsize(capture_file_path)
+        logger().info(f"captured_audio_size : {captured_audio_size}")
+        assert 8 <= int(captured_audio_size/100000) <= 10
     logger().info(f"Scan in {t.duration} seconds")
