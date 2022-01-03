@@ -1,3 +1,5 @@
+# Test author: Vinod.G
+# Test suite: MQTT_INTERNAL
 import pytest
 from devices.rs911x import (
     RS9116CoexMode,
@@ -8,6 +10,21 @@ from devices.rs911x import (
     RS9116ConfigFeatureBitMap
     )
 from interfaces.wifi import WlanError
+
+"""The testcases added in this file run below test steps for DUT-RS9116
+        1. Configuration of DUT in 2G/5G : BGN without enabling MQTT feature in the DUT
+        2. Association of Third party AP's
+        3. Get the valid IP address
+        4. Open MQTT server in the Raspberry pi
+        5. DUT tries to connect to MQTT server and fails as the MQTT feature is not enabled in the DUT
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+        
+Note: The test cases added in the file works only in AT mode
+"""
 
 
 @pytest.mark.config(
