@@ -168,6 +168,9 @@ pipeline {
                                 sh '''
                                     rm -rf reports
                                     export SKIP_PROCESSING_ARTIFACTS=1
+                                    UTF_DOCKER_FLAGS="-e BUILD_URL=${BUILD_URL} -e BUILD_NUMBER=${BUILD_NUMBER} -e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE} -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/ -e TEST_SUITE=OT_Smoke_brd4161a -e BRANCH_NAME=${RS9116_FIRMWARE} -e SSH_TARGET=${SSH_TARGET}"
+                                    echo $UTF_DOCKER_FLAGS
+                                    export UTF_DOCKER_FLAGS
                                     ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
                                 '''
                             }
