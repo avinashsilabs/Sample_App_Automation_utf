@@ -9,6 +9,20 @@ from devices.rs911x import RS9116PowerSaveModes
 def logger():
     return get_logger(__name__)
 
+"""setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Enable the wlan and bt power save mode in dut after the connection
+        3. Initiate the Scan from DUT
+        4. Verify the scan results
+
+    Author: Ravi Nemali
+"""
 
 pytestmark = [
     pytest.mark.config(

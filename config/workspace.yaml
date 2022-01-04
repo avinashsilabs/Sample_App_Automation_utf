@@ -1,0 +1,5 @@
+test_package_dir: example_test_package
+utf_core_dir: utf_pytest
+utf_extension_dirs: []
+hwmux_group_name: utf_wifi
+python_venv_dir: utf_pytest/venv

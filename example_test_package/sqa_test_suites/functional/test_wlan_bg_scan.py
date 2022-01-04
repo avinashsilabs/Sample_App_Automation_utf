@@ -25,7 +25,9 @@ def logger():
         4. Create a new TCP/IP socket
         5. Bind the socket with DUT ip address
         6. Connect the client with server socket as specified port number.
-        7. Validate Probe response & HT information, BG scan on primary, non US & DFS channel etc. via sniffer.
+        7. Expectation of this test case is to verify different parameters of Background scan functionalities. 
+        8. Validate Probe response & HT information, BG scan on primary, non US & DFS channel etc. via sniffer with
+           different mode/channels 
 
     setup requirement:
         1. DUT(RS9116)
@@ -33,13 +35,15 @@ def logger():
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Sniffer(NUC device)
+        
+    Author: Vivek Verma
 """
 
 
 class IopTcpIpSockets:
     def open_socket(self, wifi_networked_dut) -> int:
         if isinstance(wifi_networked_dut.interfaces.wifi, RSSAPICommands):
-            result = wifi_networked_dut.interfaces.wifi.start_ip()
+            result = wifi_networked_dut.interfaces.wifi.start_ip(timeout=25)
             dut_ip = result.ip.decode()
             logger().info(f"DUT ip address : {dut_ip}")
             assert isinstance(result, wifi_networked_dut.interfaces.wifi.IPConfig)
@@ -78,7 +82,6 @@ class IopTcpIpSockets:
         return connect_status
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -93,24 +96,23 @@ class IopTcpIpSockets:
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_bgscan_2g(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_2g_T2278(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_2g')
     time.sleep(5)
-    for i in range(1, 2):
+    for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
         time.sleep(5)
-        wifi_dut.interfaces.wifi.scan(ssid=None)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
 
+        logger().info(f"*****Enable Max PSP in DUT******")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -146,7 +148,6 @@ def test_bgscan_2g(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -162,23 +163,22 @@ def test_bgscan_2g(wifi_sniffer, wifi_access_point, wifi_dut):
         "band": 2,
     },
 )
-def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_dual_mode_T2279(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_dual_mode')
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
         time.sleep(5)
-        wifi_dut.interfaces.wifi.scan(ssid=None)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
 
+        logger().info(f"*****Enable Max PSP in DUT******")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -212,7 +212,6 @@ def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -227,24 +226,23 @@ def test_bgscan_dual_mode(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_instant_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_instant_bgscan_T2280(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_instant_bgscan')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 1, 10, 4, 10, 15, 20, 0)
 
         time.sleep(5)
-        wifi_dut.interfaces.wifi.scan(ssid=None)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
 
+        logger().info(f"*****Enable Max PSP in DUT******")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -278,7 +276,6 @@ def test_instant_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -293,7 +290,7 @@ def test_instant_bgscan(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default,
     },
 )
-def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_rejoin_infinite_retry_T2281(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -302,11 +299,10 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -331,7 +327,7 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_rejoin')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(2)
@@ -355,7 +351,6 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -370,40 +365,45 @@ def test_bgscan_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_bgscan_primary_channel(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_primary_channel_2g_T2282(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     count = 1
     send_bytes = 1000
     validation = True
     packet_filter2 = False
+    channel_bitmap_2_4 = 0
+    channel_bitmap_5 = 0
+    scan_feature_extend = 0
     channel_list = [1, 6, 11]
     for channel in channel_list:
+        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+        time.sleep(20)
+        logger().info(f"Channel = {channel}")
+        channel_bitmap_2_4 += 1 << (channel - 1)
+        logger().info(f"channel bitmap = {channel_bitmap_2_4}")
         wifi_sniffer.interfaces.capture.configure_interface(channel)
         time.sleep(5)
-        if count == 1:
-            logger().info(f"*****Sniffer capture start******")
-            wifi_sniffer.interfaces.capture.start_capture()
-            count = count + 1
-        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-        time.sleep(90)
-        logger().info(f"Channel = {channel}")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_2g')
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                        scan_bitmap_2_4=channel_bitmap_2_4,
+                                                        scan_bitmap_5=channel_bitmap_5,
+                                                        scan_feature=scan_feature_extend)
+        wifi_dut.interfaces.wifi.join(bgscan_flag=True)
         wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
 
+        logger().info(f"*****Enable Max PSP in DUT******")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
+        time.sleep(5)
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
         packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
                          f'and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff '
-
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
         time.sleep(2)
         connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -418,85 +418,85 @@ def test_bgscan_primary_channel(wifi_sniffer, wifi_access_point, wifi_dut):
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
                     logger().info(f"Send {send_bytes} bytes successfully")
-        wifi_dut.interfaces.wifi.leave()
+
+        time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
-
-
-# @pytest.mark.skip
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
-    },
-)
-def test_bgscan_non_us_channel(wifi_sniffer, wifi_access_point, wifi_dut):
-    tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 1000
-    validation = True
-    count = 1
-    packet_filter2 = False
-    channel_list = [12, 13, 14]
-    for channel in channel_list:
-        wifi_sniffer.interfaces.capture.configure_interface(channel)
-        time.sleep(5)
-        if count == 1:
-            logger().info(f"*****Sniffer capture start******")
-            wifi_sniffer.interfaces.capture.start_capture()
-            count = count + 1
-        wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
-        wifi_dut.interfaces.wifi.scan(ssid=None)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
-
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
-        packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
-                         f'and wlan.fc.type_subtype == 0x0004 ' \
-                         f'and wlan.da == ff:ff:ff:ff:ff:ff '
-
-        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-        time.sleep(5)
-        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
         wifi_dut.interfaces.wifi.leave()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        search_packet = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
-        # if search_packet['packet_count'] is False:
-        output_dict = {}
-        output_dict[channel] = search_packet['packet_count']
-        logger().info(f'Output = {output_dict}')
-    res = all(output_dict.values())
-    logger().info(f'Output = {output_dict}')
-    assert True if res is False else False
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+        ['packet_count']
 
 
-@pytest.mark.skip
+# @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+# @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+# @pytest.mark.config(
+#     "wifi_dut",
+#
+#     wifi={
+#
+#         "oper_mode": 0,
+#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+#         "custom_features": RS9116CustomFeatureBitMap.Default
+#     },
+# )
+# def test_bgscan_non_us_channel(wifi_sniffer, wifi_access_point, wifi_dut):
+#     tcp_socket_obj = IopTcpIpSockets()
+#     send_bytes = 1000
+#     validation = True
+#     count = 1
+#     packet_filter2 = False
+#     channel_list = [12, 13, 14]
+#     output_dict = {}
+#     for channel in channel_list:
+#         wifi_sniffer.interfaces.capture.configure_interface(channel)
+#         time.sleep(5)
+#         if count == 1:
+#             logger().info(f"*****Sniffer capture start******")
+#             wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_non_us_channel')
+#             count = count + 1
+#         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+#         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+#         wifi_dut.interfaces.wifi.start_ip()
+#
+#         logger().info(f"*****Enable Max PSP in DUT******")
+#         wifi_dut.interfaces.wifi.power_save(2, 0)
+#         wifi_dut.interfaces.wifi.bt_power_save(
+#             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+#         )
+#         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+#         logger().info(f"DUT MAC_Address: {dut_mac_address}")
+#         packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
+#                          f'and wlan.fc.type_subtype == 0x0004 ' \
+#                          f'and wlan.da == ff:ff:ff:ff:ff:ff '
+#
+#         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
+#         time.sleep(5)
+#         connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+#         if connect_status is False:
+#             logger().info("Unable to connect with Server")
+#             assert connect_status
+#         else:
+#             send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+#             logger().info(f'SEND-RESPONSE = {send_response}')
+#             if 'status 10' in str(send_response):
+#                 result = send_response.decode().replace("\r\n", '').strip()
+#                 match = re.findall(r"\d+", result)
+#                 if int(match[1]) == send_bytes:
+#                     logger().info(f"Send {send_bytes} bytes successfully")
+#         wifi_dut.interfaces.wifi.leave()
+#         wifi_sniffer.interfaces.capture.stop_capture()
+#         logger().info("Stop Sniffer finally")
+#         search_packet = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+#
+#         output_dict[channel] = search_packet['packet_count']
+#         logger().info(f'Output = {output_dict}')
+#     res = all(output_dict.values())
+#     logger().info(f'Output = {output_dict}')
+#     assert True if res is False else False
+
+
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -512,90 +512,26 @@ def test_bgscan_non_us_channel(wifi_sniffer, wifi_access_point, wifi_dut):
         "band": 1,
     },
 )
-def test_bgscan_5g(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5g_T2736(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     packet_filter2 = 'Data Rate:'
+    wifi_access_point.interfaces.wifi.config['channel'] = 36
+    wifi_access_point.interfaces.wifi.start_ap()
+    time.sleep(20)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g')
     time.sleep(5)
     for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
         time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         wifi_dut.interfaces.wifi.start_ip()
+
         logger().info(f"*****Enable Max PSP in DUT******")
-
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
-        packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {dut_mac_address} and wlan.tag.number == 61'
-
-        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-        time.sleep(5)
-        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-        time.sleep(2)
-        wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
-        wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
-        logger().info(f"ITERATION END= {i}")
-        wifi_sniffer.interfaces.capture.stop_capture(validation)
-        logger().info("Stop Sniffer finally")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
-
-
-@pytest.mark.skip
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default,
-        "band": 2,
-    },
-)
-def test_bgscan_5g_dual_band(wifi_sniffer, wifi_access_point, wifi_dut):
-    tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 1000
-    validation = True
-    packet_filter2 = 'Data Rate:'
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
-    time.sleep(5)
-    for i in range(1, 6):
-        logger().info(f"ITERATION START= {i}")
-        wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
-
-        time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
-
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -629,7 +565,74 @@ def test_bgscan_5g_dual_band(wifi_sniffer, wifi_access_point, wifi_dut):
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
+@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "band": 2,
+    },
+)
+def test_bgscan_5g_dual_band_T2737(wifi_sniffer, wifi_access_point, wifi_dut):
+    tcp_socket_obj = IopTcpIpSockets()
+    send_bytes = 1000
+    validation = True
+    packet_filter2 = 'Data Rate:'
+    wifi_access_point.interfaces.wifi.config['channel'] = 36
+    wifi_access_point.interfaces.wifi.start_ap()
+    time.sleep(20)
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_dual_band')
+    time.sleep(5)
+    for i in range(1, 6):
+        logger().info(f"ITERATION START= {i}")
+        wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.start_ip()
+
+        logger().info(f"*****Enable Max PSP in DUT******")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == ' \
+                         f'{dut_mac_address} and wlan.tag.number == 61'
+
+        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
+        time.sleep(5)
+        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
+        else:
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        logger().info(f"ITERATION END= {i}")
+        wifi_sniffer.interfaces.capture.stop_capture(validation)
+        logger().info("Stop Sniffer finally")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+
+
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -645,16 +648,18 @@ def test_bgscan_5g_dual_band(wifi_sniffer, wifi_access_point, wifi_dut):
         "band": 1,
     },
 )
-def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5g_rejoin_infinite_T2739(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     packet_filter2 = False
+    wifi_access_point.interfaces.wifi.config['channel'] = 36
+    wifi_access_point.interfaces.wifi.start_ap()
+    time.sleep(20)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
 
@@ -684,7 +689,7 @@ def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_rejoin')
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(2)
     wifi_access_point.interfaces.wifi.start_ap()
@@ -707,7 +712,6 @@ def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -723,24 +727,27 @@ def test_bgscan_5g_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
         "band": 1,
     },
 )
-def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5g_dfs_ch_T2738(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     packet_filter2 = 'Data Rate:'
+    wifi_access_point.interfaces.wifi.config['channel'] = 149
+    wifi_access_point.interfaces.wifi.start_ap()
+    time.sleep(20)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_dfs_ch')
     time.sleep(5)
-    for i in range(1, 2):
+    for i in range(1, 6):
         logger().info(f"ITERATION START= {i}")
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
         time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+        # wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
 
+        logger().info(f"*****Enable Max PSP in DUT******")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -774,7 +781,6 @@ def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -787,37 +793,41 @@ def test_bgscan_5g_dfs_ch(wifi_sniffer, wifi_access_point, wifi_dut):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "band": 1,
+        "band": 2,
     },
 )
-def test_bgscan_primary_channel(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_primary_channel_5G_T2740(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     count = 1
     send_bytes = 1000
     validation = True
     packet_filter2 = False
-    channel_list = [36, 149, 165]
+    channel_bitmap_2_4 = 0
+    channel_bitmap_5g = 0
+    scan_feature_extend = 0
+    channel_list = {36:0, 149:20, 165:24}
+    wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     for channel in channel_list:
+        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+        time.sleep(20)
+        channel_bitmap_5g += 1 << (channel_list[channel])
+        logger().info(f"channel bitmap = {channel_bitmap_5g}")
         wifi_sniffer.interfaces.capture.configure_interface(channel)
         time.sleep(5)
-        if count == 1:
-            logger().info(f"*****Sniffer capture start******")
-            wifi_sniffer.interfaces.capture.start_capture()
-            count = count + 1
-        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-        time.sleep(90)
-        logger().info(f"Channel = {channel}")
-        wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
-
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                        scan_bitmap_2_4=channel_bitmap_2_4,
+                                                        scan_bitmap_5=channel_bitmap_5g,
+                                                        scan_feature=scan_feature_extend)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_5G')
+        wifi_dut.interfaces.wifi.join(bgscan_flag=True)
         wifi_dut.interfaces.wifi.start_ip()
-        logger().info(f"*****Enable Max PSP in DUT******")
 
+        logger().info(f"*****Enable Max PSP in DUT******")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
+        time.sleep(5)
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
         packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} and wlan.tag.number == 61'
@@ -836,7 +846,8 @@ def test_bgscan_primary_channel(wifi_sniffer, wifi_access_point, wifi_dut):
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
                     logger().info(f"Send {send_bytes} bytes successfully")
-        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+        wifi_dut.interfaces.wifi.leave()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+        ['packet_count']

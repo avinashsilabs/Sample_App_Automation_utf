@@ -14,16 +14,23 @@ from utils.iperf.iperf_utils import get_host_ip
 from interfaces.wifi import WlanError
 from utils.logger import get_logger
 
-
 def logger():
     return get_logger(__name__)
-
 
 """setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+    
+     Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http firmware upgrade
+        5. Verify the otaf status
+
+    Author: Ravi Nemali
 """
 
 @pytest.mark.config(
@@ -758,3 +765,96 @@ def test_http_otaf_feature_not_enabled_neg_testcase4(http_server, wifi_dut, wifi
         wifi_dut.interfaces.wifi.get_http_otaf_status()
     assert exc_info.value.error_code == 0xFF74, "observed wrong error code expected is 0xff74"
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.Bluetooth,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+    },
+)
+def test_http_otaf_neg_testcase1(http_server, wifi_dut, logger):
+    host_ip = get_host_ip()
+    time.sleep(30)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.Bluetooth,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+    },
+)
+def test_http_otaf_neg_subtestcase2_1(http_server, wifi_dut, logger):
+    host_ip = get_host_ip()
+    time.sleep(30)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
+    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.Bluetooth,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+    },
+)
+def test_http_otaf_neg_subtestcase2_2(http_server, wifi_dut, logger):
+    host_ip = get_host_ip()
+    time.sleep(30)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_removing.rps")
+    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.Bluetooth,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+    },
+)
+def test_http_otaf_neg_subtestcase3(http_server, wifi_dut, logger):
+    host_ip = get_host_ip()
+    time.sleep(30)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.xml")
+    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.Bluetooth,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+    },
+)
+def test_http_otaf_neg_subtestcase5(http_server, wifi_dut, logger):
+    host_ip = get_host_ip()
+    time.sleep(30)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_empty.rps")
+    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"

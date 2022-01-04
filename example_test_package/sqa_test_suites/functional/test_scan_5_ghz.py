@@ -7,20 +7,20 @@ from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBi
 def logger():
     return get_logger(__name__)
 
-"""
-setup requirement:
+"""setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-"""
 
-"""
-Tests Steps:
-        1. Initialize the Dut 
-        2. Enable the deep sleep power save
-        3. Enable the different in DUT
-        4. Run Scan API's for the all channels and selective channels
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 5Ghz
+        2. Enable the wlan and bt power save mode in dut after the connection
+        3. Configure the region and rejoin parameters in dut
+        4. Initiate the Scan from DUT
+        5. Verify the scan results 
+
+    Author: Ravi Nemali
 """
 
 

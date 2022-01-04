@@ -1,3 +1,7 @@
 projenv.*
 .idea/
 test_agent/build/
+reports/
+user-preferences.yaml
+*.lnk
+
