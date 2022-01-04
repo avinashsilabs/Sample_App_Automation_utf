@@ -1,5 +1,5 @@
 firmware:
-  rs911x: RS9116.NB0.WC.GENR.OSI.2.3.0.0001.rps
+  rs911x: RS9116W.2.4.1.17.rps
   efx32: sqa_test_agent.hex
 
 #List of devices to be reset when needed
