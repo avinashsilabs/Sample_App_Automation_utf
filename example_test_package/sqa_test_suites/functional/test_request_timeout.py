@@ -31,7 +31,6 @@ def logger():
 
 class FilterPacket:
     '''This function is responsible to create a list for ARP announcement packet time delta '''
-
     def delta_between_arp_packet(self):
         packet_filter = "Time delta from previous captured frame"
         count = 0
@@ -72,15 +71,15 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
     keep_alive_time = 4
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_request_timeout_keep_alive_10sec')
     time.sleep(5)
     wifi_dut.interfaces.wifi.set_timeout(feature=keep_alive_time, timeout=10)
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     time.sleep(5)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -112,6 +111,7 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
     wifi_dut.interfaces.wifi.leave()
     time.sleep(1)
 
+
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -133,15 +133,15 @@ def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_po
     keep_alive_time = 4
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_request_timeout_keep_alive_30sec')
     time.sleep(5)
     wifi_dut.interfaces.wifi.set_timeout(feature=keep_alive_time, timeout=30)
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     time.sleep(5)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -192,31 +192,31 @@ def test_request_timeout_scan_100misc(wifi_sniffer, wifi_dut, wifi_access_point)
     scan_timeout = 2
     wifi_dut.interfaces.wifi.set_timeout(feature=scan_timeout, timeout=100)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_request_timeout_scan_100misc')
     time.sleep(5)
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     logger().info(scan_results)
     assert len(scan_results) > 0
     logger().info(f"Scan in {t.duration} seconds")
-    assert (t.duration > 1.2 and t.duration < 1.5)
+    assert (1.2 < t.duration < 1.5)
     time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
+
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f"Actual version: {result}")
 
     time.sleep(10)
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.leave()
+
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -237,31 +237,31 @@ def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point)
     scan_timeout = 2
     wifi_dut.interfaces.wifi.set_timeout(feature=scan_timeout, timeout=500)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_request_timeout_scan_500misc')
     time.sleep(5)
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     logger().info(scan_results)
     assert len(scan_results) > 0
     logger().info(f"Scan in {t.duration} seconds")
-    assert (t.duration > 5.5 and t.duration < 5.8)
+    assert (5.5 < t.duration < 5.8)
     time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
+
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f"Actual version: {result}")
 
     time.sleep(10)
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.leave()
+
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -280,15 +280,12 @@ def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point)
 def test_wifi_auth_timeout_with_100msec(wifi_sniffer, wifi_dut, wifi_access_point):
     """=================this test_case to validate Authentication timeout for 100 Milliseconds======================"""
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_auth_timeout_with_100msec')
     time.sleep(5)
     auth_timeout = 1
     wifi_dut.interfaces.wifi.set_timeout(feature=auth_timeout, timeout=100)
     time.sleep(5)
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
 
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f"Actual version: {result}")
@@ -297,7 +294,6 @@ def test_wifi_auth_timeout_with_100msec(wifi_sniffer, wifi_dut, wifi_access_poin
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         wifi_sniffer.interfaces.capture.stop_capture()
     assert exc_info.value.error_code == 0x48
-
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -317,15 +313,12 @@ def test_wifi_auth_timeout_with_100msec(wifi_sniffer, wifi_dut, wifi_access_poin
 def test_wifi_auth_timeout_with_300msec(wifi_sniffer, wifi_dut, wifi_access_point):
     """=================this test_case to validate Authentication timeout for 300 Milliseconds======================"""
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture()
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_auth_timeout_with_300msec')
     time.sleep(5)
     auth_timeout = 1
     wifi_dut.interfaces.wifi.set_timeout(feature=auth_timeout, timeout=100)
     time.sleep(2)
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-
-    mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Actual MAC_Address: {mac_address}")
 
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f"Actual version: {result}")
