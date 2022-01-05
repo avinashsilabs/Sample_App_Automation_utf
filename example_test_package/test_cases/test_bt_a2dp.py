@@ -29,7 +29,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    capture_file_path = "./a2dp_capture_test_bt_a2dp_dut_as_src.wav"
+    capture_file_path = "/tmp/a2dp_capture_test_bt_a2dp_dut_as_src.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -71,7 +71,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
         # assert the captured audio size
-        captured_audio_size = os.path.getsize(capture_file_path)
+        captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
         logger().info(f"captured_audio_size : {captured_audio_size}")
         assert 5 <= int(captured_audio_size / 100000) <= 6
     logger().info(f"Scan in {t.duration} seconds")
@@ -82,7 +82,7 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    capture_file_path = "./a2dp_capture_test_bt_avrcp_dut_as_src.wav"
+    capture_file_path = "/tmp/a2dp_capture_test_bt_avrcp_dut_as_src.wav"
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -137,7 +137,7 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
         #assert the captured audio size
-        captured_audio_size = os.path.getsize(capture_file_path)
+        captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
         logger().info(f"captured_audio_size : {captured_audio_size}")
         assert 8 <= int(captured_audio_size/100000) <= 11
     logger().info(f"Scan in {t.duration} seconds")
