@@ -217,8 +217,6 @@ def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
 
     # Enables the bt power save in DUT
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    channel = 11
-    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
 
     with TimeMeasurer() as t:
 
@@ -314,13 +312,12 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
         logger().info(scan_results)
         assert len(scan_results) >= 1
         for count in scan_results:
-            assert count.ssid == 'test_ssid'
+            assert count.ssid == 'hidden_ssid'
         channel_selected = 0
         for count1 in scan_results:
             for device_channel in channel_list:
                 if count1.rf_channel == device_channel:
                     channel_selected = channel_selected + 1
-
             assert (channel_selected <= len(scan_results))
     logger().info(f"Scan in {t.duration} seconds")
 
@@ -373,10 +370,6 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut,wifi_access_point):
 
     # initiates the rejoin in dut
     wifi_dut.interfaces.wifi.rejoin()
-    channel = 13
-
-    # Enables and assign the dhcp in DUT
-    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
 
     with TimeMeasurer() as t:
         # enables the scan in DUT with the given channel bitmap value
@@ -399,10 +392,6 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut,wifi_access_point):
 
     # initiates the rejoin in dut
     wifi_dut.interfaces.wifi.rejoin()
-    channel = 13
-
-    # Enables and assign the dhcp in DUT
-    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
 
     with TimeMeasurer() as t:
         # enables the scan in DUT with the given channel bitmap value
