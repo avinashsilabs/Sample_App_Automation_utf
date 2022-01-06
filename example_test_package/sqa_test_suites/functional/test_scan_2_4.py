@@ -268,14 +268,9 @@ def test_scan_hidden_mode_scan_with_all_channels_c19062(wifi_dut,wifi_access_poi
 
     # Enables the rejoin feature on DUT
     wifi_dut.interfaces.wifi.rejoin()
-    channel = 0
-    channel_bitmap_2_4 = 0
-    scan_feature_extend = 0
     with TimeMeasurer() as t:
                 # enables the scan in DUT with the given channel bitmap value
-                scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel,ssid="test_ssid",
-                                                                       scan_bitmap_2_4=channel_bitmap_2_4,
-                                                                       scan_feature=scan_feature_extend)
+                scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid="test_ssid")
                 logger().info(scan_results)
                 assert len(scan_results) >= 1
                 for count in scan_results:
