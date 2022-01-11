@@ -77,19 +77,36 @@ pipeline {
                                                                keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                        sh '''
-                                            rm -rf rs9116_binary
-                                            export GIT_SSH=ssh
-                                            export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
-                                        '''
+                                        
+                                        if(BUILD_LOCATION == "build_artifacts"){
+                                            sh '''
+                                                rm -rf rs9116_binary
+                                                export GIT_SSH=ssh
+                                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
+                                            '''
+                                        } else {
+                                            sh '''
+                                                rm -rf rs9116_binary
+                                                export GIT_SSH=ssh
+                                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                            '''
+                                        }
                                     }
                                     dir('rs9116_binary'){
-                                        sh  '''
-                                            unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                            rm -f ../example_test_package/rs9116*.rps
-                                            cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
-                                        '''
+                                        if(BUILD_LOCATION == "build_artifacts"){
+                                            sh  '''
+                                                rm -f ../example_test_package/rs9116*.rps
+                                                cp -f firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                            '''
+                                        }else {
+                                            sh  '''
+                                                unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
+                                                rm -f ../example_test_package/rs9116*.rps
+                                                cp -f ${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                            '''                                            
+                                        }
                                     }
                                 }
                             } else {
