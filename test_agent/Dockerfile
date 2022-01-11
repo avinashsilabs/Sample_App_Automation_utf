@@ -10,8 +10,8 @@ RUN slc signature trust --sdk $GECKO_SDK
 
 ARG RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
 ARG BUILD_LOCATION=release_packages
-RUN if [ "$BUILD_LOCATION" = "release_packages" ]; then \
-     --mount=type=ssh \
+RUN --mount=type=ssh \ 
+    if [ "$BUILD_LOCATION" = "release_packages" ]; then \
      git archive --remote ssh://git@stash.silabs.com/redpine/release_packages.git --format tar ${RELEASE_PACKAGE_VERSION} ${RELEASE_PACKAGE_VERSION}.zip -o ${RELEASE_PACKAGE_VERSION}.tar && \
      tar -xvf ${RELEASE_PACKAGE_VERSION}.tar && \
      unzip ${RELEASE_PACKAGE_VERSION}.zip && \
@@ -20,7 +20,6 @@ RUN if [ "$BUILD_LOCATION" = "release_packages" ]; then \
      cp -r ${RELEASE_PACKAGE_VERSION}/third_party mini_gecko_sdk/platform/radio/wifi/rs9116 && \
      rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}.zip && rm -rf ${RELEASE_PACKAGE_VERSION}; \
     else \
-     --mount=type=ssh \
      unzip ${RELEASE_PACKAGE_VERSION}.zip && \
      cp -r ${RELEASE_PACKAGE_VERSION}/sapi mini_gecko_sdk/platform/radio/wifi/rs9116 && \
      cp -r ${RELEASE_PACKAGE_VERSION}/platforms/efx32 mini_gecko_sdk/platform/radio/wifi/rs9116 && \
