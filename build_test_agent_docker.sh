@@ -8,9 +8,10 @@ SSH_KEY=$2
 if [ -z "$2" ]; then
    SSH_KEY=$HOME/.ssh/id_rsa
 fi
+BUILD_LOCATION=$3
 export DOCKER_BUILDKIT=1
 set -e
-docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION -f test_agent/Dockerfile -t wifi_test_agent_build --ssh default=$SSH_KEY .
+docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --build-arg=$BUILD_LOCATION -f test_agent/Dockerfile -t wifi_test_agent_build --ssh default=$SSH_KEY .
 
 rm -rf test_agent/build
 mkdir -p test_agent/build
