@@ -19,20 +19,21 @@ pytestmark = [
     )
 ]
 
+
 def logger():
     return get_logger(__name__)
 
-def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client):
+
+@pytest.mark.parametrize("enable_ssp", [True, False])
+def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
-            "This test case is only currently implemented for SAPI"
+            "This test case is only currently implemented for AT"
         )
     with TimeMeasurer() as t:
 
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_hid(enable_ssp=True)
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_hid(enable_ssp=enable_ssp)
         assert bt_dut_address is not None
-
-        bt_dut_address = "80:C9:55:B9:EF:DC"
 
         # Begin Scanning for BLE devices
         bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
@@ -47,10 +48,8 @@ def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client):
         bt_client.interfaces.bluetooth.stop_scanning()
 
         with wifi_dut.interfaces.wifi.run_bt_task():
-            bt_client.interfaces.bluetooth.connect(bt_dut_address)
-
-        logger().info(f"Sleeping")
-        time.sleep(15)
+            bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            time.sleep(10)
 
         wifi_dut.interfaces.wifi.bt_hid_send_interrupt(bt_client_address,
                                                        data_arr=["01", "00", "00", "05", "00", "00", "00", "00", "00"])
