@@ -11,7 +11,7 @@ RUN slc signature trust --sdk $GECKO_SDK
 ARG RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
 ARG BUILD_LOCATION=release_packages
 RUN --mount=type=ssh \ 
-    if [ "$BUILD_LOCATION" = "release_packages" ]; then \
+    if [ "${BUILD_LOCATION}" = "release_packages" ]; then \
      git archive --remote ssh://git@stash.silabs.com/redpine/release_packages.git --format tar ${RELEASE_PACKAGE_VERSION} ${RELEASE_PACKAGE_VERSION}.zip -o ${RELEASE_PACKAGE_VERSION}.tar && \
      tar -xvf ${RELEASE_PACKAGE_VERSION}.tar && \
      unzip ${RELEASE_PACKAGE_VERSION}.zip && \
