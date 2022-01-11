@@ -49,7 +49,6 @@ def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
 
         with wifi_dut.interfaces.wifi.run_bt_task():
             bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
-            time.sleep(10)
 
         wifi_dut.interfaces.wifi.bt_hid_send_interrupt(bt_client_address,
                                                        data_arr=["01", "00", "00", "05", "00", "00", "00", "00", "00"])
