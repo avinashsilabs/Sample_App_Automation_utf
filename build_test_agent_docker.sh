@@ -11,7 +11,7 @@ fi
 BUILD_LOCATION=$3
 export DOCKER_BUILDKIT=1
 set -e
-docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --build-arg=$BUILD_LOCATION -f test_agent/Dockerfile -t wifi_test_agent_build --ssh default=$SSH_KEY .
+docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --build-arg BUILD_LOCATION=$BUILD_LOCATION -f test_agent/Dockerfile -t wifi_test_agent_build --ssh default=$SSH_KEY .
 
 rm -rf test_agent/build
 mkdir -p test_agent/build
