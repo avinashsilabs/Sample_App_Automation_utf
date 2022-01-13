@@ -18,7 +18,7 @@ def test_capture_power_meter_data_points_to_file(power_meter):
     # Trigger source and Elog
     power_meter.interfaces.power_meter.configure_trigger_source_and_trigger_elog(3)
     # Capture data for time span of 10 seconds on channel 3
-    captured_file_name = power_meter.interfaces.power_meter.capture_data_log(3, 10, "power_meter_test")
+    captured_file_name = power_meter.interfaces.power_meter.capture_data_log(3, 10)
     # Stop data log
     power_meter.interfaces.power_meter.stop_data_log(3)
     file_size = os.path.getsize(captured_file_name)
