@@ -21,12 +21,8 @@ pytestmark = [
 ]
 
 
-def logger():
-    return get_logger(__name__)
-
-
 @pytest.mark.parametrize("enable_ssp", [True, False])
-def test_bt_hid_dut_as_slave(wifi_dut, bt_client, enable_ssp):
+def test_bt_hid_dut_as_slave(wifi_dut, bt_client, logger, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
             "This test case is only currently implemented for AT"
@@ -73,4 +69,4 @@ def test_bt_hid_dut_as_slave(wifi_dut, bt_client, enable_ssp):
             assert hid_logs[i] == test_data[i]
 
         bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
-    logger().info(f"Scan in {t.duration} seconds")
+    logger.info(f"Scan in {t.duration} seconds")
