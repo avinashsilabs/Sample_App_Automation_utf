@@ -25,7 +25,7 @@ def logger():
     return get_logger(__name__)
 
 
-@pytest.mark.parametrize("enable_ssp", [False])
+@pytest.mark.parametrize("enable_ssp", [True, False])
 def test_bt_hid_dut_as_slave(wifi_dut, bt_client, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
