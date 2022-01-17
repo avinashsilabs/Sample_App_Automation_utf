@@ -26,7 +26,7 @@ def logger():
 
 
 @pytest.mark.parametrize("enable_ssp", [False])
-def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
+def test_bt_hid_dut_as_slave(wifi_dut, bt_client, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
             "This test case is only currently implemented for AT"
@@ -34,12 +34,12 @@ def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
 
     # https://community.silabs.com/s/article/iwrap-hid-localization-country-code-x?language=en_US
     # Page 53 of https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
-    test_data = ["1,9,01,00,00,04,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00",  # a, keyrelease
-                 "1,9,01,00,00,05,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00",  # b, keyrelease
-                 "1,9,01,02,00,04,00,00,00,00,00", "1,9,01,02,00,00,00,00,00,00,00",  # L-Shift + a, keyrelease
-                 "1,9,01,02,00,05,00,00,00,00,00", "1,9,01,02,00,00,00,00,00,00,00",  # L-Shift + b, keyrelease
-                 "1,9,01,00,00,2e,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00",  # =, keyrelease
-                 "1,9,01,00,00,3a,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00"]  # F1, keyrelease
+    test_data = ["9,01,00,00,04,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",  # a, keyrelease
+                 "9,01,00,00,05,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",  # b, keyrelease
+                 "9,01,02,00,04,00,00,00,00,00", "9,01,02,00,00,00,00,00,00,00",  # L-Shift + a, keyrelease
+                 "9,01,02,00,05,00,00,00,00,00", "9,01,02,00,00,00,00,00,00,00",  # L-Shift + b, keyrelease
+                 "9,01,00,00,2e,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",  # =, keyrelease
+                 "9,01,00,00,3a,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00"]  # F1, keyrelease
 
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_hid(enable_ssp=enable_ssp)
@@ -70,7 +70,7 @@ def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
             hid_logs = hid_recorder.logs()
 
         for i in range(len(test_data)):
-            assert hid_logs[i] == ",".join(test_data[i].split(",")[1:])
+            assert hid_logs[i] == test_data[i]
 
         bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
     logger().info(f"Scan in {t.duration} seconds")
