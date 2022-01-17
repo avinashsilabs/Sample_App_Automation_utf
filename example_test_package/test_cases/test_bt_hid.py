@@ -25,7 +25,7 @@ def logger():
     return get_logger(__name__)
 
 
-@pytest.mark.parametrize("enable_ssp", [True])
+@pytest.mark.parametrize("enable_ssp", [False])
 def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
@@ -38,15 +38,16 @@ def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
                  "1,9,01,00,00,05,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00",  # b, keyrelease
                  "1,9,01,02,00,04,00,00,00,00,00", "1,9,01,02,00,00,00,00,00,00,00",  # L-Shift + a, keyrelease
                  "1,9,01,02,00,05,00,00,00,00,00", "1,9,01,02,00,00,00,00,00,00,00",  # L-Shift + b, keyrelease
-                 "1,9,01,00,00,2E,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00",  # =, keyrelease
-                 "1,9,01,00,00,3A,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00"]  # F1, keyrelease
+                 "1,9,01,00,00,2e,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00",  # =, keyrelease
+                 "1,9,01,00,00,3a,00,00,00,00,00", "1,9,01,00,00,00,00,00,00,00,00"]  # F1, keyrelease
 
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_hid(enable_ssp=enable_ssp)
         assert bt_dut_address is not None
 
         # Begin Scanning for BLE devices
-        bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                          pin_code=pin_code)
         assert bt_client_address is not None
 
         device_found = False
@@ -60,14 +61,16 @@ def test_bt_hid_dut_as_slave_ssp(wifi_dut, bt_client, enable_ssp):
         assert device_found
 
         with wifi_dut.interfaces.wifi.run_bt_task():
-            bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            assert connected
 
-        with HidRecorder(hid_log_path="./reports/hid.log", hid_error_path="./reports/hid_error.log"):
+        with HidRecorder() as hid_recorder:
             for item in test_data:
                 wifi_dut.interfaces.wifi.bt_hid_send_interrupt(bt_client_address, data=item)
+            hid_logs = hid_recorder.logs()
+
+        for i in range(len(test_data)):
+            assert hid_logs[i] == ",".join(test_data[i].split(",")[1:])
 
         bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
     logger().info(f"Scan in {t.duration} seconds")
-
-
-    # hidrecorder.print_logs()
