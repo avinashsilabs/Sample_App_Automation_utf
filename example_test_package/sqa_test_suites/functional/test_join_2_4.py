@@ -92,6 +92,9 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -114,6 +117,9 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -171,6 +177,9 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -193,6 +202,9 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -250,6 +262,9 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -272,6 +287,9 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -328,6 +346,9 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -350,6 +371,9 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -406,6 +430,9 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -428,6 +455,9 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -485,6 +515,9 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -507,6 +540,9 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -633,6 +669,9 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -655,6 +694,9 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -714,6 +756,9 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -736,6 +781,9 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -796,6 +844,9 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
         packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and eapol'
 
+        # Validate dhcp
+        packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -818,6 +869,9 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
         logger().info(" Validating the EAPOL keys")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
             'packet_count'], 'Unable to find eapol keys in sniffer'
+        logger().info(" Validating dhcp in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer'
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -877,6 +931,9 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
             packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                              f'wlan.da == {dut_mac_address} and eapol'
 
+            # Validate dhcp
+            packet_filter7 = f'(wlan.addr == {dut_mac_address} and dhcp'
+
             # Initiate ping from third party wifi-client to DUT
             status = ping(device_ip, 10)
             assert status == 1
@@ -899,4 +956,7 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
             logger().info(" Validating the EAPOL keys")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
                 'packet_count'], 'Unable to find eapol keys in sniffer'
+            logger().info(" Validating dhcp in sniffer")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
+                'packet_count'], 'Unable to find dhcp in sniffer'
     logger().info(f"Associated and ping in {t.duration} seconds")
