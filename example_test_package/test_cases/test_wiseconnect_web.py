@@ -36,6 +36,7 @@ def test_wiseconnect_web(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     time.sleep(5)
 
 
+@pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "disable_store_config"])
 def test_wiseconnect_web_firmware_upgrade(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
