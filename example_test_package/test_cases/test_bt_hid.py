@@ -65,6 +65,7 @@ def test_bt_hid_dut_as_slave(wifi_dut, bt_client, logger, enable_ssp):
                 wifi_dut.interfaces.wifi.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
+        assert len(hid_logs) == len(test_data)
         for i in range(len(test_data)):
             assert hid_logs[i] == test_data[i]
 
