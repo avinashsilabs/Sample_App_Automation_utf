@@ -11,7 +11,7 @@ from interfaces import wifi
 from utils.logger import get_logger
 from utils.time_measurer import TimeMeasurer
 import time
-from interfaces.wifi import SecurityMode
+from interfaces.wifi import SecurityMode, WlanError
 import interfaces.cli.rs_commands_base
 
 
@@ -186,20 +186,22 @@ def test_connectivity_with_WPA2_EAP_with_wrongcertificate_TLS(wifi_dut, wifi_acc
             # enable rejoin
             wifi_dut.interfaces.wifi.rejoin()
             # test_wifi_join
-            wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
-        with pytest.raises(WlanError) as exc_info:
-            result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-            assert exc_info.value.error_code == 0x45
-            # Get IP through DHCP
-            result = wifi_dut.interfaces.wifi.start_ip()
-            assert isinstance(
-                result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
-            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            # Initiating power save
-            wifi_dut.interfaces.wifi.power_save(2)
-            wifi_dut.interfaces.wifi.bt_power_save(2)
-            time.sleep(2)
+            wifi_dut.interfaces.wifi.eap_method(eap_method="TLS",
+                                                eap_inner_method="\\\"auth=MSCHAPV2\\\"",
+                                                private_key="\"\"")
+            with pytest.raises(WlanError) as exc_info:
+                wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+                assert exc_info.value.error_code == 0x45
+                # Get IP through DHCP
+                result = wifi_dut.interfaces.wifi.start_ip()
+                assert isinstance(
+                    result, wifi_dut.interfaces.wifi.IPConfig
+                ), f"Failed to get IP address. Result = {result}"
+                device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                # Initiating power save
+                wifi_dut.interfaces.wifi.power_save(2)
+                wifi_dut.interfaces.wifi.bt_power_save(2)
+                time.sleep(2)
 
 
 pytestmark = [
@@ -235,20 +237,22 @@ def test_connectivity_with_WPA2_EAP_with_nocertificate_TLS(wifi_dut, wifi_access
             # enable rejoin
             wifi_dut.interfaces.wifi.rejoin()
            # test_wifi_join
-            wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
-        with pytest.raises(WlanError) as exc_info:
-            result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-            assert exc_info.value.error_code == 0x45
-            #Get IP through DHCP
-            result = wifi_dut.interfaces.wifi.start_ip()
-            assert isinstance(
-                result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
-            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            # Initiating power save
-            wifi_dut.interfaces.wifi.power_save(2)
-            wifi_dut.interfaces.wifi.bt_power_save(2)
-            time.sleep(2)
+            wifi_dut.interfaces.wifi.eap_method(eap_method="TLS",
+                                                eap_inner_method="\\\"auth=MSCHAPV2\\\"",
+                                                private_key="\"\"")
+            with pytest.raises(WlanError) as exc_info:
+                result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+                assert exc_info.value.error_code == 0x45
+                #Get IP through DHCP
+                result = wifi_dut.interfaces.wifi.start_ip()
+                assert isinstance(
+                    result, wifi_dut.interfaces.wifi.IPConfig
+                ), f"Failed to get IP address. Result = {result}"
+                device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                # Initiating power save
+                wifi_dut.interfaces.wifi.power_save(2)
+                wifi_dut.interfaces.wifi.bt_power_save(2)
+                time.sleep(2)
 
 pytestmark = [
     pytest.mark.config(
@@ -286,16 +290,16 @@ def test_connectivity_with_WPA2_EAP_with_expireddate_TLS(wifi_dut, wifi_access_p
             wifi_dut.interfaces.wifi.rejoin()
             # test_wifi_join
             wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
-        with pytest.raises(WlanError) as exc_info:
-            result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-            assert exc_info.value.error_code == 0x45
-            # Get IP through DHCP
-            result = wifi_dut.interfaces.wifi.start_ip()
-            assert isinstance(
-                result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
-            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            # Initiating power save
-            wifi_dut.interfaces.wifi.power_save(2)
-            wifi_dut.interfaces.wifi.bt_power_save(2)
-            time.sleep(2)
+            with pytest.raises(WlanError) as exc_info:
+                    result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+                    assert exc_info.value.error_code == 0x45
+                    # Get IP through DHCP
+                    result = wifi_dut.interfaces.wifi.start_ip()
+                    assert isinstance(
+                        result, wifi_dut.interfaces.wifi.IPConfig
+                    ), f"Failed to get IP address. Result = {result}"
+                    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                    # Initiating power save
+                    wifi_dut.interfaces.wifi.power_save(2)
+                    wifi_dut.interfaces.wifi.bt_power_save(2)
+                    time.sleep(2)
