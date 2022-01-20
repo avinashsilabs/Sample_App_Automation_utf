@@ -1,5 +1,5 @@
 from devices.rs911x import RS9116OperatingMode
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.Iperf_constants import IperfConstants
 from utils.rs911x_version import parse_version
 from utils.time_measurer import TimeMeasurer
 import time

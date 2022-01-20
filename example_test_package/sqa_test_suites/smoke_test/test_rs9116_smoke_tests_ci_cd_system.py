@@ -5,7 +5,7 @@ from utils.time_measurer import TimeMeasurer
 from utils.iperf.iperf_utils import ping
 import time
 from utils.rs911x_version import parse_version
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.Iperf_constants import IperfConstants
 from utils.stopwatch import Stopwatch
 
 

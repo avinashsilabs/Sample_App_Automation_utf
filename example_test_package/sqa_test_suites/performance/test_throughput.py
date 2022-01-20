@@ -1,14 +1,14 @@
 # import pytest
 from interfaces.wifi import WlanError
 
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.Iperf_constants import IperfConstants
 import pytest
 from utils.logger import get_logger
 
 from integration_tests.common import logger
 from interfaces.iperf.fixtures import IPerfFixture, iperf
 
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.Iperf_constants import IperfConstants
 from utils.thread_base import ThreadBase
 import time
 from interfaces.cli.rs_sapi_commands import RSSAPICommands

@@ -1,4 +1,4 @@
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.Iperf_constants import IperfConstants
 import pytest
 from utils.logger import get_logger
 from utils.iperf.iperf_utils import print_dict
