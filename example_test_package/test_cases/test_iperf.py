@@ -53,7 +53,6 @@ def test_device_as_server(iperf1, wifi_access_point, wifi_dut, wifi_client, logg
     __print_throughput(tp)
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize('iperf1', [{IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}},
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
