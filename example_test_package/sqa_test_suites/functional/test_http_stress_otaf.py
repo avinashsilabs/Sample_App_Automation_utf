@@ -18,7 +18,8 @@ def logger():
     return get_logger(__name__)
 
 
-"""setup requirement:
+"""
+    setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
@@ -31,7 +32,7 @@ def logger():
         4. Initiate http firmware upgrade
         5. Verify the otaf status
 
-    Author: Ravi Nemali
+    Author: RaviNemali
 """
 
 @pytest.mark.config(
@@ -49,7 +50,7 @@ def logger():
         },
     )
 # This test case verifies the http otaf for 500 iterations
-def test_http_otaf_stress_overnight_testcase1(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_point):
     for i in range(0,500):
         # Joins the AP with given ssid and passphrase
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -109,7 +110,7 @@ def test_http_otaf_stress_overnight_testcase1(http_server, wifi_dut, wifi_access
         },
     )
 # This test case verifies the http otaf for the corrupted rps file for 500 iterations
-def test_http_otaf_stress_corrupted_testcase2(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_over_night_C19794(http_server, wifi_dut, wifi_access_point):
     for i in range(0, 500):
         # Joins the AP with given ssid and passphrase
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -167,7 +168,7 @@ def test_http_otaf_stress_corrupted_testcase2(http_server, wifi_dut, wifi_access
         },
     )
 # This test case verifies the http otaf for the non rps file for 500 iterations
-def test_http_otaf_stress_nonrps_testcase3(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_over_night_C19795(http_server, wifi_dut, wifi_access_point):
     for i in range(0, 500):
         # Joins the AP with given ssid and passphrase
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
