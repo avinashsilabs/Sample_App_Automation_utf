@@ -77,3 +77,46 @@ def test_wifi_start_ap(wifi_dut):
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
     assert wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip) < 0.1
+
+
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+             'ssid': 'TESTTESTTEST2'
+        },
+        1: {
+             'ssid': 'Codecom123'
+        }
+    }
+)
+def test_multiple_access_points(wifi_dut, wifi_access_points):
+    result = wifi_dut.interfaces.wifi.join_ap(wifi_access_points[0])
+    assert result
+    wifi_dut.interfaces.wifi.leave()
+
+    if len(wifi_access_points) > 1:
+        result = wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
+        assert result
+        wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, no need to provide respective index if there are no test case level config.
+        1: {
+             'ssid': 'Alia_2G'
+        }
+    }
+)
+def test_multiple_access_points(wifi_dut, wifi_access_points):
+    result = wifi_dut.interfaces.wifi.join_ap(wifi_access_points[0])
+    assert result
+    wifi_dut.interfaces.wifi.leave()
+
+    if len(wifi_access_points) > 1:
+        result = wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
+        assert result
+        wifi_dut.interfaces.wifi.leave()
