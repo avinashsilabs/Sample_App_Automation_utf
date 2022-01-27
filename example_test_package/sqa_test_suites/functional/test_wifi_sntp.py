@@ -13,6 +13,7 @@ from devices.rs911x import (
     SocketType,
     Cipher,
     DeviceConstants,
+    RS9116AsyncEventType,
     )
 from typing import Dict
 
@@ -65,7 +66,7 @@ def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) 
 def test_sntp_unicast_TC19015(
         wifi_sniffer, wifi_dut, wifi_access_point, logger
         ):
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_sntp_unicast_TC19015"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -84,13 +85,25 @@ def test_sntp_unicast_TC19015(
     wifi_dut.interfaces.wifi.start_ip()
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
-    # wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
     time.sleep(10)
+    asynchronous_request_time = 0
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
+            sntp_event = event.event_data
+            asynchronous_request_time = event.timestamp + 1
+        else:
+            assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
+    sntp_status = int(sntp_event.split(b":")[1])
+    assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP connection request is wrong " \
+                             "expected is 1 "
+
     command_type, sntp_time = wifi_dut.interfaces.wifi.get_sntp_time()
     assert command_type == 2, "Command type received for the body of get_sntp_time response is wrong, expected is 2"
     command_type, sntp_date_time = wifi_dut.interfaces.wifi.get_sntp_timedate()
@@ -103,7 +116,18 @@ def test_sntp_unicast_TC19015(
     assert server_ip == sntp_server_address, f"SNTP server ip address received for the body of get_sntp_server_info " \
                                              f"response is wrong, expected " \
                                              "is {sntp_server_address}"
+
     wifi_dut.interfaces.wifi.sntp_delete()
+    time.sleep(5)
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
+            sntp_event = event.event_data
+        else:
+            assert 1, f"SNTP asynchronous event is not received by DUT after SNTP delete is initiated"
+    sntp_status = int(sntp_event.split(b":")[1])
+    assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP delete request is wrong expected " \
+                             "is 1 "
     time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
@@ -142,7 +166,7 @@ def test_sntp_unicast_TC19015(
 def test_sntp_keepalive_TC19016(
         wifi_sniffer, wifi_dut, wifi_access_point, keep_alive_time, idle_time, logger
         ):
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_sntp_keepalive_TC19016"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -161,13 +185,24 @@ def test_sntp_keepalive_TC19016(
     wifi_dut.interfaces.wifi.start_ip()
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
-    # wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
     time.sleep(10)
+    asynchronous_request_time = 0
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
+            sntp_event = event.event_data
+            asynchronous_request_time = event.timestamp + 1
+        else:
+            assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
+    sntp_status = int(sntp_event.split(b":")[1])
+    assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP connection request is wrong " \
+                             "expected is 1 "
     command_type, sntp_time = wifi_dut.interfaces.wifi.get_sntp_time()
     assert command_type == 2, "Command type received for the body of get_sntp_time response is wrong, expected is 2"
     command_type, sntp_date_time = wifi_dut.interfaces.wifi.get_sntp_timedate()
@@ -180,8 +215,19 @@ def test_sntp_keepalive_TC19016(
     assert server_ip == sntp_server_address, f"SNTP server ip address received for the body of get_sntp_server_info " \
                                              f"response is wrong, expected " \
                                              "is {sntp_server_address}"
-    wifi_dut.interfaces.wifi.sntp_delete()
+
     time.sleep(idle_time)
+    wifi_dut.interfaces.wifi.sntp_delete()
+    time.sleep(5)
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
+            sntp_event = event.event_data
+        else:
+            assert 1, f"SNTP asynchronous event is not received by DUT after SNTP delete is initiated"
+    sntp_status = int(sntp_event.split(b":")[1])
+    assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP delete request is wrong expected " \
+                             "is 1 "
     wifi_sniffer.interfaces.capture.stop_capture()
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     ntp_capture_list = get_ntp_list(wifi_sniffer, decryption_key, ["ntp"])
@@ -230,7 +276,7 @@ def test_sntp_keepalive_TC19016(
 def test_sntp_ludp_coexit_TC19017(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
         ):
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_sntp_ludp_coexit_TC19017"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -249,8 +295,8 @@ def test_sntp_ludp_coexit_TC19017(
     wifi_dut.interfaces.wifi.start_ip()
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
-    # wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -267,5 +313,15 @@ def test_sntp_ludp_coexit_TC19017(
 
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
-    time.sleep(20)
-
+    time.sleep(10)
+    asynchronous_request_time = 0
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
+            sntp_event = event.event_data
+            asynchronous_request_time = event.timestamp + 1
+        else:
+            assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
+    sntp_status = int(sntp_event.split(b":")[1])
+    assert sntp_status == 2, "SNTP connection is successful even though the UDP socket at 123 port is already opened " \
+                             "in the DUT which is not expected "
