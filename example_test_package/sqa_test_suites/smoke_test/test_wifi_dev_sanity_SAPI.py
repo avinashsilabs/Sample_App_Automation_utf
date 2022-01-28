@@ -68,15 +68,280 @@ class wifiJoinThread(ThreadBase):
         logger().info("this is IPerf END")
 
 
-def test_version_testcase18(wifi_dut):
+# this thread used for sta+ble as a slave
+class BleThread_connection(ThreadBase):
+    def __init__(self, wifi_dut, ble_client, mode):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.mode = mode
+
+    def run(self):
+        self.logger.info('this is BLE run')
+        time.sleep(5)
+        if self.mode == "ble_master":
+            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            assert bt_dut_address is not None
+
+            # Start ble client
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+            assert bt_client_address is not None
+
+            # Start scanning and connect to ble client
+            logger().info("Scanning to ble client")
+            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
+
+            timeout = 120
+            logger().info("Connecting to ble client")
+            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+
+            # Disconnect
+            logger().info("Disconnect to ble client")
+            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+        if self.mode == "ble_slave":
+            # Set up DUT for BLE advertising
+            logger().info("Starts BLE advertising")
+            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            assert bt_dut_address is not None
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+            # Begin Scanning for BLE devices
+            logger().info("Scanning for BLE devices")
+            time.sleep(3)
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert bt_client_address is not None
+            time.sleep(3)
+            self.ble_client.interfaces.bluetooth.stop_scanning()
+
+            # See that we found our device
+            logger().info("Checks our device is found")
+            found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+            time.sleep(3)
+            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
+            assert (
+                    found_devices[self.wifi_dut.interfaces.wifi.ble_address]
+                    == self.wifi_dut.interfaces.wifi.ble_advertising_data
+            )
+            self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
+            time.sleep(40)
+
+            self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+
+class Ble_Data_Transfer(ThreadBase):
+    def __init__(self, wifi_dut, ble_client):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+
+    def run(self):
+        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+        data1 = "LzY0"
+        data2 = "K09x"
+        data3 = "Mx3Y"
+
+        # Set up BLE Server on DUT
+        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address is not None
+        self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
+        self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
+        self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
+
+        # Start advertising
+        logger().info("Ble start advertising")
+        self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+        # Begin Scanning for BLE devices
+        logger().info("Scanning for BLE devices")
+        bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        time.sleep(5)
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        # See that we found our device
+        logger().info("Searching for our devices")
+        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+        assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
+        assert (
+                found_devices[self.wifi_dut.interfaces.wifi.ble_address]
+                == self.wifi_dut.interfaces.wifi.ble_advertising_data
+        )
+
+        # connecting to dut
+        logger().info("Connecting to dut")
+        self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
+        time.sleep(2)
+
+        # resolving charecteristic
+        logger().info("Resolving characteristic")
+        bus = self.ble_client.interfaces.bluetooth.bus
+        servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+        assert len(servs) > 0
+        assert len(chars) > 0
+
+        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic \
+            (bus, services=servs, service_uid=service_uid, char_uid=char_uid)
+        assert char is not None
+        assert len(char_props) > 0
+
+        # read value - Notifications not enabled
+        logger().info("read value")
+        result = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+        assert result == data1
+
+        # subscribe to notifications
+        logger().info("subscribe to notifications")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+                                                                                     char_uid=char_uid)
+        # time.sleep(0.5)
+        time.sleep(35)
+
+        # notify only
+        logger().info("notify")
+        self.wifi_dut.interfaces.wifi.ble_notify_value()
+
+        # write/read new value - Notifications enabled
+        logger().info("write/read new value")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data2)
+        time.sleep(0.1)
+        result = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+        assert result == data2
+
+        # write value - Notifications enabled
+        logger().info("write value")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data3)
+
+        # auto notify
+        logger().info("auto notify")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+                                                                                     char_uid=char_uid)
+        self.wifi_dut.interfaces.wifi.ble_start_notify_value(interval_ms=500, count=2)
+        time.sleep(1)
+
+        # subscribe to notifications
+        logger().info("subscribe to notifications")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        time.sleep(0.5)
+
+        # notify only - disabled notifications - should raise exception
+        with pytest.raises(WlanError) as exc_info:
+            self.wifi_dut.interfaces.wifi.ble_notify_value()
+        assert exc_info.value.error_code == 0x21
+
+        # assert received notifications
+        logger().info("assert will received notifications")
+        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+        logger().info(notifications)
+        assert len(notifications) == 6
+        assert notifications[0] == data1
+        assert notifications[1] == data2
+        assert notifications[2] == data2
+        assert notifications[3] == data3
+        assert notifications[4] == data3
+        assert notifications[5] == data3
+
+        # disconnecting from dut
+        logger().info("disconnecting from dut")
+        self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+
+def test_firmware_version_TC18(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
         pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
-
-    logger().info(f"Expected FW version: {expected_version}")
+    logger().info(f"Expected Firmware version: {expected_version}")
     result = wifi_dut.interfaces.wifi.version()
-    logger().info(f"Actual version: {result}")
+    logger().info(f"Actual Firmware version: {result}")
     assert result == expected_version
+
+
+# STA + BLE DATA TRANSFER
+@pytest.mark.parametrize('run_iperf1', [
+    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
+                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
+     }])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2
+        }
+    )
+def test_threading_sta_ble_data_udp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                            ble_client):
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
+            Ble_Data_Transfer(wifi_dut, ble_client):
+        time.sleep(30)
+
+
+@pytest.mark.parametrize('run_iperf1', [
+    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
+                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
+     }])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2
+        }
+    )
+def test_threading_sta_ble_data_udp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                            ble_client):
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), Ble_Data_Transfer(wifi_dut,
+                                                                                                           ble_client):
+        time.sleep(40)
+
+
+@pytest.mark.parametrize('run_iperf1', [
+    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
+                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
+     }])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2
+        }
+    )
+def test_threading_sta_ble_data_tcp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                            ble_client):
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), Ble_Data_Transfer(wifi_dut,
+                                                                                                           ble_client):
+        time.sleep(20)
+
+
+@pytest.mark.parametrize('run_iperf1', [
+    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
+                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
+     }])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2
+        }
+    )
+def test_threading_sta_ble_data_tcp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+                                            ble_client):
+    with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), Ble_Data_Transfer(wifi_dut,
+                                                                                                           ble_client):
+        time.sleep(20)
 
 
 @pytest.mark.config(
@@ -230,6 +495,7 @@ def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wi
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
+        # "first_time_retry": 0,
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -239,8 +505,10 @@ def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 def test_store_config_open_testcase12(wifi_access_point, wifi_dut):
     # DUT connects to AP after join_ap API is executed
+    logger().info("Joining the Wifi Access Point")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
+    logger().info("DUT gets ipaddress through DHCP ")
     wifi_dut.interfaces.wifi.start_ip()
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -249,18 +517,24 @@ def test_store_config_open_testcase12(wifi_access_point, wifi_dut):
     assert status == 1, "DUT is not responding to ping request from third party device before store configuration"
 
     # Save the wireless configuration in the flash
+    logger().info("Save the Wireless Configuration in the flash")
     wifi_dut.interfaces.wifi.config_save()
     # Enable the wireless configuration in the flash
+    logger().info("Enables the Wireless Configuration in the flash")
     wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
     # deinit
+    logger.info("deinit")
     wifi_dut.interfaces.wifi.reset_soft()
     time.sleep(5)
     # init
+    logger().info("Wireless Initialization ")
     wifi_dut.interfaces.wifi.wireless_init()
     time.sleep(10)
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
+    logger().info("Enables the Wifi power save")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info("Enables the BT Power SAve")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
     # Ping to dut from third party device
