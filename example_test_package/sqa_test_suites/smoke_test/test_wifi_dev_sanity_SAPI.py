@@ -16,6 +16,8 @@ from devices.rs911x import (
     RS9116AsyncEventType,
     RS9116StoreConfiguration,
     RS9116CustomFeatureBitMap,
+    RS9116MqttQos,
+    DeviceConstants,
     )
 from utils.iperf.iperf_utils import get_host_ip
 from utils.logger import get_logger
@@ -26,6 +28,10 @@ from utils.iperf.iperf_utils import ping
 from utils.thread_base import ThreadBase
 from utils.rs911x_version import parse_version
 from utils.time_measurer import TimeMeasurer
+from utils.stopwatch import Stopwatch
+import string
+import random
+from utils.iperf.iperf_utils import ping
 
 
 def logger():
@@ -73,21 +79,17 @@ def test_version_testcase18(wifi_dut):
     assert result == expected_version
 
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
-            "band": 1
-            }
-        )
-    ]
-
-
+@pytest.mark.config(
+    "wifi_dut",
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
+        "band": 1
+        }
+    )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -225,278 +227,9 @@ def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wi
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "rejoin_max_retry": 40,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-        "ca_cert": "ca-chain.cert.pem"
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
-def test_ssl_client_tx_rejoin_length_1460_testcase2(
-        wifi_dut, wifi_access_point, ssl_server, logger
-        ):
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
-    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
-    port1 = ssl_server.interfaces.ssl.config['device_port1']
-    pkt_count = 10000
-    bytes_sent = (pkt_count * buffer_length)
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server()
-    # Open ssl client socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-    assert sock == 0
-
-    # Enable ssl option for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                               SocketOptions.TCP_MAX_RETRY)
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
-    # ssl socket opened in DUT connects to the server
-    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
-
-    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length, pkt_rcv_timeout=120)
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
-    thread.start()
-    wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, timeout=600)
-    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
-    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                         f"not matched on socket {1} "
-
-    wifi_dut.interfaces.wifi.close_socket(sock)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "rejoin_max_retry": 40,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-        "ca_cert": "ca-chain.cert.pem"
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
-def test_ssl_client_rx_while_rejoining_testcase2(
-        wifi_dut, wifi_access_point, ssl_server, logger
-        ):
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
-    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
-    port1 = ssl_server.interfaces.ssl.config['device_port1']
-
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server()
-    # Open ssl client socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
-                                                           socket_flag=SocketType.ASYNCHRONOUS)
-    assert sock == 0
-
-    # Enable ssl option for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-    # Set the tcp max retry for the socket
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                               SocketOptions.TCP_MAX_RETRY)
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
-    # ssl socket opened in DUT connects to the server
-    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
-
-    ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
-    thread.start()
-    time.sleep(300)
-    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
-    bytes_received = int(result.split(b":")[1])
-    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
-    wifi_dut.interfaces.wifi.close_socket(sock)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "rejoin_max_retry": 40,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-        "ca_cert": "ca-chain.cert.pem"
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_ssl_client_tx_rejoin_length_1460_testcase4(
-        wifi_dut, wifi_access_point, ssl_server, logger
-        ):
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
-    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
-    port1 = ssl_server.interfaces.ssl.config['device_port1']
-    pkt_count = 10000
-    bytes_sent = (pkt_count * buffer_length)
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server()
-    # Open ssl client socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-    assert sock == 0
-
-    # Enable ssl option for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                               SocketOptions.TCP_MAX_RETRY)
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
-    # ssl socket opened in DUT connects to the server
-    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
-
-    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length, pkt_rcv_timeout=120)
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
-    thread.start()
-    wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, timeout=600)
-    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
-    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                         f"not matched on socket {1} "
-
-    wifi_dut.interfaces.wifi.close_socket(sock)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "rejoin_max_retry": 40,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-        "ca_cert": "ca-chain.cert.pem"
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_ssl_client_rx_while_rejoining_testcase4(
-        wifi_dut, wifi_access_point, ssl_server, logger
-        ):
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
-    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
-    port1 = ssl_server.interfaces.ssl.config['device_port1']
-
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server()
-    # Open ssl client socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
-                                                           socket_flag=SocketType.ASYNCHRONOUS)
-    assert sock == 0
-
-    # Enable ssl option for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-    # Set the tcp max retry for the socket
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                               SocketOptions.TCP_MAX_RETRY)
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
-    # ssl socket opened in DUT connects to the server
-    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
-
-    ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
-    thread.start()
-    time.sleep(300)
-    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
-    bytes_received = int(result.split(b":")[1])
-    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
-    wifi_dut.interfaces.wifi.close_socket(sock)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
-        # "first_time_retry": 0,
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -534,56 +267,6 @@ def test_store_config_open_testcase12(wifi_access_point, wifi_dut):
     status = ping(device_ip, 10)
     assert status == 1, "DUT is not responding to ping request from third party device after store configuration"
     time.sleep(5)
-
-
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-                              | RS9116TCPIPFeatureBitMap.SSL
-                              | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                              | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.SSLCertBypass | RS9116ExtTCPIPFeatureBitMap.Default,
-            },
-        ),
-    ]
-
-
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_aws_connect_sub_publish_testcase45(wifi_access_point, wifi_dut):
-    topic_1 = "sdk/test/Python"
-    message = '{"message": "my payload"}'
-
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.aws_iot_connect()
-    time.sleep(2)
-    wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, 0)
-
-    wifi_dut.interfaces.wifi.aws_iot_publish(
-        topic_1, message, 0
-        )
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-
-    if len(events):
-        for event in events:
-            assert topic_1 == event.event_data.topic, "message is not received on subscribed topic"
-            assert message == event.event_data.payload, "sent and received messages are not matching"
 
 
 @pytest.mark.config(
@@ -644,3 +327,645 @@ def test_http_otaf_testcase53(http_server, wifi_dut, wifi_access_point, logger):
 
     # gets DUT fw version
     wifi_dut.interfaces.wifi.version()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ca_cert": "ca-chain.cert.pem"
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+def test_ssl_client_tx_rejoin_length_1460_testcase2(
+        wifi_dut, wifi_access_point, ssl_server, logger
+        ):
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    pkt_count = 10000
+    bytes_sent = (pkt_count * buffer_length)
+    # DUT connects to AP after join_ap API is executed
+    logger.info(f"sending rejoin params with rejoin_max=40, scan_interval=6, beacon_missedcount=40 and  "
+                f"first_time_retry=0")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=40,
+                                    scan_interval=6,
+                                    beacon_missedcount=40,
+                                    first_time_retry=0)
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server()
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock == 0
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               SocketOptions.TCP_MAX_RETRY)
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length, pkt_rcv_timeout=120)
+    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
+    thread.start()
+    wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, timeout=600)
+    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
+    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                         f"not matched on socket {1} "
+
+    wifi_dut.interfaces.wifi.close_socket(sock)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": "ca-chain.cert.pem"
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+def test_ssl_client_rx_while_rejoining_testcase2(
+        wifi_dut, wifi_access_point, ssl_server, logger
+        ):
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    logger.info(f"sending rejoin params with rejoin_max=40, scan_interval=6, beacon_missedcount=40 and  "
+                f"first_time_retry=0")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=40,
+                                    scan_interval=6,
+                                    beacon_missedcount=40,
+                                    first_time_retry=0)
+    # DUT connects to AP after join_ap API is executed
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server()
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
+                                                           socket_flag=SocketType.ASYNCHRONOUS)
+    assert sock == 0
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Set the tcp max retry for the socket
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               SocketOptions.TCP_MAX_RETRY)
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
+    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
+    thread.start()
+    time.sleep(300)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
+    wifi_dut.interfaces.wifi.close_socket(sock)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": "ca-chain.cert.pem"
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_ssl_client_tx_rejoin_length_1460_testcase4(
+        wifi_dut, wifi_access_point, ssl_server, logger
+        ):
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    pkt_count = 10000
+    bytes_sent = (pkt_count * buffer_length)
+    logger.info(f"sending rejoin params with rejoin_max=40, scan_interval=6, beacon_missedcount=40 and  "
+                f"first_time_retry=0")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=40,
+                                    scan_interval=6,
+                                    beacon_missedcount=40,
+                                    first_time_retry=0)
+    # DUT connects to AP after join_ap API is executed
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server()
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock == 0
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               SocketOptions.TCP_MAX_RETRY)
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length, pkt_rcv_timeout=120)
+    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
+    thread.start()
+    wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, timeout=600)
+    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
+    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                         f"not matched on socket {1} "
+
+    wifi_dut.interfaces.wifi.close_socket(sock)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": "ca-chain.cert.pem"
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_ssl_client_rx_while_rejoining_testcase4(
+        wifi_dut, wifi_access_point, ssl_server, logger
+        ):
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    logger.info(f"sending rejoin params with rejoin_max=40, scan_interval=6, beacon_missedcount=40 and  "
+                f"first_time_retry=0")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=40,
+                                    scan_interval=6,
+                                    beacon_missedcount=40,
+                                    first_time_retry=0)
+    # DUT connects to AP after join_ap API is executed
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server()
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
+                                                           socket_flag=SocketType.ASYNCHRONOUS)
+    assert sock == 0
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Set the tcp max retry for the socket
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               SocketOptions.TCP_MAX_RETRY)
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
+    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 20, logger), )
+    thread.start()
+    time.sleep(300)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
+    wifi_dut.interfaces.wifi.close_socket(sock)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+# The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
+def test_mqtt_qos1_connect_sub_publish_testcase_42(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
+        ):
+    topic1 = "mytesttopic/1"
+    topic2 = "mytesttopic/2"
+    # The api returns 100 bytes of random data
+    message1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+    # The api returns 200 bytes of random data
+    message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
+
+    capture_filename = "test_mqtt_qos1_connect_sub_publish_testcase_42"
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+
+    # DUT connects to AP after join_ap API is executed
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    ip_address = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    logger.info(f"DUT ip : {device_ip}")
+    logger.info(f"Initiating ping to DUT ip {device_ip}")
+    status = ping(device_ip, 10)
+    if status == 1:
+        logger.info(f"ping to DUT is successful")
+    else:
+        logger.info(f"ping to DUT is failed")
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+    client_devices = [wifi_dut, mqtt_client]
+    # Both DUT and third-party mqtt client connects to MQTT server
+    for device in client_devices:
+        device.interfaces.mqtt.mqtt_client_connect_to_server(
+            mqtt_server.interfaces.mqtt
+            )
+    time.sleep(5)
+    if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, qos=RS9116MqttQos.QOS1)
+    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+
+    # publish a message with the third-party mqtt client
+    mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, message1.encode(), qos=RS9116MqttQos.QOS1)
+    time.sleep(1)
+    # publish a message with the dut
+    wifi_dut.interfaces.mqtt.mqtt_client_publish(topic2, message2.encode(), qos=RS9116MqttQos.QOS1)
+
+    msgs = []
+    sw = Stopwatch()
+    while sw.elapsed_sec < 10:
+        time.sleep(0.1)
+        msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        if len(msgs) == 1:
+            break
+    assert len(msgs) == 1, "No message is received by DUT"
+    assert msgs[0].topic == topic1, "No message received by DUT on subscribed topic"
+    assert msgs[0].payload.decode() == message1, "No message is received by DUT on subscribed topic or message " \
+                                                 "received is wrong"
+    assert msgs[0].qos == RS9116MqttQos.QOS1, "DUT received message with wrong QOS. expected is QOS1"
+    sw = Stopwatch()
+    while sw.elapsed_sec < 10:
+        time.sleep(0.1)
+        msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+        if len(msgs) == 1:
+            break
+
+    assert len(msgs) == 1, "No message is received by mqtt-client"
+    assert msgs[0].topic == topic2, "No message received by mqtt-client on subscribed topic"
+    assert msgs[0].qos == RS9116MqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+    assert msgs[0].payload.decode() == message2, "No message is received by mqtt-client on subscribed topic or " \
+                                                 "message " \
+                                                 "received is wrong"
+
+    # The API returns asynchronous messages received by DUT
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    assert len(events) == 1
+    # The API returns asynchronous messages received by DUT
+    events = wifi_dut.interfaces.wifi.get_async_events()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        "ca_cert": "ca-chain.cert.pem"
+        }
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+# The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
+        ):
+    topic1 = "mytesttopic/1"
+    topic2 = "mytesttopic/2"
+    # The api returns 100 bytes of random data
+    message1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+    # The api returns 200 bytes of random data
+    message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
+
+    capture_filename = "test_mqtt_qos1_connect_sub_publish_ssl_testcase_41"
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+    # DUT connects to AP after join_ap API is executed
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    logger.info("get IP through dhcp")
+    ip_address = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    logger.info(f"DUT ip : {device_ip}")
+    logger.info(f"Initiating ping to DUT ip {device_ip}")
+    status = ping(device_ip, 10)
+    if status == 1:
+        logger.info(f"ping to DUT is successful")
+    else:
+        logger.info(f"ping to DUT is failed")
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+    client_devices = [wifi_dut, mqtt_client]
+    # Both DUT and third-party mqtt client connects to MQTT server
+    for device in client_devices:
+        device.interfaces.mqtt.mqtt_client_connect_to_server(
+            mqtt_server.interfaces.mqtt
+            )
+
+    time.sleep(5)
+    if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, qos=RS9116MqttQos.QOS1)
+    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+
+    # publish a message with the third-party mqtt client
+    mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, message1.encode(), qos=RS9116MqttQos.QOS1)
+    time.sleep(1)
+    # publish a message with the dut
+    wifi_dut.interfaces.mqtt.mqtt_client_publish(topic2, message2.encode(), qos=RS9116MqttQos.QOS1)
+
+    msgs = []
+    sw = Stopwatch()
+    while sw.elapsed_sec < 10:
+        time.sleep(0.1)
+        msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        if len(msgs) == 1:
+            break
+    assert len(msgs) == 1, "No message is received by DUT"
+    assert msgs[0].topic == topic1, "No message received by DUT on subscribed topic"
+    assert msgs[0].payload.decode() == message1, "No message is received by DUT on subscribed topic or message " \
+                                                 "received is wrong"
+    assert msgs[0].qos == RS9116MqttQos.QOS1, "DUT received message with wrong QOS. expected is QOS1"
+    sw = Stopwatch()
+    while sw.elapsed_sec < 10:
+        time.sleep(0.1)
+        msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+        if len(msgs) == 1:
+            break
+
+    assert len(msgs) == 1, "No message is received by mqtt-client"
+    assert msgs[0].topic == topic2, "No message received by mqtt-client on subscribed topic"
+    assert msgs[0].qos == RS9116MqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+    assert msgs[0].payload.decode() == message2, "No message is received by mqtt-client on subscribed topic or " \
+                                                 "message " \
+                                                 "received is wrong"
+
+    # The API returns asynchronous messages received by DUT
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    assert len(events) == 1
+    # The API returns asynchronous messages received by DUT
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    assert len(events) == 0
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost | RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        }
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+# The test case checks whether the RTC(Real time clock) functionality is working fine in DUT
+def test_wifi_set_get_rtc_testcase47(wifi_dut, wifi_access_point):
+    # DUT runs broadcast scan procedure when ssid is set to None
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth
+
+    wifi_dut.interfaces.wifi.power_save(8)
+    wifi_dut.interfaces.wifi.bt_power_save(8)
+
+    set_seconds = 30
+    set_minutes = 6
+    set_hour = 10
+    set_month_day = 10
+    set_month = 10
+    set_year = 2021
+    set_week_day = 3
+    wait_time = 100
+    set_time_sec = ((set_minutes * 60) + set_seconds)
+
+    # This API starts RTC timer in DUT
+    wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hour=set_hour,
+                                     month_day=set_month_day,
+                                     month=set_month, year=set_year, week_day=set_week_day)
+    logger.info(f"wait for {wait_time} seconds")
+    time.sleep(wait_time)
+
+    # get_rtc API returns time parameters output at the instance
+    get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
+    get_time_sec = ((get_minutes * 60) + get_seconds)
+    assert (set_hour == get_hours) and (set_month_day == get_day_month) and (set_month == get_month) and (
+            set_year == get_year) and (set_week_day == get_week_day)
+
+    time_dif = get_time_sec - set_time_sec
+
+    assert (time_dif - wait_time) == 0, "get time is not updated"
+
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    logger.info("get IP through dhcp")
+    ip_address = wifi_dut.interfaces.wifi.start_ip()
+
+    set_seconds = 30
+    set_minutes = 6
+    set_hour = 10
+    set_month_day = 10
+    set_month = 10
+    set_year = 2021
+    set_week_day = 3
+    wait_time = 100
+    set_time_sec = ((set_minutes * 60) + set_seconds)
+
+    # This API starts RTC timer in DUT
+    wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hour=set_hour,
+                                     month_day=set_month_day,
+                                     month=set_month, year=set_year, week_day=set_week_day)
+    time.sleep(wait_time)
+
+    # get_rtc API returns time parameters output at the instance
+    get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
+    get_time_sec = ((get_minutes * 60) + get_seconds)
+    assert (set_hour == get_hours) and (set_month_day == get_day_month) and (set_month == get_month) and (
+            set_year == get_year) and (set_week_day == get_week_day)
+
+    time_dif = get_time_sec - set_time_sec
+
+    assert (time_dif - wait_time) == 0, "get time is not updated"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+
+        },
+    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_query_dns_testcase48(wifi_dut, wifi_access_point, logger):
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    time.sleep(2)
+    logger.info("Connecting to the AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    logger.info("get IP through dhcp")
+    ip_address = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger.info(f"*****Enable Max PSP in DUT******")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    # packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
+    # packet_filter2 = False
+    wifi_dut.interfaces.wifi.power_save(2, 0)
+    wifi_dut.interfaces.wifi.bt_power_save(
+        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
+    time.sleep(3)
+    result = wifi_dut.interfaces.wifi.version()
+    logger.info(f" DUT_Version: {result}")
+    time.sleep(5)
+
+    status = ping(device_ip, 10)
+    assert status == 1
+    result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com")
+    logger.info(result.decode())
