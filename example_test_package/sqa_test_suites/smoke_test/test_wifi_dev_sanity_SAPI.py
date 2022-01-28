@@ -343,61 +343,61 @@ def test_threading_sta_ble_data_tcp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_a
                                                                                                            ble_client):
         time.sleep(20)
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
-        "band": 1
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 56})
-# This test case verifies the dut connect functionality in 5ghz dfs channel mode of access point
-def test_join_5ghz_dfs_channel_testcase20(wifi_dut, wifi_access_point):
-    with TimeMeasurer() as t:
-        # enables the rejoin feature on dut
-        logger().info("enabling Re-joining")
-        status = wifi_dut.interfaces.wifi.rejoin()
-        assert status
-
-        # Joins the access point with given ssid and password
-        logger().info("Joining the AP")
-        status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        assert status, 'Unable to join ap '
-
-        # assigns and enables the dhcp in dut
-        logger().info("Starting dhcp")
-        result = wifi_dut.interfaces.wifi.start_ip()
-
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-        # Enables the wifi power save in dut
-        logger().info("enabling wifi power save")
-        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(8)
-        assert enable_wifi_ps, 'failed to enable'
-
-        # Enables the bt power save in dut
-        logger().info("enabling bt power save")
-        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(8)
-        assert enable_bt_ps, 'failed to enable'
-
-        # initiates the ping in dut
-        logger().info("pinging to dut ip")
-        status = ping(device_ip, 10)
-        assert status == 1
-    logger().info(f"Associated in {t.duration} seconds")
-
-
+#
+# @pytest.mark.config(
+#     "wifi_dut",
+#     {
+#         "oper_mode": 0,
+#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+#         "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
+#         "band": 1
+#         }
+#     )
+# @pytest.mark.start_state("wifi_dut", wifi=['init'])
+# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+# @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 56})
+# # This test case verifies the dut connect functionality in 5ghz dfs channel mode of access point
+# def test_join_5ghz_dfs_channel_testcase20(wifi_dut, wifi_access_point):
+#     with TimeMeasurer() as t:
+#         # enables the rejoin feature on dut
+#         logger().info("enabling Re-joining")
+#         status = wifi_dut.interfaces.wifi.rejoin()
+#         assert status
+#
+#         # Joins the access point with given ssid and password
+#         logger().info("Joining the AP")
+#         status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+#         assert status, 'Unable to join ap '
+#
+#         # assigns and enables the dhcp in dut
+#         logger().info("Starting dhcp")
+#         result = wifi_dut.interfaces.wifi.start_ip()
+#
+#         assert isinstance(
+#             result, wifi_dut.interfaces.wifi.IPConfig
+#             ), f"Failed to get IP address. Result = {result}"
+#         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+#
+#         # Enables the wifi power save in dut
+#         logger().info("enabling wifi power save")
+#         enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(8)
+#         assert enable_wifi_ps, 'failed to enable'
+#
+#         # Enables the bt power save in dut
+#         logger().info("enabling bt power save")
+#         enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(8)
+#         assert enable_bt_ps, 'failed to enable'
+#
+#         # initiates the ping in dut
+#         logger().info("pinging to dut ip")
+#         status = ping(device_ip, 10)
+#         assert status == 1
+#     logger().info(f"Associated in {t.duration} seconds")
+#
+#
 @pytest.mark.parametrize('run_iperf1', [
     {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
                                         IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
@@ -523,7 +523,7 @@ def test_store_config_open_testcase12(wifi_access_point, wifi_dut):
     logger().info("Enables the Wireless Configuration in the flash")
     wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
     # deinit
-    logger.info("deinit")
+    logger().info("deinit")
     wifi_dut.interfaces.wifi.reset_soft()
     time.sleep(5)
     # init
@@ -1126,7 +1126,7 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 # The test case checks whether the RTC(Real time clock) functionality is working fine in DUT
-def test_wifi_set_get_rtc_testcase47(wifi_dut, wifi_access_point):
+def test_wifi_set_get_rtc_testcase47(wifi_dut, wifi_access_point,logger):
     # DUT runs broadcast scan procedure when ssid is set to None
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
