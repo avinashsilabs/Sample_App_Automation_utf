@@ -24,7 +24,6 @@ from utils.logger import get_logger
 from utils.iperf.Iperf_constants import IperfConstants
 from interfaces.iperf.fixtures import IPerfFixture, iperf
 from threading import Thread
-from utils.iperf.iperf_utils import ping
 from utils.thread_base import ThreadBase
 from utils.rs911x_version import parse_version
 from utils.time_measurer import TimeMeasurer
@@ -32,6 +31,7 @@ from utils.stopwatch import Stopwatch
 import string
 import random
 from utils.iperf.iperf_utils import ping
+from interfaces.wifi import WlanError
 
 
 def logger():
