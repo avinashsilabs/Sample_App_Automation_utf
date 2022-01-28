@@ -1,6 +1,7 @@
 import time
 import pytest
 from devices.rs911x import RS9116CoexMode
+from interfaces.bluetooth.bluez import BatteryService
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 from interfaces.bluetooth import BLEDeviceState
 from utils.logger import get_logger
@@ -379,10 +380,11 @@ def test_ble_gatt_client_master(ble_client):
     # assert bt_dut_address is not None
 
     # # Start ble client
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_battery_adv(bt_dut_address=None)
+    bt_dut_address = None
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_battery_service(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
     #
-    time.sleep(120)
+    time.sleep(50)
     #
     # # Start scanning and connect to ble client
     # wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
