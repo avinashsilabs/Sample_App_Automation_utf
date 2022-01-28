@@ -558,8 +558,9 @@ def test_store_config_open_testcase12(wifi_access_point, wifi_dut):
 
         },
     )
+@pytest.mark.parametrize("wireless_firmware", ["/RS9116.2.5.0.4.rps"])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan mode
-def test_http_otaf_testcase53(http_server, wifi_dut, wifi_access_point, logger):
+def test_http_otaf_testcase53(http_server, wifi_dut, wifi_access_point, wireless_firmware):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -572,7 +573,7 @@ def test_http_otaf_testcase53(http_server, wifi_dut, wifi_access_point, logger):
     async_timestamp = 0
 
     # performs the firmware upgrade on DUT over the http port
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, wireless_firmware)
     time.sleep(30)
 
     # API fetches the DUT otaf status
