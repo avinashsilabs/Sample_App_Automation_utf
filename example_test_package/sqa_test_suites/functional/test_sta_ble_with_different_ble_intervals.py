@@ -6,7 +6,7 @@ from utils.iperf.Iperf_constants import IperfConstants
 from utils.iperf.iperf_utils import ping
 from interfaces.wifi import WlanError
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
-    RS9116TCPIPFeatureBitMap
+    RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utils.thread_base import ThreadBase
 import time
@@ -37,62 +37,20 @@ def logger():
 
 # this thread used for wifi join
 class WifiThread(ThreadBase):
-    def __init__(self, wifi_dut, wifi_access_point):
+    def __init__(self, wifi_sniffer = None,wifi_dut=None, \
+                 wifi_access_point=None,testcase=None,wifi_client=None,\
+                 run_iperf=None,http_server=None,index_path=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
-
-    def run(self):
-
-        # This API Enables the wifi power save mode in DUT
-        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-        # # Enables the bt power save in DUT
-        #self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-        # Join Wi-Fi Access Point
-        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
-        logger().info(f"Successfully connected to AP")
-        time.sleep(5)
-        # This API Enables the DHCP in DUT
-        result = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
-        assert isinstance(
-            result,self.wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        # Initiate ping from third party wifi-client to DUT
-        status = ping(device_ip, 10)
-        logger().info(f"ping status {status}")
-
-        assert status == 1
-
-
-
-#tcp thoughput thread for rx adn tx packets
-class TCPPacketThread(ThreadBase):
-    def __init__(self,wifi_access_point, wifi_dut, wifi_client, run_iperf1):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.testcase = testcase
+        self.run_iperf = run_iperf
         self.wifi_client = wifi_client
-        self.run_iperf = run_iperf1
+        self.http_server = http_server
+        self.index_path = index_path
 
-    def run(self):
-        # This API Enables the wifi power save mode in DUT
-        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-        # # Enables the bt power save in DUT
-        #self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
-        logger().info(f"Successfully connected to AP")
-        time.sleep(5)
-        # This API Enables the DHCP in DUT
-        result = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
-        assert isinstance(
-            result, self.wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-
+    def run_traffic(self):
 
         iperf = IPerfFixture(
             'test1',
@@ -105,40 +63,70 @@ class TCPPacketThread(ThreadBase):
         iperf.run()
         logger().info("this is IPerf")
 
-
-
-# this thread used for wifi join
-class Wifi_http_download_Thread(ThreadBase):
-    def __init__(self, wifi_dut, wifi_access_point,http_server,index_path):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.wifi_access_point = wifi_access_point
-        self.http_server = http_server
-        self.index_path = index_path
-
-    def run(self):
-
-        # Join Wi-Fi Access Point
-        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
-        logger().info(f"Successfully connected to AP")
-        time.sleep(10)
-        #starts the dhcp in dut
-        result = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
-        assert isinstance(
-            result, self.wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-
-        # This API Enables the wifi power save mode in DUT
-        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-        # Enables the bt power save in DUT
-        #self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    def run_http_download(self):
 
         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
 
         # API used to get the http data
         self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http, self.index_path)
+
         logger().info(f"Http download is success")
+
+
+    def run(self):
+        validation = True
+        packet_filter2 = False
+        logger().info("configuring the Sniffer with the channel")
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+
+        # Join Wi-Fi Access Point
+        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+        logger().info(f"Successfully connected to AP")
+
+        time.sleep(5)
+        # This API Enables the DHCP in DUT
+        result = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
+        assert isinstance(
+            result,self.wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"Found device ip: {device_ip}")
+
+        # Fetches the DUT mac address
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+
+        # Validating the power management bit
+        packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+
+        # This API Enables the wifi power save mode in DUT
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+        # # Enables the bt power save in DUT
+        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        time.sleep(5)
+
+        # Initiate ping from third party wifi-client to DUT
+        status = ping(device_ip, 10)
+        assert status == 1
+        logger().info(f"ping is successful")
+
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit in sniffer'
+        logger().info(f"Verified device is in power save")
+
+        if self.run_iperf:
+            self.run_traffic()
+
+        if self.http_server:
+            self.run_http_download()
+
+
+
 
 
 #this thread used for sta+ble as a slave
@@ -153,8 +141,11 @@ class BleThread_Advertise(ThreadBase):
         # Set up DUT for BLE advertising
         bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address is not None
+
+        time.sleep(5)
+
         self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=self.adv_int, \
-                                                            ble_adv_int_max=self.adv_int)
+                                                            ble_adv_int_max=self.adv_int,timeout=30)
 
         logger().info(f"Started advertising DUT")
 
@@ -167,13 +158,13 @@ class BleThread_Advertise(ThreadBase):
         logger().info("\n***********{}**********\n".format(bt_client_address))
 
 
-        for i in range(0,5):
+        for i in range(0,10):
 
-            time.sleep(10)
+            time.sleep(5)
 
             if self.adv_int > 1000:
 
-                time.sleep(20)
+                time.sleep(10)
 
             # See that we found our device
 
@@ -218,84 +209,21 @@ class BleThread_Scan(ThreadBase):
 
         logger().info(f"Remote device found in scan results ,BLE scanning is successful")
 
-        #self.wifi_dut.interfaces.wifi.ble_stop_scanning(timeout=50)
 
 
 
-#this thread used for sta+ble as a slave
-class BleThread_connection(ThreadBase):
-    def __init__(self, wifi_dut, ble_client, mode):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.ble_client = ble_client
-        self.mode = mode
 
-    def run(self):
-
-        if ( self.mode == "ble_master"):
-            # Start DUT
-            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None
-            # Start ble client
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None
-            time.sleep(1)
-            # Start scanning and connect to ble client
-            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
-            # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
-            logger().info(f"Initiating connection this can take upto 120 seconds....")
-            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=120)
-            # Disconnect
-            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
-        if (self.mode == "ble_slave"):
-            # Set up DUT for BLE advertising
-            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None
-            self.wifi_dut.interfaces.wifi.ble_start_advertising()
-
-            # Begin Scanning for BLE devices
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None
-            time.sleep(5)
-            self.ble_client.interfaces.bluetooth.stop_scanning()
-
-            # See that we found our device
-            found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
-            assert (
-                    found_devices[self.wifi_dut.interfaces.wifi.ble_address]
-                    == self.wifi_dut.interfaces.wifi.ble_advertising_data
-            )
-
-            # Not legal to start advertising if we're already advertising...
-            with pytest.raises(WlanError) as exc_info:
-                self.wifi_dut.interfaces.wifi.ble_start_advertising()
-            assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
-
-            self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
-
-            # Connecting will automatically stop advertising
-            with pytest.raises(WlanError) as exc_info:
-                self.wifi_dut.interfaces.wifi.ble_stop_advertising()
-            assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
-
-
-
-#thread for scan functionality
+#thread for wifi scan functionality
 class ScanThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point):
         super().__init__()
         self.wifi_dut = wifi_dut
 
     def run(self):
-            # enables the scan in dut on channel 0
-            scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            logger().info(scan_results)
-            time.sleep(5)
-
-
-
+        #enables the scan in dut on channel 0
+        scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(f"scan results : {scan_results}")
+        assert (len(scan_results) >= 1)
 
 
 
@@ -304,27 +232,36 @@ class ScanThread(ThreadBase):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+
+    }
+ )
+
+
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_Wifi_scan_with_BLE_advertising_interval_of_20ms(wifi_dut, wifi_access_point, ble_client):
-       with ScanThread(wifi_dut, wifi_access_point), BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
+       with ScanThread(wifi_dut, wifi_access_point),BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
         time.sleep(5)
 
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+
+    }
+ )
+
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 
-def test_AP_connection_with_BLE_advertising_interval_of_20ms(wifi_dut, wifi_access_point, ble_client):
-       with WifiThread(wifi_dut, wifi_access_point), BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
+def test_AP_connection_with_BLE_advertising_interval_of_20ms(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
+    testcase = "test_AP_connection_with_BLE_advertising_interval_of_20ms"
+    with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
         time.sleep(5)
 
 
@@ -345,33 +282,35 @@ def test_AP_connection_with_BLE_advertising_interval_of_20ms(wifi_dut, wifi_acce
 
     }
  )
-
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 
-def test_Wifi_Data_transfer_with_BLE_advertising_interval_of_20ms(wifi_dut,\
+def test_Wifi_Data_transfer_with_BLE_advertising_interval_of_20ms(wifi_sniffer,wifi_dut,\
                                                                        wifi_access_point,wifi_client,\
                                                                   run_iperf1,ble_client):
+    testcase = "test_Wifi_Data_transfer_with_BLE_advertising_interval_of_20ms"
 
-    with TCPPacketThread(wifi_access_point, wifi_dut, wifi_client, run_iperf1), \
+    with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, run_iperf1), \
          BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
         time.sleep(5)
 
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
 
+    }
+ )
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_Wifi_scan_with_BLE_advertising_interval_of_10240ms(wifi_dut, wifi_access_point, ble_client):
-       with ScanThread(wifi_dut, wifi_access_point), BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
+       with ScanThread(wifi_dut, wifi_access_point),\
+               BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
         time.sleep(5)
-
 
 
 
@@ -380,13 +319,20 @@ def test_Wifi_scan_with_BLE_advertising_interval_of_10240ms(wifi_dut, wifi_acces
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+
+    }
+ )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 
-def test_AP_connection_with_BLE_advertising_interval_of_10240ms(wifi_dut, wifi_access_point, ble_client):
-       with WifiThread(wifi_dut, wifi_access_point), BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
+def test_AP_connection_with_BLE_advertising_interval_of_10240ms(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
+    testcase = "test_AP_connection_with_BLE_advertising_interval_of_10240ms"
+    with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), \
+            BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
         time.sleep(5)
+
+
 
 
 
@@ -404,94 +350,54 @@ def test_AP_connection_with_BLE_advertising_interval_of_10240ms(wifi_dut, wifi_a
 
     }
  )
+
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_Wifi_Data_transfer_with_BLE_advertising_interval_of_10240ms(wifi_dut,wifi_access_point,\
-                                                                     wifi_client,run_iperf1, ble_client):
-    with TCPPacketThread(wifi_access_point, wifi_dut, wifi_client, run_iperf1), \
+
+def test_Wifi_Data_transfer_with_BLE_advertising_interval_of_10240ms(wifi_sniffer,wifi_dut,\
+                                                                       wifi_access_point,wifi_client,\
+                                                                  run_iperf1,ble_client):
+    testcase = "test_Wifi_Data_transfer_with_BLE_advertising_interval_of_10240ms"
+
+    with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, run_iperf1), \
          BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
         time.sleep(5)
 
 
 
 
-
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-        | RS9116TCPIPFeatureBitMap.SSL
-        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-    },
-)
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
 
-@pytest.mark.dut("rs9116_sapi")
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"100MB.html"})
-@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+    }
+ )
 
-def test_Wifi_http_download_BLE_advertising_interval_of_20ms(http_server,wifi_dut, wifi_access_point,\
-                                                             ble_client,index_path):
-    with Wifi_http_download_Thread(wifi_dut, wifi_access_point, http_server, index_path), \
-         BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
-        time.sleep(5)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-        | RS9116TCPIPFeatureBitMap.SSL
-        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-    },
-)
-
-@pytest.mark.dut("rs9116_sapi")
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"100MB.html"})
-@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
-def test_Wifi_http_download_BLE_advertising_interval_of_10240ms(http_server,wifi_dut, wifi_access_point,\
-                                                             ble_client,index_path):
-    with Wifi_http_download_Thread(wifi_dut, wifi_access_point, http_server, index_path), \
-                       BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
-                    time.sleep(5)
-
-
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_Wifi_scan_with_BLE_Scan_interval_of_10240ms(wifi_dut, wifi_access_point, ble_client):
        with ScanThread(wifi_dut, wifi_access_point),\
                BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=8000):
            time.sleep(15)
-#
+
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+            OpenMode | RS9116FeatureBitMap.PSKSecurity,
+
+    }
+ )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_AP_connection_with_BLE_Scan_interval_of_10240ms(wifi_dut, wifi_access_point, ble_client):
-       with WifiThread(wifi_dut, wifi_access_point), BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,\
-                                                                    ble_scan_window=8000):
+def test_AP_connection_with_BLE_Scan_interval_of_10240ms(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
+       testcase = "test_AP_connection_with_BLE_Scan_interval_of_10240ms"
+       with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), \
+               BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=8000):
         time.sleep(5)
 
 
@@ -511,13 +417,14 @@ def test_AP_connection_with_BLE_Scan_interval_of_10240ms(wifi_dut, wifi_access_p
     }
  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_Wifi_Data_transfer_with_BLE_Scan_interval_of_10240ms(wifi_dut,wifi_access_point,wifi_client,\
+def test_Wifi_Data_transfer_with_BLE_Scan_interval_of_10240ms(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
                                                                   run_iperf1,ble_client):
 
-    with TCPPacketThread(wifi_access_point, wifi_dut, wifi_client, run_iperf1),\
+    testcase = "test_Wifi_Data_transfer_with_BLE_Scan_interval_of_10240ms"
+
+    with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, run_iperf1), \
          BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=8000):
         time.sleep(15)
-
 
 
 
@@ -526,6 +433,63 @@ def test_Wifi_Data_transfer_with_BLE_Scan_interval_of_10240ms(wifi_dut,wifi_acce
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+
+
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"100MB.html"})
+@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+
+def test_Wifi_http_download_BLE_advertising_interval_of_20ms(wifi_sniffer,http_server,wifi_dut, wifi_access_point,\
+                                                             ble_client,index_path):
+    testcase = "test_Wifi_http_download_BLE_advertising_interval_of_20ms"
+    #with Wifi_http_download_Thread(wifi_dut, wifi_access_point, http_server, index_path), \
+    with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path),\
+         BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
+        time.sleep(5)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+    },
+)
+
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"100MB.html"})
+@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
+def test_Wifi_http_download_BLE_advertising_interval_of_10240ms(wifi_sniffer,http_server,wifi_dut, wifi_access_point,\
+                                                             ble_client,index_path):
+
+    testcase = "test_Wifi_http_download_BLE_advertising_interval_of_10240ms"
+    with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path), \
+            BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
+        time.sleep(5)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
         | RS9116TCPIPFeatureBitMap.SSL
         | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -537,8 +501,13 @@ def test_Wifi_Data_transfer_with_BLE_Scan_interval_of_10240ms(wifi_dut,wifi_acce
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_Wifi_http_download_with_BLE_scan_interval_of_10240ms_and_scan_window_of_10000ms(http_server,wifi_dut, wifi_access_point,\
-                                                             ble_client,index_path):
-       with Wifi_http_download_Thread(wifi_dut, wifi_access_point,http_server,index_path),\
+def test_Wifi_http_download_with_BLE_scan_interval_of_10240ms_and_scan_window_of_10000ms(wifi_sniffer,http_server,\
+                                                wifi_dut, wifi_access_point,ble_client,index_path):
+       testcase = "test_Wifi_http_download_with_BLE_scan_interval_of_10240ms_and_scan_window_of_10000ms"
+       with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path), \
             BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=10000):
-            time.sleep(5)
+            time.sleep(15)
+
+
+
+
