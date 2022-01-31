@@ -353,42 +353,42 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
-def test_ble_gatt_client_master(wifi_dut, ble_client):
+# @pytest.mark.config(
+#     "wifi_dut",
+#     wifi={
+#         "oper_mode": 0,
+#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#     },
+# )
+def test_ble_gatt_client_master(ble_client):
     # # Join Wi-Fi Access Point
     # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     #
     # # Start DUT
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    # bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    # assert bt_dut_address is not None
     #
     # # Init ble on DUT
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    # bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    # assert bt_dut_address is not None
 
     # Start ble client
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_battery_service(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_battery_service(bt_dut_address="80:C9:55:B9:EF:DC")#bt_dut_address)
     assert bt_client_address is not None
 
-    time.sleep(1)
+    time.sleep(3000)
 
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    # wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
-    timeout = 120
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+    # timeout = 120
+    # logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    # wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
     # Get the state of the dut
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
+    # state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    # state_int = int(state) if state.isdigit() else -1
+    # assert state_int == BLEDeviceState.Connected
 
     # Disconnect
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
