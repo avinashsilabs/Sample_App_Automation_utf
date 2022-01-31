@@ -1,56 +1,82 @@
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 import pytest
-from utils.logger import get_logger
+from interfaces.iperf.iperf_device_output_parser import Result
 from utils.iperf.iperf_utils import print_dict
-
-
-def logger():
-    return get_logger(__name__)
-
-
-prefix = "##     "
 
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
-        print_dict(prefix, iperf_throughput)
+        print_dict("##     ", iperf_throughput)
 
 
-@pytest.mark.parametrize('run_iperf', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }], indirect=['run_iperf'])
-def test_device_as_tcp_server(run_iperf):
-    assert run_iperf.iper_process_success
-    __print_throughput(run_iperf.iperf_throughput)
-    logger().info("test_device_as_tcp_server completed !!")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
+    # preparing wifi_dut
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+    # preparing wifi_client
+    if wifi_access_point != wifi_client:
+        wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
+    # preparing iperf
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
+
+    # open socket and start listening
+    with wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=net_perf_client.interfaces.net_perf.protocol,
+            port=net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=net_perf_client.interfaces.net_perf.client_data_len,
+            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
+        # start iperf
+        net_perf_client.interfaces.net_perf.start()
+        # capture device output
+        wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output(result)
+    assert tp is not None
+    __print_throughput(tp)
 
 
-@pytest.mark.parametrize('run_iperf', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-     }], indirect=['run_iperf'])
-def test_device_as_udp_server(run_iperf):
-    assert run_iperf.iper_process_success
-    __print_throughput(run_iperf.iperf_throughput)
-    logger().info("test_device_as_udp_server completed !!")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
+    # preparing wifi_dut
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
+    # preparing wifi_client
+    if wifi_access_point != wifi_client:
+        wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
 
-@pytest.mark.parametrize('run_iperf', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }], indirect=['run_iperf'])
-def test_host_as_tcp_server(run_iperf):
-    assert run_iperf.iper_process_success
-    __print_throughput(run_iperf.iperf_throughput)
-    logger().info("test_host_as_tcp_server completed !!")
+    # starting iperf
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.start()
 
+    # open socket and send traffic
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
 
-@pytest.mark.parametrize('run_iperf', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-     }], indirect=['run_iperf'])
-def test_host_as_udp_server(run_iperf):
-    assert run_iperf.iper_process_success
-    __print_throughput(run_iperf.iperf_throughput)
-    logger().info("test_host_as_udp_server completed !!")
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp is not None
+    __print_throughput(tp)

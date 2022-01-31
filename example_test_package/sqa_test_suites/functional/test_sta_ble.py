@@ -1,9 +1,8 @@
 import pytest
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 from utils.time_measurer import TimeMeasurer
 from utils.logger import get_logger
-from interfaces.iperf.fixtures import IPerfFixture, iperf
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 from utils.iperf.iperf_utils import ping
 from interfaces.wifi import WlanError
 from devices.rs911x import (
@@ -343,23 +342,38 @@ class RejoinThread(ThreadBase):
 
 # tcp thoughput thread for rx adn tx packets
 class TCPPacketThread(ThreadBase):
-    def __init__(self, wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
+    def __init__(self, wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client):
         super().__init__()
         self.wifi_networked_dut = wifi_networked_dut
         self.wifi_access_point = wifi_access_point
         self.wifi_client = wifi_client
-        self.run_iperf = run_iperf1
+        self.net_perf_client = net_perf_client
 
     def run(self):
-        iperf = IPerfFixture(
-            'test1',
-            self.run_iperf,
-            self.wifi_access_point,
-            self.wifi_networked_dut,
-            self.wifi_client,
-            )
         time.sleep(5)
-        iperf.run()
+        # preparing wifi_dut
+        self.wifi_networked_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+        ip_config = self.wifi_networked_dut.interfaces.wifi.start_ip()
+        device_ip = self.wifi_networked_dut.interfaces.wifi.get_device_ip(ip_config)
+
+        # preparing wifi_client
+        if self.wifi_access_point != self.wifi_client:
+            self.wifi_client.interfaces.wifi.join_ap(self.wifi_access_point)
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        assert self.wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
+        # starting iperf
+        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip)
+        self.net_perf_client.interfaces.net_perf.start()
+
+        # open socket and send traffic
+        self.wifi_networked_dut.interfaces.wifi.send_traffic_from_device(
+            host_ip,
+            device_ip,
+            self.net_perf_client.interfaces.net_perf.server_port,
+            self.net_perf_client.interfaces.net_perf.protocol,
+            self.net_perf_client.interfaces.net_perf.client_options,
+        )
         logger().info("this is IPerf")
 
 
@@ -581,10 +595,12 @@ def test_threading_sta_ble_rejoin_deauth(wifi_dut, wifi_access_point, ble_client
         time.sleep(15)
 
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        "host_role": IperfConstants.SERVER_MODE, 
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP,
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -596,9 +612,9 @@ def test_threading_sta_ble_rejoin_deauth(wifi_dut, wifi_access_point, ble_client
         }
     )
 # testcase11 for server mode(tx) packet throughput +ble
-def test_throughput_wifi_bt_2(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1, ble_client):
+def test_throughput_wifi_bt_2(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client, ble_client):
     mode = "ble_slave"
-    with TCPPacketThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut,
+    with TCPPacketThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client), BleThread_connection(wifi_dut,
                                                                                                                ble_client,
                                                                                                                mode):
         time.sleep(5)

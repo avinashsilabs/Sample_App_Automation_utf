@@ -2,7 +2,7 @@ import pytest as pytest
 
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utils.iperf import iperf_utils
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 from utils.logger import get_logger
 from utils.subprocess_manager import SubprocessManager
 
