@@ -74,7 +74,7 @@ def test_device_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
-def test_host_as_server_ap(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
+def test_host_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
