@@ -16,10 +16,11 @@ from devices.rs911x import (
     RS9116AsyncEventType,
     )
 from typing import Dict
+from interfaces.wifi import WlanError
 
 
 def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) -> Dict[str, int]:
-    mqtt_capture_list = []
+    ntp_capture_list = []
     source_ip = ""
     destination_ip = ""
     for packet in wifi_sniffer.interfaces.capture.iter_packets(
@@ -39,9 +40,9 @@ def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) 
                         destination_ip = count.split(":")[1].strip()
 
             if layer_name in print_layers:
-                mqtt_layer = str(layer)
-                mqtt_capture_list.append(tuple([mqtt_layer, packet.sniff_timestamp, source_ip, destination_ip]))
-    return mqtt_capture_list
+                ntp_layer = str(layer)
+                ntp_capture_list.append(tuple([ntp_layer, packet.sniff_timestamp, source_ip, destination_ip]))
+    return ntp_capture_list
 
 
 @pytest.mark.config(
@@ -52,7 +53,7 @@ def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) 
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.SNTPClient,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.SNTPClient | RS9116TCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "rejoin_max_retry": 10,
@@ -91,6 +92,7 @@ def test_sntp_unicast_TC19015(
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
+    logger.info("wait for 10 seconds to receive SNTP asynchronous messages")
     time.sleep(10)
     asynchronous_request_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
@@ -118,6 +120,7 @@ def test_sntp_unicast_TC19015(
                                              "is {sntp_server_address}"
 
     wifi_dut.interfaces.wifi.sntp_delete()
+    logger.info("wait for 5 seconds to receive SNTP asynchronous messages")
     time.sleep(5)
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
     for event in events:
@@ -151,7 +154,7 @@ def test_sntp_unicast_TC19015(
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.SNTPClient,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.SNTPClient | RS9116TCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "rejoin_max_retry": 10,
@@ -191,6 +194,7 @@ def test_sntp_keepalive_TC19016(
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
+    logger.info("wait for 10 seconds to receive SNTP asynchronous messages")
     time.sleep(10)
     asynchronous_request_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
@@ -215,9 +219,10 @@ def test_sntp_keepalive_TC19016(
     assert server_ip == sntp_server_address, f"SNTP server ip address received for the body of get_sntp_server_info " \
                                              f"response is wrong, expected " \
                                              "is {sntp_server_address}"
-
+    logger.info(f"wait for {idle_time} to check SNTP keep-alive packets in sniffer")
     time.sleep(idle_time)
     wifi_dut.interfaces.wifi.sntp_delete()
+    logger.info("wait for 5 seconds to receive SNTP asynchronous messages")
     time.sleep(5)
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
     for event in events:
@@ -262,7 +267,7 @@ def test_sntp_keepalive_TC19016(
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.SNTPClient,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.SNTPClient | RS9116TCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "rejoin_max_retry": 10,
@@ -313,6 +318,8 @@ def test_sntp_ludp_coexit_TC19017(
 
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
+    logger.info("wait for 10 seconds to receive SNTP asynchronous messages")
+
     time.sleep(10)
     asynchronous_request_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
@@ -325,3 +332,13 @@ def test_sntp_ludp_coexit_TC19017(
     sntp_status = int(sntp_event.split(b":")[1])
     assert sntp_status == 2, "SNTP connection is successful even though the UDP socket at 123 port is already opened " \
                              "in the DUT which is not expected "
+
+    status = wifi_dut.interfaces.wifi.wlan_get_status()
+    status_code = "NULL"
+    status = status.split(b"\n")
+    for line in status:
+        if b"status:" in line:
+            status_code = line.split(b":")[1].decode().strip("\r").strip()
+    logger.info(f"DUT sent error code-> {status_code} when trying to open SNTP client, but already a socket is opened "
+                f"at port number 123")
+    assert status_code == "0xBB23", "Observed wrong error code, expected is 0xBB23"
