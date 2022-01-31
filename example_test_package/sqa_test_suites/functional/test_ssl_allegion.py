@@ -35,7 +35,7 @@ from typing import Dict
 """
 
 
-def get_bssid(wifi_sniffer, decryption_key: str, ap_ssid, mode=0) -> Dict[str, int]:
+def get_beacon_interval(wifi_sniffer, decryption_key: str, ap_ssid, mode=0) -> Dict[str, int]:
     mgt_flag = 0
     beacon_interval = 0
     dtim_period = 0
@@ -75,7 +75,7 @@ def get_bssid(wifi_sniffer, decryption_key: str, ap_ssid, mode=0) -> Dict[str, i
 
 
 def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) -> Dict[str, int]:
-    mqtt_capture_list = []
+    ntp_capture_list = []
     source_ip = ""
     destination_ip = ""
     for packet in wifi_sniffer.interfaces.capture.iter_packets(
@@ -95,9 +95,9 @@ def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) 
                         destination_ip = count.split(":")[1].strip()
 
             if layer_name in print_layers:
-                mqtt_layer = str(layer)
-                mqtt_capture_list.append(tuple([mqtt_layer, packet.sniff_timestamp, source_ip, destination_ip]))
-    return mqtt_capture_list
+                ntp_layer = str(layer)
+                ntp_capture_list.append(tuple([ntp_layer, packet.sniff_timestamp, source_ip, destination_ip]))
+    return ntp_capture_list
 
 
 def ApWirelessOff(wifi_access_point, wait_time, logger):
@@ -189,7 +189,7 @@ def test_three_ssl_socket_connection_after_reconnection_TC19156(
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
         wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
         # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         # Open ssl server socket in remote device(Raspberry pi or static device)
         ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
         # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -262,6 +262,7 @@ def test_three_ssl_socket_connection_after_reconnection_TC19156(
 
         if count == 0:
             wifi_access_point.interfaces.wifi.stop_ap()
+            ssl_server.interfaces.ssl.stop_server()
             time.sleep(130)
             rejoin_error_recv = 0
             events = wifi_dut.interfaces.wifi.get_async_events()
@@ -274,7 +275,7 @@ def test_three_ssl_socket_connection_after_reconnection_TC19156(
             else:
                 assert f"DUT didn't recieve rejoin failure error within time even after AP is powered off"
             wifi_access_point.interfaces.wifi.start_ap()
-            ssl_server.interfaces.ssl.stop_server()
+            # ssl_server.interfaces.ssl.stop_server()
         if count == 1:
             # Close socket 1
             wifi_dut.interfaces.wifi.close_socket(sock)
@@ -318,7 +319,7 @@ def test_three_ssl_socket_connection_after_reconnection_TC19156(
 def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
         ):
-    capture_filename = "test_three_ssl_socket_connection_after_reconnection_TC19156"
+    capture_filename = "test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -362,13 +363,9 @@ def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
 
     # Open ssl client socket in the DUT
     sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
@@ -385,10 +382,11 @@ def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
         # ssl socket opened in DUT connects to the server
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
     assert exc_info.value.error_code == 0xd2, "DUT sent wrong error code, expected is 0xD2"
-
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
     # Open ssl client socket in the DUT
     sock1 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-    assert sock1 == 0, f"socket id received is wrong, expected is 0"
+    assert sock1 == 1, f"socket id received is wrong, expected is 0"
     # Enable ssl option for socket opened
     wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                SocketOptions.SSL_ENABLE)
@@ -402,9 +400,12 @@ def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
         wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
     assert exc_info.value.error_code == 0xd2, "DUT sent wrong error code, expected is 0xD2"
 
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
+
     # Open ssl client socket in the DUT
     sock2 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-    assert sock2 == 0, f"socket id received is wrong, expected is 0"
+    assert sock2 == 2, f"socket id received is wrong, expected is 0"
 
     # Enable ssl option for socket opened
     wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
@@ -452,9 +453,703 @@ def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_check_TC19158(
-        wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+def test_ssl_three_sockets_send_data_testcaseTC3918(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
         ):
+    capture_filename = "test_ssl_three_sockets_send_data_testcaseTC3918"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    port2 = ssl_server.interfaces.ssl.config['device_port2']
+    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    bytes_sent = (pkt_count * buffer_length)
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # The below API loads ca-cert into DUT at cert index 0
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                 cert_index=0,
+                                                 )
+    # The below API loads ca-cert into DUT at cert index 1
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert2[0])),
+                                                 cert_index=1,
+                                                 )
+    # The below API loads ca-cert into DUT at cert index 2
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[0])),
+                                                 cert_index=2,
+                                                 )
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
+
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock == 0, f"socket id received is wrong, expected is 0"
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Enable cert index 0 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX0)
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    # Open ssl client socket in the DUT
+    sock1 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock1 == 1, f"socket id received is wrong, expected is 1"
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Enable cert index 1 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX1)
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock1, device_ip, port2)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
+
+    # Open ssl client socket in the DUT
+    sock2 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock2 == 2, f"socket id received is wrong, expected is 2"
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Enable cert index 1 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX2)
+
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock2, device_ip, port3)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock2, ssl_server.interfaces.ssl, server_port=port3)
+
+    socket_no = [1, 2, 3]
+    for socket in socket_no:
+        ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+        # ssl_server.interfaces.ssl.data_receive(socket, 10000, buffer_length)
+    if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+        socket_no = [1, 2, 3]
+        for socket in socket_no:
+            if ssl_server.interfaces.ssl.socket_connection_status(socket):
+                # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                time.sleep(10)
+                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+                assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                                     f"not matched on socket {socket} "
+
+            else:
+                assert f"failed to connect on socket no {socket}"
+
+    # Close socket 1
+    wifi_dut.interfaces.wifi.close_socket(sock)
+    # Close socket 2
+    wifi_dut.interfaces.wifi.close_socket(sock1)
+    # Close socket 3
+    wifi_dut.interfaces.wifi.close_socket(sock2)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        }
+    )
+@pytest.mark.parametrize("cert1, cert2, cert3",
+                         [
+                             (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"]
+
+                              )
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_ssl_three_sockets_load_remove_certs_connection_check_testcaseTC3929(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        ):
+    capture_filename = "test_ssl_three_sockets_load_remove_certs_connection_check_testcaseTC3929"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    port2 = ssl_server.interfaces.ssl.config['device_port2']
+    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    bytes_sent = (pkt_count * buffer_length)
+
+    for iteration in range(0, 2):
+        if iteration == 1:
+            wifi_dut.interfaces.wifi.leave()
+            wifi_dut.interfaces.wifi.associated = False
+            # wifi_dut.interfaces.wifi.initialized = False
+            time.sleep(120)
+        wifi_dut.interfaces.wifi.scan(ssid=None)
+        # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        # The below API loads ca-cert into DUT at cert index 0
+        if iteration == 0:
+            wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                         str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                         cert_index=0,
+                                                         )
+            # The below API loads ca-cert into DUT at cert index 1
+            wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                         str(get_tls_certificate_dir().joinpath(cert2[0])),
+                                                         cert_index=1,
+                                                         )
+            # The below API loads ca-cert into DUT at cert index 2
+            wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                         str(get_tls_certificate_dir().joinpath(cert3[0])),
+                                                         cert_index=2,
+                                                         )
+        else:
+            for cert_index in range(0, 3):
+                wifi_dut.interfaces.wifi.clear_certificate(RS9116CertificateType.SSLCACertificate,
+                                                           cert_index=cert_index)
+        # DUT gets ipaddress through DHCP process after start_ip API is executed
+        wifi_dut.interfaces.wifi.start_ip()
+        # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+        # DUT to power save in Wifi+bluetooth mode
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        # The below api parses DUTs IP address
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
+
+        # Open ssl client socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        # Enable cert index 0 for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   SocketOptions.CERT_INDEX0)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+
+        if iteration == 0:
+            # ssl socket opened in DUT connects to the server
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+        else:
+            with pytest.raises(WlanError) as exc_info:
+                # ssl socket opened in DUT connects to the server
+                wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+            assert exc_info.value.error_code == 0xd2, "DUT sent wrong error code, expected is 0xD2"
+
+        # Open ssl client socket in the DUT
+        sock1 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock1 == 1, f"socket id received is wrong, expected is 1"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        # Enable cert index 1 for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   SocketOptions.CERT_INDEX1)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock1, device_ip, port2)
+
+        if iteration == 0:
+            # ssl socket opened in DUT connects to the server
+            wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
+        else:
+            with pytest.raises(WlanError) as exc_info:
+                # ssl socket opened in DUT connects to the server
+                wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
+            assert exc_info.value.error_code == 0xd2, "DUT sent wrong error code, expected is 0xD2"
+
+        # Open ssl client socket in the DUT
+        sock2 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock2 == 2, f"socket id received is wrong, expected is 2"
+
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        # Enable cert index 1 for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   SocketOptions.CERT_INDEX2)
+
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock2, device_ip, port3)
+
+        if iteration == 0:
+            # ssl socket opened in DUT connects to the server
+            wifi_dut.interfaces.wifi.connect_to_server(sock2, ssl_server.interfaces.ssl, server_port=port3)
+        else:
+            with pytest.raises(WlanError) as exc_info:
+                # ssl socket opened in DUT connects to the server
+                wifi_dut.interfaces.wifi.connect_to_server(sock2, ssl_server.interfaces.ssl, server_port=port3)
+            assert exc_info.value.error_code == 0xd2, "DUT sent wrong error code, expected is 0xD2"
+
+        if iteration == 0:
+            socket_no = [1, 2, 3]
+            for socket in socket_no:
+                ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+
+            if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+                socket_no = [1, 2, 3]
+                for socket in socket_no:
+                    if ssl_server.interfaces.ssl.socket_connection_status(socket):
+                        wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                        time.sleep(10)
+                        bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+                        assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote " \
+                                                             f"peer " \
+                                                             f"not matched on socket {socket} "
+
+                    else:
+                        assert f"failed to connect on socket no {socket}"
+
+            # Close socket 1
+            wifi_dut.interfaces.wifi.close_socket(sock)
+            # Close socket 2
+            wifi_dut.interfaces.wifi.close_socket(sock1)
+            # Close socket 3
+            wifi_dut.interfaces.wifi.close_socket(sock2)
+            ssl_server.interfaces.ssl.stop_server()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        }
+    )
+@pytest.mark.parametrize("cert1, cert2, cert3",
+                         [
+                             (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"]
+
+                              )
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_ssl_three_sockets_shut_down_testcaseTC3923(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        ):
+    capture_filename = "test_ssl_three_sockets_shut_down_testcaseTC3923"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    port2 = ssl_server.interfaces.ssl.config['device_port2']
+    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    bytes_sent = (pkt_count * buffer_length)
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # The below API loads ca-cert into DUT at cert index 0
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                 cert_index=0,
+                                                 )
+    # The below API loads ca-cert into DUT at cert index 1
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert2[0])),
+                                                 cert_index=1,
+                                                 )
+    # The below API loads ca-cert into DUT at cert index 2
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[0])),
+                                                 cert_index=2,
+                                                 )
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
+
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock == 0, f"socket id received is wrong, expected is 0"
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Enable cert index 0 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX0)
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    # Open ssl client socket in the DUT
+    sock1 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock1 == 1, f"socket id received is wrong, expected is 1"
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Enable cert index 1 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX1)
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock1, device_ip, port2)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
+
+    # Open ssl client socket in the DUT
+    sock2 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock2 == 2, f"socket id received is wrong, expected is 2"
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # Enable cert index 1 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX2)
+
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock2, device_ip, port3)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock2, ssl_server.interfaces.ssl, server_port=port3)
+
+    socket_no = [1, 2, 3]
+    for socket in socket_no:
+        ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+        # ssl_server.interfaces.ssl.data_receive(socket, 10000, buffer_length)
+    if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+        socket_no = [1, 2, 3]
+        for socket in socket_no:
+            if ssl_server.interfaces.ssl.socket_connection_status(socket):
+                # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                time.sleep(10)
+                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+                assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                                     f"not matched on socket {socket} "
+
+            else:
+                assert f"failed to connect on socket no {socket}"
+
+    # Close socket 1
+    wifi_dut.interfaces.wifi.close_socket(sock)
+    # Close socket 2
+    wifi_dut.interfaces.wifi.close_socket(sock1)
+    # Close socket 3
+    wifi_dut.interfaces.wifi.close_socket(sock2)
+    sockets_opened, socket_info = wifi_dut.interfaces.wifi.wlan_get_socket_info()
+    assert sockets_opened == 0, f"Number of sockets opened in DUT is 0. But shown {sockets_opened} when query " \
+                                f"through get_network_params api"
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        }
+    )
+@pytest.mark.parametrize("cert1, cert2, cert3",
+                         [
+                             (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"]
+
+                              )
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_ssl_clear_cert2_TC3920(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        ):
+    capture_filename = "test_ssl_clear_cert2_TC3920"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    port2 = ssl_server.interfaces.ssl.config['device_port2']
+    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    bytes_sent = (pkt_count * buffer_length)
+
+    for iteration in range(0, 2):
+        if iteration == 1:
+            time.sleep(120)
+            wifi_dut.interfaces.wifi.reset_soft()
+            wifi_dut.interfaces.wifi.wireless_init()
+        # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        if iteration == 0:
+            # The below API loads ca-cert into DUT at cert index
+            wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                         str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                         cert_index=0,
+                                                         )
+            # The below API loads ca-cert into DUT at cert index 1
+            wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                         str(get_tls_certificate_dir().joinpath(cert2[0])),
+                                                         cert_index=1,
+                                                         )
+            # The below API loads ca-cert into DUT at cert index 2
+            wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                         str(get_tls_certificate_dir().joinpath(cert3[0])),
+                                                         cert_index=2,
+                                                         )
+        if iteration == 1:
+            wifi_dut.interfaces.wifi.clear_certificate(RS9116CertificateType.SSLCACertificate, cert_index=2)
+
+        # DUT gets ipaddress through DHCP process after start_ip API is executed
+        wifi_dut.interfaces.wifi.start_ip()
+        # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+        # DUT to power save in Wifi+bluetooth mode
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        # The below api parses DUTs IP address
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+        # Open ssl server socket in remote device(Raspberry pi or static device)
+        ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
+
+        # Open ssl client socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        # Enable cert index 0 for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   SocketOptions.CERT_INDEX0)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+        # ssl socket opened in DUT connects to the server
+        wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+        # Open ssl client socket in the DUT
+        sock1 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock1 == 1, f"socket id received is wrong, expected is 1"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        # Enable cert index 1 for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock1, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   SocketOptions.CERT_INDEX1)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock1, device_ip, port2)
+        # ssl socket opened in DUT connects to the server
+        wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
+
+        # Open ssl client socket in the DUT
+        sock2 = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock2 == 2, f"socket id received is wrong, expected is 2"
+
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        # Enable cert index 1 for socket opened
+        wifi_dut.interfaces.wifi.set_socket_option(sock2, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   SocketOptions.CERT_INDEX2)
+
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock2, device_ip, port3)
+        if iteration == 0:
+            # ssl socket opened in DUT connects to the server
+            wifi_dut.interfaces.wifi.connect_to_server(sock2, ssl_server.interfaces.ssl, server_port=port3)
+        else:
+            with pytest.raises(WlanError) as exc_info:
+                # ssl socket opened in DUT connects to the server
+                wifi_dut.interfaces.wifi.connect_to_server(sock2, ssl_server.interfaces.ssl, server_port=port3)
+            assert exc_info.value.error_code == 0xd2, "DUT sent wrong error code, expected is 0xD2"
+
+        if iteration == 0:
+            socket_no = [1, 2, 3]
+        else:
+            socket_no = [1, 2]
+        for socket in socket_no:
+            ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+
+        if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+            if iteration == 0:
+                socket_no = [1, 2, 3]
+            else:
+                socket_no = [1, 2]
+            for socket in socket_no:
+                if ssl_server.interfaces.ssl.socket_connection_status(socket):
+                    # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+                    wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                    time.sleep(10)
+                    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+                    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                                         f"not matched on socket {socket} "
+
+                else:
+                    assert f"failed to connect on socket no {socket}"
+
+        # Close socket 1
+        wifi_dut.interfaces.wifi.close_socket(sock)
+        # Close socket 2
+        wifi_dut.interfaces.wifi.close_socket(sock1)
+        if iteration == 0:
+            # Close socket 3
+            wifi_dut.interfaces.wifi.close_socket(sock2)
+            ssl_server.interfaces.ssl.stop_server()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        }
+    )
+@pytest.mark.parametrize("cert1, cert2, cert3",
+                         [
+                             (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"]
+
+                              )
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_socket_check_TC19158(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        ):
+    capture_filename = "test_socket_check_TC19158"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -486,7 +1181,7 @@ def test_socket_check_TC19158(
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
     # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -610,7 +1305,7 @@ def test_socket_check_TC19158(
         }
     )
 def test_query_wireless_stats_TC19175(wifi_sniffer, wifi_dut, wifi_access_point, logger):
-    capture_filename = "test_query_wireless_stats"
+    capture_filename = "test_query_wireless_stats_TC19175"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -636,7 +1331,8 @@ def test_query_wireless_stats_TC19175(wifi_sniffer, wifi_dut, wifi_access_point,
     operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
     wifi_sniffer.interfaces.capture.stop_capture()
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    beacon_interval_ap, dtim_period_ap = get_bssid(wifi_sniffer, decryption_key, wifi_access_point.interfaces.wifi.ssid)
+    beacon_interval_ap, dtim_period_ap = get_beacon_interval(wifi_sniffer, decryption_key,
+                                                             wifi_access_point.interfaces.wifi.ssid)
 
     logger.info(f"-------Beacon interval and DTIM period of the connected AP captured in the sniffer are-> beacon "
                 f"interval:{beacon_interval_ap}, DTIM period:{dtim_period_ap}")
@@ -670,7 +1366,7 @@ def test_query_wireless_stats_TC19175(wifi_sniffer, wifi_dut, wifi_access_point,
         }
     )
 def test_query_wireless_stats_after_rejoin_TC19177(wifi_sniffer, wifi_dut, wifi_access_point, logger):
-    capture_filename = "test_query_wireless_stats"
+    capture_filename = "test_query_wireless_stats_after_rejoin_TC19177"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -699,7 +1395,8 @@ def test_query_wireless_stats_after_rejoin_TC19177(wifi_sniffer, wifi_dut, wifi_
     operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
     wifi_sniffer.interfaces.capture.stop_capture()
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    beacon_interval_ap, dtim_period_ap = get_bssid(wifi_sniffer, decryption_key, wifi_access_point.interfaces.wifi.ssid)
+    beacon_interval_ap, dtim_period_ap = get_beacon_interval(wifi_sniffer, decryption_key,
+                                                             wifi_access_point.interfaces.wifi.ssid)
 
     logger.info(f"-------Beacon interval and DTIM period of the connected AP captured in the sniffer are-> beacon "
                 f"interval:{beacon_interval_ap}, DTIM period:{dtim_period_ap}")
@@ -812,6 +1509,111 @@ def test_sntp__TC19191(
     for ntp_pkt in ntp_capture_list:
         if (ntp_pkt[2] == sntp_server_address) and (ntp_pkt[3] == device_ip):
             logger.info(f"SNTP response body received in the sniffer {ntp_pkt}")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        }
+    )
+@pytest.mark.parametrize("cert1, cert2, cert3",
+                         [
+                             (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"]
+
+                              )
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_get_rtc_after_powersave_TC3945(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        ):
+    capture_filename = "test_ssl_three_sockets_send_data_testcaseTC3918"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    port2 = ssl_server.interfaces.ssl.config['device_port2']
+    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    bytes_sent = (pkt_count * buffer_length)
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # The below API loads ca-cert into DUT at cert index 0
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                 cert_index=0,
+                                                 )
+    # The below API loads ca-cert into DUT at cert index 1
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert2[0])),
+                                                 cert_index=1,
+                                                 )
+    # The below API loads ca-cert into DUT at cert index 2
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[0])),
+                                                 cert_index=2,
+                                                 )
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+    set_seconds = 30
+    set_minutes = 6
+    set_hour = 10
+    set_month_day = 10
+    set_month = 10
+    set_year = 2021
+    set_week_day = 3
+    wait_time = 100
+    set_time_sec = ((set_minutes * 60) + set_seconds)
+
+    # This API starts RTC timer in DUT
+    wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hour=set_hour,
+                                     month_day=set_month_day,
+                                     month=set_month, year=set_year, week_day=set_week_day)
+    logger.info(f"wait for {wait_time} seconds")
+    time.sleep(wait_time)
+
+    # get_rtc API returns time parameters output at the instance
+    get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
+    get_time_sec = ((get_minutes * 60) + get_seconds)
+    assert (set_hour == get_hours) and (set_month_day == get_day_month) and (set_month == get_month) and (
+            set_year == get_year) and (set_week_day == get_week_day)
+
+    time_dif = get_time_sec - set_time_sec
+
+    assert (time_dif - wait_time) == 0, "get time is not updated"
 
 
 @pytest.mark.config(
