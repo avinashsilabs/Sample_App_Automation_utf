@@ -1,8 +1,7 @@
 import pytest
 from utils.logger import get_logger
 from utils.time_measurer import TimeMeasurer
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
-    RS9116TCPIPFeatureBitMap
+from devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
 from interfaces.wifi import WlanError
 from devices.rs911x import RS9116PowerSaveModes
 
@@ -42,13 +41,16 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_c19056(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
     with TimeMeasurer() as t:
 
         # enables the scan in dut on channel 0
+        logger().info("Initiating scan from dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     assert (len(scan_results) > 1 and (t.duration < (1.2 + 0.2)))
     logger().info(scan_results)
@@ -58,12 +60,15 @@ def test_scan_c19056(wifi_dut, wifi_access_point):
 # This test case verifies the scan Response Based on RSSI
 def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
     with TimeMeasurer() as t:
         # enables the scan in dut on channel 0
+        logger().info("Initiating scan from DUT...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     logger().info(scan_results)
     scan_count = len(scan_results)
@@ -78,18 +83,22 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
 # This test case verifies the scan with 32 byte SSID name
 def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
     scan_ssid = "test123test123test123test123"
     start_ap_args = {'ssid': scan_ssid}
 
     # api starts the access point with the given argument ssid
+    logger().info("Starting the access piint with custom ssid....")
     wifi_access_point.interfaces.wifi.start_ap(**start_ap_args)
     with TimeMeasurer() as t:
 
         # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating the scan from DUT...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=scan_ssid)
     logger().info(scan_results)
     assert len(scan_results) == 1
@@ -98,9 +107,11 @@ def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
 # This test case verifies the scan functionality on channles 1,6,8
 def test_scan_selective_channel_c19058(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
     channel_list = [1, 6, 8]
     channel_bitmap_2_4 = 0
@@ -114,11 +125,13 @@ def test_scan_selective_channel_c19058(wifi_dut, wifi_access_point):
     for channel in channel_list:
 
         # initiates the access point with channel given in list
+        logger().info("Setting access point with custom channel...")
         wifi_access_point.interfaces.wifi.start_ap(channel=channel)
 
         with TimeMeasurer() as t:
 
             # enables the scan in DUT with the given channel bitmap value
+            logger().info("Initiating selective channel scan in DUT...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -137,9 +150,11 @@ def test_scan_selective_channel_c19058(wifi_dut, wifi_access_point):
 # Verifies the scan functionality with the channel 1,3,6,11
 def test_scan_selective_channel_c19059(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
     channel_list = [1, 3, 6, 11]
     channel_bitmap_2_4 = 0
@@ -153,11 +168,13 @@ def test_scan_selective_channel_c19059(wifi_dut, wifi_access_point):
     for channel in channel_list:
 
         # initiates the access point with channel given in list
+        logger().info("Starting access point with custom channel...")
         wifi_access_point.interfaces.wifi.start_ap(channel=channel)
 
         with TimeMeasurer() as t:
 
             # enables the scan in DUT with the given channel bitmap value
+            logger().info("Initiating the selective channel scan in dut...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -177,9 +194,11 @@ def test_scan_selective_channel_c19059(wifi_dut, wifi_access_point):
 # This test case verifies the scan functionality for channles 1-11
 def test_scan_selective_channel_c19057(wifi_dut, wifi_access_point):
         # Enables the wifi power save in DUT
+        logger().info("Setting DUT in wlan power save...")
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
         # Enables the bt power save in DUT
+        logger().info("Setting DUT in bt power save...")
         wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
         channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         channel_bitmap_2_4 = 0
@@ -194,9 +213,11 @@ def test_scan_selective_channel_c19057(wifi_dut, wifi_access_point):
         for channel in channel_list:
 
             # initiates the access point with channel given in list
+            logger().info("Starting access point with custom channel...")
             wifi_access_point.interfaces.wifi.start_ap(channel=channel)
 
             # enables the scan in DUT with the given channel bitmap value
+            logger().info("Initiating selective channel scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -213,17 +234,21 @@ def test_scan_selective_channel_c19057(wifi_dut, wifi_access_point):
 # Verifies the scan functionality in us region
 def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     with TimeMeasurer() as t:
 
         # Sets the DUT with the us region
+        logger().info(" ***** Configuring DUT in US region ***** ")
         wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
 
         # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating the scan in dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     logger().info(scan_results)
     assert (len(scan_results) >= 1)
@@ -234,21 +259,26 @@ def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
 # This test case verifies the scan functionality with max scan of dut
 def test_scan_selective_channel_c19061(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # enables the rejoin in dut
+    logger().info(" Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
     channel = 0
     channel_bitmap_2_4 = 0
     scan_feature_extend = 0
 
     # initiates the access point with given arguments
+    logger().info("Starting access pint with custom configs...")
     wifi_access_point.interfaces.wifi.start_ap()
     with TimeMeasurer() as t:
         # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating the selective channel scan ...")
         scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel,ssid=None,scan_bitmap_2_4=channel_bitmap_2_4,scan_feature=scan_feature_extend)
         logger().info(scan_results)
         assert len(scan_results) >= 11
@@ -261,15 +291,19 @@ def test_scan_selective_channel_c19061(wifi_dut, wifi_access_point):
 # This case verifies the scan in hidden mode of AP for all channels
 def test_scan_hidden_mode_scan_with_all_channels_c19062(wifi_dut,wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the rejoin feature on DUT
+    logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
     with TimeMeasurer() as t:
                 # enables the scan in DUT with the given channel bitmap value
+                logger().info("Initiating scan...")
                 scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid="test_ssid")
                 logger().info(scan_results)
                 assert len(scan_results) >= 1
@@ -284,12 +318,15 @@ def test_scan_hidden_mode_scan_with_all_channels_c19062(wifi_dut,wifi_access_poi
 # Verifies the scan in selected channels with the ap set in hidden mode
 def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_access_point):
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the rejoin feature on DUT
+    logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
     channel = 0
     channel_list = [1,5,9]
@@ -303,6 +340,7 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
     with TimeMeasurer() as t:
 
         # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating Scan...")
         scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid="hidden_ssid",scan_bitmap_2_4=channel_bitmap_2_4,scan_feature=scan_feature_extend)
         logger().info(scan_results)
         assert len(scan_results) >= 1
@@ -321,14 +359,18 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the scan in us region with cahnnels 12,13,14
 def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_point):
+    logger().info(" ***** Configuring the dut in US region *****")
     wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the rejoin feature on DUT
+    logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
     channel = [12,13,14]
     channel_list =[12,13,14]
@@ -340,10 +382,12 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_poin
         scan_expected_time += 100
     for channel in channel:
         # initiates the access point with channel given in list
+        logger().info("Starting the access point with custom channel...")
         wifi_access_point.interfaces.wifi.start_ap(channel=channel)
         with TimeMeasurer() as t:
             with pytest.raises(WlanError) as exc_info:
                 # enables the scan in DUT with the given channel bitmap value
+                logger().info("Initiating Scan...")
                 wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_feature=scan_feature_extend)
@@ -356,18 +400,23 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_poin
 # Verifies scan on all channels in by setting EU region on DUT
 def test_scan_all_channels_in_EU_region_c19070(wifi_dut,wifi_access_point):
     # enables the region to europe in DUT
+    logger().info(" ***** Configuring DUT in EU region ***** ")
     wifi_dut.interfaces.wifi.set_region(region=1, region_code=2, module_type=1)
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # initiates the rejoin in dut
+    logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
 
     with TimeMeasurer() as t:
         # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating Scan...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     logger().info(scan_results)
     assert (len(scan_results) >= 1)
@@ -378,20 +427,24 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut,wifi_access_point):
 # Verifies scan on all channels in by setting japan region on DUT
 def test_scan_all_channels_in_japan_region_c19071(wifi_dut,wifi_access_point):
     # enables the region to japan in DUT
+    logger().info(" ***** Configuring DUT in japan region *****")
     wifi_dut.interfaces.wifi.set_region(region=1, region_code=3, module_type=1)
     # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     # initiates the rejoin in dut
+    logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
 
     with TimeMeasurer() as t:
         # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating Scan...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     logger().info(scan_results)
     assert (len(scan_results) >= 1)
     logger().info(f"Scan in {t.duration} seconds")
-
