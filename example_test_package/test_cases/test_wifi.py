@@ -91,7 +91,7 @@ def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
         }
     }
 )
-def test_multiple_access_points(wifi_dut, wifi_access_points):
+def test_multiple_access_points_config_override(wifi_dut, wifi_access_points):
     for wifi_ap in wifi_access_points:
         result = wifi_dut.interfaces.wifi.join_ap(wifi_ap)
         assert result
