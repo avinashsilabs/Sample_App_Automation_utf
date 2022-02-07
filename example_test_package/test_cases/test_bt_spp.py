@@ -1,5 +1,5 @@
 import pytest
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
+from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType
 from interfaces.bluetooth import BTSocketRole
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utils.logger import get_logger
@@ -20,6 +20,8 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
+
+@pytest.mark.skip
 def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
@@ -30,7 +32,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
         assert bt_dut_address is not None
 
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
         assert bt_client_address is not None
 
         with bt_client.interfaces.bluetooth.bt_socket(
@@ -78,6 +80,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.skip
 def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
     send_text = "sA0L9b1xEgGuUqN5YOlx"
     recv_text = "H2D7yZKRhKULU9Xil5Yv"
@@ -139,4 +142,61 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
                 0.2
             )  # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+    logger().info(f"Scan in {t.duration} seconds")
+
+
+def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
+    with TimeMeasurer() as t:
+        # Join Wi-Fi Access Point
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+        assert bt_dut_address is not None
+
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
+        assert bt_client_address is not None
+
+        with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Server
+        ) as bt_server_socket:
+            # SPP Connection
+            with wifi_dut.interfaces.wifi.run_bt_task():
+                bt_server_socket.create_server()
+                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=0)
+                time.sleep(1)
+                assert not connected
+            bt_server_socket.close()
+
+        recieved_authentication_failure = False
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
+                    recieved_authentication_failure = b"4E05" in event.event_data
+        assert recieved_authentication_failure
+    logger().info(f"Scan in {t.duration} seconds")
+
+
+def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
+    with TimeMeasurer() as t:
+        # Join Wi-Fi Access Point
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address is not None
+
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="9876")
+        assert bt_client_address is not None
+        time.sleep(0.5)
+
+        with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Client
+        ) as bt_client_socket:
+            # SPP Connection
+            with wifi_dut.interfaces.wifi.run_bt_task():
+                bt_client_socket.create_client()
+                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
+                addr = bt_client_socket.accept(timeout=12)
+                assert addr is None
+            bt_client_socket.close()
     logger().info(f"Scan in {t.duration} seconds")
