@@ -1,6 +1,6 @@
 import pytest
 import re
-from datetime import datetime
+from datetime import datetime, date
 from utils.time_measurer import TimeMeasurer
 from utils.logger import get_logger
 from utils.iperf.iperf_utils import ping
@@ -236,7 +236,7 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         validation = True
         packet_filter2 = False
         time_obj = FilterPacket()
-        packet_filter8 = 'Type/Subtype: Probe Request (0x0004)'
+        packet_filter8 = f'wlan.fc.type_subtype == 0x0004'
 
         logger().info(" ====== configuring the Sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -306,16 +306,20 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
 
         # Calculating the unicast probe req time
         time_str1 = time_stamp_list[0]
+        time_str1 = time_str1[:-3]
         time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
-
+        logger().info(f'probe req time {time_object1}')
         # Calcuting the reponse time of eapol4
         time_str2 = time_stamp_list[1]
+        time_str2 = time_str2[:-3]
         time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
-        date = datetime.date(1, 1, 1)
-        datetime1 = datetime.datetime.combine(date, time_object1)
-        datetime2 = datetime.datetime.combine(date, time_object2)
-        time_taken = datetime1 - datetime2
-        assert time_taken >= 60
+        logger().info(f'eapol key time {time_object2}')
+        date1 = date(1, 1, 1)
+        datetime1 = datetime.combine(date1, time_object1)
+        datetime2 = datetime.combine(date1, time_object2)
+        time_taken = datetime2 - datetime1
+        time_taken = time_taken.total_seconds()
+        assert time_taken <= 60
         logger().info(f"time taken to connect is: {time_taken}")
 
         logger().info("Validating Unicast Probe request")
@@ -346,7 +350,7 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         validation = True
         packet_filter2 = False
         time_obj = FilterPacket()
-        packet_filter8 = 'Type/Subtype: Probe Request (0x0004)'
+        packet_filter8 = f'wlan.fc.type_subtype == 0x0004'
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -413,18 +417,22 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         time_stamp_list = time_obj.find_time_stamp()
         logger().info(f'time stamp list ={time_stamp_list}')
 
-        # Calculating the probe req time
+        # Calculating the unicast probe req time
         time_str1 = time_stamp_list[0]
+        time_str1 = time_str1[:-3]
         time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
-
-        # Calculating the probe response time
+        logger().info(f'probe req time {time_object1}')
+        # Calcuting the reponse time of eapol4
         time_str2 = time_stamp_list[1]
+        time_str2 = time_str2[:-3]
         time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
-        date = datetime.date(1, 1, 1)
-        datetime1 = datetime.datetime.combine(date, time_object1)
-        datetime2 = datetime.datetime.combine(date, time_object2)
-        time_taken = datetime1 - datetime2
-        assert time_taken >= 60
+        logger().info(f'eapol key time {time_object2}')
+        date1 = date(1, 1, 1)
+        datetime1 = datetime.combine(date1, time_object1)
+        datetime2 = datetime.combine(date1, time_object2)
+        time_taken = datetime2 - datetime1
+        time_taken = time_taken.total_seconds()
+        assert time_taken <= 60
         logger().info(f"time taken to connect is: {time_taken}")
 
         logger().info("Validating Unicast Probe request")
