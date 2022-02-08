@@ -350,3 +350,13 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+def test_set_advertising_parameters(ble_client):
+    response, message = ble_client.interfaces.bluetooth.set_advertising_paramaters('0x20', '0x00', '0x20', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x07', '0x00')
+    logger().info(f"message: {message}")
+    assert response is True
+
+def test_set_advertising_enable(ble_client):
+    response, message = ble_client.interfaces.bluetooth.set_advertising_enable('0x01')
+    logger().info(f"message: {message}")
+    assert response is True
