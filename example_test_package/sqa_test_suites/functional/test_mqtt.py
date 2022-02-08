@@ -22,7 +22,6 @@ import random
 from threading import Thread
 from utils import mac_address_to_string
 from typing import Dict
-from utils.iperf.iperf_utils import get_device_ip
 from utils.iperf.iperf_utils import ping
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -110,7 +109,7 @@ def test_mqtt_qos0_connect_sub_publish_testcase_14(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -223,7 +222,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_15(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -327,7 +326,7 @@ def test_mqtt_invalid_server_testcase2(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -389,7 +388,7 @@ def test_mqtt_common_clientid_testcase_5(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -488,7 +487,7 @@ def test_mqtt_authentication_testcase6(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -593,7 +592,7 @@ def test_mqtt_authentication_wrong_cred_testcase7(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -659,7 +658,7 @@ def test_mqtt_retain_testcase_16(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -742,7 +741,7 @@ def test_mqtt_delete_retain_message_testcase17(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -825,7 +824,7 @@ def test_mqtt_unsubscribe_testcase_20(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -927,7 +926,7 @@ def test_mqtt_sequence_testcase_22(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -995,7 +994,7 @@ def test_mqtt_reconnect_testcase_23(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1074,7 +1073,7 @@ def test_mqtt_common_clientid_null_testcase_29(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1199,7 +1198,7 @@ def test_mqtt_tx_after_rejoin_testcase24(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1321,7 +1320,7 @@ def test_mqtt_init_after_rejoin_fail_testcase25(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1449,7 +1448,7 @@ def test_mqtt_rx_after_rejoin_testcase30(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1571,7 +1570,7 @@ def test_mqtt_publish_qos1_testcase32(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1682,7 +1681,7 @@ def test_mqtt_rx_testcase43(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1798,7 +1797,7 @@ def test_mqtt_keep_alive_60_testcase_8(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1882,7 +1881,7 @@ def test_mqtt_keep_alive_120_testcase_9(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1966,7 +1965,7 @@ def test_mqtt_keep_alive_300_testcase_10(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -2050,7 +2049,7 @@ def test_mqtt_keep_alive_disable_testcase_11(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -2122,7 +2121,7 @@ def test_mqtt_connect_clean_session_0_testcase_49(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)

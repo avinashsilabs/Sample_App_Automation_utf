@@ -11,7 +11,6 @@ from devices.rs911x import (
     )
 from interfaces.wifi import WlanError
 from utils import mac_address_to_string
-from utils.iperf.iperf_utils import get_device_ip
 from utils.iperf.iperf_utils import ping
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -71,7 +70,7 @@ def test_mqtt_feature_not_enabled_testcase4(wifi_sniffer, mqtt_server, wifi_acce
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
