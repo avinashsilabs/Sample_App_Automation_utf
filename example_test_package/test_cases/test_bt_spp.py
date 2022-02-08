@@ -187,7 +187,7 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="9876")
         assert bt_client_address is not None
-        time.sleep(0.5)
+        time.sleep(1)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
@@ -199,4 +199,12 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
                 addr = bt_client_socket.accept(timeout=12)
                 assert addr is None
             bt_client_socket.close()
+
+        recieved_authentication_failure = False
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
+                    recieved_authentication_failure = b"4E05" in event.event_data
+        assert recieved_authentication_failure
     logger().info(f"Scan in {t.duration} seconds")
