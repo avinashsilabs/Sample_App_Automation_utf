@@ -78,14 +78,14 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
+def test_ble_scanning(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
 
     # Join Wi-Fi Access Point
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -351,12 +351,23 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
-def test_set_advertising_parameters(ble_client):
-    response, message = ble_client.interfaces.bluetooth.set_advertising_paramaters('0x20', '0x00', '0x20', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x07', '0x00')
-    logger().info(f"message: {message}")
-    assert response is True
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_custom_advertisement(wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
 
-def test_set_advertising_enable(ble_client):
-    response, message = ble_client.interfaces.bluetooth.set_advertising_enable('0x01')
-    logger().info(f"message: {message}")
-    assert response is True
+    # Start DUT
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_custom_adv(bt_dut_address=bt_dut_address, adv_enable_value='0x01', adv_params=['0x20', '0x00', '0x20', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x00', '0x07', '0x00'])
+    assert bt_client_address is not None
