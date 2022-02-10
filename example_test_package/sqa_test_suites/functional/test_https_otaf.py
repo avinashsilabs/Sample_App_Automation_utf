@@ -3,8 +3,6 @@ import pytest
 from devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
-    RS9116CertificateType,
-    RS9116ExtTCPIPFeatureBitMap,
     RS9116CoexMode,
     RS9116ConfigFeatureBitMap,
     RS9116FeatureBitMap,
@@ -19,7 +17,8 @@ from utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
-"""setup requirement:
+"""
+     setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
@@ -32,7 +31,7 @@ def logger():
         4. Initiate https firmware upgrade
         5. Verify the https otaf status
 
-    Author: Ravi Nemali
+    Author: RaviNemali
 """
 
 @pytest.mark.config(
@@ -51,7 +50,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection on providing the empty rps file
-def test_https_otaf_sta_unassociated_testcase1(http_server, wifi_dut, wifi_access_point, logger):
+def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_dut, wifi_access_point, logger):
     # This API gets the host ip for the http server
     host_ip = get_host_ip()
 
@@ -81,7 +80,7 @@ def test_https_otaf_sta_unassociated_testcase1(http_server, wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection in wlan mode
-def test_https_otaf_testcase2(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -138,7 +137,7 @@ def test_https_otaf_testcase2(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection in wlan and bluetooth mode
-def test_https_otaf_wifi_bt_testcase3(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -197,7 +196,7 @@ def test_https_otaf_wifi_bt_testcase3(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection in wlan and BLE mode
-def test_https_otaf_wifi_bt_testcase4(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -256,7 +255,7 @@ def test_https_otaf_wifi_bt_testcase4(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection in wlan and dual bluetooth mode
-def test_https_otaf_wifi_bt_testcase5(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -314,7 +313,7 @@ def test_https_otaf_wifi_bt_testcase5(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config('wifi_access_point',wifi ={"standard": '11g'})
 # These test case verifies the firmware upgrade in DUT over the https connection on DUT connection in access point 11g mode
-def test_http_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
+def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -375,7 +374,7 @@ def test_http_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config('wifi_access_point',wifi ={"standard": '11g'})
 # These test case verifies the firmware upgrade in DUT over the https connection on DUT connection in access point 11n mode
-def test_http_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
+def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -434,7 +433,7 @@ def test_http_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection on DUT SPI connection
-def test_https_otaf_usb_spi_interface_testcase11(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -493,7 +492,7 @@ def test_https_otaf_usb_spi_interface_testcase11(http_server, wifi_dut, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection by enabling the power save mode in DUT
-def test_https_otaf_ap_power_save_testcase12(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -558,7 +557,7 @@ def test_https_otaf_ap_power_save_testcase12(http_server, wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection on single band Q7 board
-def test_https_otaf_Q7_board_testcase14(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -618,7 +617,7 @@ def test_https_otaf_Q7_board_testcase14(http_server, wifi_dut, wifi_access_point
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade in DUT over the https connection on dual band A7 board
-def test_https_otaf_A7_board_testcase14(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -677,7 +676,7 @@ def test_https_otaf_A7_board_testcase14(http_server, wifi_dut, wifi_access_point
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection on providing the empty rps file
-def test_https_otaf_empty_neg_testcase5(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -711,7 +710,7 @@ def test_https_otaf_empty_neg_testcase5(http_server, wifi_dut, wifi_access_point
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection on providing the corrupted rps file
-def test_https_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -745,7 +744,7 @@ def test_https_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection,when http is disabled in DUT
-def test_https_otaf_feature_not_enabled_neg_testcase4(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi_dut, wifi_access_point, logger):
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -761,6 +760,3 @@ def test_https_otaf_feature_not_enabled_neg_testcase4(http_server, wifi_dut, wif
         # API fetches the DUT otaf status
         wifi_dut.interfaces.wifi.get_http_otaf_status()
     assert exc_info.value.error_code == 0xff74, "observed wrong error code expected is 0xff74"
-
-
-

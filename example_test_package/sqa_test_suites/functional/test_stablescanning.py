@@ -1,9 +1,9 @@
 import pytest
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 from utils.time_measurer import TimeMeasurer
 from utils.logger import get_logger
 from interfaces.iperf.fixtures import IPerfFixture, iperf
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 from utils.iperf.iperf_utils import ping
 from interfaces.wifi import WlanError
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
