@@ -1,6 +1,7 @@
 import pytest
+import time
 import re
-from datetime import datetime
+from datetime import datetime, date
 from utils.time_measurer import TimeMeasurer
 from utils.logger import get_logger
 from utils.iperf.iperf_utils import ping
@@ -65,7 +66,6 @@ pytestmark = [
 def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -97,24 +97,13 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate 11n capability, authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
-
-        # Validate auth key
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -123,24 +112,14 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate 11n capability, authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find 11n capability, authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to auth key in sniffer'
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -150,7 +129,6 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
 # The test case checks whether the DUT connection works with AP hidden mode
 def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the Sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -182,24 +160,16 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate hidden mode, authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 4 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.da == {dut_mac_address} and eapol'
-
-        # Validate auth key
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter3 = f'(wlan.tag.number == 4 ) && (wlan.fc.type_subtype == 0x0000)'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -208,24 +178,18 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
         logger().info(" Validate hidden ssid, authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find hidden, authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -234,9 +198,8 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
 # The test case checks whether the DUT connects to Access point with the generated pmk with user given ssid and password
 def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         validation = True
-        packet_filter2 = False
+        packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
         time_obj = FilterPacket()
-        packet_filter8 = 'Type/Subtype: Probe Request (0x0004)'
 
         logger().info(" ====== configuring the Sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -269,73 +232,58 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
-
-        # Validate auth key
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate the eapol 4 key
-        packet_filter9 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
+        packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                          f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
 
+        time.sleep(10)
+
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
         logger().info("Validating time between two packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8, packet_filter9)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
         time_stamp_list = time_obj.find_time_stamp()
         logger().info(f'time stamp list ={time_stamp_list}')
 
         # Calculating the unicast probe req time
         time_str1 = time_stamp_list[0]
+        time_str1 = time_str1[:-3]
         time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
-
+        logger().info(f'probe req time {time_object1}')
         # Calcuting the reponse time of eapol4
         time_str2 = time_stamp_list[1]
+        time_str2 = time_str2[:-3]
         time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
-        date = datetime.date(1, 1, 1)
-        datetime1 = datetime.datetime.combine(date, time_object1)
-        datetime2 = datetime.datetime.combine(date, time_object2)
-        time_taken = datetime1 - datetime2
-        assert time_taken >= 60
+        logger().info(f'eapol key time {time_object2}')
+        date1 = date(1, 1, 1)
+        datetime1 = datetime.combine(date1, time_object1)
+        datetime2 = datetime.combine(date1, time_object2)
+        time_taken = datetime2 - datetime1
+        time_taken = time_taken.total_seconds()
+        assert time_taken <= 60
         logger().info(f"time taken to connect is: {time_taken}")
-
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -344,9 +292,8 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
 # The test case checks whether the DUT connection Time on the joining the AP
 def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
-        packet_filter2 = False
+        packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
         time_obj = FilterPacket()
-        packet_filter8 = 'Type/Subtype: Probe Request (0x0004)'
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -378,27 +325,16 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
-
-        # Validate auth key
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate the eapol 4 key
-        packet_filter9 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
+        packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                          f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
         # Initiate ping from third party wifi-client to DUT
@@ -408,43 +344,38 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
         logger().info("Validating time between two packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8, packet_filter9)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+
         time_stamp_list = time_obj.find_time_stamp()
         logger().info(f'time stamp list ={time_stamp_list}')
 
-        # Calculating the probe req time
+        # Calculating the unicast probe req time
         time_str1 = time_stamp_list[0]
+        time_str1 = time_str1[:-3]
         time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
-
-        # Calculating the probe response time
+        logger().info(f'probe req time {time_object1}')
+        # Calcuting the reponse time of eapol4
         time_str2 = time_stamp_list[1]
+        time_str2 = time_str2[:-3]
         time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
-        date = datetime.date(1, 1, 1)
-        datetime1 = datetime.datetime.combine(date, time_object1)
-        datetime2 = datetime.datetime.combine(date, time_object2)
-        time_taken = datetime1 - datetime2
-        assert time_taken >= 60
+        logger().info(f'eapol key time {time_object2}')
+        date1 = date(1, 1, 1)
+        datetime1 = datetime.combine(date1, time_object1)
+        datetime2 = datetime.combine(date1, time_object2)
+        time_taken = datetime2 - datetime1
+        time_taken = time_taken.total_seconds()
+        assert time_taken <= 60
         logger().info(f"time taken to connect is: {time_taken}")
-
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -453,7 +384,6 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
 # The test case checks whether the DUT connection works fine on giving the random passphrase
 def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the sniffer with access point channel ======")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -485,24 +415,16 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate  authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate dhcp
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter2 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -511,24 +433,20 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find  authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
+
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -537,7 +455,6 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
 # The test case checks whether the DUT connection Time on the joining the AP with pmk
 def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -570,24 +487,16 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
+        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate dhcp
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter3 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -596,24 +505,18 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate  authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -624,7 +527,6 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
 def test_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -643,26 +545,14 @@ def test_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_access_poin
         assert exc_info.value.error_code == 0x0008
         logger().info(f"Dut Tried to connect to ap with wrong password, observed error code 0x0008 which is expected")
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
-
         # Validate de-auth packet
-        packet_filter4 = f'(wlan.fc.type_subtype == 12)'
+        packet_filter1 = f'(wlan.fc.type_subtype == 12)'
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
         logger().info(" Validate de-auth packet in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find deauth packet'
 
     logger().info(f"test executed in {t.duration} seconds")
@@ -690,7 +580,6 @@ def test_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point):
 def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
-        packet_filter2 = False
 
         logger().info(" ============== THIS TEST CASE SUPPORTS ONLY WITH ASUS AP ============== ")
         logger().info(" ====== configuring the Sniffer with access point channel ====== ")
@@ -725,24 +614,13 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.da == {dut_mac_address} and eapol'
-
-        # Validate auth key
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -751,24 +629,14 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find  authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -780,7 +648,6 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
 def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -812,24 +679,13 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
-
-        # Validate auth key
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -838,25 +694,14 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate  authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
-    logger().info(f"Associated and ping in {t.duration} seconds")
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -868,7 +713,6 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
 def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
-        packet_filter2 = False
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -900,24 +744,16 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
         # Fetches the DUT mac address
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validating Unicast Probe request
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-        # Validating Broadcast Probe request
-        packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-        # Validate authentication ,association
-        packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-        # Validate EAPOL keys
-        packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and eapol'
+        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate dhcp
-        packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter3 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -926,24 +762,18 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Unicast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-            'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-        logger().info("Validating Broadcast Probe request")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-            'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-        logger().info(" Validate authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-            'packet_count'], 'Unable to find authentication and association in sniffer '
-        logger().info(" Validating the power management bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-            'packet_count'], 'Unable to find power management bit in sniffer'
-        logger().info(" Validating the EAPOL keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-            'packet_count'], 'Unable to find eapol keys in sniffer'
-        logger().info(" Validating auth key in sniffer")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-            'packet_count'], 'Unable to find auth key in sniffer'
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info(" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -955,7 +785,6 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
     with TimeMeasurer() as t:
         for iteration in range(0, 30):
             validation = True
-            packet_filter2 = False
 
             logger().info(" ====== configuring the sniffer with the access point channel ====== ")
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -987,24 +816,13 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
             # Fetches the DUT mac address
             dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-            # Validating Unicast Probe request
-            packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid}'
-
-            # Validating Broadcast Probe request
-            packet_filter3 = f'wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff'
+            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+            packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                             f'(wlan.fc.type_subtype == 0x000b))'
 
             # Validating the power management bit
-            packet_filter5 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-
-            # Validate connection and association
-            packet_filter4 = f'(wlan.tag.number == 45 ) && (wlan.fc.type_subtype == 0x0000)'
-
-            # Validate EAPOL keys
-            packet_filter6 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                             f'wlan.da == {dut_mac_address} and eapol'
-
-            # Validate auth key
-            packet_filter7 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+            packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
             # Initiate ping from third party wifi-client to DUT
             status = ping(device_ip, 10)
@@ -1013,22 +831,12 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
 
-            logger().info("Validating Unicast Probe request")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-                'packet_count'], 'Unable to find Unicast Probe request packet in sniffer'
-            logger().info("Validating Broadcast Probe request")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-                'packet_count'], 'Unable to find Broadcast Probe request packet in sniffer'
-            logger().info(" Validate authentication and association keys")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
-                'packet_count'], 'Unable to find authentication and association in sniffer '
-            logger().info(" Validating the power management bit")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
-                'packet_count'], 'Unable to find power management bit in sniffer'
-            logger().info(" Validating the EAPOL keys")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-                'packet_count'], 'Unable to find eapol keys in sniffer'
-            logger().info(" Validating auth key in sniffer")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7, packet_filter2)[
-                'packet_count'], 'Unable to find auth key in sniffer'
+            logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                                 'in sniffer'
+
+            logger().info(" Validate power management bit 1")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+                'packet_count'], 'Unable to find power management bit 1 in sniffer '
     logger().info(f"Associated and ping in {t.duration} seconds")
