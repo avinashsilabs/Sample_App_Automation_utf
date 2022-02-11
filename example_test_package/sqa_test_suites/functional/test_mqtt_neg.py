@@ -50,9 +50,9 @@ Note: The test cases added in the file works only in AT mode
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when trying to connect to mqtt server without enabling mqtt feature in DUT
-def test_mqtt_feature_not_enabled_testcase4(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
+def test_mqtt_feature_not_enabled_TC19244(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
                                             mqtt_dut, logger):
-    capture_filename = "test_mqtt_feature_not_enabled_testcase4"
+    capture_filename = "test_mqtt_feature_not_enabled_TC19244"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
