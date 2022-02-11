@@ -21,7 +21,6 @@ def logger():
     return get_logger(__name__)
 
 
-@pytest.mark.skip
 def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
@@ -32,7 +31,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
         assert bt_dut_address is not None
 
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None
 
         with bt_client.interfaces.bluetooth.bt_socket(
@@ -80,7 +79,6 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
-@pytest.mark.skip
 def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
     send_text = "sA0L9b1xEgGuUqN5YOlx"
     recv_text = "H2D7yZKRhKULU9Xil5Yv"
@@ -150,7 +148,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp(bt_pin_code="4321")
         assert bt_dut_address is not None
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
@@ -182,7 +180,7 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp(bt_pin_code="4321")
         assert bt_dut_address is not None
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="9876")
