@@ -17,6 +17,7 @@ pytestmark = [
     )
 ]
 
+
 def logger():
     return get_logger(__name__)
 
@@ -148,7 +149,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp(bt_pin_code="4321")
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp(bt_pin_code="1234")
         assert bt_dut_address is not None
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
@@ -171,6 +172,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
             for event in events:
                 if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
                     recieved_authentication_failure = b"4E05" in event.event_data
+                    break
         assert recieved_authentication_failure
     logger().info(f"Scan in {t.duration} seconds")
 
@@ -180,7 +182,7 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp(bt_pin_code="4321")
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp(bt_pin_code="1234")
         assert bt_dut_address is not None
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="9876")
@@ -204,5 +206,6 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
             for event in events:
                 if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
                     recieved_authentication_failure = b"4E05" in event.event_data
+                    break
         assert recieved_authentication_failure
     logger().info(f"Scan in {t.duration} seconds")
