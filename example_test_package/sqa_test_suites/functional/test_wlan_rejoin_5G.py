@@ -193,6 +193,7 @@ def test_rejoin_C19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
                 result = send_response.decode().replace("\r\n", '').strip()
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
             else:
                 logger().info(f"Data transfer failed")
                 assert send_response
