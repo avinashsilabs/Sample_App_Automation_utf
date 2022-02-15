@@ -135,6 +135,9 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -205,6 +208,9 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -277,6 +283,9 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
@@ -349,6 +358,9 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -422,6 +434,9 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -493,6 +508,9 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -560,6 +578,9 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -629,6 +650,9 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -690,6 +714,9 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
@@ -853,6 +880,9 @@ def test_basic_data_rates_T6865(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
