@@ -132,6 +132,9 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -155,6 +158,9 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -214,6 +220,9 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     time.sleep(2)
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
@@ -238,6 +247,9 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -296,6 +308,9 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -319,6 +334,9 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -375,6 +393,9 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_rejoin')
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(10)
@@ -392,6 +413,9 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -468,6 +492,9 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
                     logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -606,6 +633,9 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     time.sleep(2)
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
@@ -630,6 +660,9 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -694,6 +727,9 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     time.sleep(2)
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
@@ -718,6 +754,9 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -780,6 +819,9 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
@@ -804,6 +846,9 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -865,6 +910,9 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     time.sleep(2)
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
@@ -889,6 +937,9 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
 
@@ -961,6 +1012,9 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
                     logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.leave()
