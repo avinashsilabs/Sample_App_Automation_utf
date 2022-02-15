@@ -41,14 +41,9 @@ def logger():
 
 
 class IopTcpIpSockets:
-    def open_socket(self, wifi_networked_dut) -> int:
-        if isinstance(wifi_networked_dut.interfaces.wifi, RSSAPICommands):
-            result = wifi_networked_dut.interfaces.wifi.start_ip()
-            dut_ip = result.ip.decode()
-            logger().info(f"DUT ip address : {dut_ip}")
-            assert isinstance(result, wifi_networked_dut.interfaces.wifi.IPConfig)
-
-            tcp_socket_id = wifi_networked_dut.interfaces.wifi.open_tcp_client_socket()
+    def open_socket(self, wifi_dut, dut_ip) -> int:
+        if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+            tcp_socket_id = wifi_dut.interfaces.wifi.open_tcp_client_socket()
             if isinstance(tcp_socket_id, int):
                 logger().info(f"Socket open successfully : {tcp_socket_id}")
             else:
@@ -56,7 +51,7 @@ class IopTcpIpSockets:
                 raise RuntimeError(tcp_socket_id)
 
             time.sleep(2)
-            bind_response = wifi_networked_dut.interfaces.wifi.bind(tcp_socket_id, dut_ip)
+            bind_response = wifi_dut.interfaces.wifi.bind(tcp_socket_id, dut_ip)
             if bind_response.decode().split(">")[1].replace("'", '').strip() == 'success':
                 logger().info(f"Bind socket successfully: {bind_response}")
             else:
@@ -64,11 +59,11 @@ class IopTcpIpSockets:
                 raise RuntimeError(bind_response)
         return tcp_socket_id
 
-    def connect_socket(self, wifi_networked_dut, tcp_socket_id: int):
+    def connect_socket(self, wifi_dut, tcp_socket_id: int):
         retry_limit: int = 2
         connect_status = False
         for retry in range(1, retry_limit):
-            connect_response = wifi_networked_dut.interfaces.wifi.connect(tcp_socket_id)
+            connect_response = wifi_dut.interfaces.wifi.connect(tcp_socket_id)
             logger().info(f"Connect response : {connect_response}")
             if connect_response.decode() == '':
                 logger().info(f"Unable to connect socket: {connect_response} in {retry} try")
@@ -96,34 +91,38 @@ class IopTcpIpSockets:
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_mgmt_data_rates_T6841(wifi_sniffer, wifi_access_point, wifi_dut):
-    """Verification of Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets data
-    rates """
+def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Data rates used for Management packets, Verify for following management packets,Assoc req,Assoc resp.Reassoc 
+    req,Re assoc resp,Probe req,Prob res'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates')
-    time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+    
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    # Verification of Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets
+    # datarates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == ' \
                      f'0x0000 ' \
                      f'or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and !(wlan.fc.type_subtype == ' \
                      f'0x000d) and !(wlan.fc.type_subtype == 0x0020) '
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -136,13 +135,14 @@ def test_mgmt_data_rates_T6841(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-        time.sleep(2)
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -159,12 +159,13 @@ def test_mgmt_data_rates_T6841(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_mgmt_data_rates_rts_cts_T6843(wifi_sniffer, wifi_access_point, wifi_dut):
-    """Verification of Block ack req/res, RTS/CTS mgmt packets data rates"""
+def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Data rates used for Control packets, Verify for following Control packets,Block ACK Req,(Qos)Block Ack(Qos)
+       Ps-PollRTSCTSACK'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates_rts_cts')
     time.sleep(5)
@@ -172,15 +173,21 @@ def test_mgmt_data_rates_rts_cts_T6843(wifi_sniffer, wifi_access_point, wifi_dut
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+
+    """Verification of Block ack req/res, RTS/CTS mgmt packets data rates"""
     # Block Ack req & RTS
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate == 1'
@@ -188,8 +195,7 @@ def test_mgmt_data_rates_rts_cts_T6843(wifi_sniffer, wifi_access_point, wifi_dut
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {ap_bssid} ' \
                      f'or wlan.fc.type_subtype == 0x0019 or wlan.fc.type_subtype == 0x001c and wlan_radio.data_rate == 1'
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -202,14 +208,16 @@ def test_mgmt_data_rates_rts_cts_T6843(wifi_sniffer, wifi_access_point, wifi_dut
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
-    result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)
+    result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
     if result1 is False or result2 is False:
         logger().info(
             f"Expected packet validation failed, Block Ack req/RTS = {result1}, Block Ack res/CTS = {result2}")
@@ -235,32 +243,34 @@ def test_mgmt_data_rates_rts_cts_T6843(wifi_sniffer, wifi_access_point, wifi_dut
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_for_data_packet_T6845(wifi_sniffer, wifi_access_point, wifi_dut):
-    """Verification of Data/Null/Qos packets data rates"""
+def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''	Data rates used for Data packets, Verify for following Data packets,Data.Null Data and Qos Null data.Qos Data '''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_data_packet')
-    time.sleep(5)
-
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    """Verification of Data/Null/Qos packets data rates"""
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or ' \
                      f'wlan.fc.type_subtype == 0x0024 and !(wlan_radio.data_rate == 1) and !wlan.mgt'
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -273,13 +283,14 @@ def test_data_rates_for_data_packet_T6845(wifi_sniffer, wifi_access_point, wifi_
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
-        time.sleep(2)
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -296,20 +307,25 @@ def test_data_rates_for_data_packet_T6845(wifi_sniffer, wifi_access_point, wifi_
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_for_b_mode_T6847(wifi_sniffer, wifi_access_point, wifi_dut):
-    """set data rate in b(11Mbps) mode and Verify """
+def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Set data rate to 11b rates, and verify all following packets with all data ratesAssoc Req,Assoc Resp.ReAssoc 
+    Req,Re Assoc Resp.Probe Req,Probe RespBeacon.DisAssoc.'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_b_mode')
-    time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
+
+    """set data rate in b(11Mbps) mode and Verify """
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_11)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
@@ -318,6 +334,7 @@ def test_data_rates_for_b_mode_T6847(wifi_sniffer, wifi_access_point, wifi_dut):
     )
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
+
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or ' \
                      f'wlan.fc.type_subtype == 0x0024 and wlan_radio.data_rate == 11 and !wlan.mgt '
@@ -328,8 +345,7 @@ def test_data_rates_for_b_mode_T6847(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and !(wlan.fc.type_subtype == ' \
                      f'0x000d) and !(wlan.fc.type_subtype == 0x0020) '
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -342,16 +358,16 @@ def test_data_rates_for_b_mode_T6847(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-        'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-        'packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -368,26 +384,33 @@ def test_data_rates_for_b_mode_T6847(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_for_g_mode_T6849(wifi_sniffer, wifi_access_point, wifi_dut):
-    """set data rate in g mode(54 Mbps) and Verify """
+def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Set data rate to 11g rates, and verify all following packets with all data ratesAssoc Req,Assoc Resp.ReAssoc 
+       Req,Re Assoc RespProbe Req,Probe Resp'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_g_mode')
-    time.sleep(5)
     wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    """set data rate in g mode(54 Mbps) and Verify """
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_54)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
                      f'0x0024 and wlan_radio.data_rate == 54 and !wlan.mgt'
@@ -398,8 +421,7 @@ def test_data_rates_for_g_mode_T6849(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and !(wlan.fc.type_subtype == ' \
                      f'0x000d) and !(wlan.fc.type_subtype == 0x0020) '
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -412,15 +434,16 @@ def test_data_rates_for_g_mode_T6849(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
-        'packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -438,35 +461,41 @@ def test_data_rates_for_g_mode_T6849(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_for_n_mode_T6851(wifi_sniffer, wifi_access_point, wifi_dut):
-    """set data rate in n mode and Verify Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets data"""
+def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Set data rate to 11n rates,and verify all following packets with all data ratesAssoc Req,Assoc RespReAssoc 
+       Req,Re Assoc RespProbe Req,Probe RespBeaconDisAssoc'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_n_mode')
-    time.sleep(5)
     wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    # set data rate in n mode
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_54)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    #Verify Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == ' \
                      f'0x0000 ' \
-                     f'or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and wlan.tag.number == 61 and' \
+                     f'or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and wlan.tag.number == 45 and' \
                      f' !(wlan.fc.type_subtype == ' \
                      f'0x000d) and !(wlan.fc.type_subtype == 0x0020) '
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -479,13 +508,15 @@ def test_data_rates_for_n_mode_T6851(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -502,33 +533,39 @@ def test_data_rates_for_n_mode_T6851(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_for_data_packets_12mbps_T6853(wifi_sniffer, wifi_access_point, wifi_dut):
-    """set data rate in 12 Mbps and Verify Data/Null/Qos packets"""
+def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Set Fixed data rate to 12Mbps and verify which data rate is using for 4GHz .DataNull Data and Qos Null dataQos 
+       Data'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_data_packets_12mbps')
-    time.sleep(5)
     wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    # set data rate in 12 Mbps
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_12)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    # Verify Data/Null/Qos packets
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} or ' \
                      f'wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
                      f'0x0024 ' \
                      f'and wlan_radio.data_rate == 12 and !wlan.mgt'
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -541,13 +578,15 @@ def test_data_rates_for_data_packets_12mbps_T6853(wifi_sniffer, wifi_access_poin
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -564,35 +603,41 @@ def test_data_rates_for_data_packets_12mbps_T6853(wifi_sniffer, wifi_access_poin
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_for_rts_cts_12mbps_T6855(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, wifi_dut):
     """Verification of Block ack req/res, RTS/CTS mgmt packets data rates for 12 Mbps"""
     """Block Ack/RTS/CTS and will not transmit at 12 Mbps data rate """
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Set Fixed data rate to 12Mbps and verify which data rate is using for 4GHz .Block ACK Req,(Qos)Block Ack(Qos)
+       Ps-PollRTSCTSACK'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_rts_cts_12mbps')
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_12)
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate ' \
                      f'== 12 '
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -605,13 +650,15 @@ def test_data_rates_for_rts_cts_12mbps_T6855(wifi_sniffer, wifi_access_point, wi
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -628,32 +675,33 @@ def test_data_rates_for_rts_cts_12mbps_T6855(wifi_sniffer, wifi_access_point, wi
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
-    """Verification of EAPOL packets for 1 Mbps data rates"""
+def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Data rates used for EAPOL key exchanges and GTK key renewal exchanges with auto rate'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_eapol')
     time.sleep(5)
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
+    wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+
+    """Verification of EAPOL packets for 1 Mbps data rates"""
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan_rsna_eapol.keydes.key' \
                      f'_info.key_type == 1 and wlan_radio.data_rate == 1'
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -666,13 +714,15 @@ def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
 
 
 # @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -694,7 +744,7 @@ def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
 #     tcp_socket_obj = IopTcpIpSockets()
 #     send_bytes = 1000
 #     validation = True
-#     packet_filter2 = False
+#     
 #     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 #     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_basic_data_rates')
 #     time.sleep(5)
@@ -703,7 +753,9 @@ def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
 #     logger().info(f'AP BSSID = {ap_bssid}')
 #     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 #     time.sleep(5)
-#     wifi_dut.interfaces.wifi.start_ip()
+#     result = wifi_dut.interfaces.wifi.start_ip()
+#     dut_ip = result.ip.decode()
+#     logger().info(f"DUT ip address : {dut_ip}")
 #
 #     logger().info(f"*****Enable Max PSP in DUT******")
 #     wifi_dut.interfaces.wifi.power_save(2, 0)
@@ -722,7 +774,7 @@ def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
 #     packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
 #                      f'and wlan.fc.type_subtype == 0x0004 and frame[99:7] == 01:05:82:84:8c:98:b0'
 #
-#     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
+#     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
 #     time.sleep(5)
 #     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
 #     if connect_status is False:
@@ -757,8 +809,6 @@ def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
 #         assert True
 
 
-
-
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -773,28 +823,33 @@ def test_data_rates_eapol_T6859(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 )
 def test_basic_data_rates_T6865(wifi_sniffer, wifi_access_point, wifi_dut):
-    """Verification of Basic data rates for Association req & Probe response"""
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = False
+
+    '''Verify data rates in Assoc Req, is same as data rates present in probe Resp of connected AP or not'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.scan(ssid=None)
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.start_ip()
-    logger().info(f"*****Enable Max PSP in DUT******")
 
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
+
+    logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    """Verification of Basic data rates for Association req & Probe response"""
     # Assoc req & Basic data rates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'and wlan.fc.type_subtype == 0x0000 or ((((wlan.supported_rates == 0x82) && ' \
@@ -812,8 +867,7 @@ def test_basic_data_rates_T6865(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'(wlan.supported_rates == 0x84)) && (wlan.supported_rates == 0x8c)) && ' \
                      f'(wlan.supported_rates == 0x98)) && (wlan.supported_rates == 0xb0)'
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut)
-    time.sleep(5)
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
     if connect_status is False:
         logger().info("Unable to connect with Server")
@@ -826,15 +880,18 @@ def test_basic_data_rates_T6865(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
         time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
-    result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)
-    result3 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+    result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+    result3 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)
 
     if result1['packet_count'] is False or result2['packet_count'] is False or result3['packet_count'] is False:
         logger().info(

@@ -21,7 +21,6 @@ import os
 import random
 from threading import Thread
 from utils import mac_address_to_string
-from utils.iperf.iperf_utils import get_device_ip
 from utils.iperf.iperf_utils import ping
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -65,7 +64,7 @@ Note: The test cases added in the file works only in AT mode
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
-def test_mqtt_authentication_ssl_testcase18(
+def test_mqtt_authentication_ssl_TC19258(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
     topic1 = "mytesttopic/1"
@@ -75,7 +74,7 @@ def test_mqtt_authentication_ssl_testcase18(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_authentication_ssl_TC19258"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -93,7 +92,7 @@ def test_mqtt_authentication_ssl_testcase18(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -188,13 +187,13 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_after_rejoin_ssl_testcase31(
+def test_mqtt_rx_after_rejoin_ssl_TC19271(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_rx_after_rejoin_ssl_TC19271"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -212,7 +211,7 @@ def test_mqtt_rx_after_rejoin_ssl_testcase31(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -312,13 +311,13 @@ def test_mqtt_rx_after_rejoin_ssl_testcase31(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_while_rejoin_ssl_testcase34(
+def test_mqtt_publish_while_rejoin_ssl_TC19274(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_publish_while_rejoin_ssl_TC19274"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -336,7 +335,7 @@ def test_mqtt_publish_while_rejoin_ssl_testcase34(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -436,13 +435,13 @@ def test_mqtt_publish_while_rejoin_ssl_testcase34(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_ssl_testcase45(
+def test_mqtt_rx_ssl_TC19285(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_rx_ssl_TC19285"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -460,7 +459,7 @@ def test_mqtt_rx_ssl_testcase45(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -550,13 +549,13 @@ def test_mqtt_rx_ssl_testcase45(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_1mb_file_ssl_testcase46(
+def test_mqtt_publish_1mb_file_ssl_TC19286(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_publish_1mb_file_ssl_TC19286"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -574,7 +573,7 @@ def test_mqtt_publish_1mb_file_ssl_testcase46(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -664,13 +663,13 @@ def test_mqtt_publish_1mb_file_ssl_testcase46(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_max_len_ssl_testcase47(
+def test_mqtt_publish_max_len_ssl_TC19287(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_publish_max_len_ssl_TC19287"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -688,7 +687,7 @@ def test_mqtt_publish_max_len_ssl_testcase47(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -778,10 +777,10 @@ def test_mqtt_publish_max_len_ssl_testcase47(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_max_len_ssl_ecdsa_testcase50(
+def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_publish_max_len_ssl_ecdsa_TC19290"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -801,7 +800,7 @@ def test_mqtt_publish_max_len_ssl_ecdsa_testcase50(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -988,10 +987,10 @@ def test_mqtt_publish_max_len_ssl_ecdsa_testcase50(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_ssl_ecdsa_testcase51(
+def test_mqtt_rx_ssl_ecdsa_TC19291(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_rx_ssl_ecdsa_TC19291"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1011,7 +1010,7 @@ def test_mqtt_rx_ssl_ecdsa_testcase51(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
