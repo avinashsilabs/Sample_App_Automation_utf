@@ -160,6 +160,9 @@ def test_rejoin_C19721(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -168,7 +171,7 @@ def test_rejoin_C19721(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count']
 
-    logger().info("Enable 120 second sleep mode for rejoin process")
+    logger().info("Enable 60 second sleep mode for rejoin process")
     time.sleep(60)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
@@ -214,6 +217,9 @@ def test_rejoin_C19721(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
 
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
@@ -269,6 +275,9 @@ def test_rejoin_max_retry_failure_C19722(wifi_sniffer, wifi_access_point, wifi_d
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -318,6 +327,9 @@ def test_rejoin_max_retry_failure_C19722(wifi_sniffer, wifi_access_point, wifi_d
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
 
 # @pytest.mark.skip
@@ -382,6 +394,10 @@ def test_rejoin_scan_channels_C19723(wifi_sniffer, wifi_access_point, wifi_dut, 
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     end_time = datetime.now() + timedelta(minutes=3)
 
@@ -462,6 +478,9 @@ def test_rejoin_scan_other_channel_C19725(wifi_sniffer, wifi_access_point, wifi_
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(5)
@@ -546,6 +565,10 @@ def test_rejoin_max_retry_failure_with_security_mode_change_C19729(wifi_sniffer,
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     end_time = datetime.now() + timedelta(minutes=1)
 
@@ -643,6 +666,10 @@ def test_rejoin_eap_tls_C19730(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -667,6 +694,9 @@ def test_rejoin_eap_tls_C19730(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -735,6 +765,10 @@ def test_rejoin_eap_ttls_C19731(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -760,6 +794,9 @@ def test_rejoin_eap_ttls_C19731(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -828,6 +865,10 @@ def test_rejoin_eap_peap_C19732(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -852,6 +893,9 @@ def test_rejoin_eap_peap_C19732(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -916,6 +960,10 @@ def test_rejoin_disable_C19733(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture()
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -984,6 +1032,10 @@ def test_rejoin_psk_change_C19734(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_psk_change')
     end_time = datetime.now() + timedelta(minutes=1)
 
@@ -1062,6 +1114,10 @@ def test_rejoin_with_disconnect_C19735(wifi_sniffer, wifi_access_point, wifi_dut
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture('test_rejoin_with_disconnect')
     time.sleep(2)
     logger().info('***** Disable the AP radio *****')
@@ -1139,6 +1195,10 @@ def test_rejoin_beacon_miss_counter_C19736(wifi_sniffer, wifi_access_point, wifi
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture()
     time.sleep(1)
     '''Post power off AP DUT will try for the rejoin process that we can check in sniffer(i.e: post power off AP need 
@@ -1221,6 +1281,10 @@ def test_rejoin_scan_interval_1sec_C19737(wifi_sniffer, wifi_access_point, wifi_
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_interval_1sec')
     end_time = datetime.now() + timedelta(minutes=1)
 
@@ -1316,6 +1380,10 @@ def test_rejoin_infinite_retry_C19738(wifi_sniffer, wifi_access_point, wifi_dut)
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     end_time = datetime.now() + timedelta(minutes=1)
 
@@ -1397,6 +1465,10 @@ def test_rejoin_with_bgscan_C19739(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_bgscan')
     time.sleep(2)
     logger().info('***** Disable the AP radio *****')
@@ -1420,6 +1492,9 @@ def test_rejoin_with_bgscan_C19739(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -1540,6 +1615,10 @@ def test_rejoin_hidden_ssid_C19741(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_hidden_ssid')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
