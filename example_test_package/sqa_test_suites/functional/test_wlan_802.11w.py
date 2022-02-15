@@ -521,7 +521,7 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
                      f'and wlan.ta == {dut_mac_address}'
     # Packet filter for mgmt action frame with protection bit enable and packet should only be unicast
     packet_filter3 = f'wlan.fc.protected == 1 and wlan.fc.type_subtype == 0x000d and !(wlan.fixed.action_code == 0x00)' \
-                     f' and wlan.ta == {dut_mac_address}'
+                     f'and wlan.ta == {dut_mac_address}'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
