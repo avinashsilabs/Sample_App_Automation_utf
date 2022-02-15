@@ -165,6 +165,9 @@ def test_rejoin_C19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
                     logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
         wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_rejoin_unicast_prob_req')
 
         logger().info('***** Disable the AP radio *****')
@@ -190,8 +193,9 @@ def test_rejoin_C19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
                 result = send_response.decode().replace("\r\n", '').strip()
                 match = re.findall(r"\d+", result)
                 if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.leave()
@@ -255,6 +259,9 @@ def test_rejoin_max_retry_failure_with_security_mode_change_C19392(wifi_sniffer,
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     end_time = datetime.now() + timedelta(minutes=1)
 
@@ -341,6 +348,10 @@ def test_rejoin_dual_band_C19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
 
     logger().info('***** Disable the AP radio *****')
@@ -365,6 +376,9 @@ def test_rejoin_dual_band_C19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -428,6 +442,10 @@ def test_rejoin_dfs_channel_C19394(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
 
     logger().info('***** Disable the AP radio *****')
@@ -452,6 +470,9 @@ def test_rejoin_dfs_channel_C19394(wifi_sniffer, wifi_access_point, wifi_dut):
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -526,6 +547,10 @@ def test_rejoin_different_region_non_dfs_C19395(wifi_sniffer, wifi_access_point,
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
@@ -550,6 +575,9 @@ def test_rejoin_different_region_non_dfs_C19395(wifi_sniffer, wifi_access_point,
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -625,6 +653,10 @@ def test_rejoin_different_region_dfs_ch_C19396(wifi_sniffer, wifi_access_point, 
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     logger().info('***** Disable the AP radio *****')
@@ -652,6 +684,9 @@ def test_rejoin_different_region_dfs_ch_C19396(wifi_sniffer, wifi_access_point, 
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -724,6 +759,10 @@ def test_rejoin_different_region_dual_band_non_dfs_C19398(wifi_sniffer, wifi_acc
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
 
     logger().info('***** Disable the AP radio *****')
@@ -750,6 +789,9 @@ def test_rejoin_different_region_dual_band_non_dfs_C19398(wifi_sniffer, wifi_acc
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -820,6 +862,9 @@ def test_rejoin_different_region_dual_band_dfs_ch_C19399(wifi_sniffer, wifi_acce
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
 
     logger().info('***** Disable the AP radio *****')
@@ -846,6 +891,9 @@ def test_rejoin_different_region_dual_band_dfs_ch_C19399(wifi_sniffer, wifi_acce
             match = re.findall(r"\d+", result)
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
