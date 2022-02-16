@@ -98,12 +98,15 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b)'
 
         # Validating the power management bit
-        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+
+        # Validate dhcp
+        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -118,14 +121,18 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
                              'in sniffer'
 
         logger().info(" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"broadcast_ssid": False})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-ASUS-hidden","broadcast_ssid": False})
 # The test case checks whether the DUT connection works with AP hidden mode
 def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
@@ -137,13 +144,13 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Connectivity_with_hidden_mode_AP_C19708')
 
         # Scan for the AP's
-        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None)
+        ap_mac = wifi_dut.interfaces.wifi.scan(ssid='TEST-ASUS-hidden')
         ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
         logger().info(f'AP BSSID = {ap_bssid}')
 
         # This API connects STA to the third party AP
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
+        time.sleep(10)
         # This API Enables the DHCP in DUT
         result = wifi_dut.interfaces.wifi.start_ip()
         assert isinstance(
@@ -151,7 +158,7 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        # This API Enables the wifi power save mode in DUT
+        # # This API Enables the wifi power save mode in DUT
         wifi_dut.interfaces.wifi.power_save(2)
 
         # This API Enables the bt power save mode in DUT
@@ -166,10 +173,13 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
                          f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
-        # Validate hidden mode, authentication ,association
-        packet_filter3 = f'(wlan.tag.number == 4 ) && (wlan.fc.type_subtype == 0x0000)'
+        # Validate hidden mode
+        packet_filter4 = f'(wlan.ssid == "") and (wlan.sa == {ap_bssid})'
+
+        # Validate dhcp
+        packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -184,12 +194,16 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
                              'in sniffer'
 
         logger().info(" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
         logger().info(" Validate hidden ssid, authentication and association keys")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-            'packet_count'], 'Unable to find hidden, authentication and association in sniffer '
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+            'packet_count'], 'Unable to find hidden in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -244,6 +258,9 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                          f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
+        # Validate dhcp
+        packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -261,6 +278,10 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         logger().info(" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
 
         logger().info("Validating time between two packets")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
@@ -337,6 +358,9 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                          f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
+        # Validate dhcp
+        packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
+
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
         assert status == 1
@@ -352,6 +376,10 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         logger().info(" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
 
         logger().info("Validating time between two packets")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
@@ -424,7 +452,7 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate dhcp
-        packet_filter2 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -443,10 +471,8 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
         logger().info(" Validate dhcp")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
-
-
 
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -493,10 +519,10 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
                          f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate dhcp
-        packet_filter3 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -511,11 +537,11 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
                              'in sniffer'
 
         logger().info(" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
         logger().info(" Validate dhcp")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -620,7 +646,10 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
                          f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+
+        # Validate dhcp
+        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -635,8 +664,12 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
                              'in sniffer'
 
         logger().info(" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -685,7 +718,10 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
                          f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+
+        # Validate dhcp
+        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -700,8 +736,12 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
                              'in sniffer'
 
         logger().info(" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -750,10 +790,10 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
                          f'(wlan.fc.type_subtype == 0x000b))'
 
         # Validating the power management bit
-        packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
         # Validate dhcp
-        packet_filter3 = f'wlan.addr == {dut_mac_address} && (wlan.fc.type_subtype == 0x000b)'
+        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -768,11 +808,11 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
                              'in sniffer'
 
         logger().info(" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
         logger().info(" Validate dhcp")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
     logger().info(f"Associated and ping in {t.duration} seconds")
 
@@ -783,7 +823,8 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
 # The test case checks whether the DUT connection and disconnection  to AP for 30 iterations
 def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
-        for iteration in range(0, 30):
+        t_end = time.time() + 60 * 30
+        while time.time() < t_end:
             validation = True
 
             logger().info(" ====== configuring the sniffer with the access point channel ====== ")
@@ -822,7 +863,10 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
                              f'(wlan.fc.type_subtype == 0x000b))'
 
             # Validating the power management bit
-            packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+            packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+
+            # Validate dhcp
+            packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
             # Initiate ping from third party wifi-client to DUT
             status = ping(device_ip, 10)
@@ -837,6 +881,10 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
                                  'in sniffer'
 
             logger().info(" Validate power management bit 1")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
                 'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+            logger().info(" Validate dhcp")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+                  'packet_count'], 'Unable to find dhcp in sniffer '
     logger().info(f"Associated and ping in {t.duration} seconds")
