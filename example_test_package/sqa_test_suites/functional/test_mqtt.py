@@ -22,7 +22,6 @@ import random
 from threading import Thread
 from utils import mac_address_to_string
 from typing import Dict
-from utils.iperf.iperf_utils import get_device_ip
 from utils.iperf.iperf_utils import ping
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -81,7 +80,7 @@ def get_mqtt_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0)
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos0
-def test_mqtt_qos0_connect_sub_publish_testcase_14(
+def test_mqtt_qos0_connect_sub_publish_TC19252(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
     topic1 = "mytesttopic/1"
@@ -91,7 +90,7 @@ def test_mqtt_qos0_connect_sub_publish_testcase_14(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_qos0_connect_sub_publish_testcase_14"
+    capture_filename = "test_mqtt_qos0_connect_sub_publish_TC19252"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -110,7 +109,7 @@ def test_mqtt_qos0_connect_sub_publish_testcase_14(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -194,7 +193,7 @@ def test_mqtt_qos0_connect_sub_publish_testcase_14(
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
-def test_mqtt_qos1_connect_sub_publish_testcase_15(
+def test_mqtt_qos1_connect_sub_publish_TC19254(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
     topic1 = "mytesttopic/1"
@@ -204,7 +203,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_15(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_qos1_connect_sub_publish_testcase_15"
+    capture_filename = "test_mqtt_qos1_connect_sub_publish_TC19254"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -223,7 +222,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_15(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -306,10 +305,10 @@ def test_mqtt_qos1_connect_sub_publish_testcase_15(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when DUT is trying to connect to MQTT server, but server is not responding
-def test_mqtt_invalid_server_testcase2(
+def test_mqtt_invalid_server_TC19242(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_invalid_server_testcase2"
+    capture_filename = "test_mqtt_invalid_server_TC19242"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -327,7 +326,7 @@ def test_mqtt_invalid_server_testcase2(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -368,10 +367,10 @@ def test_mqtt_invalid_server_testcase2(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when DUT is tyring to connect to MQTT server with client id, but the same client
 # id is already being used by another mqtt client
-def test_mqtt_common_clientid_testcase_5(
+def test_mqtt_common_clientid_TC19245(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_common_clientid_testcase_5"
+    capture_filename = "test_mqtt_common_clientid_TC19245"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -389,7 +388,7 @@ def test_mqtt_common_clientid_testcase_5(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -460,7 +459,7 @@ def test_mqtt_common_clientid_testcase_5(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when password based authentication feature is
 # enabled on mqtt server
-def test_mqtt_authentication_testcase6(
+def test_mqtt_authentication_TC19246(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
     topic1 = "mytesttopic/1"
@@ -470,7 +469,7 @@ def test_mqtt_authentication_testcase6(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_authentication_testcase6"
+    capture_filename = "test_mqtt_authentication_TC19246"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -488,7 +487,7 @@ def test_mqtt_authentication_testcase6(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -572,10 +571,10 @@ def test_mqtt_authentication_testcase6(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when trying to connect to MQTT server with wrong credentials
-def test_mqtt_authentication_wrong_cred_testcase7(
+def test_mqtt_authentication_wrong_cred_TC19247(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_authentication_wrong_cred_testcase7"
+    capture_filename = "test_mqtt_authentication_wrong_cred_TC19247"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -593,7 +592,7 @@ def test_mqtt_authentication_wrong_cred_testcase7(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -638,10 +637,10 @@ def test_mqtt_authentication_wrong_cred_testcase7(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "wifi_powersave_disable", "mqtt_disconnect"])
 # The test case checks mqtt publish message with retain option
-def test_mqtt_retain_testcase_16(
+def test_mqtt_retain_TC19256(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_retain_testcase_16"
+    capture_filename = "test_mqtt_retain_TC19256"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -659,7 +658,7 @@ def test_mqtt_retain_testcase_16(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -721,10 +720,10 @@ def test_mqtt_retain_testcase_16(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt publish message with retain option
-def test_mqtt_delete_retain_message_testcase17(
+def test_mqtt_delete_retain_message_TC19262(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_delete_retain_message_testcase17"
+    capture_filename = "test_mqtt_delete_retain_message_TC19262"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -742,7 +741,7 @@ def test_mqtt_delete_retain_message_testcase17(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -804,10 +803,10 @@ def test_mqtt_delete_retain_message_testcase17(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # the test case checks MQTT unsubscribe functionality
-def test_mqtt_unsubscribe_testcase_20(
+def test_mqtt_unsubscribe_TC19260(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_unsubscribe_testcase_20"
+    capture_filename = "test_mqtt_unsubscribe_TC19260"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -825,7 +824,7 @@ def test_mqtt_unsubscribe_testcase_20(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -906,10 +905,10 @@ def test_mqtt_unsubscribe_testcase_20(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # the test case runs mqtt sequence multiple times
-def test_mqtt_sequence_testcase_22(
+def test_mqtt_sequence_TC19277(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_sequence_testcase_22"
+    capture_filename = "test_mqtt_sequence_TC19277"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -927,7 +926,7 @@ def test_mqtt_sequence_testcase_22(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -995,7 +994,7 @@ def test_mqtt_reconnect_testcase_23(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1046,7 +1045,7 @@ def test_mqtt_reconnect_testcase_23(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # DUT functionality when trying to connect to MQTT server with client-id NULL
-def test_mqtt_common_clientid_null_testcase_29(
+def test_mqtt_common_clientid_null_TC19269(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):
     topic_wild = "mytesttopic/#"
@@ -1056,7 +1055,7 @@ def test_mqtt_common_clientid_null_testcase_29(
     message1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
-    capture_filename = "test_mqtt_common_clientid_null_testcase_29"
+    capture_filename = "test_mqtt_common_clientid_null_TC19269"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1074,7 +1073,7 @@ def test_mqtt_common_clientid_null_testcase_29(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1199,7 +1198,7 @@ def test_mqtt_tx_after_rejoin_testcase24(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1298,12 +1297,12 @@ def test_mqtt_tx_after_rejoin_testcase24(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_init_after_rejoin_fail_testcase25(
+def test_mqtt_init_after_rejoin_fail_TC19265(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_init_after_rejoin_fail_testcase25"
+    capture_filename = "test_mqtt_init_after_rejoin_fail_TC19265"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1321,7 +1320,7 @@ def test_mqtt_init_after_rejoin_fail_testcase25(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1426,12 +1425,12 @@ def test_mqtt_init_after_rejoin_fail_testcase25(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_after_rejoin_testcase30(
+def test_mqtt_rx_after_rejoin_TC19270(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_rx_after_rejoin_testcase30"
+    capture_filename = "test_mqtt_rx_after_rejoin_TC19270"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1449,7 +1448,7 @@ def test_mqtt_rx_after_rejoin_testcase30(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1548,12 +1547,12 @@ def test_mqtt_rx_after_rejoin_testcase30(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_qos1_testcase32(
+def test_mqtt_publish_qos1_TC19272(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_publish_qos1_testcase32"
+    capture_filename = "test_mqtt_publish_qos1_TC19272"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1571,7 +1570,7 @@ def test_mqtt_publish_qos1_testcase32(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1659,12 +1658,12 @@ def test_mqtt_publish_qos1_testcase32(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_testcase43(
+def test_mqtt_rx_TC19283(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_rx_testcase43"
+    capture_filename = "test_mqtt_rx_TC19283"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1682,7 +1681,7 @@ def test_mqtt_rx_testcase43(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1776,10 +1775,10 @@ def test_mqtt_rx_testcase43(
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 300)])
-def test_mqtt_keep_alive_60_testcase_8(
+def test_mqtt_keep_alive_60_TC19248(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
         ):
-    capture_filename = "test_mqtt_keep_alive_60_testcase_8"
+    capture_filename = "test_mqtt_keep_alive_60_TC19248"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1798,7 +1797,7 @@ def test_mqtt_keep_alive_60_testcase_8(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1860,10 +1859,10 @@ def test_mqtt_keep_alive_60_testcase_8(
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 600)])
-def test_mqtt_keep_alive_120_testcase_9(
+def test_mqtt_keep_alive_120_TC19249(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
         ):
-    capture_filename = "test_mqtt_keep_alive_120_testcase_9"
+    capture_filename = "test_mqtt_keep_alive_120_TC19249"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1882,7 +1881,7 @@ def test_mqtt_keep_alive_120_testcase_9(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -1944,10 +1943,10 @@ def test_mqtt_keep_alive_120_testcase_9(
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(300, 1200)])
-def test_mqtt_keep_alive_300_testcase_10(
+def test_mqtt_keep_alive_300_TC19250(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
         ):
-    capture_filename = "test_mqtt_keep_alive_300_testcase_10"
+    capture_filename = "test_mqtt_keep_alive_300_TC19250"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -1966,7 +1965,7 @@ def test_mqtt_keep_alive_300_testcase_10(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -2028,10 +2027,10 @@ def test_mqtt_keep_alive_300_testcase_10(
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
-def test_mqtt_keep_alive_disable_testcase_11(
+def test_mqtt_keep_alive_disable_TC19251(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
         ):
-    capture_filename = "test_mqtt_keep_alive_disable_testcase_11"
+    capture_filename = "test_mqtt_keep_alive_disable_TC19251"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -2050,7 +2049,7 @@ def test_mqtt_keep_alive_disable_testcase_11(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)
@@ -2100,10 +2099,10 @@ def test_mqtt_keep_alive_disable_testcase_11(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
-def test_mqtt_connect_clean_session_0_testcase_49(
+def test_mqtt_connect_clean_session_0_TC19289(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
         ):
-    capture_filename = "test_mqtt_connect_clean_session_0_testcase_49"
+    capture_filename = "test_mqtt_connect_clean_session_0_TC19289"
 
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
@@ -2122,7 +2121,7 @@ def test_mqtt_connect_clean_session_0_testcase_49(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
     ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = get_device_ip(ip_address, "AT")
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
     status = ping(device_ip, 10)

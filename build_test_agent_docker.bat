@@ -30,5 +30,5 @@ if %errorlevel% neq 0 (
 copy test_agent\build\debug\sqa_test_agent.hex example_test_package
 
 :: run python script to parse map file to view memory usage
-@rem call utf_pytest\venv\scripts\activate
-@rem python test_agent\map_file_parser.py test_agent\build\debug\sqa_test_agent.map 1024
+call utf_pytest\venv\scripts\activate
+python test_agent\map_file_parser.py test_agent\build\debug\sqa_test_agent.map 1024
