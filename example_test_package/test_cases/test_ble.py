@@ -434,6 +434,7 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     #TODO
     #ble_get_profiles_async bt_client_address - expect "RSI_BLE_GATT_PROFILES - resolved"
     #call this, parse the response  and assert for the presence of BatteryService's uuid in the resolved services
+    #index value determines how many services we resolved. parse these services into an array
 
     #TODO
     #ble_get_profile_async B8:27:EB:8E:A9:99 6159 - RSI_BLE_GATT_PROFILE - resolved
