@@ -397,40 +397,81 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#     },
-# )
-def test_ble_gatt_client_master(ble_client):
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     # # Join Wi-Fi Access Point
-    # wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    #
-    # # Start DUT
-    # bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
-    # assert bt_dut_address is not None
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Start DUT
+    #TODO
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None
 
     # Start ble client
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address="80:C9:55:B9:EF:DC",
-                                                                      service_classes=[BatteryService])#bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
+                                                                      service_classes=[BatteryService])
     assert bt_client_address is not None
 
-    time.sleep(3000)
-
     # Start scanning and connect to ble client
-    # wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-    # wifi_dut.interfaces.wifi.ble_stop_scanning()
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    wifi_dut.interfaces.wifi.ble_stop_scanning()
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
-    # timeout = 120
-    # logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    # wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+    timeout = 120
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
     # Get the state of the dut
-    # state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    # state_int = int(state) if state.isdigit() else -1
-    # assert state_int == BLEDeviceState.Connected
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    #TODO
+    #ble_get_profiles_async bt_client_address - expect "RSI_BLE_GATT_PROFILES - resolved"
+    #call this, parse the response  and assert for the presence of BatteryService's uuid in the resolved services
+
+    #TODO
+    #ble_get_profile_async B8:27:EB:8E:A9:99 6159 - RSI_BLE_GATT_PROFILE - resolved
+    #6159 is the decimal format of BatteryService.UUID
+    #call this, parse the response and expect to have start_handle and end_handle greater then 0
+
+    #TODO
+    #ble_get_char_services_async B8:27:EB:8E:A9:99 14 18
+    #14 and 18 are the start and end handles from the previous call
+    #expect RSI_BLE_GATT_CHAR_SERVICES - resolved
+    #Index value determines how many characteristics we have resovled
+    #for each index value capture the response as one characteristics
+    #there should be one uuid 0x2a19, matching the uuid of BatteryLevelCharacteristic.UUID and should also have a write_handle greater then 0
+
+    #TODO
+    #ble_set_att_value_async B8:27:EB:8E:A9:99 16 89
+    #16 is the write_handle, 89 is any number between 0 and 100 to set the battery level of battery service
+
+    #TODO
+    #ble_get_att_value_async B8:27:EB:8E:A9:99 16
+    #expect rsi_ble_on_read_resp_event_gatt - att_value
+    #read the response and parse the att_value it should be same as the one sent in the previous command
+
+    #TODO
+    #call events = wifi_dut.interfaces.wifi.get_async_events()
+    #ble_set_att_value_async B8:27:EB:8E:A9:99 17 1
+    #call above command to enable notifications
+    #time.sleep(some delay, say 6 sec) #battery service sents notification every 2 sec
+    # call ble_set_att_value_async B8:27:EB:8E:A9:99 17 0 to disable notifications
+    #call events = wifi_dut.interfaces.wifi.get_async_events()
+    #sleep for two sec just to be safe side
+    #parse events received and look for "rsi_ble_on_gatt_write_event_gatt - att_value - 87" strings
+    #assert the expected count of events based on the delay given above
+    #capture the latest battery level value from the last event
+
+    #TODO
+    #call ble_get_att_value_async B8:27:EB:8E:A9:99 16 to read the battery value again this is already called above
+    #assert the value with the latest battery level value read in the above command
 
     # Disconnect
-    # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
