@@ -409,7 +409,6 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Start DUT
-    #TODO
     bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
     assert bt_dut_address is not None
 
@@ -424,7 +423,7 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout, expected="RSI_BLE_SECURITY_KEYS_EVENT")
 
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -432,8 +431,11 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected
 
     #TODO
-    #ble_get_profiles_async bt_client_address - expect "RSI_BLE_GATT_PROFILES - resolved"
-    #call this, parse the response  and assert for the presence of BatteryService's uuid in the resolved services
+    uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+    assert BatteryService.UUID in uuids
+    #bt_client_address this is the raspi mac address
+    #ble_get_profiles_async bt_client_address - expected "RSI_BLE_GATT_PROFILES - resolved"
+    #call this, parse the response  and assert for the presence of BatteryService.uuid in the resolved services
     #index value determines how many services we resolved. parse these services into an array
 
     #TODO
@@ -448,6 +450,7 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     #Index value determines how many characteristics we have resovled
     #for each index value capture the response as one characteristics
     #there should be one uuid 0x2a19, matching the uuid of BatteryLevelCharacteristic.UUID and should also have a write_handle greater then 0
+    #assert char_property against BatteryLevelCharacteristic.Flags - GattFlags
 
     #TODO
     #ble_set_att_value_async B8:27:EB:8E:A9:99 16 89
@@ -459,12 +462,12 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     #read the response and parse the att_value it should be same as the one sent in the previous command
 
     #TODO
-    #call events = wifi_dut.interfaces.wifi.get_async_events()
+    #call events = wifi_dut.interfaces.wifi.get_async_events() - start
     #ble_set_att_value_async B8:27:EB:8E:A9:99 17 1
     #call above command to enable notifications
     #time.sleep(some delay, say 6 sec) #battery service sents notification every 2 sec
     # call ble_set_att_value_async B8:27:EB:8E:A9:99 17 0 to disable notifications
-    #call events = wifi_dut.interfaces.wifi.get_async_events()
+    #call events = wifi_dut.interfaces.wifi.get_async_events() - end
     #sleep for two sec just to be safe side
     #parse events received and look for "rsi_ble_on_gatt_write_event_gatt - att_value - 87" strings
     #assert the expected count of events based on the delay given above
