@@ -4,7 +4,8 @@ from utils.logger import get_logger
 from interfaces.bluetooth import BLEDeviceState
 from interfaces.wifi import WlanError
 from utils.iperf.iperf_utils import get_host_ip
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116AsyncEventType
+from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116AsyncEventType,RS9116TCPIPFeatureBitMap,\
+    RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116ExtTCPIPFeatureBitMap
 import time
 
 def logger():
@@ -12,18 +13,18 @@ def logger():
 
 
 """
-setup requirement:
+    setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-Test Steps:
+    Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz for wlan btble.
         2. Scan and Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Execute the tests
 
-Author: Ravi Nemali
+    Author: RaviNemali
 """
 
 @pytest.mark.config(
@@ -34,7 +35,7 @@ Author: Ravi Nemali
     }
 )
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
-def test_wlan_bt_le_conn_as_master_T6179(wifi_dut,ble_client,logger,wifi_access_point):
+def test_wlan_bt_le_conn_as_master_T6179(wifi_dut,ble_client,wifi_access_point):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -198,8 +199,6 @@ def test_wlan_bt_le_conn_as_slave_T6182(wifi_dut,ble_client,logger,wifi_access_p
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 '
-                         # f'and wlan.da == ff:ff:ff:ff:ff:ff'
-
 
         # Enables the wifi power save in dut
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1)
@@ -216,7 +215,6 @@ def test_wlan_bt_le_conn_as_slave_T6182(wifi_dut,ble_client,logger,wifi_access_p
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=30)
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-
     logger.info(f"Scan in {t.duration} seconds")
 
 @pytest.mark.config(
@@ -307,7 +305,7 @@ def test_http_get_functionality_T6231(http_server,http_client, wifi_dut, wifi_ac
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 #This test case verifies the Http post functionality
-def test_http_post_functionality_invalidip_T6233(http_server, wifi_dut,http_client, wifi_access_point, logger, index_path):
+def test_http_post_functionality_invalidip_T6233(http_server, wifi_dut,http_client, wifi_access_point,index_path):
     # Initiates scan in dut
     wifi_dut.interfaces.wifi.scan(ssid=None)
 

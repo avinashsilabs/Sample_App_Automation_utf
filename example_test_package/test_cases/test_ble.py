@@ -19,6 +19,48 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+def test_ble_conn_params(wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
+    time.sleep(5)
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert wifi_dut.interfaces.wifi.ble_address in found_devices
+    assert (
+            found_devices[wifi_dut.interfaces.wifi.ble_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
+    )
+
+    ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                            min_conn_interval=160,
+                                            max_conn_interval=160,
+                                            conn_latency=0,
+                                            supervision_timeout=2000)
+    time.sleep(2)
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

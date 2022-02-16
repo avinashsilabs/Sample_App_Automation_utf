@@ -44,17 +44,17 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 # This test case verifies the dut connect functionality in 5ghz mode of access point
-def test_join_11n_mode(wifi_dut, wifi_access_point):
+def test_join_5ghz_mode(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
-        # Joins the access point with given ssid and password
-        logger().info("Joining the AP")
-        status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        assert status, 'Unable to join ap '
 
         # enables the rejoin feature on dut
         logger().info("enabling Re-joining")
-        status = wifi_dut.interfaces.wifi.rejoin()
-        assert status
+        wifi_dut.interfaces.wifi.rejoin()
+
+        # Joins the access point with given ssid and password
+        logger().info("Joining the AP")
+        status= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        assert status, 'Unable to join ap '
 
         # assigns and enables the dhcp in dut
         logger().info("Starting dhcp")
@@ -102,8 +102,7 @@ def test_join_5ghz_dfs_channel(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         # enables the rejoin feature on dut
         logger().info("enabling Re-joining")
-        status = wifi_dut.interfaces.wifi.rejoin()
-        assert status
+        wifi_dut.interfaces.wifi.rejoin()
 
         # Joins the access point with given ssid and password
         logger().info("Joining the AP")
@@ -171,15 +170,15 @@ def test_join_5ghz_dfs_channels_100_and_140(wifi_dut, wifi_access_point, wifi_sn
             # initiates the access point with channel given in list
             logger().info("Starting AP...")
             wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+
+            # enables the rejoin feature on dut
+            logger().info("enabling Re-joining")
+            wifi_dut.interfaces.wifi.rejoin()
+
             # Joins the access point with given ssid and password
             logger().info("Joining the AP")
             status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
             assert status, 'Unable to join ap '
-
-            # enables the rejoin feature on dut
-            logger().info("enabling Re-joining")
-            config = wifi_dut.interfaces.wifi.rejoin()
-            assert config
 
             # assigns and enables the dhcp in dut
             logger().info("Starting dhcp")
