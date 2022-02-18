@@ -32,7 +32,7 @@ def test_ble_custom_adv_params(wifi_dut, ble_client):
     # Start ble client
     # for more information on hci_adv_params download Specification Details from
     # https://www.bluetooth.com/specifications/specs/core-specification-5-2/
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
         hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
                        "0x40 0x00 "  # Advertising_Interval_Max
