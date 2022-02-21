@@ -61,7 +61,7 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_d
     wifi_dut.interfaces.wifi.version()
 
     # DUT wifi initialization
-    logger().inof("Initialising DUT....")
+    logger().info("Initialising DUT....")
     wifi_dut.interfaces.wifi.init()
     with pytest.raises(WlanError) as exc_info:
 
@@ -69,7 +69,6 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_d
         logger().info("Performing firmware upgrade....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
     assert exc_info.value.error_code == 0x0021, "observed wrong error code expected is 0x0021"
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -399,7 +398,7 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on DUT....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -475,7 +474,7 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -549,7 +548,7 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -630,7 +629,7 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -704,7 +703,7 @@ def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_d
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -778,7 +777,7 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -831,7 +830,7 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
         },
     )
 # These test case verifies the firmware upgrade failure in DUT over the http connection on providing the empty rps file
-def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wifi_access_point, logger):
+def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -855,7 +854,7 @@ def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wi
 
         # API fetches the DUT otaf status
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xBBE2 | 0xbb38
+    assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
 @pytest.mark.config(
     "wifi_dut",
@@ -872,7 +871,7 @@ def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wi
         },
     )
 # These test case verifies the firmware upgrade failure in DUT over the http connection on providing the corrupted rps file
-def test_http_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi_access_point, logger):
+def test_http_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -913,7 +912,7 @@ def test_http_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi_
         },
     )
 # These test case verifies the firmware upgrade failure in DUT over the http connection,when http is disabled in DUT
-def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_dut, wifi_access_point, logger):
+def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -949,7 +948,7 @@ def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut, logger):
+def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut):
     logger().info("fetching host for server....")
     host_ip = get_host_ip()
     time.sleep(30)
@@ -972,7 +971,7 @@ def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_d
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, logger):
+def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut):
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
     time.sleep(30)
@@ -994,7 +993,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, log
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_dut, logger):
+def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_dut):
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
     time.sleep(30)
@@ -1016,7 +1015,7 @@ def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, logger):
+def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut):
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
     time.sleep(30)
@@ -1038,7 +1037,7 @@ def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, logg
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, wifi_dut, logger):
+def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, wifi_dut):
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
     time.sleep(30)
