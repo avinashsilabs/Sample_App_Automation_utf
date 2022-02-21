@@ -65,8 +65,8 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
 
         # Upgrades the firmware in DUT on http
         logger().info("performing fw upgrade on dut....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-        time.sleep(90)
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+        time.sleep(40)
 
         with pytest.raises(WlanError) as exc_info:
 
@@ -141,7 +141,7 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
         # Upgrades the firmware in DUT on http
         logger().info("performing fw upgrade on dut....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
-        time.sleep(90)
+        time.sleep(40)
         with pytest.raises(WlanError) as exc_info:
 
         # API gets the Upgrade async status
@@ -213,7 +213,7 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
         # Upgrades the firmware in DUT on http
         logger().info("performing fw upgrade on dut....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.xml")
-        time.sleep(60)
+        time.sleep(40)
         with pytest.raises(WlanError) as exc_info:
 
             # API gets the Upgrade async status
