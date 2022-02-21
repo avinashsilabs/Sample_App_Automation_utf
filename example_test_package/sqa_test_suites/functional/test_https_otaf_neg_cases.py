@@ -46,12 +46,12 @@ def logger():
 # verifies the otaf failure with only BT mode with error code 0x21
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_dut, wifi_access_point):
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
 
@@ -71,12 +71,12 @@ def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_
 # verifies the otaf failure with only BT mode with error code 0x21
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi_dut, wifi_access_point):
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
 @pytest.mark.config(
@@ -95,12 +95,12 @@ def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi
 # verifies the otaf failure with only BT mode with error code 0x21
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, wifi_dut, wifi_access_point):
     host_ip = get_host_ip()
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
     time.sleep(10)
     with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
 
@@ -120,7 +120,7 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
 # verifies the otaf failure with Wlan only mode and a non-rps file with error code 0xBB41
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_https_fw_upgrade_failure_when_enabled_only_bt_C19776(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_when_enabled_only_bt_C19776(http_server, wifi_dut, wifi_access_point):
     # Joins the access point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
