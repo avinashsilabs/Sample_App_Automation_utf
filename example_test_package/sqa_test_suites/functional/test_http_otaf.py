@@ -47,7 +47,7 @@ def logger():
         },
     )
 # These test case verifies the firmware upgrade failure in DUT over the http connection whe dut is not connected
-def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_dut, wifi_access_point, logger):
+def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_dut, wifi_access_point):
 
     # This API gets the host ip for the http server
     logger().info(" fetching the host IP for http server")
@@ -67,7 +67,7 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_d
 
         # performs the firmware upgrade on DUT over the http port
         logger().info("Performing firmware upgrade....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     assert exc_info.value.error_code == 0x0021, "observed wrong error code expected is 0x0021"
 
 @pytest.mark.config(
@@ -108,7 +108,7 @@ def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, 
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("Performing firmware upgrade....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -181,7 +181,7 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("Performing firmware upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -255,7 +255,7 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("Performing fw upgrade on DUT....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -324,7 +324,7 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
     wifi_dut.interfaces.wifi.version()
 
     # performs the firmware upgrade on DUT over the http port
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
