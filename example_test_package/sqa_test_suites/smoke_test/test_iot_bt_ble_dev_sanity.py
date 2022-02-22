@@ -27,7 +27,7 @@ def logger():
         4. Opnes Bt socket and connects to the remote client.
         5. Verifies ping after the connection.
 
-    Author: RaviNemali
+    Author: Rakesh Nayini
 """
 
 pytestmark = [
@@ -162,17 +162,10 @@ def test_ble_gatt_BLE_connection_stability(wifi_dut, wifi_access_point, ble_clie
         logger().info("******* Start ble client *******")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
         assert bt_client_address is not None
-
         time.sleep(1)
-
         # Start scanning and connect to ble client
         logger().info("******* Start scanning and connect to ble client *******")
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-        # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
-        logger().info(
-            "Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?")
-        timeout = 120
-        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
         wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
         # Get the state of the dut
@@ -232,7 +225,6 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # Start scanning and connect to ble client
     logger().info("******* Start scanning and connect to ble client *******")
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
-    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
