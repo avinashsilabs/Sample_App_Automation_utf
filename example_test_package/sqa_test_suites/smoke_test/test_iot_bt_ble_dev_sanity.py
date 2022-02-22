@@ -13,6 +13,22 @@ from utils.time_measurer import TimeMeasurer
 def logger():
     return get_logger(__name__)
 
+"""
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's
+
+    Test Steps:
+        1. Initiates the DUT Coex wlan and BT mode
+        2. Initiates the DUT in master Spp mode for the capability
+        3. Initiates the client in slave spp with capabilty enables
+        4. Opnes Bt socket and connects to the remote client.
+        5. Verifies ping after the connection.
+
+    Author: RaviNemali
+"""
 
 pytestmark = [
     pytest.mark.config(
@@ -29,7 +45,7 @@ pytestmark = [
 def test_BT_classic_slave_role_with_powersave(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
-        logger().info("Join Wi-Fi Access Point")
+        logger().info("******* Join Wi-Fi Access Point *******")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
@@ -42,14 +58,15 @@ def test_BT_classic_slave_role_with_powersave(wifi_dut, wifi_access_point, bt_cl
                 mode=BTSocketRole.Server
         ) as bt_server_socket:
             # SPP Connection
-            logger().info("SPP Connection")
+            logger().info("******* SPP Connection *******")
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_server_socket.create_server()
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
                 assert connected
-
+                if not connected:
+                    logger().info('********** Connection Failed ***********')
             # Initiating power save
-            logger().info("Initiating power save")
+            logger().info("******* Initiating power save *******")
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                 wifi_dut.interfaces.wifi.set_sleep_gpio(True)
                 wifi_dut.interfaces.wifi.power_save(
@@ -60,21 +77,20 @@ def test_BT_classic_slave_role_with_powersave(wifi_dut, wifi_access_point, bt_cl
                 )
 
             # Ping dut
-            logger().info("Ping dut")
+            logger().info("******* Ping dut *******")
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
 
             # Close connection
-            logger().info("Close connection")
+            logger().info("******* Close connection *******")
             bt_server_socket.close()
-    logger().info(f"Scan in {t.duration} seconds")
 
 
 def test_BT_classic_master_role_with_powersave(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
-        logger().info("Join Wi-Fi Access Point")
+        logger().info("******* Join Wi-Fi Access Point *******")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
@@ -88,7 +104,7 @@ def test_BT_classic_master_role_with_powersave(wifi_dut, wifi_access_point, bt_c
                 mode=BTSocketRole.Client
         ) as bt_client_socket:
             # SPP Connection
-            logger().info("SPP Connection")
+            logger().info("******* SPP Connection *******")
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
@@ -96,7 +112,7 @@ def test_BT_classic_master_role_with_powersave(wifi_dut, wifi_access_point, bt_c
                 assert addr == bt_dut_address
 
             # Initiating power save
-            logger().info("Initiating power save")
+            logger().info("******* Initiating power save *******")
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                 wifi_dut.interfaces.wifi.set_sleep_gpio(True)
                 wifi_dut.interfaces.wifi.power_save(
@@ -106,19 +122,19 @@ def test_BT_classic_master_role_with_powersave(wifi_dut, wifi_access_point, bt_c
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
                 )
             # Ping dut
-            logger().info("Ping dut")
+            logger().info("******* Ping dut *******")
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
 
             # Close connection
-            logger().info("Close connection")
+            logger().info("******* Close connection *******")
             bt_client_socket.close()
             time.sleep(
                 0.2
             )  # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
-    logger().info(f"Scan in {t.duration} seconds")
+
 
 
 @pytest.mark.config(
@@ -134,23 +150,23 @@ def test_ble_gatt_BLE_connection_stability(wifi_dut, wifi_access_point, ble_clie
             "This test case is only currently implemented for SAPI"
         )
         # Join Wi-Fi Access Point
-        logger().info("Join Wi-Fi Access Point")
+        logger().info("******* Join Wi-Fi Access Point *******")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
         # Start DUT
-        logger().info("Start DUT")
+        logger().info("******* Start DUT *******")
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address is not None
 
         # Start ble client
-        logger().info("Start ble client")
+        logger().info("******* Start ble client *******")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
         assert bt_client_address is not None
 
         time.sleep(1)
 
         # Start scanning and connect to ble client
-        logger().info("Start scanning and connect to ble client")
+        logger().info("******* Start scanning and connect to ble client *******")
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
         # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
         logger().info(
@@ -160,13 +176,13 @@ def test_ble_gatt_BLE_connection_stability(wifi_dut, wifi_access_point, ble_clie
         wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
         # Get the state of the dut
-        logger().info("Get the state of the dut")
+        logger().info("******* Get the state of the dut *******")
         state = wifi_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
 
         # Disconnect
-        logger().info("Connection Disconnect")
+        logger().info("******* Connection Disconnected *******")
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
@@ -190,16 +206,16 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     data3 = "Mx3Y"
 
     # Join Wi-Fi Access Point
-    logger().info("Join Wi-Fi Access Point")
+    logger().info("******* Join Wi-Fi Access Point *******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Start DUT
-    logger().info("Start DUT.........")
+    logger().info("******* Start DUT *******")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
 
     # Set up BLE Server on DUT
-    logger().info("Set up BLE Server on DUT")
+    logger().info("******* Set up BLE Server on DUT *******")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
     wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
@@ -207,14 +223,14 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
 
     # Start ble client
-    logger().info("Start ble client")
+    logger().info("******* Start ble client *******")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
     time.sleep(1)
 
     # Start scanning and connect to ble client
-    logger().info("Start scanning and connect to ble client")
+    logger().info("******* Start scanning and connect to ble client *******")
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
@@ -222,20 +238,20 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
     # Get the state of the dut
-    logger().info("Get the state of the dut")
+    logger().info("******* Get the state of the dut *******")
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected
 
     # Start advertising
-    logger().info("Start advertising")
+    logger().info("******* Start advertising *******")
     # characteristics are not visible until advertised
     logger().info("Characteristics are not visible until advertised")
     wifi_dut.interfaces.wifi.ble_start_advertising()
     time.sleep(0.5)
 
     # resolving characteristic
-    logger().info("Resolving characteristic")
+    logger().info("******* Resolving characteristic *******")
     bus = ble_client.interfaces.bluetooth.bus
     servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
     assert len(servs) > 0
@@ -254,13 +270,13 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     assert result == data1
 
     # subscribe to notifications
-    logger().info("Subscribe to notifications")
+    logger().info("******* Subscribe to notifications *******")
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
     time.sleep(0.5)
 
     # notify only
-    logger().info("notify only............")
+    logger().info("******* notify only *******")
     wifi_dut.interfaces.wifi.ble_notify_value()
 
     # write/read new value - Notifications enabled
@@ -275,13 +291,13 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data3)
 
     # auto notify
-    logger().info("auto notify........")
+    logger().info("******* auto notify *******")
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
     wifi_dut.interfaces.wifi.ble_start_notify_value(interval_ms=500, count=2)
     time.sleep(1)
 
     # subscribe to notifications
-    logger().info("subscribe to notifications")
+    logger().info("******* subscribe to notifications *******")
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
     time.sleep(0.5)
@@ -293,7 +309,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     assert exc_info.value.error_code == 0x21
 
     # assert received notifications
-    logger().info("assert received notifications")
+    logger().info("******* assert received notifications *******")
     notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
     logger().info(notifications)
     assert len(notifications) == 6
@@ -305,5 +321,5 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     assert notifications[5] == data3
 
     # Disconnect
-    logger().info("Disconnect.............")
+    logger().info("******* Disconnect *******")
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
