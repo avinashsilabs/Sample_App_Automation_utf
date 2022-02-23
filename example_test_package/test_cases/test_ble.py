@@ -406,7 +406,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_gatt_client_master(wifi_dut, ble_client):
+def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     # # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
