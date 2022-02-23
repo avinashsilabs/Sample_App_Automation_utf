@@ -50,7 +50,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection on providing the empty rps file
-def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_dut, wifi_access_point, logger):
+def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_dut, wifi_access_point):
     # This API gets the host ip for the http server
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
@@ -67,7 +67,7 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_d
     with pytest.raises(WlanError) as exc_info:
         # performs the firmware upgrade on DUT over the https port
         logger().info("performing fw upgrade on dut....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x0021, "observed wrong error code expected is 0x0021"
 
 @pytest.mark.config(
@@ -105,8 +105,8 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
     wifi_dut.interfaces.wifi.version()
 
     # performs the firmware upgrade on DUT over the https port
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -177,8 +177,8 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -250,8 +250,8 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
     wifi_dut.interfaces.wifi.version()
 
     # performs the firmware upgrade on DUT over the https port
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -325,8 +325,8 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut...")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -398,8 +398,8 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -473,8 +473,8 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -547,8 +547,8 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -629,8 +629,8 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -703,8 +703,8 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -778,8 +778,8 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
 
     # performs the firmware upgrade on DUT over the https port
     logger().info("performing fq upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+    time.sleep(50)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -832,7 +832,7 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection on providing the empty rps file
-def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -873,7 +873,7 @@ def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection on providing the corrupted rps file
-def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -914,7 +914,7 @@ def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wi
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 # These test case verifies the firmware upgrade failure in DUT over the https connection,when http is disabled in DUT
-def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi_dut, wifi_access_point, logger):
+def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi_dut, wifi_access_point):
     # Joins the AP with given ssid and passphrase
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
