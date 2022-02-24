@@ -444,6 +444,9 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
+# TODO : This test case does not work without merging the PR
+# https://stash.silabs.com/projects/REDPINE/repos/utf/pull-requests/47/overview
+# But merging them is causing the A2DP test cases to fail. SO This test case will fail until we fix that
 @pytest.mark.config(
     "wifi_dut",
     wifi={
