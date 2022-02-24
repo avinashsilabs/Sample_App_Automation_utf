@@ -497,10 +497,10 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(ble_remote_dev_address=bt_client_address,
                     start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
     assert BatteryLevelCharacteristic.UUID in uuids
-    index = uuids.find(BatteryLevelCharacteristic.UUID)
+    index = uuids.index(BatteryLevelCharacteristic.UUID)
 
-    char_property = int(char_properties[index], 16)
-    assert char_property == BatteryLevelCharacteristic.CHAR_PROPERTY
+    assert char_properties[index].isdigit()
+    assert BatteryLevelCharacteristic.prop_init == int(char_properties[index])
 
     write_handle = int(write_handles[index], 16)
     assert write_handle > 0
@@ -515,15 +515,14 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
                                                      char_property=write_handle)
     assert val == f'{new_value}'
 
-
-    wifi_dut.interfaces.wifi.get_async_events()
     # enable notifications
+    since_time = time.perf_counter_ns()
     wifi_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
                                                      char_property=(write_handle+1), value=1)
     time.sleep(6)
-    events = wifi_dut.interfaces.wifi.get_async_events()
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
     assert len(events) > 0
-    latest_val = events[-1]
+    latest_val = events[-1].event_data #capturing the last value notified by Gatt server
 
     # read value
     val = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
