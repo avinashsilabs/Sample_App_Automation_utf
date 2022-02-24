@@ -349,10 +349,9 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    # Start DUT
+    # Set up BLE Server on DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
-
     wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
     wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
     wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
@@ -365,6 +364,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
 
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
+    wifi_dut.interfaces.wifi.ble_stop_scanning()
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
