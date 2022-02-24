@@ -119,7 +119,7 @@ class DNSThread(ThreadBase):
                  logger().info(result.decode())
                  time.sleep(15)
             status = ping(device_ip, 100)
-            assert status == 1
+            assert status == 1, f"received packets is 100%, expected is 1"
         self.wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
@@ -172,12 +172,9 @@ class httpgetpostThread(ThreadBase):
             packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
 
             self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-
             logger().info("API used to get the http data")
             self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http, self.index_path)
-
             time.sleep(10)
-
             logger().info(f"API used to post the http data")
             self.wifi_dut.interfaces.http.http_post(self.http_server.interfaces.http, "cgi-bin/cgi_example.py",
                                                     post_data="utf automation")
@@ -188,7 +185,6 @@ class httpgetpostThread(ThreadBase):
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                              'in sniffer'
-
         logger().info(" Validate power management bit 1")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
@@ -213,9 +209,7 @@ class BleThread_connection(ThreadBase):
             time.sleep(1)
             logger().info(f"Start scanning and connect to ble client")
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
-            logger().info(f"Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?")
             timeout = 120
-            logger().info(f"Initiating connection this can take upto {timeout} seconds....")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
             logger().info(f"Disconnect")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
