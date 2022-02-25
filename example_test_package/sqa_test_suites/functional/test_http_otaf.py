@@ -257,8 +257,7 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wifi_dut, wifi_access_point,
-                                                                 wifi_sniffer):
+def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wifi_dut, wifi_access_point,wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
