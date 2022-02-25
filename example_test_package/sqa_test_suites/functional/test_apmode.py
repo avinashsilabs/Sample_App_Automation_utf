@@ -199,7 +199,7 @@ def test_unsupported_channel_JP_region_C19457(wifi_dut, wifi_client):
         logger().info(" ********** DUT works as a Ap mode ********* ")
         wifi_dut.interfaces.wifi.start_ap(channel=236)
     assert "0xA" in str(exc_info)
-    logger().info("observed wrong error code expected is 0xA")
+    logger().info("observed error as 0xA because we are trying to configered in invalid channel so which is expected")
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -230,7 +230,7 @@ def test_unsupported_channel_EU_region_C19458(wifi_dut, wifi_client):
         logger().info(" ********** DUT works as a Ap mode ********* ")
         wifi_dut.interfaces.wifi.start_ap(channel=236)
     assert "0xA" in str(exc_info)
-    logger().info("observed wrong error code expected is 0xA")
+    logger().info("observed error as 0xA because we are trying to configered in invalid channel so which is expected")
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -253,9 +253,8 @@ def test_wifi_AP_mode_C19435(wifi_dut, wifi_client):
     gateway = '192.168.100.76'
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
     with pytest.raises(AssertionError) as exc_info:
-        logger().info(" ********** DUT works as a Ap mode ********* ")
         wifi_dut.interfaces.wifi.start_ap()
-        wifi_client.interfaces.wifi.join()
+        logger().info(" ********** DUT works as a Ap mode ********* ")
     assert "Device must be initialized for the correct band" in str(exc_info)
     logger().info(f"Device must be initialized for the correct band")
 
