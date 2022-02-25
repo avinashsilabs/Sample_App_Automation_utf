@@ -500,7 +500,7 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     index = uuids.index(BatteryLevelCharacteristic.UUID)
 
     assert char_properties[index].isdigit()
-    assert BatteryLevelCharacteristic.prop_init == int(char_properties[index])
+    assert BatteryLevelCharacteristic.prop_int == int(char_properties[index])
 
     write_handle = int(write_handles[index], 16)
     assert write_handle > 0
