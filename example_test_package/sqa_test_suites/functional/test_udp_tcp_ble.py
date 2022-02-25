@@ -1,18 +1,18 @@
 from interfaces.wifi import WlanError
 
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 import pytest
 from utils.logger import get_logger
 
 from integration_tests.common import logger
-from interfaces.iperf.fixtures import IPerfFixture, iperf
 
-from utils.iperf.Iperf_constants import IperfConstants
+from interfaces.iperf.iperf_constants import IperfConstants
 from utils.thread_base import ThreadBase
 import time
 from interfaces.cli.rs_sapi_commands import RSSAPICommands
 from interfaces.bluetooth import BTSocketRole
 from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap
+from interfaces.iperf.iperf_device_output_parser import Result
 
 
 def logger():
@@ -35,23 +35,63 @@ Author:
 
 #this thread used for data throughput
 class wifiDatathroughputThread(ThreadBase):
-    def __init__(self, wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1):
+    def __init__(self, wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, mode):
         super().__init__()
         self.wifi_networked_dut = wifi_networked_dut
         self.wifi_access_point = wifi_access_point
         self.wifi_client = wifi_client
-        self.run_iperf = run_iperf1
+        self.net_perf_client = net_perf_client
+        self.mode = mode
 
     def run(self):
-        iperf = IPerfFixture(
-            'test1',
-            self.run_iperf,
-            self.wifi_access_point,
-            self.wifi_networked_dut,
-            self.wifi_client,
-        )
-        time.sleep(10)
-        iperf.run()
+        time.sleep(5)
+        # preparing wifi_dut
+        self.wifi_networked_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+        ip_config = self.wifi_networked_dut.interfaces.wifi.start_ip()
+        device_ip = self.wifi_networked_dut.interfaces.wifi.get_device_ip(ip_config)
+
+        # preparing wifi_client
+        if self.wifi_access_point != self.wifi_client:
+            self.wifi_client.interfaces.wifi.join_ap(self.wifi_access_point)
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        assert self.wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
+        # starting iperf as Server
+        if (self.mode == IperfConstants.SERVER_MODE):
+            self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip)
+            self.net_perf_client.interfaces.net_perf.start()
+
+            # open socket and send traffic
+            self.wifi_networked_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                self.net_perf_client.interfaces.net_perf.server_port,
+                self.net_perf_client.interfaces.net_perf.protocol,
+                self.net_perf_client.interfaces.net_perf.client_options,
+            )
+        # starting iperf as Client
+        else:
+            self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip)
+            # creating results object for sharing between host and dut
+            result = Result(self.net_perf_client.interfaces.net_perf.protocol)
+
+            # open socket and start listening
+            with self.wifi_networked_dut.interfaces.wifi.start_socket_reader(
+                    log_file=self.net_perf_client.interfaces.net_perf.device_log_file_handle,
+                    result=result,
+                    protocol=self.net_perf_client.interfaces.net_perf.protocol,
+                    port=self.net_perf_client.interfaces.net_perf.client_port,
+                    device_ip=device_ip,
+                    data_len=self.net_perf_client.interfaces.net_perf.client_data_len,
+                    time=self.net_perf_client.interfaces.net_perf.client_timeout) as obj:
+                # start iperf
+                self.net_perf_client.interfaces.net_perf.start()
+                # capture device output
+                self.wifi_networked_dut.interfaces.wifi.read_from_device(obj, self.net_perf_client.interfaces.net_perf.client_timeout)
+
+            # get and print throughput
+            tp = self.net_perf_client.interfaces.net_perf.process_output(result)
+
         logger().info("this is IPerf END")
 
 # this thread used for ble connectionn as a slave/master
@@ -110,10 +150,11 @@ class BleThread_connection(ThreadBase):
             self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -126,15 +167,16 @@ class BleThread_connection(ThreadBase):
 )
 #Tcp rx packet loss #tcp rx throughput in WPA2-AES mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_dut_tcp_rx_C20223_C20230(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1):
+def test_threading_sta_ble_dut_tcp_rx_C20223_C20230(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -147,16 +189,17 @@ def test_threading_sta_ble_dut_tcp_rx_C20223_C20230(ble_client, wifi_dut, wifi_n
 )
 #txp tx in WPA2-Mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_dut_tcp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+def test_threading_sta_ble_dut_tcp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -169,16 +212,17 @@ def test_threading_sta_ble_dut_tcp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_
 )
 #udp rx in WPA2-AES mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_dut_udp_rx_C20230(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+def test_threading_sta_ble_dut_udp_rx_C20230(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -191,17 +235,18 @@ def test_threading_sta_ble_dut_udp_rx_C20230(wifi_dut, wifi_networked_dut, wifi_
 )
 #udp tx in WPA2-AES mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_dut_udp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+def test_threading_sta_ble_dut_udp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -214,15 +259,16 @@ def test_threading_sta_ble_dut_udp_tx_C20229(wifi_dut, wifi_networked_dut, wifi_
 )
 #rx throughput functionality in open mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "OPEN", "cipher": 'AES'})
-def test_threading_sta_ble_dut_tcp_rx_C20203(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1):
+def test_threading_sta_ble_dut_tcp_rx_C20203(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -235,16 +281,17 @@ def test_threading_sta_ble_dut_tcp_rx_C20203(ble_client, wifi_dut, wifi_networke
 )
 #tcp tx throughput functionality in open mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "OPEN", "cipher": 'AES'})
-def test_threading_sta_ble_dut_tcp_tx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+def test_threading_sta_ble_dut_tcp_tx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.CLIENT_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -257,16 +304,17 @@ def test_threading_sta_ble_dut_tcp_tx_C20203(wifi_dut, wifi_networked_dut, wifi_
 )
 #throughput functionality in open mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "OPEN", "cipher": 'AES'})
-def test_threading_sta_ble_dut_udp_rx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+def test_threading_sta_ble_dut_udp_rx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
-@pytest.mark.parametrize('run_iperf1', [
-    {IperfConstants.IPERF_TEST_CONFIG: {IperfConstants.IPERF_TEST_HOST_ROLE: IperfConstants.SERVER_MODE,
-                                        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP}
-     }])
+@pytest.mark.config("net_perf_client",
+ net_perf={
+        IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.UDP
+        }
+    )
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -279,10 +327,10 @@ def test_threading_sta_ble_dut_udp_rx_C20203(wifi_dut, wifi_networked_dut, wifi_
 )
 #throughput functionality in open mode
 @pytest.mark.config('wifi_access_point', wifi={"security": "OPEN", "cipher": 'AES'})
-def test_threading_sta_ble_dut_udp_tx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
+def test_threading_sta_ble_dut_udp_tx_C20203(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
-    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), BleThread_connection(wifi_dut, ble_client, mode):
+    with wifiDatathroughputThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE), BleThread_connection(wifi_dut, ble_client, mode):
         time.sleep(10)
 
 

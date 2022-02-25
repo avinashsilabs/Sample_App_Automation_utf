@@ -154,3 +154,48 @@ def test_ble_master_disconnect_testcase36(wifi_dut, ble_client, logger):
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert not state_int == BLEDeviceState.Connected, "dut is unable to disconnect in master mode"
+
+'''=================== ble gap power save test cases ==============='''
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_power_save3_when_dut_Advertising(wifi_dut,ble_client,logger):
+    # Set up DUT for BLE advertising
+    logger.info("Initiate ble service in DUT")
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+
+    logger.info("Set DUT in advertise mode")
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+
+    logger.info("Enable wlan power save")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode3)
+
+    logger.info("Enable bt power save")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode3)
+
+    logger.info("Start smp scan from the remote device")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
+    time.sleep(5)
+    logger.info("stop scanning ....")
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    # See that we found our device
+    logger.info("Check the dut is listed...")
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert wifi_dut.interfaces.wifi.ble_address in found_devices
+
+    logger.info("Connect to the dut with mac address..")
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+
+    logger.info("Disconnecting the bt host....")
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+

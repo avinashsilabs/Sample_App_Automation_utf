@@ -10,6 +10,8 @@ from devices.rs911x import (
     RS9116ConfigFeatureBitMap
     )
 from interfaces.wifi import WlanError
+from utils import mac_address_to_string
+from utils.iperf.iperf_utils import ping
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN without enabling MQTT feature in the DUT
@@ -22,7 +24,7 @@ from interfaces.wifi import WlanError
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-        
+
 Note: The test cases added in the file works only in AT mode
 """
 
@@ -48,12 +50,34 @@ Note: The test cases added in the file works only in AT mode
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when trying to connect to mqtt server without enabling mqtt feature in DUT
-def test_mqtt_feature_not_enabled_testcase4(mqtt_server, mqtt_client, wifi_access_point, wifi_dut,
+def test_mqtt_feature_not_enabled_TC19244(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
                                             mqtt_dut, logger):
+    capture_filename = "test_mqtt_feature_not_enabled_TC19244"
+
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    capture_filter = "ether host " + mac_address
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
+        )
     # DUT connects to AP after join_ap API is executed
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
+    ip_address = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
+    logger.info(f"DUT ip : {device_ip}")
+    logger.info(f"Initiating ping to DUT ip {device_ip}")
+    status = ping(device_ip, 10)
+    if status == 1:
+        logger.info(f"ping to DUT is successful")
+    else:
+        logger.info(f"ping to DUT is failed")
     # The below api puts DUT to power save
     wifi_dut.interfaces.wifi.power_save(2)
     with pytest.raises(WlanError) as exc_info:
@@ -61,3 +85,5 @@ def test_mqtt_feature_not_enabled_testcase4(mqtt_server, mqtt_client, wifi_acces
         mqtt_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,
                                                                mqtt_server="192.168.100.100")
     assert exc_info.value.error_code == 0xFF74, "DUT sent wrong error code, expected is 0xFF74"
+    logger.info(f"DUT is throwing error code {exc_info.value.error_code} when MQTT feature is not enabled in the DUT "
+                f"which is expected behavior")
