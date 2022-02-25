@@ -1,4 +1,3 @@
-import re
 import time
 import pytest
 from devices.rs911x import RS9116CoexMode
@@ -312,7 +311,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.ble_notify_value()
-    assert exc_info.value.error_code == 0x21
+    assert exc_info.value.error_code == 0x21 or exc_info.value.error_code == 0xFFFFFFFD
 
     # assert received notifications
     notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
@@ -349,10 +348,6 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
 
     # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # Start DUT
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
 
     # Set up BLE Server on DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -432,7 +427,7 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.ble_notify_value()
-    assert exc_info.value.error_code == 0x21
+    assert exc_info.value.error_code == 0x21 or exc_info.value.error_code == 0xFFFFFFFD
 
     # assert received notifications
     notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
@@ -449,6 +444,9 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
+# TODO : This test case does not work without merging the PR
+# https://stash.silabs.com/projects/REDPINE/repos/utf/pull-requests/47/overview
+# But merging them is causing the A2DP test cases to fail. SO This test case will fail until we fix that
 @pytest.mark.config(
     "wifi_dut",
     wifi={
