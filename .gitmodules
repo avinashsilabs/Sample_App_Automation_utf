@@ -7,3 +7,9 @@
 [submodule "tcmgr"]
 	path = tcmgr
 	url = ../../toolchain_internal/tcmgr.git
+[submodule "utf_core"]
+	path = utf_core
+	url = ../../utf/utf_core
+[submodule "utf_wiseconnect"]
+	path = utf_wiseconnect
+	url = ../../utf/utf_wiseconnect
