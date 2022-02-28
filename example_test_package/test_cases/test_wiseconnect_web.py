@@ -1,8 +1,8 @@
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.iperf.iperf_utils import ping
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.iperf.iperf_utils import ping
 import time
 import pytest
-from devices.rs911x import RS9116TCPIPFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116TCPIPFeatureBitMap
 
 pytestmark = [
     pytest.mark.config(

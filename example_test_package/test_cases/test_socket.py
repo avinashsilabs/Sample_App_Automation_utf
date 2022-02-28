@@ -1,10 +1,10 @@
 import pytest as pytest
 
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.iperf import iperf_utils
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.logger import get_logger
-from utils.subprocess_manager import SubprocessManager
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.iperf import iperf_utils
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils.logger import get_logger
+from utf.utils.subprocess_manager import SubprocessManager
 
 
 def logger():

@@ -48,8 +48,11 @@ ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
 # Top-level application files
 #################################################
 
+# Set TESTS_DIR to match the source directory of the test cases
+ENV TESTS_DIR=example_test_package
+
 # Copy tests, config, firmware and startup script
-COPY tests/ ./tests/
+COPY $TESTS_DIR/ ./$TESTS_DIR/
 COPY config/ ./config/
 COPY manifest/ ./manifest/
 COPY executor/docker_startup.sh .

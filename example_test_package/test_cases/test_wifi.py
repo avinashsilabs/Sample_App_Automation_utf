@@ -1,10 +1,10 @@
-from devices.rs911x import RS9116OperatingMode, RS9116Band
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.rs911x_version import parse_version
-from utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf_wiseconnect.utils.rs911x_version import parse_version
+from utf.utils.time_measurer import TimeMeasurer
 import time
 import pytest
-from utils.logger import get_logger
+from utf.utils.logger import get_logger
 
 
 def logger():

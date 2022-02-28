@@ -88,7 +88,6 @@ def main(
     hwmux_group_json: Optional[str],
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
-    #package_manifest = "../manifest/manifest.yaml"
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
     docker_manager = WiFiDockerManager(
         target,

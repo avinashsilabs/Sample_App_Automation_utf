@@ -1,4 +1,4 @@
-from utils.logger import get_logger
+from utf.utils.logger import get_logger
 import paramiko
 import os
 
