@@ -1,8 +1,8 @@
 [submodule "rs911x"]
-	path = rs911x
+	path = test_agent/rs911x
 	url = ../../Redpine/utf
 [submodule "mini_gecko_sdk"]
-	path = mini_gecko_sdk
+	path = test_agent/mini_gecko_sdk
 	url = ../../Redpine/mini_gecko_sdk
 [submodule "tcmgr"]
 	path = tcmgr
