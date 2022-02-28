@@ -1,14 +1,14 @@
 import pytest
 
-from interfaces.iperf.iperf_device_output_parser import Result
-from utils.logger import get_logger
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
-from utils.time_measurer import TimeMeasurer
-from utils.iperf.iperf_utils import ping, print_dict
+from utf.interfaces.iperf.iperf_device_output_parser import Result
+from utf.utils.logger import get_logger
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
+from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.iperf.iperf_utils import ping, print_dict
 import time
-from utils.rs911x_version import parse_version
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.stopwatch import Stopwatch
+from utf_wiseconnect.utils.rs911x_version import parse_version
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils.stopwatch import Stopwatch
 
 
 def logger():

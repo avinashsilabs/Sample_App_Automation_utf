@@ -1,7 +1,7 @@
 # Test author: Vinod.G
 # Test suite: Advertise CCM based more cipher suites for TLS_1.2
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,

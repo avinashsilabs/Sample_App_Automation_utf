@@ -1,10 +1,10 @@
 import pytest
-from utils.thread_base import ThreadBase
+from utf.utils.thread_base import ThreadBase
 import time
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
-from utils.logger import get_logger
-from utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
+from utf.utils.logger import get_logger
+from utf.utils.time_measurer import TimeMeasurer
 
 def logger():
     return get_logger(__name__)

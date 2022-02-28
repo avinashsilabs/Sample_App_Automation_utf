@@ -2,7 +2,7 @@
 # Test suite: AWS_IOT test suite
 import time
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
     RS9116CoexMode,
@@ -10,8 +10,8 @@ from devices.rs911x import (
     RS9116ConfigFeatureBitMap,
     RS9116PowerSaveModes
     )
-from devices.rs911x import RS9116AsyncEventType
-from interfaces.wifi import WlanError
+from utf_wiseconnect.devices.rs911x import RS9116AsyncEventType
+from utf.interfaces.wifi import WlanError
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN

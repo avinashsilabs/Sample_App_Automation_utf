@@ -1,15 +1,15 @@
 import pytest
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.time_measurer import TimeMeasurer
-from utils.logger import get_logger
-from interfaces.iperf.fixtures import IPerfFixture, iperf
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.iperf.iperf_utils import ping
-from interfaces.wifi import WlanError
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.logger import get_logger
+#from utf.interfaces.iperf.fixtures import IPerfFixture, iperf
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils.iperf.iperf_utils import ping
+from utf.interfaces.wifi import WlanError
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.thread_base import ThreadBase
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.thread_base import ThreadBase
 import time
 
 def logger():

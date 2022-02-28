@@ -1,7 +1,7 @@
 # Test author: Vinod.G
 # Test suite: MQTT_INTERNAL
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -9,9 +9,9 @@ from devices.rs911x import (
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap
     )
-from interfaces.wifi import WlanError
-from utils import mac_address_to_string
-from utils.iperf.iperf_utils import ping
+from utf.interfaces.wifi import WlanError
+from utf.utils import mac_address_to_string
+from utf.utils.iperf.iperf_utils import ping
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN without enabling MQTT feature in the DUT

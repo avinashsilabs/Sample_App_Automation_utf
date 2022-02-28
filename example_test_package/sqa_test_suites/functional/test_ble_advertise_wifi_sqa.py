@@ -2,9 +2,9 @@
 # Test suite: BLE GAP test suite
 import time
 import pytest
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap
-from interfaces.wifi import WlanError
+from utf.interfaces.wifi import WlanError
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in Wifi+Bluetooth dual mode

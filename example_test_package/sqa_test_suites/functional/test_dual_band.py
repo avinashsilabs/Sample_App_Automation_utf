@@ -1,10 +1,10 @@
 import pytest
-from utils.logger import get_logger
-from utils.time_measurer import TimeMeasurer
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+from utf.utils.logger import get_logger
+from utf.utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap
-from devices.rs911x import RS9116PowerSaveModes
-from utils.iperf.iperf_utils import ping
+from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes
+from utf.utils.iperf.iperf_utils import ping
 
 def logger():
     return get_logger(__name__)

@@ -1,10 +1,10 @@
 import pytest
-from utils.time_measurer import TimeMeasurer
-from utils.logger import get_logger
-from interfaces.bluetooth import BLEDeviceState
-from interfaces.wifi import WlanError
-from utils.iperf.iperf_utils import get_host_ip
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116AsyncEventType,RS9116TCPIPFeatureBitMap,\
+from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.logger import get_logger
+from utf.interfaces.bluetooth import BLEDeviceState
+from utf.interfaces.wifi import WlanError
+from utf.utils.iperf.iperf_utils import get_host_ip
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116AsyncEventType,RS9116TCPIPFeatureBitMap,\
     RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116ExtTCPIPFeatureBitMap
 import time
 

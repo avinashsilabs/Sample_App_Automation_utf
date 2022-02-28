@@ -2,11 +2,11 @@ import pytest
 import time
 import re
 from datetime import datetime, date
-from utils.time_measurer import TimeMeasurer
-from utils.logger import get_logger
-from utils.iperf.iperf_utils import ping
-from interfaces.wifi import WlanError
-from devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
+from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.logger import get_logger
+from utf.utils.iperf.iperf_utils import ping
+from utf.interfaces.wifi import WlanError
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
 
 def logger():
     return get_logger(__name__)
