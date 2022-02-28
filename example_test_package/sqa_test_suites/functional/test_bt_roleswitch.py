@@ -41,7 +41,7 @@ def logger():
     return get_logger(__name__)
 
 #This test case is used to switch the Slave to Master Role
-def test_bt_spp_dut_as_slave_roleswitch_T3571(wifi_dut, bt_client):
+def test_bt_spp_dut_as_slave_roleswitch_C19991(wifi_dut, bt_client):
     send_text = "AMFJTEJRTOLGWSGJWTJWGTL"
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
@@ -52,26 +52,32 @@ def test_bt_spp_dut_as_slave_roleswitch_T3571(wifi_dut, bt_client):
             mode=BTSocketRole.Server
             ) as bt_server_socket:
             # SPP Connection
+            logger().info("========Spp Connection=======")
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_server_socket.create_server()
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
                 assert connected
                 # Initiating power save
+            logger().info("======= Initiating the Power Save==========")
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                 wifi_dut.interfaces.wifi.set_sleep_gpio(True)
                 # Enables the power save in Wifi Mode
+                logger().info("======== Enables Power Save in Wifi Mode ========")
                 wifi_dut.interfaces.wifi.power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 # Enables the Power save in BT Side
+                logger().info("=======Enables Power Save in BT Mode==========")
                 wifi_dut.interfaces.wifi.bt_power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 # Ping Dut
+                logger().info("==========Ping DUT=========")
                 assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                     dest_addr=bt_dut_address
                 )
-                logger().info("*********Fetch the Response of Slave Role**********")
+                logger().info("Here Device role 1 is Slave Role, Device role 0 is Master Role")
+                logger().info("===========Fetch the Response of Slave Role==========")
                 # The Below api will fetch the response of Slave Role
                 result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
                 logger().info(f"Device role:{result}")
@@ -79,12 +85,14 @@ def test_bt_spp_dut_as_slave_roleswitch_T3571(wifi_dut, bt_client):
                 wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="0")
                 time.sleep(10)
                 # Here we can see the final get response of role Switch
-                logger().info("***********Final Role Switch to Slave Role*************")
+                logger().info("============Final Role Switch Slave Role to Master Role=========")
                 final_role= wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
                 assert final_role
                 logger().info(f"Role Switch: {final_role}")
+                if final_role == 1:
+                    logger().info(f'From BT response is not found')
                 # Send data from dut to bt_client
-                logger().info("***********Send the data from dut to bt client*********")
+                logger().info("==========Send the data from dut to bt client=========")
                 wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
                 data = bt_server_socket.recv()
                 assert data is not None
@@ -93,7 +101,7 @@ def test_bt_spp_dut_as_slave_roleswitch_T3571(wifi_dut, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 #This test case is used to switch the Master to Slave Role
-def test_bt_spp_dut_as_master_roleswitch_T3570(wifi_dut,bt_client):
+def test_bt_spp_dut_as_master_roleswitch_C19990(wifi_dut,bt_client):
     send_text = "ABCDEFRGHJ12345UIOPLKJ"
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
@@ -103,24 +111,28 @@ def test_bt_spp_dut_as_master_roleswitch_T3570(wifi_dut,bt_client):
         with bt_client.interfaces.bluetooth.bt_socket(
                 mode=BTSocketRole.Client
         ) as bt_client_socket:
-            # Spp Connections
+            logger().info("========Spp Connection=======")
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 addr = bt_client_socket.accept(timeout=10)
                 assert addr == bt_dut_address
             # Initiating power save
+            logger().info("========Initiating Power Save=======")
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                 wifi_dut.interfaces.wifi.set_sleep_gpio(True)
                 # Enables the Power Save in Wifi Mode
+                logger().info("==========Enables Power Save in Wifi Mode===========")
                 wifi_dut.interfaces.wifi.power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
                 # Enables the Power Save in BT Mode
+                logger().info("==========Enables Power Save in BT Mode===========")
                 wifi_dut.interfaces.wifi.bt_power_save(
                     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
                 )
-            logger().info("*********Fetch the Response of Master Role**********")
+            logger().info("Here Device role 1 is Slave Role, Device role 0 is Master Role")
+            logger().info("=========Fetch the Response of Master Role=======")
             # The Below api will fetch the response of Master Role
             result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
             logger().info(f"Device role:{result}")
@@ -128,12 +140,12 @@ def test_bt_spp_dut_as_master_roleswitch_T3570(wifi_dut,bt_client):
             wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="1")
             time.sleep(10)
             # Here we can see the final get response of role Switch
-            logger().info("***********Final Role Switch to Slave Role*************")
+            logger().info("=========Final Role Switch Master Role to Slave Role=======")
             final_role = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
-            logger().info(f"Role Switch: {final_role}")
             assert final_role
+            logger().info(f"Role Switch: {final_role}")
             # Send the data from dut to bt client
-            logger().info("***********Send the data from dut to bt client*********")
+            logger().info("=========Send the data from dut to bt client==========")
             wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
             data = bt_client_socket.recv()
             assert data is not None
@@ -142,4 +154,4 @@ def test_bt_spp_dut_as_master_roleswitch_T3570(wifi_dut,bt_client):
             time.sleep(0.2)
             # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
-    logger().info(f"Scan in {t.duration} seconds ")
+    logger().info(f"Scan in {t.duration} seconds")
