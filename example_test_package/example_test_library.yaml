@@ -2,7 +2,7 @@ name: 'UTF Wi-Fi Integration Test Suite'
 
 
 
-test_library:
+test_cases:
 - test_case_id: 'test_http_server_and_linux_client_post'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client_post::1'
