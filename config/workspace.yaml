@@ -1,5 +1,21 @@
-test_package_dir: example_test_package
-utf_core_dir: utf_pytest
-utf_extension_dirs: []
+# the directory containing the test sources
+tests_dir: example_test_package
+
+# the directory containing the firmware manifest
+manifest_dir: manifest
+
+# the directory containing the utf_core repo
+utf_core_dir: utf_core
+
+# the list of UTF extensions
+utf_extension_dirs:
+- utf_wiseconnect
+
+# the python script used to launch the test execution
+test_executor_script: executor/launch_utf_tests.py
+
+# The group label for HWMux integration
 hwmux_group_name: utf_wifi
-python_venv_dir: utf_pytest/venv
+
+# The python virtual environment directory
+python_venv_dir: venv
