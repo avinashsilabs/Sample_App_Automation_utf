@@ -32,7 +32,7 @@ if %errorlevel% neq 0 (
 
 popd
 
-copy test_agent\build\debug\sqa_test_agent.hex example_test_package
+copy test_agent\build\debug\sqa_test_agent.hex manifest
 
 :: run python script to parse map file to view memory usage
 call venv\scripts\activate

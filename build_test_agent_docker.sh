@@ -25,4 +25,4 @@ docker run -u $UID --rm -t -v ${PWD}/build:/build/rs911x/Host_MCU/test/sqa_test_
 
 popd
 
-cp ./test_agent/build/debug/sqa_test_agent.hex example_test_package
+cp ./test_agent/build/debug/sqa_test_agent.hex manifest
