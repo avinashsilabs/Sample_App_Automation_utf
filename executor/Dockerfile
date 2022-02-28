@@ -1,6 +1,6 @@
 # Change BASE_IMAGE to modify the base docker image upon which this image will be based
 ARG BASE_IMAGE=utfsilabs/rpi_ubuntu
-FROM $BASE_IMAGE:01_12_2022
+FROM $BASE_IMAGE:02_28_2022
 
 ENV APP_DIR=/app
 WORKDIR $APP_DIR

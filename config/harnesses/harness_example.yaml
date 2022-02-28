@@ -554,6 +554,17 @@ devices:
                 server_port: 5001
                 local_port: 5001
 
+    static_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "10.207.18.2"
+                host_username: "test"
+                host_password: "test123"
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
