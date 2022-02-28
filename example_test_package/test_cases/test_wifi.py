@@ -60,9 +60,7 @@ def test_wifi_leave(wifi_networked_dut):
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
-        "oper_mode": RS9116OperatingMode.AccessPoint
-    },
+    wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
 )
 def test_wifi_start_ap(wifi_dut):
     wifi_dut.interfaces.wifi.start_ap()
@@ -70,26 +68,25 @@ def test_wifi_start_ap(wifi_dut):
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
-        "oper_mode": RS9116OperatingMode.AccessPoint
-    },
+    wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
 )
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
-    assert wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip) < 0.1
+    assert (
+        wifi_client.interfaces.wifi.ping(
+            server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+        )
+        < 0.1
+    )
 
 
 @pytest.mark.config(
     "wifi_access_points",
     wifi={
         # Here, indexing (starts with 0) applies as per order defined in harness.
-        0: {
-             'ssid': 'TESTTESTTEST2'
-        },
-        1: {
-             'ssid': 'Codecom123'
-        }
-    }
+        0: {"ssid": "TESTTESTTEST2"},
+        1: {"ssid": "Codecom123"},
+    },
 )
 def test_multiple_access_points_config_override(wifi_dut, wifi_access_points):
     for wifi_ap in wifi_access_points:
@@ -102,10 +99,8 @@ def test_multiple_access_points_config_override(wifi_dut, wifi_access_points):
     "wifi_access_points",
     wifi={
         # Here, no need to provide respective index if there are no test case level config.
-        1: {
-             'ssid': 'Alia_2G'
-        }
-    }
+        1: {"ssid": "Alia_2G"}
+    },
 )
 def test_multiple_access_points(wifi_dut, wifi_access_points):
     for wifi_ap in wifi_access_points:
@@ -120,14 +115,40 @@ def test_multiple_access_points(wifi_dut, wifi_access_points):
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "band": RS9116Band.FiveGHz,
-        "security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36
-    }
+        "security": "WPA",
+        "ssid": "RS9116_AP",
+        "passphrase": "12345678",
+        "channel": 36,
+    },
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36}
+    wifi={
+        "security": "WPA",
+        "ssid": "RS9116_AP",
+        "passphrase": "12345678",
+        "channel": 36,
+    },
 )
 def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
-    assert wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip) < 0.1
+    assert (
+        wifi_client.interfaces.wifi.ping(
+            server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+        )
+        < 0.1
+    )
+
+
+@pytest.mark.config("wifi_dut", wifi={"oper_mode": RS9116OperatingMode.AccessPoint})
+def test_multiple_wifi_clients(wifi_dut, wifi_clients):
+    wifi_dut.interfaces.wifi.start_ap()
+    for wifi_client in wifi_clients:
+        wifi_client.interfaces.wifi.join()
+        assert (
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
+        )
