@@ -31,6 +31,9 @@ def logger():
 
     Author: RaviNemali
 """
+# Configure below time parameter to run the test case for specific time lapse # below is the 30 mins given as default
+logger().info("configure the time lapse to run the test case...")
+time_lapse = 30
 
 @pytest.mark.config(
     "wifi_dut",
@@ -48,7 +51,8 @@ def logger():
         }
     )
 def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-    for i in range(0,500):
+    t_end = time.time() + 60 * time_lapse
+    while time.time() < t_end:
         """ ******* SERVER CHECKS ******* """
         logger().info("Verifying server stats....")
         server_stat = http_server.interfaces.http.started
@@ -132,7 +136,8 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         }
     )
 def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-    for i in range(0, 500):
+    t_end = time.time() + 60 * time_lapse
+    while time.time() < t_end:
         """ ******* SERVER CHECKS ******* """
         logger().info("checking weather server is running....")
         server_stat = http_server.interfaces.http.started
@@ -200,7 +205,8 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         }
     )
 def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-    for i in range(0, 500):
+    t_end = time.time() + 60 * time_lapse
+    while time.time() < t_end:
         """ ******* SERVER CHECKS ***** """
         logger().info("checking server stats....")
         server_stat = http_server.interfaces.http.started
