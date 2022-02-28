@@ -142,4 +142,4 @@ def test_bt_spp_dut_as_master_roleswitch_T3570(wifi_dut,bt_client):
             time.sleep(0.2)
             # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
-    logger().info(f"Scan in {t.duration} seconds")
+    logger().info(f"Scan in {t.duration} seconds ")
