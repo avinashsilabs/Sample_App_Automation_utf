@@ -658,6 +658,10 @@ defaults:
     # (needed in order to test the host AP mode on the DUT)
     wifi_client: 'raspi_wifi'
 
+    wifi_clients:
+        - 'raspi_wifi'
+        - 'raspi_wifi_ssh'
+
     wifi_sniffer: 'airpcap'
 
     logic_analyzer: 'saleae_logic_analyzer'
