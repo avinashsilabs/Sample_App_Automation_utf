@@ -12,5 +12,10 @@ docs/
 tcmgr/
 test_agent/
 
+# old submodules that may be left around
+utf_pytest/
+rs911x/
+mini_gecko_sdk/
+
 # on a raspberry pi we don't need the AMD64 commander binaries
 utf_core/src/utf/utils/commander_AMD64/
