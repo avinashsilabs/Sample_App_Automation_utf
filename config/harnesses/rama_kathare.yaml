@@ -156,7 +156,7 @@ devices:
                 # to be set up ahead of time with the settings below
                 type: 'wifi.access_points.static'
                 security: WPA
-                ssid: 'TESTTESTTEST'
+                ssid: 'ramakathare_dlink'
                 passphrase: 'thisisatestnetwork'
 
 
