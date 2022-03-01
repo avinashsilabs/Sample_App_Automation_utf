@@ -488,7 +488,9 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
-@pytest.mark.skip #This test case needs a separate test agent.
+# This test case needs a sqa_test_agent_utf_pr_52.hex file to be loaded on EFR.
+# We will have to handle this manually until https://jira.silabs.com/browse/UTF-812 is done
+@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi={
