@@ -1,0 +1,61 @@
+devices:
+  guest_ap:
+    interfaces:
+      local_shell:
+        type: 'shell.shell'
+      wifi:
+        type: 'wifi.access_points.linux'
+        supports: 'wifi_ap'
+        shell: 'local_shell'
+        mac: 'a0:c5:89:98:c8:cb'
+        interface: 'wlan0'
+
+  rs9116_efr32:
+    interfaces:
+      uart: 'efr32mg21:vcom'
+      wifi:
+        type: 'cli.rs_sapi_commands'
+        supports: ['wifi_client','wifi_ap']
+    devices:
+      rs911x:
+        type: 'rs911x'
+        interfaces:
+          uart:
+            port: '/dev/ttyUSB0'
+          power_control:
+            type: ykush
+            port: 3
+      efr32mg21:
+        type: 'efx32'
+        interfaces:
+          power_control:
+            type: ykush
+            port: 1
+          vcom:
+            port: '/dev/ttyACM0'
+    defaults:
+      cli_transport: uart
+
+  airpcap:
+    interfaces:
+      local_shell: 'shell.shell'
+      capture:
+        default:
+        type: 'wifi.sniffer.tshark'
+        shell: 'local_shell'
+        interface: 'wlx008048770294'
+
+
+defaults:
+  dut: 'rs9116_efr32'
+  wifi_access_point: 'guest_ap'
+  wifi_sniffer: 'airpcap'
+
+  serial:
+    baud: 115200
+
+  wifi:
+    ssid: 'test-nuc-1'
+    security: 'WPAMixedMode'
+    channel: 6
+    passphrase: 'itscomplicated'
