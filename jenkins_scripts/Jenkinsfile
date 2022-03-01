@@ -14,55 +14,28 @@ pipeline {
                             }
                         }
                         withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                           keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
                             sh '''
                                 export GIT_SSH=ssh
-                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                git config --file=.gitmodules submodule.utf_pytest.url ssh://git@stash.silabs.com/iot_infra_sw/utf_python_core
-                                git submodule update --init --recursive utf_pytest
-                                
+                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
 
+                                git config --file=.gitmodules submodule.utf_core.url ssh://git@stash.silabs.com/utf/utf_core
+                                git submodule update --init --recursive utf_core
+
+                                git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect
+                                git submodule update --init --recursive utf_wiseconnect
                             '''
                         }
                         script {
                             if(isUnix()) {
                                 sh '''
-                                    if [ ! -d ./venv ]; then
-                                      python3 -m venv venv
-                                    fi
-                                    . venv/bin/activate
-                                    cd ./utf_pytest
-                                    #TODO: following echo and yaml installation to be removed after https://jira.silabs.com/browse/UTF-617 is addressed
-                                    echo "Skipping installing until we have permanent fix for https://jira.silabs.com/browse/UTF-617"
-                                    pip install pyyaml>=5.4
-                                    pip install paramiko
-                                    #pip install wheel
-                                    #pip install -r requirements.txt
-                                    cd ..
+                                    ./workspace_setup.sh
                                 '''
                             } else {
-                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                    sh '''
-                                        export GIT_SSH=ssh
-                                        export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                        git submodule update --init --recursive tcmgr
-                                    '''
-                                }
                                 bat '''
-                                    call tcm_setup.bat
-                                    if not EXIST venv (
-                                        python -m venv venv
-                                    )
-                                    copy /y venv\\scripts\\python.exe  venv\\scripts\\python3.exe
-                                    call venv\\scripts\\activate
-                                    cd .\\utf_pytest
-                                    pip install -r requirements.txt
-                                    cd..
+                                   call workspace_setup.bat
                                 '''
                             }
                         }
@@ -74,7 +47,7 @@ pipeline {
                             if(FLASH_RS9116.toBoolean()){
                                 if(RS9116_FIRMWARE != "Internal"){
                                     withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                               keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                               keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
                                         
@@ -82,14 +55,14 @@ pipeline {
                                             sh '''
                                                 rm -rf rs9116_binary
                                                 export GIT_SSH=ssh
-                                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
                                                 git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
                                             '''
                                         } else {
                                             sh '''
                                                 rm -rf rs9116_binary
                                                 export GIT_SSH=ssh
-                                                export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
                                                 git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
                                             '''
                                         }
@@ -97,14 +70,14 @@ pipeline {
                                     dir('rs9116_binary'){
                                         if(BUILD_LOCATION == "build_artifacts"){
                                             sh  '''
-                                                rm -f ../example_test_package/rs9116*.rps
-                                                cp -f firmware/RS9116*.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                                rm -f ../manifest/rs9116*.rps
+                                                cp -f firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
                                             '''
                                         }else {
                                             sh  '''
                                                 unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                                rm -f ../example_test_package/rs9116*.rps
-                                                cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../example_test_package/${RS9116_FIRMWARE}.rps
+                                                rm -f ../manifest/rs9116*.rps
+                                                cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
                                             '''                                            
                                         }
                                     }
@@ -121,29 +94,24 @@ pipeline {
                             if(FLASH_EFR32.toBoolean()){
                                 if(SQA_TEST_AGENT != "Internal"){
                                     withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                               keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
+                                                               keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
                                         sh '''
                                             export GIT_SSH=ssh
-                                            export GIT_SSH_COMMAND="ssh -i ${TCM_JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
 
                                             git config --file=.gitmodules submodule.mini_gecko_sdk.url ssh://git@stash.silabs.com/Redpine/mini_gecko_sdk
-                                            git submodule update --init --recursive mini_gecko_sdk
-                                            
-                                            
-                                            #git config --file=.gitmodules submodule.rs911x.url ssh://git@stash.silabs.com/Redpine/utf
-                                            #git config --file=.gitmodules submodule.rs911x.shallow true
-                                            #git submodule update --init --recursive rs911x
-                                            
-                                            git clone --no-checkout --branch=utf/dev --depth 1 ssh://git@stash.silabs.com/Redpine/utf rs911x
-                                            cd rs911x
+                                            git submodule update --init --recursive test_agent/mini_gecko_sdk
+
+                                            git clone --no-checkout --branch=utf/dev --depth 1 ssh://git@stash.silabs.com/Redpine/utf test_agent/rs911x
+                                            cd test_agent/rs911x
                                             git checkout utf/dev
-                                            cd ..
+                                            cd ../..
                                             
-                                            rm -f example_test_package/sqa_test_agent*.hex
-                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${TCM_JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION}
-                                            cp -f example_test_package/sqa_test_agent.hex example_test_package/${SQA_TEST_AGENT}.hex
+                                            rm -f manifest/sqa_test_agent*.hex
+                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION}
+                                            cp -f manifest/sqa_test_agent.hex manifest/${SQA_TEST_AGENT}.hex
                                         '''
                                     }
                                 }
@@ -167,41 +135,30 @@ pipeline {
                 }
                 stage('Run Tests') {
                     steps {
-                        sh '''
-                            rm -rf utf_pytest/test_package
-                            cp -rf example_test_package/ utf_pytest/test_package
-                        '''
-                        dir('utf_pytest'){
-                                echo BUILD_URL
-                                echo BUILD_NUMBER
-                                echo GIT_BRANCH
-                                echo RUN_TESTS_DISPLAY_URL
-                                echo RS9116_FIRMWARE
-                                withEnv(['BUILD_URL='+BUILD_URL, 'BUILD_NUMBER='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'RUN_TESTS_DISPLAY_URL='+RUN_TESTS_DISPLAY_URL, 'INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
-                                      sh "echo \$BUILD_URL"
-                                      sh "echo \$BUILD_NUMBER"
-                                      sh "echo \$GIT_BRANCH"
-                                      sh "echo \$RUN_TESTS_DISPLAY_URL"
-                                      sh "echo \$INSTALLER_URL_SDK"
-                                }
-                            withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                           keyFileVariable: 'TCM_JENKINS_SSH_KEY_PATH', \
-                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                sh '''
-                                    rm -rf reports
-                                    export SKIP_PROCESSING_ARTIFACTS=1
-                                    UTF_DOCKER_FLAGS="-e BUILD_URL=${BUILD_URL} -e BUILD_NUMBER=${BUILD_NUMBER} -e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL} -e JOB_NAME=${JOB_NAME} -e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE} -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/ -e TEST_SUITE=OT_Smoke_brd4161a -e BRANCH_NAME=${RS9116_FIRMWARE} -e SSH_TARGET=${SSH_TARGET}"
-                                    echo $UTF_DOCKER_FLAGS
-                                    export UTF_DOCKER_FLAGS
-                                    ./load_tests_docker.sh ${SSH_TARGET} ${HARNESS_NAME}
-                                '''
-                            }
-                            archiveArtifacts 'test_package/**'
-                            archiveArtifacts 'reports/**'
-                            archiveArtifacts "utf/harness/${env.HARNESS_NAME}.yaml"
-                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                        echo BUILD_URL
+                        echo BUILD_NUMBER
+                        echo GIT_BRANCH
+                        echo RUN_TESTS_DISPLAY_URL
+                        echo RS9116_FIRMWARE
+                        withEnv(['BUILD_URL='+BUILD_URL, 'BUILD_NUMBER='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'RUN_TESTS_DISPLAY_URL='+RUN_TESTS_DISPLAY_URL, 'INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
+                              sh "echo \$BUILD_URL"
+                              sh "echo \$BUILD_NUMBER"
+                              sh "echo \$GIT_BRANCH"
+                              sh "echo \$RUN_TESTS_DISPLAY_URL"
+                              sh "echo \$INSTALLER_URL_SDK"
                         }
+                        sh '''
+                            rm -rf reports
+                            export SKIP_PROCESSING_ARTIFACTS=1
+
+                            . venv/bin/activate
+                            cd executor
+                            python launch_utf_tests.py --target ${SSH_TARGET} --harness ${HARNESS_NAME} --docker_flags "-e BUILD_URL=${BUILD_URL},-e BUILD_NUMBER=${BUILD_NUMBER},-e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL},-e JOB_NAME=${JOB_NAME},-e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE},-e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/,-e TEST_SUITE=OT_Smoke_brd4161a,-e BRANCH_NAME=${RS9116_FIRMWARE},-e SSH_TARGET=${SSH_TARGET}"
+                        '''
+                        archiveArtifacts 'example_test_package/**'
+                        archiveArtifacts 'reports/**'
+                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}.yaml"
+                        junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                     }
                 }
             }
