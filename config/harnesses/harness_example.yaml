@@ -422,6 +422,26 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    raspi_mosquitto_tls_ecdsa:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'eth0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'server_ecdsa.key'
+                tls_certificate: 'server_ecdsa.crt'
+                tls_ca_chain: 'ca_ecdsa.crt'
     # this represents a statically-configured MQTT broker
     static_mqtt_broker:
         interfaces:
@@ -481,12 +501,16 @@ devices:
     airpcap:
         interfaces:
             local_shell:
-                type: 'shell.shell'
+                type: 'shell.ssh_shell'
+                remote: 192.168.0.0  # configure sniffer NUC IP
+                username: test       # sniffer NUC username
+                password: test123    # sniffer NUC password
+                use_paramiko_expect: false
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
-                interface: 'wlan1'
+                interface: 'wlp0s20f3'
 
     saleae_logic_analyzer:
         interfaces:
@@ -499,7 +523,13 @@ devices:
                 logic_path: '/home/test/saleae/install_folder/Logic 1.2.18 (64-bit)'
                 username: 'test'
                 password: 'test123'
-    
+
+    keysight_power_analyzer:
+        interfaces:
+            power_meter:
+                type: 'power_meter.keysight_N6705_power_analyzer'
+                instrument_lan_ip_address: '10.207.19.83'
+
     python_aws_iot_thing:
         interfaces:
             aws_iot:
@@ -577,6 +607,24 @@ devices:
                 server_port: 5001
                 local_port: 5001
 
+    # This represents the wise connect web browser configuration
+    wiseconnect_web:
+        interfaces:
+            wiseconnect_ui:
+                type: wiseconnect.wiseconnect_web
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+
+    raspi_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+
     static_iperf:
         interfaces:
             net_perf:
@@ -601,19 +649,20 @@ defaults:
     # This should be set to the name of the device in the "devices" section to be used as an access point
     wifi_access_point: 'dlink_ap'
 
+    # To connect the multiple access points
+    wifi_access_points:
+        - 'raspi_wifi'
+        - 'static_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
     wifi_client: 'raspi_wifi'
 
-    # To connect the multiple wifi clients
-    wifi_clients:
-        - 'raspi_wifi'
-        #- 'raspi_wifi_ssh'
-
     wifi_sniffer: 'airpcap'
 
     logic_analyzer: 'saleae_logic_analyzer'
+
+    power_meter: 'keysight_power_analyzer'
 
     ble_client: 'raspi_ble_client'
 
@@ -630,7 +679,9 @@ defaults:
     rf_attenuator: '50pa500_attenuator'
     ssl_server: 'raspi_ssl_server'
     #ssl_server: 'raspi_ssl_server_static'
-    #ssl_client: 'raspi_ssl_client'
+    ssl_client: 'raspi_ssl_client'
+    remote_socket: 'raspi_ip_socket'
+    multicast_client: 'raspi_multicast'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -642,6 +693,21 @@ defaults:
         channel: 1
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
+        sniffer_validation: True
+
+        # firmware path for http/https otaf
+        http_url: '/RS9116.2.5.0.4.rps'
+
+    wiseconnect_web: 'wiseconnect_web'
+
+    net_perf_client: 'raspi_iperf'
+
+    wiseconnect_ui:
+        mode: 'Client'
+        band: '2.4'
+        ssid: 'TESTTESTTEST'
+        passphrase: 'thisisatestnetwork'
+        channel: 1
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
@@ -658,27 +724,19 @@ defaults:
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
 
-# The logger section is optional and can be used to modify the logging level for different modules
-logger:
-    DLink810AccessPoint: DEBUG
-
-tools:
-    iperf2:
-        # to zip all the iperf output files
-        zip_results: 'Y'
-        server_params:
+    net_perf:
+        server_options:
             # seconds between periodic bandwidth reports
             interval: 1
             # time in seconds to listen for new connections as well as to receive traffic (default not set)
             time: 30
-        client_params:
+        client_options:
             # used only for UDP as there is no limit imposed while TCP
             bandwidth: 0.1M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30
         host:
-            network_interface: 'eth1'
             TCP:
                 port: 5201
             UDP:
@@ -693,6 +751,11 @@ tools:
                 port: 1235
                 # bytes, number of bytes we want device to send to server (host) in each iteration
                 data_len: 1472
+        tos_value: '0xC8'
+
+# The logger section is optional and can be used to modify the logging level for different modules
+logger:
+    DLink810AccessPoint: DEBUG
 
 # default start & end states for devices & interfaces
 start_state:
