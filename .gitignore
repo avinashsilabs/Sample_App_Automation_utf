@@ -1,4 +1,5 @@
 projenv.*
+*.pyc
 test_agent/build/
 reports/
 user-preferences.yaml
