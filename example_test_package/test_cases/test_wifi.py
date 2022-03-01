@@ -146,6 +146,7 @@ def test_multiple_wifi_clients(wifi_dut, wifi_clients):
     wifi_dut.interfaces.wifi.start_ap()
     for wifi_client in wifi_clients:
         wifi_client.interfaces.wifi.join()
+        time.sleep(0.5)
         assert (
             wifi_client.interfaces.wifi.ping(
                 server_ip=wifi_client.interfaces.wifi.client_gateway_ip

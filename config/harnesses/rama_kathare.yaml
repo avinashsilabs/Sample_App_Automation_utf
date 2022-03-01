@@ -19,6 +19,7 @@ devices:
         # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
         # In the case of a 9116 device, the type 'rs911x' should be used
         type: 'rs911x'
+        src_dir: 'utf_wiseconnect'
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -71,6 +72,7 @@ devices:
                 # to be defined in the defaults section for specifying the
                 # communication interface to the device
                 type: 'cli.rs_at_commands'
+                src_dir: 'utf_wiseconnect'
 
                 # reset type
                 # this mechanism is applied when the wifi_dut fixture is created.
@@ -88,6 +90,7 @@ devices:
         # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
         # In the case of a 9116 device, the type 'rs911x' should be used
         type: 'rs911x'
+        src_dir: 'utf_wiseconnect'
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -131,6 +134,7 @@ devices:
                 # to be defined in the defaults section for specifying the
                 # communication interface to the device
                 type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
 
 
     #EFR32 configuration
@@ -220,9 +224,26 @@ devices:
                 # running hostapd to create a soft AP
                 type: 'wifi.access_points.linux'
                 shell: 'linux_shell'
-                ssid: 'TESTTESTTEST1'
+                ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                supports: ['wifi_ap', 'wifi_client']
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+
+    raspi_wifi_ssh:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.1.154
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
 
@@ -563,7 +584,7 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
@@ -575,6 +596,10 @@ defaults:
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
     wifi_client: 'raspi_wifi'
+
+    wifi_clients:
+        - 'raspi_wifi'
+        - 'raspi_wifi_ssh'
 
     wifi_sniffer: 'airpcap'
 
@@ -612,7 +637,7 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTESTTEST1'
+        ssid: 'TESTTESTTEST'
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
