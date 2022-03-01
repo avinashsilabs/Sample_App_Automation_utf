@@ -1,10 +1,10 @@
 import pytest
-from utils.thread_base import ThreadBase
+from utf.utils.thread_base import ThreadBase
 import time
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.logger import get_logger
-from interfaces.bluetooth import BTSocketRole
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.logger import get_logger
+from utf.interfaces.bluetooth import BTSocketRole
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
 
 
 def logger():

@@ -1,6 +1,6 @@
 import time
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -16,7 +16,7 @@ from devices.rs911x import (
     RS9116AsyncEventType,
     )
 from typing import Dict
-from interfaces.wifi import WlanError
+from utf.interfaces.wifi import WlanError
 
 
 def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) -> Dict[str, int]:

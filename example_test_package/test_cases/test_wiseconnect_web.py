@@ -1,8 +1,8 @@
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.iperf.iperf_utils import ping
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.iperf.iperf_utils import ping
 import time
 import pytest
-from devices.rs911x import RS9116TCPIPFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116TCPIPFeatureBitMap
 
 pytestmark = [
     pytest.mark.config(
@@ -23,7 +23,7 @@ def test_wiseconnect_web(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     assert status is True, "DUT is not responding to ping request from third party device before store configuration"
 
     # configures the values from harness on given ip address of web page
-    wiseconnect_web.interfaces.wiseconnect_ui.configure_submit(web_address=device_ip)
+    wiseconnect_web.interfaces.wiseconnect_ui.configure_submit(ip_address=device_ip)
 
     wifi_dut.interfaces.wifi.reset_soft()
     wifi_dut.interfaces.wifi.wireless_init()
@@ -54,7 +54,7 @@ def test_wiseconnect_web_firmware_upgrade(wifi_dut, wifi_access_point, wiseconne
     wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
     # configures the values from harness on given ip address of web page
     alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
-        ip_address=device_ip, firmware_file_path='/app/test_package/RS9116W.2.4.1.17.rps', upgrade_wait_time=300)
+        ip_address=device_ip, firmware_file_path='/app/manifest/RS9116W.2.4.1.17.rps', upgrade_wait_time=300)
     logger.info(f"upgraded message: {alert_msg}")
     wifi_dut.reset()
     time.sleep(90)

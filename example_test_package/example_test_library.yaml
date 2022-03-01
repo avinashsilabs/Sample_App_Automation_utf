@@ -2,7 +2,60 @@ name: 'UTF Wi-Fi Integration Test Suite'
 
 
 
-test_library:
+test_cases:
+
+- test_case_id: 'get_ram_dump_full'
+  labels: [ 'ram_dump' ]
+  test_id: 'get_ram_dump_full::1'
+  test_module: 'test_cases/test_ram_dump.py'
+  test_function: 'test_ram_dump'
+  test_params:
+  -   name: start_address
+      value: 0
+  -   name: end_address
+      value: 65
+  test_markers:
+  - pytest.mark.dut("rs9116_sapi")
+
+- test_case_id: 'get_ram_dump_partial_1'
+  labels: [ 'ram_dump' ]
+  test_id: 'get_ram_dump_partial_1::1'
+  test_module: 'test_cases/test_ram_dump.py'
+  test_function: 'test_ram_dump'
+  test_params:
+  -   name: start_address
+      value: 0
+  -   name: end_address
+      value: 127
+  test_markers:
+  - pytest.mark.dut("rs9116_sapi")
+
+- test_case_id: 'get_ram_dump_partial_2'
+  labels: [ 'ram_dump' ]
+  test_id: 'get_ram_dump_partial_2::1'
+  test_module: 'test_cases/test_ram_dump.py'
+  test_function: 'test_ram_dump'
+  test_params:
+  -   name: start_address
+      value: 37
+  -   name: end_address
+      value: 3457
+  test_markers:
+  - pytest.mark.dut("rs9116_sapi")
+
+- test_case_id: 'get_ram_dump_partial_3'
+  labels: [ 'ram_dump' ]
+  test_id: 'get_ram_dump_partial_3::1'
+  test_module: 'test_cases/test_ram_dump.py'
+  test_function: 'test_ram_dump'
+  test_params:
+  -   name: start_address
+      value: 60000
+  -   name: end_address
+      value: 65535
+  test_markers:
+  - pytest.mark.dut("rs9116_sapi")
+
 - test_case_id: 'test_http_server_and_linux_client_post'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client_post::1'

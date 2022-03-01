@@ -1,0 +1,63 @@
+devices:
+  rs9116_abcd1234:
+    type: 'rs911x'
+    defaults:
+      cli_transport: 'uart'
+    interfaces:
+      uart:
+        type: 'serial'
+        port: 'auto'
+        vid: 0x1618
+        pid: 0x9116
+      wifi:
+        type: 'cli.rs_at_commands'
+      reset_uart:
+        type: 'serial'
+        port: 'auto'
+        vid: 0x1366
+        pid: 0x0105
+        reset:
+          type: 'cli.rs_sapi_commands'
+          cli_transport: 'reset_uart'
+
+  guest_ap:
+    interfaces:
+      wifi:
+        type: 'wifi.access_points.static'
+        ssid: 'TESTTESTTEST'
+        passphrase: 'thisisatestnework'
+        supports: 'wifi_ap'
+
+  local_ap:
+    interfaces:
+      linux_shell:
+        type: 'shell.shell'
+
+      wifi:
+        type: 'wifi.access_points.linux'
+        shell: 'linux_shell'
+        ssid: 'TESTTESTTEST'
+        passphrase: 'thisisatestnework'
+        supports: 'wifi_ap'
+        interface: 'wlan0'
+
+
+defaults:
+  9116_dut: 'rs9116_abcd1234'
+  dut: 'rs9116_abcd1234'
+
+  # wifi_access_point: 'guest_ap'
+  wifi_access_point: 'local_ap'
+  wifi_client: 'local_ap'
+
+  serial:
+    baud: 115200
+
+  wifi:
+    ssid: 'TESTTESTTEST'
+    security: 2
+    channel: 1
+    passphrase: 'thisisatestnework'
+    server_ip: '192.168.0.1'
+
+    

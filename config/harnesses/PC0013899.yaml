@@ -1,0 +1,58 @@
+devices:
+  guest_ap:
+    interfaces:
+      wifi:
+        type: 'wifi.access_points.static'
+        ssid: 'YOUR_AP_SSID'
+        passphrase: 'YOUR_AP_PASSPHRASE'
+        supports: 'wifi_ap'
+
+  rs9116_abcd1234:
+    interfaces:
+      uart: 'efr32mg21:vcom'
+      wifi:
+        type: 'cli.rs_sapi_commands'
+        supports: ['wifi_client', 'wifi_ap']
+    devices:
+      rs911x:
+        type: 'rs911x'
+        interfaces:
+          uart:
+            port: 'COM4'
+          power_control:
+            type: ykush
+            port: 3
+          reset:
+            type: 'reset.cli'
+            cli: '..:wifi'
+            command: 'reset'
+      efr32mg21:
+        type: 'efx32'
+        interfaces:
+          power_control:
+            type: ykush
+            port: 1
+          vcom:
+            port: 'COM10'
+          reset:
+            type: 'reset.cli'
+            cli: '..:wifi'
+            command: 'efr_reset'
+    defaults:
+      cli_transport: uart
+
+
+defaults:
+  dut: 'rs9116_abcd1234'
+  wifi_access_point: 'guest_ap'
+
+  serial:
+    baud: 115200
+
+  wifi:
+    ssid: 'YOUR_AP_SSID'
+    security: 'WPA2'
+    passphrase: 'YOUR_AP_PASSPHRASE'
+
+path:
+  - 'C:\silabs\apps\commander'

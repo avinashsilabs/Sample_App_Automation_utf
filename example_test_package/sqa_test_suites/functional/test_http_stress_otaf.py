@@ -1,12 +1,12 @@
 import pytest
-from devices.rs911x import (RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116CoexMode,RS9116ConfigFeatureBitMap,
+from utf_wiseconnect.devices.rs911x import (RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116CoexMode,RS9116ConfigFeatureBitMap,
     RS9116FeatureBitMap,
     RS9116AsyncEventType
     )
-from utils.iperf.iperf_utils import get_host_ip
-from interfaces.wifi import WlanError
+from utf.utils.iperf.iperf_utils import get_host_ip
+from utf.interfaces.wifi import WlanError
 import time
-from utils.logger import get_logger
+from utf.utils.logger import get_logger
 
 def logger():
     return get_logger(__name__)

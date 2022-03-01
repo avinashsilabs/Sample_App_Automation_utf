@@ -3,7 +3,7 @@
 from typing import Dict
 import time
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -21,7 +21,7 @@ from devices.rs911x import (
 import string
 import random
 import os
-from utils.stopwatch import Stopwatch
+from utf.utils.stopwatch import Stopwatch
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN

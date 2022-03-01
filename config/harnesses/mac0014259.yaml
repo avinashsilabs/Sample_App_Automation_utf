@@ -1,0 +1,73 @@
+devices:
+  dummy:
+    type: 'dummy'
+    interfaces:
+      efx32:
+        type: 'EFx32'      
+
+  rs9116:
+    type: 'rs911x'
+    defaults:
+      cli_transport: 'uart'
+      gpio_transport: 'uart'
+    
+    interfaces:
+      uart:
+        type: 'serial'
+        port: 'auto'
+        vid: 0x0403
+        pid: 0x6001
+
+      wifi:
+        type: 'cli.rs_at_commands'
+        reset: 'hard'
+
+  guest_ap:
+    interfaces:
+      wifi:
+        type: 'wifi.access_points.static'
+        ssid: 'DeusExGuest'
+        passphrase: 'thisisatestnework'
+        supports: 'wifi_ap'
+
+  local_ap:
+    interfaces:
+      my_shell:
+        type: 'shell.shell'
+
+      wifi:
+        type: 'wifi.access_points.linux'
+        ssid: 'DeusExGuest'
+        passphrase: 'thisisatestnework'
+        supports: 'wifi_ap'
+        shell: 'my_shell'
+
+
+  efr32_4180b:
+    type: 'efx32'
+    interfaces:
+      vcom:
+        type: 'serial'
+        port: 'auto'
+        vid: 0x1366
+        pid: 0x0105
+
+defaults:
+  dut: 'rs9116' 
+  efx32: 'efr32_4180b'
+  
+  # wifi_access_point: 'guest_ap'
+  wifi_access_point: 'local_ap'
+
+  serial:
+    baud: 115200
+
+  wifi:
+    ssid: 'DeusExGuest'
+    security: 6
+    channel: 6
+    passphrase: 'thisisatestnework'
+
+  shell: 'my_shell'
+
+    

@@ -1,6 +1,6 @@
 import time
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -11,8 +11,8 @@ from devices.rs911x import (
     RS9116PowerSaveModes,
     SocketOptions
     )
-from interfaces.wifi import WlanError
-from utils import get_tls_certificate_dir
+from utf.interfaces.wifi import WlanError
+from utf.utils import get_tls_certificate_dir
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN

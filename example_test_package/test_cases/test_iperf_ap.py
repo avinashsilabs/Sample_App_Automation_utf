@@ -1,8 +1,8 @@
-from devices.rs911x import RS9116OperatingMode, RS9116Band
-from interfaces.iperf.iperf_constants import IperfConstants
+from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 import pytest
-from interfaces.iperf.iperf_device_output_parser import Result
-from utils.iperf.iperf_utils import print_dict
+from utf.interfaces.iperf.iperf_device_output_parser import Result
+from utf.utils.iperf.iperf_utils import print_dict
 
 
 def __print_throughput(iperf_throughput: dict):

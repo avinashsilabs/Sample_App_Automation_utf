@@ -1,7 +1,7 @@
 # Test suite: MQTT_INTERNAL
 import time
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -12,12 +12,12 @@ from devices.rs911x import (
     RS9116PowerSaveModes,
     RS9116MqttQos
     )
-from utils.stopwatch import Stopwatch
+from utf.utils.stopwatch import Stopwatch
 import string
 import random
-from utils import mac_address_to_string
-from utils.iperf.iperf_utils import get_device_ip
-from utils.iperf.iperf_utils import ping
+from utf.utils import mac_address_to_string
+from utf.utils.iperf.iperf_utils import get_device_ip
+from utf.utils.iperf.iperf_utils import ping
 
 
 @pytest.mark.config(

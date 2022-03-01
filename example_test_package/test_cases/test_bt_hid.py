@@ -1,12 +1,12 @@
 import time
 import pytest
-from devices.rs911x import RS9116CoexMode
-from interfaces.bluetooth.bluetooth_logs import BleLogs
-from interfaces.bluetooth.hid_recorder import HidRecorder
-from interfaces.cli.rs_at_commands import RSATCommands
-from utils.logger import get_logger
-from utils.stopwatch import Stopwatch
-from utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode
+from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
+from utf.interfaces.bluetooth.hid_recorder import HidRecorder
+from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
+from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
+from utf.utils.time_measurer import TimeMeasurer
 
 pytestmark = [
     pytest.mark.bt_client("raspi_ble_client"),

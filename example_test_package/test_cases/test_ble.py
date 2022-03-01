@@ -1,11 +1,13 @@
 import time
 import pytest
-from devices.rs911x import RS9116CoexMode
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from interfaces.bluetooth import BLEDeviceState
-from utils.logger import get_logger
-from interfaces.wifi import WlanError
-from interfaces.bluetooth import BLEConnectError
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.logger import get_logger
+from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
+from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
+from utf.interfaces.bluetooth import BLEDeviceState
+from utf.interfaces.wifi import WlanError
+from utf.interfaces.bluetooth import BLEConnectError
 
 
 def logger():
@@ -41,6 +43,61 @@ def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
                                "33 44 " #Minor
                                "33 " #Tx Power
                                "00 " #append 00s at end, based on length of payload
+    )
+    assert bt_client_address is not None
+
+    time.sleep(1)
+
+    # Start scanning and connect to ble client
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+    timeout = 120
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # Disconnect
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_scan_resp_adv_params(wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    # Start DUT
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+
+    # Start ble client
+    # for more information on hci_adv_params download Specification Details from
+    # https://www.bluetooth.com/specifications/specs/core-specification-5-2/
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
     )
     assert bt_client_address is not None
 
@@ -331,7 +388,6 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
-    time.sleep(0.5)
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
@@ -354,12 +410,11 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-    time.sleep(0.5)
-
+    time.sleep(1)
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.ble_notify_value()
-    assert exc_info.value.error_code == 0x21
+    assert exc_info.value.error_code == 0x21 or exc_info.value.error_code == 0xFFFFFFFD
 
     # assert received notifications
     notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
@@ -397,10 +452,6 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    # Start DUT
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
-
     # Set up BLE Server on DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
@@ -412,10 +463,9 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
-    time.sleep(1)
-
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
+    wifi_dut.interfaces.wifi.ble_stop_scanning()
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
@@ -451,7 +501,6 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
-    time.sleep(0.5)
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
@@ -473,12 +522,11 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     # subscribe to notifications
     ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
     ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-    time.sleep(0.5)
-
+    time.sleep(1)
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.ble_notify_value()
-    assert exc_info.value.error_code == 0x21
+    assert exc_info.value.error_code == 0x21 or exc_info.value.error_code == 0xFFFFFFFD
 
     # assert received notifications
     notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
@@ -490,6 +538,94 @@ def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     assert notifications[3] == data3
     assert notifications[4] == data3
     assert notifications[5] == data3
+
+    # Disconnect
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+# This test case needs a sqa_test_agent_utf_pr_52.hex file to be loaded on EFR.
+# We will have to handle this manually until https://jira.silabs.com/browse/UTF-812 is done
+@pytest.mark.skip
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
+    # # Join Wi-Fi Access Point
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Start DUT
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
+                                                                      service_classes=[BatteryService])
+    assert bt_client_address is not None
+
+    # Start scanning and connect to ble client
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    wifi_dut.interfaces.wifi.ble_stop_scanning()
+    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+    timeout = 120
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                         expected="RSI_BLE_SECURITY_KEYS_EVENT")
+
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # get all profiles
+    uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+    assert BatteryService.UUID in uuids
+
+    # resolve battery profile
+    start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
+                                                             uuid=int(BatteryService.UUID, 16))
+    assert start_handle is not None
+    assert end_handle is not None
+
+    # resolve characteristics of battery profile
+    uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(ble_remote_dev_address=bt_client_address,
+                    start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
+    assert BatteryLevelCharacteristic.UUID in uuids
+    index = uuids.index(BatteryLevelCharacteristic.UUID)
+
+    assert char_properties[index].isdigit()
+    assert BatteryLevelCharacteristic.prop_int == int(char_properties[index])
+
+    write_handle = int(write_handles[index], 16)
+    assert write_handle > 0
+
+    # write value
+    new_value = 89
+    wifi_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                     char_property=write_handle, value=new_value)
+
+    # read value
+    val=wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                     char_property=write_handle)
+    assert val == f'{new_value}'
+
+    # enable notifications
+    since_time = time.perf_counter_ns()
+    wifi_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                     char_property=(write_handle+1), value=1)
+    time.sleep(6)
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+    assert len(events) > 0
+    latest_val = events[-1].event_data #capturing the last value notified by Gatt server
+
+    # read value
+    val = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                                char_property=write_handle)
+    assert val == latest_val
+
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)

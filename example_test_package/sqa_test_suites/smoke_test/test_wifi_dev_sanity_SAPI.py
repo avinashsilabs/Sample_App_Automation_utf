@@ -1,7 +1,7 @@
 import time
 import pytest
 
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -19,19 +19,19 @@ from devices.rs911x import (
     RS9116MqttQos,
     DeviceConstants,
     )
-from utils.iperf.iperf_utils import get_host_ip
-from utils.logger import get_logger
-from utils.iperf.Iperf_constants import IperfConstants
-from interfaces.iperf.fixtures import IPerfFixture, iperf
+from utf.utils.iperf.iperf_utils import get_host_ip
+from utf.utils.logger import get_logger
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.interfaces.iperf.fixtures import IPerfFixture, iperf
 from threading import Thread
-from utils.thread_base import ThreadBase
-from utils.rs911x_version import parse_version
-from utils.time_measurer import TimeMeasurer
-from utils.stopwatch import Stopwatch
+from utf.utils.thread_base import ThreadBase
+from utf_wiseconnect.utils.rs911x_version import parse_version
+from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.stopwatch import Stopwatch
 import string
 import random
-from utils.iperf.iperf_utils import ping
-from interfaces.wifi import WlanError
+from utf.utils.iperf.iperf_utils import ping
+from utf.interfaces.wifi import WlanError
 
 
 def logger():

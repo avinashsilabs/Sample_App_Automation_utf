@@ -3,7 +3,7 @@
 import yaml
 import sys
 
-with open("./example_test_package/manifest.yaml", "r+") as f:
+with open("./manifest/manifest.yaml", "r+") as f:
     rs9116_package_name = sys.argv[1]
     efr32_package_name = sys.argv[2]
     flash_rs9116 = sys.argv[3]

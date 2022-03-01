@@ -1,8 +1,21 @@
-#ignore everything by default
-**
+venv/
+*.bat
+.git/
+.gitattributes
+.gitignore
+*.html
+*.pyc
+reports/
+.idea/
+*.pyo
+docs/
+tcmgr/
+test_agent/
 
-!rs911x/Host_MCU/test/**
-!rs911x/Host_MCU/component/**
-!rs911x/Host_MCU/sapi/**
-!rs911x/Host_MCU/third_party/**
-!mini_gecko_sdk/**
+# old submodules that may be left around
+utf_pytest/
+rs911x/
+mini_gecko_sdk/
+
+# on a raspberry pi we don't need the AMD64 commander binaries
+utf_core/src/utf/utils/commander_AMD64/

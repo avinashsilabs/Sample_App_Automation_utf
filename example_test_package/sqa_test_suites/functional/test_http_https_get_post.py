@@ -1,6 +1,6 @@
-from utils.logger import get_logger
+from utf.utils.logger import get_logger
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
     RS9116CertificateType,
@@ -9,7 +9,7 @@ from devices.rs911x import (
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap
 )
-from interfaces.wifi import WlanError
+from utf.interfaces.wifi import WlanError
 
 def logger():
     return get_logger(__name__)

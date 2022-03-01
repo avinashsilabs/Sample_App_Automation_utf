@@ -5,13 +5,13 @@ from _queue import Empty
 from asyncio import QueueEmpty
 from datetime import datetime, timedelta
 
-from interfaces.cli import CLITransportException
+from utf.interfaces.cli import CLITransportException
 import pytest as pytest
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.logger import get_logger
-from devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.logger import get_logger
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
 )

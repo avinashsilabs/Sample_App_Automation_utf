@@ -1,0 +1,86 @@
+devices:
+  rs9116_abcd1234:
+    type: 'rs911x'
+    defaults:
+      cli_transport: 'uart'
+    interfaces:
+      uart:
+        type: 'serial'
+        port: 'auto'
+        vid: 0x0403
+        pid: 0x6001
+      wifi:
+        type: 'cli.rs_at_commands'
+  guest_ap:
+    interfaces:
+      wifi:
+        type: 'wifi.access_points.static'
+        ssid: 'Hanuman'
+        passphrase: 'Wifi@2020'
+        supports: 'wifi_ap'
+        security: WPA2
+        channel: 1
+  local_ap:
+    interfaces:
+      linux_shell:
+        type: 'shell.shell'
+      wifi:
+        type: 'wifi.access_points.linux'
+        shell: 'linux_shell'
+        ssid: 'Hanuman'
+        passphrase: 'Wifi@2020'
+        supports: 'wifi_ap'
+        interface: 'wlan0'
+        security: WPA2
+        channel: 1
+defaults:
+  dut: 'rs9116_abcd1234'
+  wifi_access_point: 'guest_ap'
+  wifi_client: 'guest_ap'
+  serial:
+    baud: 115200
+  wifi:
+    ssid: 'Hanuman'
+    security: WPA2
+    channel: 1
+    passphrase: 'Wifi@2020'
+    server_ip: '192.168.0.1'
+
+#should be pushed into tools,i guess
+path:
+  - '/home/silabs/commander'
+tools:
+  iperf2:
+    zip_results: 'Y'
+    server_params:
+        # seconds between periodic bandwidth reports
+        interval: 1
+        # time in seconds to listen for new connections as well as to receive traffic (default not set)
+        time: 10
+    client_params:
+      # used only for UDP as there is no limit imposed while TCP
+      bandwidth: 0.1M
+      interval: 1
+      #time in seconds to transmit for (default 10 secs)
+      time: 10
+    host:
+      # ip_address: ""
+      # currently, solution is reading it as IP address of Host
+      TCP:
+        port: 5201
+      UDP:
+        port: 5202
+    device:
+      # currently, solution is reading it as IP address of Device
+      # ip_address: ""
+      TCP:
+        port: 1234
+        data_len: 1460
+      UDP:
+        port: 1235
+        # bytes, number of bytes we want device to send to server (host) in each iteration
+        data_len: 1472
+
+
+
+

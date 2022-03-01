@@ -1,14 +1,14 @@
 import re
 import time
 from datetime import datetime, timedelta
-from utils.iperf.iperf_utils import ping
+from utf.utils.iperf.iperf_utils import ping
 import pytest as pytest
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from interfaces.wifi import WlanError, SecurityMode
-from utils.logger import get_logger
-from devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.interfaces.wifi import WlanError, SecurityMode
+from utf.utils.logger import get_logger
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
 )

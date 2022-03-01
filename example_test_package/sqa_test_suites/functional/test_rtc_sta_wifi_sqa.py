@@ -1,9 +1,9 @@
 import pytest
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap
 import time
-from utils.time_measurer import TimeMeasurer
-from interfaces.wifi import WlanError
+from utf.utils.time_measurer import TimeMeasurer
+from utf.interfaces.wifi import WlanError
 
 
 @pytest.mark.config(

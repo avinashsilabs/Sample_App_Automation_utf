@@ -1,10 +1,10 @@
 # Test author: Vinod.G
 # Test suite: TCP/UDP test suite
 import pytest
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, DeviceConstants, \
     RS9116AsyncEventType, SocketOptions
-from utils.subprocess_manager import SubprocessManager
+from utf.utils.subprocess_manager import SubprocessManager
 from threading import Thread
 import time
 from random import randint

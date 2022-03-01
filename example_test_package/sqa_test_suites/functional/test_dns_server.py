@@ -1,11 +1,11 @@
-from interfaces.wifi import WlanError
+from utf.interfaces.wifi import WlanError
 
-from devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
     RS9116TCPIPFeatureBitMap
 import time
 import pytest
-from utils.logger import get_logger
-from utils.iperf.iperf_utils import ping
+from utf.utils.logger import get_logger
+from utf.utils.iperf.iperf_utils import ping
 
 
 def logger():

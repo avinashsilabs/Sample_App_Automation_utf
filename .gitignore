@@ -1,7 +1,8 @@
 projenv.*
-.idea/
+*.pyc
 test_agent/build/
 reports/
 user-preferences.yaml
 *.lnk
-
+venv/
+example_test_package/test_sequence.yaml

@@ -1,13 +1,13 @@
 import pytest
-from utils.iperf.iperf_utils import ping
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+from utf.utils.iperf.iperf_utils import ping
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116StoreConfiguration, RS9116Region, RS9116RegionCode, RS9116ModuleType, \
     RS9116CustomFeatureBitMap, RS9116ExtTCPIPFeatureBitMap
 import time
-from utils.logger import get_logger
-# from interfaces.wifi import WlanError
+from utf.utils.logger import get_logger
+# from utf.interfaces.wifi import WlanError
 
-from interfaces.cli import CLITransportException
+from utf.interfaces.cli import CLITransportException
 
 """setup requirement:
         1. DUT(RS9116)
