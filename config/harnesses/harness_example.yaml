@@ -611,7 +611,8 @@ devices:
     wiseconnect_web:
         interfaces:
             wiseconnect_ui:
-                type: wiseconnect.wiseconnect_web
+                type: web.wiseconnect_web
+                src_dir: 'utf_wiseconnect'
                 mode: 'Client'
                 band: '2.4'
                 is_security_enable: True

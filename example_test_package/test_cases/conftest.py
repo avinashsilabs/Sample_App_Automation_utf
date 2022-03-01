@@ -1,0 +1,1 @@
+from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
