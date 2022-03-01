@@ -16,8 +16,7 @@ def __print_throughput(iperf_throughput: dict):
 
 
 @pytest.mark.net_perf_client("static_iperf")
-# @pytest.mark.wifi_client("raspi_wifi")
-# @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_device_as_server(
     net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
@@ -29,7 +28,7 @@ def test_device_as_server(
 
     # # preparing iperf
     net_perf_client.interfaces.net_perf.init_client(
-        device_ip=device_ip, protocol=protocol, host_role=IperfConstants.CLIENT_MODE
+        device_ip=device_ip, protocol=protocol
     )
 
     # verifying host_ip
