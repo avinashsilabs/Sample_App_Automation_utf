@@ -2,9 +2,9 @@ from junitparser import JUnitXml
 from junit2htmlreport.parser import Junit
 import os
 
-option = int(input("Pick an option: 1 -Enter name of files   2 -Enter folder path to pick files from :"))
+option = int(input("Pick an option: 1 -Enter the name of individual files to be merged  2 -Enter the path of the folder to pick files from :"))
 if option == 1:
-    input_files_count = int(input("Enter count of junit xml files:"))
+    input_files_count = int(input("How many junit xml files you are trying to merge now :"))
     file_name = input("Enter name of file 1 :")
     merged_xml = JUnitXml.fromfile('reports/'+file_name)
     for i in range(2, input_files_count+1):
