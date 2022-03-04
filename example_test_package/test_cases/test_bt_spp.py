@@ -36,7 +36,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None
 
-        # Added update class to avoid host is down issue
+        # Added set class to 400100 avoid host is down issue
         bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
 
         with bt_client.interfaces.bluetooth.bt_socket(
@@ -98,7 +98,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
         time.sleep(0.5)
 
-        # Added update class to avoid host is down issue
+        # Added set class to 400100 avoid host is down issue
         bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
 
         with bt_client.interfaces.bluetooth.bt_socket(
@@ -162,7 +162,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
         assert bt_client_address is not None
 
-        # Added update class to avoid host is down issue
+        # Added set class to 400100 avoid host is down issue
         bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
 
         with bt_client.interfaces.bluetooth.bt_socket(
@@ -200,7 +200,7 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
         time.sleep(1)
 
-        # Added update class to avoid host is down issue
+        # Added set class to 400100 avoid host is down issue
         bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
 
         with bt_client.interfaces.bluetooth.bt_socket(
