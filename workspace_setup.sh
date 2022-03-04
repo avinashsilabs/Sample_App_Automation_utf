@@ -1,5 +1,10 @@
 echo "*** setting up workspace ***"
-alias python3='/usr/bin/python3.9'
+#alias python3='/usr/bin/python3.9'
+python_version='python3 --version'
+
+if [ ! $python_version =~ "Python 3" ]; then
+  echo "Python 3+ version is not installed"
+fi
 
 if [ ! -f venv/bin/activate ]; then
   echo "creating venv"
