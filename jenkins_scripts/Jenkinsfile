@@ -159,7 +159,8 @@ pipeline {
 
                             pwd
 
-                            set PYTHONPATH=/opt/jenkins/jenkins-worker/workspace/UTF_WiFi/utf_core/src
+                            export PYTHONPATH=/opt/jenkins/jenkins-worker/workspace/UTF_WiFi/utf_core/src
+                            echo $PYTHONPATH
 
                             cd executor
                             pwd
