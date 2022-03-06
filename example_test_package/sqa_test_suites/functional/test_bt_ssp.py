@@ -3,6 +3,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
 from utf.interfaces.bluetooth import BTSocketRole
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
+from utf.interfaces.wifi import WlanError
 import time
 
 def logger():
@@ -624,3 +625,44 @@ def test_ble_adv_state_in_scan_C19840(bt_dut, ble_client):
     assert result
     logger().info("verifying client addr is available in scan list...")
     assert str(bt_client_address) in str(result)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
+
+    logger().info("set dut in adv mode...")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address is not None
+    bt_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("start ble scan from remote le device...")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
+    time.sleep(5)
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    # See that we found our device
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+    assert (
+            found_devices[bt_dut.interfaces.wifi.ble_address]
+            == bt_dut.interfaces.bluetooth.ble_advertising_data
+    )
+
+    logger().info("connect to dut from remote le device....")
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+
+    with pytest.raises(WlanError) as exc_info:
+        bt_dut.interfaces.bluetooth.ble_stop_advertising()
+    assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
+
+    logger().info("disconnecting the dut..")
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+
