@@ -89,10 +89,6 @@ def main(
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
-    # container_run_options = DockerManager.parse_docker_flags(docker_flags)
-    #
-    # if "environment" in container_run_options and "PYTEST_COMMAND" in container_run_options["environment"]:
-    #     pytest_command = container_run_options["environment"]["PYTEST_COMMAND"]
 
     docker_manager = WiFiDockerManager(
         target,
