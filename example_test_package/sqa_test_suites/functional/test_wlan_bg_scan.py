@@ -77,7 +77,7 @@ class IopTcpIpSockets:
         return connect_status
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -115,6 +115,7 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
@@ -139,7 +140,8 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -162,9 +164,10 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -203,6 +206,7 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
@@ -228,7 +232,8 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -251,9 +256,10 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -291,6 +297,7 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
@@ -315,7 +322,8 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -338,9 +346,10 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -377,6 +386,8 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=2000, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+    # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
                      f'0x0004 and wlan.da == ff:ff:ff:ff:ff:ff '
 
@@ -419,10 +430,14 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+
+    wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find probe request broadcast packet'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -476,6 +491,7 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
 
+        # Validating probe request broadcast packet
         packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
                          f'and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff '
@@ -499,11 +515,12 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find probe request broadcast packet'
 
-
-# @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+# @pytest.mark.start_state("wifi_dut", wifi="init")
 # @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 # @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 # @pytest.mark.config(
@@ -573,7 +590,7 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
 #     assert True if res is False else False
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -615,6 +632,7 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
@@ -641,7 +659,9 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count'], \
+        'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -664,9 +684,10 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -709,6 +730,7 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
@@ -735,7 +757,8 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find the broadcast probe request packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -758,9 +781,10 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -804,6 +828,7 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating 11n capabilities
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) && (wlan.sa == {dut_mac_address})) && (wlan.tag.number == 45)'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
@@ -827,7 +852,8 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+        'Unable to find any HT capabilities'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -850,9 +876,10 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -895,6 +922,7 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating HT capabilities
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) && (wlan.sa == {dut_mac_address})) && (wlan.tag.number == 45)'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
@@ -918,7 +946,8 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+        'Unable to find HT capabilities packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -941,9 +970,10 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+    wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -996,7 +1026,9 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
 
-        packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) and (wlan.sa == {dut_mac_address})) and (wlan.tag.number == 45)'
+        # Validating HT capabilities
+        packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) and (wlan.sa == {dut_mac_address})) and ' \
+                         f'(wlan.tag.number == 45)'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
         time.sleep(2)
@@ -1018,6 +1050,7 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.leave()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find the HT capabilities packet in DUT side'
 
 
