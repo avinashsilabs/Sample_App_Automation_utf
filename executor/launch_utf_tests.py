@@ -89,9 +89,12 @@ def main(
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
-    print('---------Launch utf tests------------------')
+    container_run_options = DockerManager.parse_docker_flags(docker_flags)
+    pytest_command = container_run_options["PYTEST_COMMAND"]
+    print('-----------------------')
     print(pytest_command)
-    print('---------Launch utf tests------------------')
+    print('-----------------------')
+
     docker_manager = WiFiDockerManager(
         target,
         harness,
