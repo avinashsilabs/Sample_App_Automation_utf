@@ -9,7 +9,6 @@ from utf.utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
-
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
