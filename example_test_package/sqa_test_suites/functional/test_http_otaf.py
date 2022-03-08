@@ -8,7 +8,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116FeatureBitMap,
     RS9116AsyncEventType
     )
-from utf.utils.iperf.iperf_utils import get_host_ip
+from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
 
