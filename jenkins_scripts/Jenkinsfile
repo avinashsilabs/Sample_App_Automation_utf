@@ -78,13 +78,8 @@ pipeline {
                                                 pwd
                                                 unzip -o ${RS9116_FIRMWARE}.zip
                                                 pwd
-                                                if [ ${RS9116_FIRMWARE} =~ "RS9116" ]; then
-                                                    rm -f ../manifest/rs9116*.rps
-                                                    cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
-                                                elif [ ${RS9116_FIRMWARE} =~ "RS916" ]; then
-                                                    rm -f ../manifest/rs916*.rps
-                                                    cp -f ${RS9116_FIRMWARE}/firmware/RS916*.rps ../manifest/${RS9116_FIRMWARE}.rps
-                                                fi
+                                                rm -f ../manifest/rs9116*.rps
+                                                cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
                                             '''                                            
                                         }
                                     }
