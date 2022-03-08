@@ -325,6 +325,64 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+def test_ble_dual_role(wifi_dut, ble_clients):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    assert len(ble_clients) >= 2
+    ble_client_1 = ble_clients[0]
+    ble_client_2 = ble_clients[1]
+
+    # start dut in advertisement
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+
+    # setup advertisement on 1st ble and connect from dut
+    bt_client_address_1 = ble_client_1.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    assert bt_client_address_1 is not None
+
+    time.sleep(1)
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address_1, timeout=30)
+    timeout = 120
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address_1, timeout=timeout)
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # start scanning from second dut and connect to dut
+    bt_client_address_2 = ble_client_2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address_2 is not None
+    time.sleep(5)
+    ble_client_2.interfaces.bluetooth.stop_scanning()
+
+    # See that we found our device
+    found_devices = ble_client_2.interfaces.bluetooth.get_devices()
+    assert wifi_dut.interfaces.wifi.ble_address in found_devices
+    assert (
+            found_devices[wifi_dut.interfaces.wifi.ble_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
+    )
+    ble_client_2.interfaces.bluetooth.connect(bt_dut_address)
+
+    # Advertisement can be started again to connect to a new master
+    # wifi_dut.interfaces.wifi.ble_start_advertising()
+    # scanning can be started to connect to a new slave
+    # wifi_dut.interfaces.wifi.ble_start_advertising()
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
 def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
