@@ -5,12 +5,30 @@ from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.logger import get_logger
 
+"""Test Author = Rakesh Reddy Nayini
+
+        1. Start the sniffer before connection
+        2. Required A7 EVK(DUT) board 
+        3. Stop the sniffer
+        4. Initiate ping from the dut
+        5. Analyizing all sniffer capture packets and find the arp announcement packet
+
+setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+"""
+
+
 def logger():
     return get_logger(__name__)
+
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
+
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
@@ -289,7 +307,7 @@ def test_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
     assert tp is not None
     __print_throughput(tp)
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    logger().info('********** Validate Probe req(Broadcast/Unicast), authentication ,association, eapol **********')
+    logger().info('********** Validate Probe req(Broadcast/Unicast), authentication ,association, eapol ***********')
     packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                      f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)'
