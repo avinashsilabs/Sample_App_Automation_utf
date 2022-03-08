@@ -188,7 +188,6 @@ class ModesThread_bypass(ThreadBase):
                 logger().info("configuring the Sniffer with the channel")
                 self.wifi_sniffer.interfaces.capture.configure_interface(
                     channel=self.wifi_access_point.interfaces.wifi.channel)
-
                 logger().info("start capturing with Sniffer by giving the test case name as filename")
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
                 time.sleep(10)
