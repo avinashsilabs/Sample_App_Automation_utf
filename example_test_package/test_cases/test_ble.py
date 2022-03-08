@@ -1,5 +1,7 @@
 import time
 import pytest
+
+from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
@@ -188,15 +190,18 @@ def test_ble_conn_params(wifi_dut, ble_client):
 
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
-    time.sleep(5)
-    ble_client.interfaces.bluetooth.stop_scanning()
 
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if bt_dut_address in found_devices and \
+                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
 
     ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
                                             min_conn_interval=160,
@@ -236,16 +241,18 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     # Begin Scanning for BLE devices
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
-    time.sleep(5)
-    ble_client.interfaces.bluetooth.stop_scanning()
 
-    # See that we found our device
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if bt_dut_address in found_devices and \
+                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
 
     # Not legal to start advertising if we're already advertising...
     with pytest.raises(WlanError) as exc_info:
@@ -356,16 +363,21 @@ def test_ble_dual_role(wifi_dut, ble_clients):
     # start scanning from second dut and connect to dut
     bt_client_address_2 = ble_client_2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address_2 is not None
-    time.sleep(5)
-    ble_client_2.interfaces.bluetooth.stop_scanning()
 
-    # See that we found our device
-    found_devices = ble_client_2.interfaces.bluetooth.get_devices()
-    assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client_2.interfaces.bluetooth.get_devices()
+        if bt_dut_address in found_devices and \
+                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+
+    ble_client_2.interfaces.bluetooth.stop_scanning()
+    assert device_found
+
+    ble_client_2.interfaces.bluetooth.stop_scanning()
+    assert device_found
     ble_client_2.interfaces.bluetooth.connect(bt_dut_address)
 
     # Advertisement can be started again to connect to a new master
@@ -411,16 +423,18 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     # Begin Scanning for BLE devices
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
-    time.sleep(5)
-    ble_client.interfaces.bluetooth.stop_scanning()
 
-    # See that we found our device
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if bt_dut_address in found_devices and \
+                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
 
     # connecting to dut
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
