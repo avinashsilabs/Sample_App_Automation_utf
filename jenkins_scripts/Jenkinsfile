@@ -79,7 +79,7 @@ pipeline {
                                                 unzip -o ${RS9116_FIRMWARE}.zip
                                                 pwd
                                                 rm -f ../manifest/rs9116*.rps
-                                                cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
+                                                cp -f ${RS9116_FIRMWARE}/firmware/RS91*.rps ../manifest/${RS9116_FIRMWARE}.rps
                                             '''                                            
                                         }
                                     }
