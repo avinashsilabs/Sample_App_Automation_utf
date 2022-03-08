@@ -80,12 +80,12 @@ class IopTcpIpSockets:
         return connect_status
 
 
+@pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
@@ -93,18 +93,20 @@ class IopTcpIpSockets:
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
             EnahanceMaxPsp,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
-
     },
 )
-def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, wifi_access_point):
+def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator):
+
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
     count_disconnect, count_connect, count_rejoin = set(), set(), set()
     try:
         if isinstance(wifi_networked_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
+            wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+
             """Applying Max power save """
             logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-            wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(2, 1)
+            wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
             ap_ssid = wifi_networked_dut_with_sniffer.interfaces.wifi.ssid
             logger().info(f"AP_ssid {ap_ssid}")
 
@@ -195,7 +197,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
     wifi_networked_dut_with_sniffer.interfaces.wifi.leave()
 
 
-@pytest.mark.skip
+@pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -212,15 +214,17 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
 
     },
 )
-def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, wifi_access_point):
+def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
     count_disconnect, count_connect, count_rejoin = set(), set(), set()
     try:
         if isinstance(wifi_networked_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
+            wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+
             """Applying Max power save """
             logger().info(f"*****Enable Max PSP in DUT******")
-            wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(2, 0)
+            wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
             wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
@@ -310,6 +314,7 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, wifi_
         logger().info(f"Total execution time of test case = {exact_execution_time}")
 
 
+@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -335,19 +340,20 @@ pytestmark = [
 ]
 
 
-def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut):
+def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     topic_1 = "IOP_AWS_Shadow"
 
     """ Start time for long duration and send messages """
     end_time = datetime.now() + timedelta(hours=12)
     start_time = datetime.now()
     try:
+        wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
         aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
         time.sleep(2)
 
         """Applying Max power save """
         logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-        wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(2, 1)
+        wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
 
         shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
             RS9116AsyncEventType.AWSIoTMQTTMessage
@@ -377,6 +383,7 @@ def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws
         logger().info("Stop Sniffer finally")
 
 
+@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -399,21 +406,20 @@ pytestmark = [
         },
     ),
 ]
-
-
-def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut):
+def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     topic_1 = "IOP_AWS_Shadow"
 
     """ Start time for long duration and send messages """
     end_time = datetime.now() + timedelta(hours=12)
     start_time = datetime.now()
     try:
+        wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
         aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
         time.sleep(2)
 
         """Applying Max power save """
         logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-        wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(2, 0)
+        wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
         wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
@@ -446,6 +452,7 @@ def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut)
         logger().info("Stop Sniffer finally")
 
 
+@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -469,19 +476,18 @@ pytestmark = [
         },
     ),
 ]
-
-
-def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut):
+def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     rejected_event_counter = 0
     timeout_event_counter = 0
     """ Start time for long duration and send messages """
     end_time = datetime.now() + timedelta(hours=12)
     start_time = datetime.now()
+    wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
     time.sleep(2)
     """Applying Max power save """
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(2, 1)
+    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
 
     shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
         RS9116AsyncEventType.AWSIoTShadowUpdateAccepted
@@ -523,6 +529,7 @@ def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_wit
     logger().info(f"Total number of Timeout Event Counter = {timeout_event_counter}")
 
 
+@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -545,19 +552,18 @@ pytestmark = [
         },
     ),
 ]
-
-
-def test_aws_device_shadow_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut):
+def test_aws_device_shadow_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     rejected_event_counter = 0
     timeout_event_counter = 0
     """ Start time for long duration and send messages """
     end_time = datetime.now() + timedelta(hours=12)
     start_time = datetime.now()
+    wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
     time.sleep(2)
     """Applying Max power save """
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(2, 0)
+    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
     wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
