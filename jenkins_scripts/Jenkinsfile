@@ -78,6 +78,18 @@ pipeline {
                                                 unzip -o ${RS9116_FIRMWARE}.zip
                                                 pwd
 
+                                                if [ ${RS9116_FIRMWARE} == "RS9116W.2.5.0.25" ]; then
+                                                    if [ -d "RS916W.2.5.0.25" ]; then
+                                                        mv RS916W.2.5.0.25 RS9116W.2.5.0.25
+                                                elif [ ${RS9116_FIRMWARE} == "RS916W.2.5.0.14" ]; then
+                                                    cd RS916.2.5.0.14/firmware
+                                                    if [ -f "RS916.2.5.0.14.rps" ]; then
+                                                        mv RS916.2.5.0.14.rps RS916W.2.5.0.14.rps
+                                                    if [ -f "RS9116.2.5.0.14.rps" ]; then
+                                                        mv RS9116.2.5.0.14.rps RS9116W.2.5.0.14.rps
+
+                                                    cd ../..
+
                                                 cp ${RS9116_FIRMWARE}/firmware/RS91*.rps ../manifest
                                             '''                                            
                                         }
