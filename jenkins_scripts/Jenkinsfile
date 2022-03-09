@@ -77,6 +77,8 @@ pipeline {
                                             sh  '''
                                                 pwd
                                                 unzip -o ${RS9116_FIRMWARE}.zip
+                                                pwd
+                                                ls
 
                                                 cp ${RS9116_FIRMWARE}/firmware/RS91*.rps ../manifest
 
