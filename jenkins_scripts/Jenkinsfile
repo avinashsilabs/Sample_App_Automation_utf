@@ -82,18 +82,17 @@ pipeline {
                                                 b="RS9116W.2.5.0.25"
 
                                                 if [ "${RS9116_FIRMWARE}" = "$b" ]; then
-                                                    if [ -d RS916W.2.5.0.25 ]; then
+                                                    ls
+                                                    if [ -d "/RS916W.2.5.0.25" ]; then
                                                         mv RS916W.2.5.0.25 RS9116W.2.5.0.25
                                                     fi
                                                 elif [ "${RS9116_FIRMWARE}" = "$a" ]; then
                                                     cd RS916W.2.5.0.14/firmware
                                                     ls
                                                     if [ -f RS916.2.5.0.14.rps ]; then
-                                                        echo "In RS916.2.5.0.14.rps firmware"
                                                         mv RS916.2.5.0.14.rps RS916W.2.5.0.14.rps
                                                     fi
                                                     if [ -f RS9116.2.5.0.14.rps ]; then
-                                                        echo "In RS9116.2.5.0.14.rps firmware"
                                                         mv RS9116.2.5.0.14.rps RS9116W.2.5.0.14.rps
                                                     fi
                                                     ls
