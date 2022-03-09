@@ -76,8 +76,9 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     assert scan_count > 0
     previous_rssi = 0
     for count in scan_results:
-        assert previous_rssi >= count.rssi
+        assert previous_rssi >= count.rssi, "scan result is not based on the rssi"
         previous_rssi = count.rssi
+        logger().info("scan results are based on rssi")
     logger().info(f"Scan in {t.duration} seconds")
 
 def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
