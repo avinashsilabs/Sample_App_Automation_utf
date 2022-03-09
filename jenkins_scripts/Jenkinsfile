@@ -85,7 +85,7 @@ pipeline {
                                                     if [ -d RS916W.2.5.0.25 ]; then
                                                         mv RS916W.2.5.0.25 RS9116W.2.5.0.25
                                                     fi
-                                                elif [ "${RS9116_FIRMWARE}" = "$b" ]; then
+                                                elif [ "${RS9116_FIRMWARE}" = "$a" ]; then
                                                     cd RS916W.2.5.0.14/firmware
                                                     ls
                                                     if [ -f RS916.2.5.0.14.rps ]; then
