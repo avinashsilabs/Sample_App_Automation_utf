@@ -105,7 +105,7 @@ class WifiThread_PMKmode(ThreadBase):
             logger().info(f"Validating the power management bit")
             packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
             status = ping(device_ip, 100)
-            assert status == 1
+            assert status == 1, f"ping is successful"
             self.wifi_sniffer.interfaces.capture.stop_capture()
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -158,7 +158,7 @@ class WifiThread_PSKMODE(ThreadBase):
             logger().info(f"Validating the power management bit")
             packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
             status = ping(device_ip, 100)
-            assert status == 1
+            assert status == 1, f"ping is successful"
             self.wifi_sniffer.interfaces.capture.stop_capture()
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -269,10 +269,7 @@ class BleThread_connection(ThreadBase):
             time.sleep(10)
             logger().info(f"Start scanning and connect to ble client")
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-            logger().info(
-                f"Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?")
             timeout = 120
-            logger().info(f"Initiating connection this can take upto {timeout} seconds....")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
             logger().info(f"Disconnect")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
