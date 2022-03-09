@@ -179,7 +179,7 @@ pipeline {
                         '''
                         archiveArtifacts 'example_test_package/**'
                         archiveArtifacts 'reports/**'
-                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}.yaml"
+                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                         junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                     }
                 }
