@@ -89,6 +89,7 @@ pipeline {
                                                         mv RS9116.2.5.0.14.rps RS9116W.2.5.0.14.rps
 
                                                     cd ../..
+                                                fi
 
                                                 cp ${RS9116_FIRMWARE}/firmware/RS91*.rps ../manifest
                                             '''                                            
