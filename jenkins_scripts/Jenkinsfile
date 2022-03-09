@@ -75,7 +75,6 @@ pipeline {
                                             '''
                                         }else {
                                             sh  '''
-                                                pwd
                                                 unzip -o ${RS9116_FIRMWARE}.zip
                                                 pwd
 
