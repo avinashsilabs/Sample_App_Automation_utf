@@ -82,6 +82,7 @@ pipeline {
                                                 b="RS9116W.2.5.0.25"
 
                                                 if [ "${RS9116_FIRMWARE}" = "$b" ]; then
+                                                    echo "Inside 2.5.0.25"
                                                     ls
                                                     if [ -d "RS916W.2.5.0.25" ]; then
                                                         mv RS916W.2.5.0.25 RS9116W.2.5.0.25
