@@ -1,5 +1,7 @@
 import time
 import pytest
+
+from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
@@ -629,3 +631,41 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    }
+)
+def test_ble_multi_connect_disconnect(wifi_dut, ble_client):
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+
+    # Begin Scanning for BLE devices
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if bt_dut_address in found_devices and \
+                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
+
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    time.sleep(2)
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(1)
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+    time.sleep(1)
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    time.sleep(2)
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(1)
