@@ -642,7 +642,7 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
