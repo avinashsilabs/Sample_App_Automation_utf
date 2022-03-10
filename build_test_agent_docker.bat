@@ -16,7 +16,7 @@ if "%3"=="" (
    set BUILD_LOCATION=release_packages
 )
 set DOCKER_BUILDKIT=1
-docker build --build-arg RELEASE_PACKAGE_VERSION=%RELEASE_PACKAGE_VERSION% --build-arg BUILD_LOCATION=$BUILD_LOCATION -t wifi_test_agent_build --ssh default=%SSH_KEY% .
+docker build --progress=plain --build-arg RELEASE_PACKAGE_VERSION=%RELEASE_PACKAGE_VERSION% --build-arg BUILD_LOCATION=$BUILD_LOCATION -t wifi_test_agent_build --ssh default=%SSH_KEY% .
 if %errorlevel% neq 0 (
    exit /b 1
 )
@@ -25,15 +25,22 @@ if exist build (
     rd /s /q build
 )
 mkdir build
-docker run --rm -it -v %CD%/build:/build/rs911x/Host_MCU/test/sqa_test_agent/build/build wifi_test_agent_build
+docker run --rm -it -v %CD%/build:/build/src/build wifi_test_agent_build
 if %errorlevel% neq 0 (
    exit /b 1
 )
 
 popd
 
-copy test_agent\build\debug\sqa_test_agent.hex manifest
+
+copy test_agent\build\*.hex manifest
 
 :: run python script to parse map file to view memory usage
-call venv\scripts\activate
-python test_agent\map_file_parser.py test_agent\build\debug\sqa_test_agent.map 1024
+::call venv\scripts\activate
+::python test_agent\map_file_parser.py test_agent\build\debug\sqa_test_agent.map 1024
+
+
+::
+exit /b 0
+
+::git archive --remote ssh://git@stash.silabs.com/redpine/release_packages.git --format tar RS916W.2.5.0.14 RS916W.2.5.0.14.zip -o RS916W.2.5.0.14.tar
