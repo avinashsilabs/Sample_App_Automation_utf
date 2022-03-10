@@ -4,13 +4,8 @@ import os
 import shutil
 import zipfile
 
-build_location = str(sys.argv[1])
-rs9116_firmware = str(sys.argv[2])
-
-print('-------Line 10-------------')
-print(build_location)
-print(rs9116_firmware)
-print('-------Line 12-------------')
+build_location = sys.argv[1]
+rs9116_firmware = sys.argv[2]
 
 if build_location == "build_artifacts":
     pathdir = "../manifest"
@@ -36,7 +31,7 @@ else:
     current_directory = os.getcwd()
     if "2.5.0" in rs9116_firmware:
         print("Firmware contains 2.5.0")
-        version_number = int(rs9116_firmware.rsplit(".", 1))
+        version_number = int(rs9116_firmware.rsplit(".", 1)[1])
         print("----------Line 35--------------")
         print(version_number)
         print("----------Line 37--------------")
