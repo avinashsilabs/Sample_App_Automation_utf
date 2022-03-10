@@ -58,4 +58,11 @@ else:
         print(f)
         print("------------Line 54--------------")
         if f.startswith("RS91") and f.endswith(".rps"):
+            print("-----Line 61------")
+            print(f)
+            print("-----Line 63------")
+            dir_list = os.listdir("..")
+            print("-----Line 65------")
+            print(dir_list)
+            print("-----Line 67------")
             shutil.copy2(f, "../manifest")
