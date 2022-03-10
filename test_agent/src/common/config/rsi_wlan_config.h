@@ -204,10 +204,10 @@ extern uint8_t g_num_of_dtim_skip ;
 #define RSI_SET_REGION_AP_SUPPORT RSI_ENABLE
 
 // If 1:region configurations taken from user ;0:region configurations taken from firmware
-#define RSI_SET_REGION_AP_FROM_USER g_region_config
+#define RSI_SET_REGION_AP_FROM_USER (g_region_config)
 
 // "US" or "EU" or "JP" or other region codes
-#define RSI_COUNTRY_CODE g_region_code
+#define RSI_COUNTRY_CODE (g_region_code)
 
 /*=======================================================================*/
 
@@ -239,13 +239,13 @@ extern uint8_t g_num_of_dtim_skip ;
 
 #define RSI_BG_SCAN_SUPPORT RSI_ENABLE
 
-#define RSI_BG_SCAN_ENABLE g_rsi_bg_scan_enable
+#define RSI_BG_SCAN_ENABLE (g_rsi_bg_scan_enable)
 
 // RSI_ENABLE or RSI_DISABLE instant BG scan
-#define RSI_INSTANT_BG g_rsi_instant_bg
+#define RSI_INSTANT_BG (g_rsi_instant_bg)
 
 // BG scan threshold value
-#define RSI_BG_SCAN_THRESHOLD g_rsi_bg_scan_threshold
+#define RSI_BG_SCAN_THRESHOLD (g_rsi_bg_scan_threshold)
 
 // RSSI tolerance Threshold
 #define RSI_RSSI_TOLERANCE_THRESHOLD g_rsi_rssi_tolerance_threshold
@@ -407,6 +407,7 @@ extern uint8_t g_num_of_dtim_skip ;
 // set handshake type of power mode
 #define RSI_HAND_SHAKE_TYPE GPIO_BASED
 
+/*
 // 0 - LP, 1- ULP mode with RAM retention and 2 - ULP with Non RAM retention
 #define RSI_SELECT_LP_OR_ULP_MODE RSI_ULP_WITH_RAM_RET
 
@@ -435,6 +436,7 @@ extern uint8_t g_num_of_dtim_skip ;
 
 // set WMM UAPSD bitmap
 #define RSI_WMM_PS_UAPSD_BITMAP 15
+*/
 
 /*=======================================================================*/
 
@@ -704,10 +706,13 @@ extern uint8_t g_num_of_dtim_skip ;
 
 
 //! No of ltcp socktes
+#undef RSI_NUMBER_OF_LTCP_SOCKETS
 #define RSI_NUMBER_OF_LTCP_SOCKETS (g_rsi_ltcp_sockets)
 //! Default number of sockets supported,max 10 sockets are supported
+#undef RSI_NUMBER_OF_SOCKETS
 #define RSI_NUMBER_OF_SOCKETS (g_rsi_client_sockets + g_rsi_ltcp_sockets)
 
+#undef RSI_TOS
 #define RSI_TOS (g_rsi_tos)
 
 
@@ -717,14 +722,17 @@ extern uint8_t g_num_of_dtim_skip ;
 //! set DTIM aligment required
 //! 0 - module wakes up at beacon which is just before or equal to listen_interval
 //! 1 - module wakes up at DTIM beacon which is just before or equal to listen_interval
+#undef RSI_DTIM_ALIGNED_TYPE
 #define RSI_DTIM_ALIGNED_TYPE g_dtim_aligned_type
 
 //! Monitor interval for the FAST PSP mode
 //! default is 50 ms, and this parameter is valid for FAST PSP only
-#define RSI_MONITOR_INTERVAL g_monitor_interval
+#undef RSI_MONITOR_INTERVAL
+#define RSI_MONITOR_INTERVAL (g_monitor_interval)
 
 //! Number of DTIMs to skip during powersave
-#define RSI_NUM_OF_DTIM_SKIP g_num_of_dtim_skip
+#undef RSI_NUM_OF_DTIM_SKIP
+#define RSI_NUM_OF_DTIM_SKIP (g_num_of_dtim_skip)
 
 //!WMM PS parameters
 //! set wmm enable or disable

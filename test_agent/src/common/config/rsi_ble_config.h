@@ -144,7 +144,9 @@ extern uint16_t g_supervision_timeout;
 #define ALLOW_SCAN_REQ_WHITE_LIST_CONN_REQ_WHITE_LIST 0x03
 
 //! Address types
+/* re-defined below
 #define LE_PUBLIC_ADDRESS                             0x00
+*/
 #define LE_RANDOM_ADDRESS                             0x01
 #define LE_RESOLVABLE_PUBLIC_ADDRESS                  0x02
 #define LE_RESOLVABLE_RANDOM_ADDRESS                  0x03
@@ -154,6 +156,10 @@ extern uint16_t g_supervision_timeout;
 /*=======================================================================*/
 //! Connection parameters
 /*=======================================================================*/
+/*
+
+// Redefined below 
+
 #define LE_SCAN_INTERVAL                             0x0100
 #define LE_SCAN_WINDOW                               0x0050
 
@@ -162,23 +168,23 @@ extern uint16_t g_supervision_timeout;
 
 #define CONNECTION_LATENCY                           0x0000
 #define SUPERVISION_TIMEOUT                          0x07D0 //2000
-
+*/
 /*=======================================================================*/
 
 /*=======================================================================*/
 //! Scan command parameters
 /*=======================================================================*/
 
-#define RSI_BLE_SCAN_TYPE                             g_ble_scan_type
-#define RSI_BLE_SCAN_FILTER_TYPE                      g_ble_scan_filter_type
-#define LE_SCAN_INTERVAL                              g_le_scan_interval
-#define LE_SCAN_WINDOW                                g_le_scan_window
-#define LE_PUBLIC_ADDRESS                             g_le_public_address
+#define RSI_BLE_SCAN_TYPE                             (g_ble_scan_type)
+#define RSI_BLE_SCAN_FILTER_TYPE                      (g_ble_scan_filter_type)
+#define LE_SCAN_INTERVAL                              (g_le_scan_interval)
+#define LE_SCAN_WINDOW                                (g_le_scan_window)
+#define LE_PUBLIC_ADDRESS                             (g_le_public_address)
 
-#define CONNECTION_INTERVAL_MIN  g_connection_interval_min
-#define CONNECTION_INTERVAL_MAX g_connection_interval_max
-#define CONNECTION_LATENCY g_connection_latency
-#define SUPERVISION_TIMEOUT g_supervision_timeout
+#define CONNECTION_INTERVAL_MIN                       (g_connection_interval_min)
+#define CONNECTION_INTERVAL_MAX                       (g_connection_interval_max)
+#define CONNECTION_LATENCY                            (g_connection_latency)
+#define SUPERVISION_TIMEOUT                           (g_supervision_timeout)
 
 //!Scan status
 #define RSI_BLE_START_SCAN                            0x01

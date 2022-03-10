@@ -98,7 +98,7 @@ uint8_t* base64_decode(const char* data, uint32_t input_length, uint32_t *output
     for (int i = 0; i < 64; i++)
         decoding_table[(unsigned char) encoding_table[i]] = i;
 
-    for (int i = 0, j = 0; i < input_length;) {
+    for (uint32_t i = 0, j = 0; i < input_length;) {
 
         uint32_t sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
         uint32_t sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
