@@ -48,7 +48,12 @@ else:
             print("----------Line 48------------")
 
     os.chdir(current_directory)
-    for f in os.listdir("./firmware"):
+    dir_list = os.listdir(".")
+    print("--------Line 52------------")
+    print(dir_list)
+    print("--------Line 54------------")
+
+    for f in os.listdir("./"+rs9116_firmware+"/firmware"):
         print("------------Line 52--------------")
         print(f)
         print("------------Line 54--------------")
