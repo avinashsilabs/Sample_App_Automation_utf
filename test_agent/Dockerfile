@@ -5,7 +5,7 @@ WORKDIR /build
 COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 COPY sdk_patches/ ./sdk_patches/
 COPY utf_wifi_extension/ ./utf_wifi_extension/
-COPY src/ ./src/
+
 ENV GECKO_SDK=/build/mini_gecko_sdk
 RUN slc configuration -s $GECKO_SDK -gcc $ARM_GCC_DIR
 RUN slc signature trust --sdk $GECKO_SDK
@@ -34,22 +34,18 @@ RUN --mount=type=ssh \
     fi
     
 
-#COPY rs911x/ ./rs911x/
-
-# Copy additional files missing from release package
-#    component files
-#RUN cp -r rs911x/Host_MCU/component mini_gecko_sdk/platform/radio/wifi/rs9116
-#    SBC codec
-
-# Copy patches from sdk_patches to mini_gecko_sdk/platform/radio/wifi/rs9116
 RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 
-#RUN slc signature trust --extension-path utf_wifi_extension
+COPY src/ ./src/
+COPY map_file_parser.py .
+
+ENV PROJECT_LIST="general_test_agent concurrent_test_agent"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
+RUN ./generate_test_agents.sh
 
-CMD ["./build_test_agent.sh"]
+CMD ["./build_test_agents.sh"]
 
 

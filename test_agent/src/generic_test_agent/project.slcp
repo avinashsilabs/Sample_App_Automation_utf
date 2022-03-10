@@ -1,6 +1,6 @@
 # Silicon Labs Project Configuration Tools: slcp, v0, Component selection file.
-project_name: sqa_test_agent
-label: sqa_test_agent
+project_name: generic_test_agent
+label: generic_test_agent
 quality: alpha
 description: Interactive command line demonstration
 category: Example|Demo
@@ -29,8 +29,8 @@ configuration:
 define:
 - {name: RSI_PROP_PROTOCOL_ENABLE, value: '1'}
 source:
-- path: main.c
-- path: app.c
+- path: ../common/main.c
+- path: ../common/app.c
 - {path: commands/ble_commands.c}
 - {path: commands/bt_commands.c}
 - {path: commands/wlan_api_commands.c}
@@ -48,7 +48,6 @@ source:
 - {path: commands/ble_gatt/gatt_commands.c}
 - {path: utilities.c}
 component:
-- id: wifi-sqa-test-agent-common
 - {id: sl_system}
 - {id: iostream_retarget_stdio}
 - instance: [cli]
