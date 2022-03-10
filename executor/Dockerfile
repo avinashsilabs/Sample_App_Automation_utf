@@ -13,6 +13,7 @@ WORKDIR $APP_DIR
 ENV UTF_CORE_PATH /app/utf_core
 
 # Copy UTF core components & package install scripts
+COPY utf_core/common-requirements.txt .
 COPY utf_core/target-requirements.txt .
 COPY utf_core/target-install.sh .
 COPY utf_core/libraries/ ./libraries/
