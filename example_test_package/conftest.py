@@ -8,6 +8,16 @@ from utf.utils.logger import get_logger
 
 @pytest.fixture()
 def wiseconnect_duts(request: pytest.FixtureRequest, harness) -> Generator[List[Device], None, None]:
+    """
+    This fixture creates devices from configuration specified under defaults and under wiseconnect_duts section
+
+    Args:
+        request: FixtureRequest object provides information of requesting test case
+        harness: Harness object represents test bed configuration
+
+    Returns:
+        None
+    """
     wiseconnect_duts = harness.create_devices_for_role(request.fixturename, request)
     yield wiseconnect_duts
 
@@ -17,6 +27,17 @@ def wiseconnect_duts(request: pytest.FixtureRequest, harness) -> Generator[List[
 
 @pytest.fixture()
 def firmware_loader(request, wiseconnect_duts):
+    """
+    This fixture loads firmware on devices from configuration specified in manifest file under firmware_applications
+    section under specified marker on test case
+
+    Args:
+        request: FixtureRequest object provides context of requesting test case
+        wiseconnect_duts: list of devices on which firmware is loaded
+
+    Returns:
+        None
+    """
     for mark in request.node.iter_markers("firmware_app"):
         app_name = mark.args[0]
         fw_mgr = FirmwareManager.get_instance()
@@ -25,4 +46,4 @@ def firmware_loader(request, wiseconnect_duts):
         yield fw_mgr
 
         #load default firmware
-        fw_mgr.load_app_default_firmware(app_name, wiseconnect_duts)
+        fw_mgr.load_default_firmware_at_test_case_teardown(app_name)

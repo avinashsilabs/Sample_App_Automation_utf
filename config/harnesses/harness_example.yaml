@@ -649,6 +649,7 @@ defaults:
 
     efx32: 'efr32_4180b'
 
+    # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
         - 'rs9116_sapi'
         - 'efr32_4180b'
