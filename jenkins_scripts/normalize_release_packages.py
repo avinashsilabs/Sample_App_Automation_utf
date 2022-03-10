@@ -4,8 +4,8 @@ import os
 import shutil
 import zipfile
 
-build_location = sys.argv[1]
-rs9116_firmware = sys.argv[2]
+build_location = str(sys.argv[1])
+rs9116_firmware = str(sys.argv[2])
 
 print('-------Line 10-------------')
 print(build_location)
