@@ -39,7 +39,10 @@ RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 COPY src/ ./src/
 COPY map_file_parser.py .
 
-ENV PROJECT_LIST="general_test_agent concurrent_test_agent"
+###########################################################
+# Update the project list here if new projects are added
+###########################################################
+ENV PROJECT_LIST="generic_test_agent concurrent_test_agent"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src

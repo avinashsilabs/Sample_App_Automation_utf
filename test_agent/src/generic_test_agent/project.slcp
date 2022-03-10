@@ -4,49 +4,69 @@ label: generic_test_agent
 quality: alpha
 description: Interactive command line demonstration
 category: Example|Demo
-include:
-- path: ''
-  file_list:
-  - {path: app.h}
-  - {path: utilities.h}
-- path: 'config'
-  file_list:
-  - {path: rsi_ble_config.h}
-  - {path: rsi_wlan_config.h}
-- path: 'data'
-  file_list:
-  - {path: pcm_data_buff.h}
-- path: 'commands/ble_gatt'
-  file_list:
-  - {path: rsi_ble_gatt_device_info.h}
-  - {path: rsi_gatt_common_config.h}
-  - {path: rsi_ble_gatt_config.h}
 package: wi-fi
-configuration:
-- {name: SL_BOARD_ENABLE_VCOM, value: '1'}
-- {name: SL_CLI_MAX_INPUT_ARGUMENTS, value: '15'}
-- {name: SL_CLI_INPUT_BUFFER_SIZE, value: '(256)'}
-define:
-- {name: RSI_PROP_PROTOCOL_ENABLE, value: '1'}
+
+include:
+
+- path: '../common'
+  file_list:
+  - path: app.h
+  - path: utilities.h
+
+- path: '../common/config'
+  file_list:
+  - path: rsi_ble_config.h
+  - path: rsi_wlan_config.h
+
+- path: '../common/data'
+  file_list:
+  - path: pcm_data_buff.h
+
+- path: '../common/commands/ble_gatt'
+  file_list:
+  - path: rsi_ble_gatt_device_info.h
+  - path: rsi_gatt_common_config.h
+  - path: rsi_ble_gatt_config.h
+
 source:
 - path: ../common/main.c
 - path: ../common/app.c
-- {path: commands/ble_commands.c}
-- {path: commands/bt_commands.c}
-- {path: commands/wlan_api_commands.c}
-- {path: commands/wlan_socket_commands.c}
-- {path: commands/rs911x_commands.c}
-- {path: commands/iperf_command.c}
-- {path: commands/mqtt_commands.c}
-- {path: commands/http_commands.c}
-- {path: commands/aws_iot_sdk_commands.c}
-- {path: commands/ant_commands.c}
-- {path: commands/wlan_wireless_firmware_upgrade.c}
-- {path: commands/ble_gatt/rsi_ble_gatt_device_info.c}
-- {path: commands/ble_gatt/rsi_ble_gatt_main_task.c}
-- {path: commands/ble_gatt/rsi_ble_gatt_subtasks.c}
-- {path: commands/ble_gatt/gatt_commands.c}
-- {path: utilities.c}
+- path: ../common/utilities.c
+
+- path: ../common/commands/ble_commands.c
+- path: ../common/commands/bt_commands.c
+- path: ../common/commands/wlan_api_commands.c
+- path: ../common/commands/wlan_socket_commands.c
+- path: ../common/commands/rs911x_commands.c
+- path: ../common/commands/iperf_command.c
+- path: ../common/commands/mqtt_commands.c
+- path: ../common/commands/http_commands.c
+- path: ../common/commands/aws_iot_sdk_commands.c
+- path: ../common/commands/ant_commands.c
+- path: ../common/commands/wlan_wireless_firmware_upgrade.c
+  
+  # ble_gatt
+- path: ../common/commands/ble_gatt/rsi_ble_gatt_device_info.c
+- path: ../common/commands/ble_gatt/rsi_ble_gatt_main_task.c
+- path: ../common/commands/ble_gatt/rsi_ble_gatt_subtasks.c
+- path: ../common/commands/ble_gatt/gatt_commands.c
+
+configuration:
+- name: SL_BOARD_ENABLE_VCOM
+  value: '1'
+- name: SL_CLI_MAX_INPUT_ARGUMENTS
+  value: '15'
+- name: SL_CLI_INPUT_BUFFER_SIZE
+  value: '(256)'
+define:
+- name: RSI_PROP_PROTOCOL_ENABLE
+  value: '1'
+- name: RSI_WLAN_ENABLE
+- name: RSI_BLE_ENABLE
+- name: RSI_BT_ENABLE
+- name: RSI_ANT_ENABLE
+
+
 component:
 - {id: sl_system}
 - {id: iostream_retarget_stdio}
@@ -65,8 +85,9 @@ component:
 - {id: nvm3_default}
 - {id: aws-sdk}
 - {id: mqtt-client}
+- {id: sbc-audio-codec}
 other_file:
-- {path: readme.md}
+- path: readme.md
 toolchain_settings: []
 ui_hints:
   highlight:
