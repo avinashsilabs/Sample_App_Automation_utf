@@ -7,6 +7,11 @@ import zipfile
 build_location = sys.argv[1]
 rs9116_firmware = sys.argv[2]
 
+print('-------Line 10-------------')
+print(build_location)
+print(rs9116_firmware)
+print('-------Line 12-------------')
+
 if build_location == "build_artifacts":
     pathdir = "../manifest"
     for f in os.listdir(pathdir):
