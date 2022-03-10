@@ -74,8 +74,10 @@ pipeline {
                                         elif [ -d venv/Scripts ]; then
                                            . venv/Scripts/activate
                                         fi
+                                        cd ..
                                         ls -lR
-                                        python3 jenkins_scripts/normalize_release_packages.py ${BUILD_LOCATION} ${RS9116_FIRMWARE}
+                                        cd rs9116_binary
+                                        python3 ../jenkins_scripts/normalize_release_packages.py ${BUILD_LOCATION} ${RS9116_FIRMWARE}
                                         '''
                                     }
                                 }
