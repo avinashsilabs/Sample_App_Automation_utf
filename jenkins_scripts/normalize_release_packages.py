@@ -65,4 +65,4 @@ else:
             print("-----Line 65------")
             print(dir_list)
             print("-----Line 67------")
-            shutil.copy2("./"+f, "../manifest")
+            shutil.copy2("./"+rs9116_firmware+"/firmware/"+f, "../manifest")
