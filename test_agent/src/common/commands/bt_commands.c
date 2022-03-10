@@ -413,40 +413,43 @@ int32_t calculate_sbc_frame_size(rsi_bt_a2dp_sbc_codec_cap_t *sbc_cap)
 
     block_mode = sbc_cap->BlockLength;
     switch (block_mode) {
+        default:
         case SBC_BLOCK_LENGTH_4:
-        blocks = 4;
-        break;
+            blocks = 4;
+            break;
         case SBC_BLOCK_LENGTH_8:
-        blocks = 8;
-        break;
+            blocks = 8;
+            break;
         case SBC_BLOCK_LENGTH_12:
-        blocks = 12;
-        break;
+            blocks = 12;
+            break;
         case SBC_BLOCK_LENGTH_16:
-        blocks = 16;
-        break;
+            blocks = 16;
+            break;
     }
 
     mode = sbc_cap->ChannelMode;
     switch (mode) {
+        default:
         case SBC_CHANNEL_MODE_MONO:
-        channels = 1;
-        break;
+            channels = 1;
+            break;
         case SBC_CHANNEL_MODE_DUAL_CHANNEL: /* fall-through */
         case SBC_CHANNEL_MODE_STEREO:
         case SBC_CHANNEL_MODE_JOINT_STEREO:
-        channels = 2;
-        break;
+            channels = 2;
+            break;
     }
 
     subband_mode = sbc_cap->SubBands;
     switch (subband_mode) {
+        default:
         case SBC_SUBBANDS_4:
-        subbands = 4;
-        break;
+            subbands = 4;
+            break;
         case SBC_SUBBANDS_8:
-        subbands = 8;
-        break;
+            subbands = 8;
+            break;
     }
 
     bitpool = sbc_cap->MaxBitPool;
