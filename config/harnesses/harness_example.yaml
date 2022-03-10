@@ -155,9 +155,10 @@ devices:
                 # is a statically configured access point, assumed
                 # to be set up ahead of time with the settings below
                 type: 'wifi.access_points.static'
-                security: WPA
-                ssid: 'Codecom123'
-                passphrase: 'thisisatestnework'
+                security: WPA2
+                ssid: 'MACHANI_SIVAPRASAD_BSNLFIBER'
+                passphrase: 'ygr294548'
+                channel: 7
 
 
     # This represents another access point configuration.
@@ -633,22 +634,39 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.2"
-                host_username: "test"
-                host_password: "test123"
+                host_ip: "192.168.1.5"
+                host_username: "simachan"
+                host_password: "simachan"
+
+     raspi_ftp_server:
+        interfaces:
+            vsftpd_ftp_server:
+                type: 'ftp.server.vsftpd_ftp_server'
+                tls_enabled: false
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+
+    raspi_ftp_client:
+        interfaces:
+            ftplib_ftp_client:
+                type: 'ftp.server.ftplib_ftp_client'
+                tls_enabled: false
+                # this is fixed as we are creating user in docker file so that user will get created while creating container
+                username: "ftpuser"
+                password: "ftpuser"
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink_ap'
+    wifi_access_point: 'static_ap'
 
     # To connect the multiple access points
     wifi_access_points:
@@ -728,6 +746,10 @@ defaults:
         certfile: "python-thing-certificate.pem.crt"
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
+
+    ftp_server: 'raspi_ftp_server'
+
+    ftp_client: 'raspi_ftp_client'
 
     net_perf:
         server_options:
