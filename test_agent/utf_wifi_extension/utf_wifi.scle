@@ -1,0 +1,10 @@
+id: utf_wifi
+version: 1.0.0
+label: UTF Wi-Fi sdk extension
+description: >
+    SDK extension for UTF Wi-Fi
+component_path:
+- path: src/common
+sdk:
+    id: gecko_sdk
+    version: "3.1.0"
