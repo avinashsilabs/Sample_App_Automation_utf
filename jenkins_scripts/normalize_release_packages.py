@@ -57,5 +57,5 @@ else:
         print("------------Line 52--------------")
         print(f)
         print("------------Line 54--------------")
-        if f.startswith("RS9116") and f.endswith(".rps"):
+        if f.startswith("RS91") and f.endswith(".rps"):
             shutil.copy2(f, "../manifest")
