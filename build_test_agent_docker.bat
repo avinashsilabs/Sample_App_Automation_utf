@@ -35,12 +35,4 @@ popd
 
 copy test_agent\build\*.hex manifest
 
-:: run python script to parse map file to view memory usage
-::call venv\scripts\activate
-::python test_agent\map_file_parser.py test_agent\build\debug\sqa_test_agent.map 1024
 
-
-::
-exit /b 0
-
-::git archive --remote ssh://git@stash.silabs.com/redpine/release_packages.git --format tar RS916W.2.5.0.14 RS916W.2.5.0.14.zip -o RS916W.2.5.0.14.tar
