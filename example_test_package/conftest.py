@@ -12,8 +12,8 @@ def wiseconnect_duts(request: pytest.FixtureRequest, harness) -> Generator[List[
     This fixture creates devices from configuration specified under defaults and under wiseconnect_duts section
 
     Args:
-        request: FixtureRequest object provides information of requesting test case
-        harness: Harness object represents test bed configuration
+        request: ``FixtureRequest`` This object provides information of requesting test case
+        harness: ``Harness`` This object represents test bed configuration
 
     Returns:
         None
@@ -32,8 +32,8 @@ def firmware_loader(request, wiseconnect_duts):
     section under specified marker on test case
 
     Args:
-        request: FixtureRequest object provides context of requesting test case
-        wiseconnect_duts: list of devices on which firmware is loaded
+        request: ``FixtureRequest`` This object provides context of requesting test case
+        wiseconnect_duts: ``List[Device]`` list of devices on which firmware is loaded
 
     Returns:
         None
