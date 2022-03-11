@@ -6,18 +6,19 @@ from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.logger import get_logger
 
 """Test Author = Rakesh Reddy Nayini
-
-        1. Start the sniffer before connection
-        2. Required A7 EVK(DUT) board 
-        3. Stop the sniffer
-        4. Initiate ping from the dut
-        5. Analyizing all sniffer capture packets and find the arp announcement packet
+            
+        1. DUT in AP Mode
+        2. Required A7 EVK(DUT) board     
+        3. Start the sniffer before connection
+        4. Stop the sniffer
+        5. Initiate ping from the dut
+        6. Analyizing all sniffer capture packets and find the arp announcement packet
 
 setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
-        4. Access Point(Third Party AP's)
+        
 """
 
 
@@ -46,6 +47,7 @@ def __print_throughput(iperf_throughput: dict):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [36])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_TCP_Tx_data_on_remote_peer_C19462(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     mode = 'static'
     ip_address = '192.168.100.76'
@@ -64,17 +66,13 @@ def test_TCP_Tx_data_on_remote_peer_C19462(wifi_sniffer, net_perf_client, wifi_d
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
-
     # preparing iperf
     logger().info("******* preparing iperf ********")
     net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
-
     # creating results object for sharing between host and dut
     logger().info("******* creating results object for sharing between host and dut ********")
     result = Result(net_perf_client.interfaces.net_perf.protocol)
-
     # open socket and start listening
     logger().info("******* open socket and start listening ********")
     with wifi_dut.interfaces.wifi.start_socket_reader(
@@ -91,11 +89,12 @@ def test_TCP_Tx_data_on_remote_peer_C19462(wifi_sniffer, net_perf_client, wifi_d
         # capture device output
         logger().info("******* capture device output ********")
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
-
     # get and print throughput
     logger().info("******* get and print throughput ********")
     tp = net_perf_client.interfaces.net_perf.process_output(result)
     assert tp is not None
+    if not tp:
+        logger().info("**** Filed to print throughput ****")
     __print_throughput(tp)
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     logger().info('********** Validate Probe req(Broadcast/Unicast), authentication ,association, eapol **********')
@@ -124,6 +123,7 @@ def test_TCP_Tx_data_on_remote_peer_C19462(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [36])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_TCP_Rx_C19464(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     mode = 'static'
     ip_address = '192.168.100.76'
@@ -142,14 +142,11 @@ def test_TCP_Rx_C19464(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, pro
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
-
     # starting iperf
     logger().info("****** starting iperf ******")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
     net_perf_client.interfaces.net_perf.start()
-
     # open socket and send traffic
     logger().info("****** open socket and send traffic ******")
     wifi_dut.interfaces.wifi.send_traffic_from_device(
@@ -163,6 +160,8 @@ def test_TCP_Rx_C19464(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, pro
     logger().info("****** get and print throughput ******")
     tp = net_perf_client.interfaces.net_perf.process_output()
     assert tp is not None
+    if not tp:
+        logger().info("***** Failed to print throughput *****")
     __print_throughput(tp)
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     logger().info('********** Validate Probe req(Broadcast/Unicast), authentication ,association, eapol **********')
@@ -189,6 +188,7 @@ def test_TCP_Rx_C19464(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, pro
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("channel", [36])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_UDP_Tx_data_on_Remote_peer_C19463(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     mode = 'static'
     ip_address = '192.168.100.76'
@@ -207,17 +207,13 @@ def test_UDP_Tx_data_on_Remote_peer_C19463(wifi_sniffer, net_perf_client, wifi_d
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
-
     # preparing iperf
     logger().info("****** preparing iperf ******")
     net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
-
     # creating results object for sharing between host and dut
     logger().info("****** creating results object for sharing between host and dut ******")
     result = Result(net_perf_client.interfaces.net_perf.protocol)
-
     # open socket and start listening
     logger().info("****** open socket and start listening ******")
     with wifi_dut.interfaces.wifi.start_socket_reader(
@@ -234,11 +230,12 @@ def test_UDP_Tx_data_on_Remote_peer_C19463(wifi_sniffer, net_perf_client, wifi_d
         # capture device output
         logger().info("****** capture device output ******")
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
-
     # get and print throughput
     logger().info("****** get and print throughput ******")
     tp = net_perf_client.interfaces.net_perf.process_output(result)
     assert tp is not None
+    if not tp:
+        logger().info("**** Filed to print throughput ****")
     __print_throughput(tp)
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     logger().info('********** Validate Probe req(Broadcast/Unicast), authentication ,association, eapol **********')
@@ -265,6 +262,7 @@ def test_UDP_Tx_data_on_Remote_peer_C19463(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("channel", [36])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     mode = 'static'
     ip_address = '192.168.100.76'
@@ -283,14 +281,13 @@ def test_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Host IP: {host_ip}")
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
-
     # starting iperf
     logger().info("********** starting iperf ********")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
     net_perf_client.interfaces.net_perf.start()
-
     # open socket and send traffic
     logger().info("********** open socket and send traffic ********")
     wifi_dut.interfaces.wifi.send_traffic_from_device(
@@ -300,7 +297,6 @@ def test_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
     )
-
     # get and print throughput
     logger().info("********** get and print throughput ********")
     tp = net_perf_client.interfaces.net_perf.process_output()
