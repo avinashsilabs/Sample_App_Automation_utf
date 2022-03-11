@@ -95,8 +95,10 @@ class WifiThread_PMKmode(ThreadBase):
             dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"Device mac address: {dut_mac_address}")
             logger().info("DUT to power save in Wifi+bluetooth mode")
-            self.wifi_dut.interfaces.wifi.power_save(2)
-            self.wifi_dut.interfaces.wifi.bt_power_save(2)
+            result = self.wifi_dut.interfaces.wifi.power_save(2)
+            assert result
+            result = self.wifi_dut.interfaces.wifi.bt_power_save(2)
+            assert result
             time.sleep(15)
             logger().info(f"Validate Probe req(Broadcast/Unicast), authentication ,association, eapol")
             packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
@@ -105,7 +107,7 @@ class WifiThread_PMKmode(ThreadBase):
             logger().info(f"Validating the power management bit")
             packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
             status = ping(device_ip, 100)
-            assert status == 1, f"ping is successful"
+            assert status == 1,f"ping failed"
             self.wifi_sniffer.interfaces.capture.stop_capture()
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -158,7 +160,7 @@ class WifiThread_PSKMODE(ThreadBase):
             logger().info(f"Validating the power management bit")
             packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
             status = ping(device_ip, 100)
-            assert status == 1, f"ping is successful"
+            assert status == 1,f"ping failed"
             self.wifi_sniffer.interfaces.capture.stop_capture()
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -269,7 +271,10 @@ class BleThread_connection(ThreadBase):
             time.sleep(10)
             logger().info(f"Start scanning and connect to ble client")
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+            logger().info(
+                f"Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?")
             timeout = 120
+            logger().info(f"Initiating connection this can take upto {timeout} seconds....")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
             logger().info(f"Disconnect")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
