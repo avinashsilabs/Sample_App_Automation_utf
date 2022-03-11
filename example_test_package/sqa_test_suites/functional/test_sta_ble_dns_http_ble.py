@@ -4,8 +4,9 @@ from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
-from utf.utils.iperf.iperf_utils import ping
+from utf.utils.iperf.iperf_utils import ping, get_host_ip
 from utf.interfaces.wifi import WlanError
+from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
@@ -576,6 +577,233 @@ class BleThread_initdeinit(ThreadBase):
             self.wifi_dut.interfaces.wifi.bt_deinit()
             time.sleep(1)
 
+class WifidatatransferThread(ThreadBase):
+    def __init__(
+        self,
+        wifi_sniffer,
+        wifi_dut,
+        wifi_access_point,
+        wifi_client,
+        net_perf_client=None,
+        protocol=None,
+        testcase=None,
+    ):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.testcase = testcase
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.wifi_client = wifi_client
+
+    def __print_throughput(self, iperf_throughput: dict):
+        if iperf_throughput is not None:
+            print_dict("##     ", iperf_throughput)
+
+    def run(self):
+        validation = True
+        packet_filter2 = False
+        logger().info("configuring the Sniffer with the channel")
+        self.wifi_sniffer.interfaces.capture.configure_interface(
+            channel=self.wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+        time.sleep(4)
+        self.wifi_dut.interfaces.wifi.scan(ssid=None)
+        logger().info(f"Join Wi-Fi Access Point")
+        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+        logger().info(f"Successfully connected to AP")
+        time.sleep(1)
+        logger().info(f"This API Enables the DHCP in DUT")
+        ip_config = self.wifi_dut.interfaces.wifi.start_ip()
+        time.sleep(3)
+        self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        time.sleep(2)
+        device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
+        logger().info(f"Found device ip: {device_ip}")
+        logger().info(f"This API Enables the wifi power save mode in DUT")
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info(f"Enables the bt power save in DUT")
+        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        time.sleep(5)
+        logger().info(f"Initiate ping from third party wifi-client to DUT")
+        status = ping(device_ip, 10)
+        assert (
+            status is True
+        ), "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+        logger().info(f"Fetches the DUT mac address")
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+        logger().info(f"Validating the power management bit")
+        packet_filter1 = f"wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}"
+        logger().info(f"preparing iperf")
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"{host_ip}")
+        self.net_perf_client.interfaces.net_perf.init_client(
+            host_ip=host_ip, device_ip=device_ip, protocol=self.protocol
+        )
+        logger().info(f"creating results object for sharing between host and dut")
+        result = Result(self.net_perf_client.interfaces.net_perf.protocol)
+        logger().info(f"open socket and start listening")
+        with self.wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=self.net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=self.net_perf_client.interfaces.net_perf.protocol,
+            port=self.net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=self.net_perf_client.interfaces.net_perf.client_data_len,
+            time=self.net_perf_client.interfaces.net_perf.client_timeout,
+        ) as obj:
+            logger().info(f"start iperf")
+            self.net_perf_client.interfaces.net_perf.start()
+            logger().info(f"capture device output")
+            self.wifi_dut.interfaces.wifi.read_from_device(
+                obj, self.net_perf_client.interfaces.net_perf.client_timeout
+            )
+        logger().info(f"get and print throughput")
+        tp = self.net_perf_client.interfaces.net_perf.process_output(result)
+        assert tp is not None
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter1, packet_filter2
+        )["packet_count"], "Unable to find power management bit in sniffer"
+        logger().info(f"Verified device is in power save")
+
+class otafthread(ThreadBase):
+    def __init__(self, wifi_dut,  wifi_access_point, http_server, wifi_client, wifi_sniffer, testcase=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_client = wifi_client
+        self.wifi_sniffer = wifi_sniffer
+        self.http_server = http_server
+        self.testcase = testcase
+
+    def run(self):
+        logger().info("configuring the Sniffer with the channel")
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+        """ ******* SERVER CHECKS ******* """
+        logger().info("checking server stats....")
+        server_stat = self.http_server.interfaces.http.started
+        assert server_stat == True
+        logger().info(f'http server state is {server_stat}')
+        logger().info("fetching server ip....")
+        host_ip = get_host_ip()
+        start_time = time.perf_counter_ns()
+        async_timestamp = 0
+        logger().info(f"server ip is {host_ip}")
+        logger().info("pinging to server ip....")
+        status = ping(host_ip, 10)
+        assert status == 1, "unable to ping to server"
+        logger().info("Fetching the DUT version...")
+        self.wifi_dut.interfaces.wifi.version()
+        logger().info("Joining ap....")
+        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+        logger().info("Starting dhcp....")
+        self.wifi_dut.interfaces.wifi.start_ip()
+        logger().info(f"performs the firmware upgrade on DUT over the http port")
+        logger().info("Performing fw upgrade on DUT....")
+        self.wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+        time.sleep(90)
+        with pytest.raises(WlanError) as exc_info:
+         logger().info("fetching otaf upgrade status....")
+         self.wifi_dut.interfaces.wifi.get_http_otaf_status()
+        assert exc_info.value.error_code == 0xbb38
+
+        time.sleep(10)
+        events = self.wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
+                    async_timestamp = event.timestamp
+
+        if not async_timestamp:
+            logger().info(f"Asynchronous message is not received after otaf over http")
+        else:
+            time_duration = (async_timestamp - start_time) / 1000000000
+            logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+        logger().info("resetting the DUT after upgrade....")
+        self.wifi_dut.interfaces.wifi.reset_soft()
+        time.sleep(60)
+
+        logger().info("Initializing DUT....")
+        self.wifi_dut.interfaces.wifi.init()
+        time.sleep(10)
+
+        logger().info("fetching DUT version after init....")
+        self.wifi_dut.interfaces.wifi.version()
+
+        logger().info("Stop Sniffer finally")
+        self.wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+        time.sleep(10)
+
+
+class BleThread_Multipleconnection(ThreadBase):
+    def __init__(self, wifi_dut, ble_client, mode):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.mode = mode
+
+    def run(self):
+           if (self.mode == "ble_master"):
+              logger().info(f"Start DUT")
+              bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+              assert bt_dut_address is not None
+              logger().info(f"Start ble client")
+              bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+              assert bt_client_address is not None
+              time.sleep(1)
+              logger().info(f"Start scanning and connect to ble client")
+              self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+              timeout = 120
+              self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+              self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+           if (self.mode == "ble_slave"):
+               bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+               assert bt_dut_address is not None
+               self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+               logger().info(f"Begin Scanning for BLE devices")
+               bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+               assert bt_client_address is not None
+               device_found = False
+               sw = Stopwatch()
+               while sw.elapsed_sec < 30:
+                   found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+                   if bt_dut_address in found_devices and \
+                           found_devices[bt_dut_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data:
+                       device_found = True
+                       break
+               self.ble_client.interfaces.bluetooth.stop_scanning()
+               assert device_found
+
+               self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
+               time.sleep(2)
+               self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+               time.sleep(1)
+               self.ble_client.interfaces.wifi.ble_start_advertising()
+               time.sleep(1)
+               self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
+               time.sleep(2)
+               self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+               time.sleep(1)
+               self.ble_client.interfaces.wifi.ble_start_advertising()
+               time.sleep(1)
+               self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
+               time.sleep(2)
+               self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+               time.sleep(1)
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -749,4 +977,58 @@ def test_threading_scan_bledeinit_C20326(wifi_sniffer, wifi_dut, wifi_access_poi
     testcase = "testcase for scan + ble_init_deinit"
     with WifidatatransferThread(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol, testcase=testcase), BleThread_initdeinit(wifi_dut, ble_client, mode):
         time.sleep(15)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation
+        | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.OpenMode
+        | RS9116FeatureBitMap.PSKSecurity,
+    },
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_threading_sta_ble_C20341(wifi_sniffer, wifi_dut, wifi_access_point,  wifi_client,  net_perf_client,  protocol, ble_client,
+):
+    mode = "ble_slave"
+    testcase = "testcase for datatransfer + multiple ble connections(slave) "
+    with WifidatatransferThread(
+        wifi_sniffer,
+        wifi_dut,
+        wifi_access_point,
+        wifi_client,
+        net_perf_client,
+        protocol,
+        testcase=testcase,
+    ), BleThread_Multipleconnection(wifi_dut, ble_client, mode):
+        time.sleep(15)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN |  RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+                          | RS9116TCPIPFeatureBitMap.SSL
+                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+        },
+    )
+@pytest.mark.http_server("raspi_lighttpd_tls")
+def test_threading_sta_ble_C20238(wifi_dut,  wifi_access_point, http_server, wifi_client, wifi_sniffer,  ble_client):
+    mode = "ble_slave"
+    testcase = "sta + ble connection as a slave"
+    with otafthread(wifi_dut, wifi_access_point, http_server, wifi_client, wifi_sniffer, testcase=testcase), BleThread_connection(wifi_dut, ble_client, mode):
+        time.sleep(15)
+
 
