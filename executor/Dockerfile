@@ -5,6 +5,12 @@ FROM $BASE_IMAGE:02_28_2022
 ENV APP_DIR=/app
 WORKDIR $APP_DIR
 
+user root
+RUN apt update
+RUN useradd -p $(openssl passwd -1 password) username2
+RUN sudo apt install -y vsftpd
+user dockerUser
+
 #################################################
 # UTF Core components
 #
