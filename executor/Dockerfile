@@ -5,11 +5,12 @@ FROM $BASE_IMAGE:02_28_2022
 ENV APP_DIR=/app
 WORKDIR $APP_DIR
 
-user root
+#@To do remove below four lines after updating the base image in utf_core.
+USER root
 RUN apt update
-RUN useradd -p $(openssl passwd -1 password) username2
+RUN useradd -p $(openssl passwd -1 ftpuser) ftpuser
 RUN sudo apt install -y vsftpd
-user dockerUser
+USER dockerUser
 
 #################################################
 # UTF Core components
@@ -19,6 +20,7 @@ user dockerUser
 ENV UTF_CORE_PATH /app/utf_core
 
 # Copy UTF core components & package install scripts
+COPY utf_core/common-requirements.txt .
 COPY utf_core/target-requirements.txt .
 COPY utf_core/target-install.sh .
 COPY utf_core/libraries/ ./libraries/

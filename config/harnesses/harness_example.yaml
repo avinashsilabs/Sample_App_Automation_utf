@@ -642,6 +642,12 @@ devices:
             vsftpd_ftp_server:
                 type: 'ftp.server.vsftpd_ftp_server'
                 tls_enabled: false
+
+    raspi_ftp_server_tls:
+        interfaces:
+            vsftpd_ftp_server:
+                type: 'ftp.server.vsftpd_ftp_server'
+                tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
 
@@ -650,6 +656,15 @@ devices:
             ftplib_ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
+                # this is fixed as we are creating user in docker file so that user will get created while creating container
+                username: "ftpuser"
+                password: "ftpuser"
+    
+    raspi_ftp_client_tls:
+        interfaces:
+            ftplib_ftp_client:
+                type: 'ftp.client.ftplib_ftp_client'
+                tls_enabled: true
                 # this is fixed as we are creating user in docker file so that user will get created while creating container
                 username: "ftpuser"
                 password: "ftpuser"
