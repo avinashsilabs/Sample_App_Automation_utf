@@ -4,7 +4,6 @@ WORKDIR /build
 
 COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 COPY sdk_patches/ ./sdk_patches/
-COPY utf_wifi_extension/ ./utf_wifi_extension/
 
 ENV GECKO_SDK=/build/mini_gecko_sdk
 RUN slc configuration -s $GECKO_SDK -gcc $ARM_GCC_DIR

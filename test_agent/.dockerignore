@@ -1,12 +1,2 @@
-#ignore everything by default
-**
-
-!rs911x/Host_MCU/test/**
-!rs911x/Host_MCU/component/**
-!rs911x/Host_MCU/sapi/**
-!rs911x/Host_MCU/third_party/**
-!mini_gecko_sdk/**
-!sdk_patches/**
-!src
-!utf_wifi_extension
-!map_file_parser.py
+rs911x/
+build/
