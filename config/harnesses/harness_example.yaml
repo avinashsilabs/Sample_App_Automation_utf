@@ -549,8 +549,8 @@ devices:
                 shell: 'telnet_shell'
             telnet_shell:
                 type: 'shell.telnet_shell'
-                remote: '10.4.1.56'
-                port: 21
+                remote: '192.168.10.185'
+                port: 3001
                 username: null
                 password: null
 
@@ -719,6 +719,13 @@ defaults:
         ble_advertising_data: 'HELLO'
         bt_local_name: "rs911x_bt_spp"
         bt_pin_code: "4321"
+
+    iop_sockets:
+        server_ip: '192.168.10.212'
+        server_port: '6001'
+        att_channel: 1
+        db_value: 2
+        att_enable: true
 
     aws_iot:
         hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
