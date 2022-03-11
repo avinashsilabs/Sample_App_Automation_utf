@@ -81,9 +81,10 @@ class IopTcpIpSockets:
 
 
 @pytest.mark.rf_attenuator('50pa500_attenuator')
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -198,9 +199,10 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
 
 
 @pytest.mark.rf_attenuator('50pa500_attenuator')
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -314,7 +316,6 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
         logger().info(f"Total execution time of test case = {exact_execution_time}")
 
 
-@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -338,8 +339,8 @@ pytestmark = [
         },
     ),
 ]
-
-
+@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     topic_1 = "IOP_AWS_Shadow"
 
@@ -383,7 +384,6 @@ def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws
         logger().info("Stop Sniffer finally")
 
 
-@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -406,6 +406,8 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     topic_1 = "IOP_AWS_Shadow"
 
@@ -452,7 +454,6 @@ def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut,
         logger().info("Stop Sniffer finally")
 
 
-@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -476,6 +477,8 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     rejected_event_counter = 0
     timeout_event_counter = 0
@@ -529,7 +532,6 @@ def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_wit
     logger().info(f"Total number of Timeout Event Counter = {timeout_event_counter}")
 
 
-@pytest.mark.rf_attenuator('50pa500_attenuator')
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -552,6 +554,8 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_device_shadow_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     rejected_event_counter = 0
     timeout_event_counter = 0
