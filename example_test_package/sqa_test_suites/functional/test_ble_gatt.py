@@ -29,8 +29,6 @@ This test case needs a sqa_test_agent_multi_gatt.hex file to be loaded on EFR me
 
 """ 
  
-
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -75,9 +73,6 @@ def test_fetch_profiles_from_RD1_C19860(wifi_dut,  ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
     logger().info(" Issued BLE disconnect ")
 
-
-
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -131,7 +126,6 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_client):
     logger().info(" Issued BLE disconnect.... ")
 
 
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -195,10 +189,8 @@ def test_fetch_characteristis_from_RD1_C19863(wifi_dut, ble_client):
 
       # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-l   logger().info(" Issued BLE disconnect.... ")
+    logger().info(" Issued BLE disconnect.... ")
 
-
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi={
