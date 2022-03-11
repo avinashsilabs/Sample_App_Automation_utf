@@ -5,3 +5,14 @@ firmware:
 # List of devices to be reset when needed
 # reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
 reset: [efx32]
+
+firmware_applications:
+    # List of markers for test cases
+    wifitest:
+    # List of devices and their firmware images for this marker
+    - device_type: 'rs911x'
+      device_subtype: 'rs9116'
+      filename: 'RS9116W.2.4.1.17.rps'
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'sqa_test_agent.hex'
