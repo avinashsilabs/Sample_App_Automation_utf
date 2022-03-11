@@ -772,7 +772,6 @@ class BleThread_Multipleconnection(ThreadBase):
                bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
                assert bt_dut_address is not None
                self.wifi_dut.interfaces.wifi.ble_start_advertising()
-
                logger().info(f"Begin Scanning for BLE devices")
                bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
                assert bt_client_address is not None
