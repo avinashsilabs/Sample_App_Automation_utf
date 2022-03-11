@@ -786,7 +786,6 @@ class BleThread_Multipleconnection(ThreadBase):
                        break
                self.ble_client.interfaces.bluetooth.stop_scanning()
                assert device_found
-
                self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
                time.sleep(2)
                self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
