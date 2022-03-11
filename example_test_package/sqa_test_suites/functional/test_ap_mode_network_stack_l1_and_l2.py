@@ -66,6 +66,8 @@ def test_TCP_Tx_data_on_remote_peer_C19462(wifi_sniffer, net_perf_client, wifi_d
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Host IP: {host_ip}")
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
     # preparing iperf
     logger().info("******* preparing iperf ********")
@@ -142,6 +144,8 @@ def test_TCP_Rx_C19464(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, pro
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Host IP: {host_ip}")
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
     # starting iperf
     logger().info("****** starting iperf ******")
@@ -207,6 +211,8 @@ def test_UDP_Tx_data_on_Remote_peer_C19463(wifi_sniffer, net_perf_client, wifi_d
     wifi_client.interfaces.wifi.join()
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Host IP: {host_ip}")
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
     # preparing iperf
     logger().info("****** preparing iperf ******")
