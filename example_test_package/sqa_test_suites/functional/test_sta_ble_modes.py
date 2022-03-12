@@ -270,10 +270,8 @@ class BleThread_connection(ThreadBase):
             time.sleep(10)
             logger().info(f"Start scanning and connect to ble client")
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-            logger().info(
-                f"Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?")
             timeout = 120
-            logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+            logger().info(f"connect")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
             logger().info(f"Disconnect")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
