@@ -643,7 +643,7 @@ class WifidatatransferThread(ThreadBase):
         packet_filter1 = f"wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}"
         logger().info(f"preparing iperf")
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"{host_ip}")
+        logger().info(f"host ip address is {host_ip}")
         self.net_perf_client.interfaces.net_perf.init_client(
             host_ip=host_ip, device_ip=device_ip, protocol=self.protocol
         )
@@ -696,6 +696,7 @@ class otafthread(ThreadBase):
         logger().info(f'http server state is {server_stat}')
         logger().info("fetching server ip....")
         host_ip = get_host_ip()
+        logger().info(f"{host_ip}")
         start_time = time.perf_counter_ns()
         async_timestamp = 0
         logger().info(f"server ip is {host_ip}")
