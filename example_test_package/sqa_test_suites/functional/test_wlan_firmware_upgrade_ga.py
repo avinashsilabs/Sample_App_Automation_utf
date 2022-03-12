@@ -16,6 +16,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
+    RS9116CustomFeatureBitMap,
     RS9116PowerSaveModes,
     SocketOptions,
     SocketType,
@@ -35,33 +36,47 @@ from utf.utils.iperf.iperf_utils import print_dict
 def logger():
     return get_logger(__name__)
 
-def ApWirelessOff(wifi_access_point,wifi_dut, wait_time,rejoin_failure):
 
-    time.sleep(wait_time)
-    logger().info(f"Disabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.stop_ap()
-    if rejoin_failure:
-        time.sleep(120)
-        end_time = datetime.now() + timedelta(minutes=2)
-        logger().info(f"time start {datetime.now()}")
-        while 1: #datetime.now() < end_time:
-            """validate rejoin retry failure"""
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            rejoin_error_events = [event for event in events if
-                                   event.event_type == RS9116AsyncEventType.RejoinError]
-            if len(rejoin_error_events):
-                logger().info(f'RE-JOIN ERROR = {rejoin_error_events}')
-                break
-            else:
-                logger().info(f'RE-JOIN ERROR not observed')
-                assert False
-        logger().info(f"time end {datetime.now()}")
+def __print_throughput(iperf_throughput: dict):
+    if iperf_throughput is not None:
+        print_dict("##     ", iperf_throughput)
 
-    if not rejoin_failure:
-        time.sleep(5)
-        logger().info(f"Enabling Wireless in AP")
-        wifi_access_point.interfaces.wifi.start_ap()
-        time.sleep(5)
+
+#this thread is used for AP power ON/OFF
+class ApWirelessOff:
+    def __init__(self, wifi_access_point,wifi_dut, wait_time,rejoin_failure):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wait_time = wait_time
+        self.rejoin_failure = rejoin_failure
+
+    def run(self):
+        time.sleep(self.wait_time)
+        logger().info(f"Disabling Wireless in AP")
+        self.wifi_access_point.interfaces.wifi.stop_ap()
+        if self.rejoin_failure:
+            time.sleep(120)
+            end_time = datetime.now() + timedelta(minutes=2)
+            logger().info(f"time start {datetime.now()}")
+            while 1:
+                """validate rejoin retry failure"""
+                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                rejoin_error_events = [event for event in events if
+                                       event.event_type == RS9116AsyncEventType.RejoinError]
+                if len(rejoin_error_events):
+                    logger().info(f'RE-JOIN ERROR = {rejoin_error_events}')
+                    break
+                else:
+                    logger().info(f'RE-JOIN ERROR not observed')
+                    assert False
+            logger().info(f"time end {datetime.now()}")
+
+        if not self.rejoin_failure:
+            time.sleep(5)
+            logger().info(f"Enabling Wireless in AP")
+            self.wifi_access_point.interfaces.wifi.start_ap()
+            time.sleep(5)
 
 
 @pytest.mark.config(
@@ -80,7 +95,7 @@ def ApWirelessOff(wifi_access_point,wifi_dut, wait_time,rejoin_failure):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
-#@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_C19377(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -88,7 +103,7 @@ def test_C19377(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
         )
     testcase = "test_Upgradation_through_Wireless_interface_in_station_mode_in_SPI"
     logger().info(f"testcase : {testcase}")
-    #firmware_path = '/app/test_package/RS9116.NB0.WC.GENR.OSI.2.3.0.0001.rps'
+
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -112,6 +127,7 @@ def test_C19377(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
     logger().info(f"upgraded message: {alert_msg}")
     assert "Firmware Upgraded Successfully" in alert_msg,alert_msg
     wifi_dut.reset()
+    logger().info("*************Need to add de init functionality instead of reset*********")
     time.sleep(90)
     wifi_dut.interfaces.wifi.wireless_init()
     upgraded_version = wifi_dut.interfaces.wifi.version()
@@ -131,6 +147,7 @@ def test_C19377(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     "rejoin_max_retry": 40,
     "scan_interval": 6,
     "beacon_missed_count": 40,
@@ -138,7 +155,7 @@ def test_C19377(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
-#@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_C19379(wifi_dut, wifi_access_point, wiseconnect_web):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -165,15 +182,14 @@ def test_C19379(wifi_dut, wifi_access_point, wiseconnect_web):
         ip_address=device_ip, firmware_file_path=firmware_path, upgrade_wait_time=300)
     logger().info(f"upgraded message: {alert_msg}")
     assert "Firmware Upgraded Successfully" in alert_msg, alert_msg
-    #wifi_dut.interfaces.wifi.wireless_deinit()
-    #wifi_dut.reset()
     wifi_dut.interfaces.wifi.reset_soft()
+    logger().info("*************Need to add de init functionality instead of reset*********")
     time.sleep(90)
     wifi_dut.interfaces.wifi.wireless_init()
     upgraded_version = wifi_dut.interfaces.wifi.version()
     logger().info(f"Upgraded version: {upgraded_version}")
 
-#
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -184,6 +200,7 @@ def test_C19379(wifi_dut, wifi_access_point, wiseconnect_web):
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     "rejoin_max_retry": 10,
     "scan_interval": 6,
     "beacon_missed_count": 40,
@@ -191,7 +208,7 @@ def test_C19379(wifi_dut, wifi_access_point, wiseconnect_web):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
-#@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_C19380(wifi_dut, wifi_access_point, wiseconnect_web):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -221,14 +238,13 @@ def test_C19380(wifi_dut, wifi_access_point, wiseconnect_web):
         alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
             ip_address=device_ip, firmware_file_path=firmware_path, upgrade_wait_time=300)
         logger().info(f"upgraded message: {alert_msg}")
-        #assert "Firmware Upgraded Successfully" in alert_msg, alert_msg
-
         if i == 0:
             time.sleep(90)
             logger().info(f"Enabling Wireless in AP")
             wifi_access_point.interfaces.wifi.start_ap()
             time.sleep(20)
     wifi_dut.interfaces.wifi.reset_soft()
+    logger().info("*************Need to add de init functionality instead of reset*********")
     time.sleep(90)
     wifi_dut.interfaces.wifi.wireless_init()
     upgraded_version = wifi_dut.interfaces.wifi.version()
@@ -236,6 +252,247 @@ def test_C19380(wifi_dut, wifi_access_point, wiseconnect_web):
 
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPSServer | RS9116TCPIPFeatureBitMap.SSL,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        #"ca_cert": "ca-chain.cert.pem",
+        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
+        "server_key": "mosquitto-utf.silabs.com.key.pem",
+        "rejoin_max_retry": 0,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_C19381(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+    testcase = "test_Firmware_upgrade_using_HTTPs_server"
+    logger().info(f"testcase : {testcase}")
+
+    logger().info("This testcase will fail ,see issue RSC-8849")
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    firmware_path = '/app/manifest/RS9116W.2.4.1.17.rps'
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    status = ping(device_ip, 10)
+    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
+
+    current_version = wifi_dut.interfaces.wifi.version()
+    logger().info(f"Current version: {current_version}")
+    wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
+
+    # configures the values from harness on given ip address of web page
+    alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
+        ip_address=device_ip, firmware_file_path=firmware_path, upgrade_wait_time=300,use_https=True)
+    logger().info(f"upgraded message: {alert_msg}")
+    assert "Firmware Upgraded Successfully" in alert_msg, alert_msg
+    wifi_dut.reset()
+    logger().info("*************Need to add de init functionality instead of reset*********")
+    time.sleep(90)
+    wifi_dut.interfaces.wifi.wireless_init()
+    upgraded_version = wifi_dut.interfaces.wifi.version()
+    logger().info(f"Upgraded version: {upgraded_version}")
+    wifi_sniffer.interfaces.capture.stop_capture()
+#
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    "rejoin_max_retry": 0,
+    "scan_interval": 6,
+    "beacon_missed_count": 40,
+    "first_time_retry": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_C19382_1(wifi_sniffer,wifi_dut,wifi_access_point, wiseconnect_web,wifi_client, net_perf_client,protocol):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    logger().info("testcase : While_upgrading_Firmware_through_wireless_close_the_TCP_connection_and_verify_firmware_upgrade_functionality")
+
+    firmware_path = '/app/manifest/RS9116W.2.4.1.17.rps'
+
+    testcase = "test_C19382_1"
+    logger().info(f"testcase : {testcase}")
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,timeout=50)
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    status = ping(device_ip, 10)
+    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
+    #
+    current_version = wifi_dut.interfaces.wifi.version()
+    logger().info(f"Current version: {current_version}")
+    wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
+    # configures the values from harness on given ip address of web page
+    alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
+        ip_address=device_ip, firmware_file_path= firmware_path, upgrade_wait_time=10)
+    logger().info(f"upgraded message: {alert_msg}")
+    logger().info("RSI_FWUP_RSP_FAILED")
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+
+    # starting iperf as Client
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip)
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
+
+    # open socket and start listening
+    with wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=net_perf_client.interfaces.net_perf.protocol,
+            port=net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=net_perf_client.interfaces.net_perf.client_data_len,
+            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
+        # start iperf
+        net_perf_client.interfaces.net_perf.start()
+        # capture device output
+        wifi_dut.interfaces.wifi.read_from_device(obj,net_perf_client.interfaces.net_perf.client_timeout)
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output(result)
+    assert tp is not None
+    __print_throughput(tp)
+
+    logger().info("UDP data transfer is successful")
+    wifi_dut.reset()
+    logger().info("*************Need to add de init functionality instead of reset*********")
+    wifi_dut.interfaces.wifi.set_state("init")
+    wifi_dut.interfaces.wifi.associated = False
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    status = ping(device_ip, 10)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    "rejoin_max_retry": 0,
+    "scan_interval": 6,
+    "beacon_missed_count": 40,
+    "first_time_retry": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_C19382_2(wifi_sniffer,wifi_dut,wifi_access_point, wiseconnect_web,wifi_client, net_perf_client,protocol):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    logger().info("testcase : While_upgrading_Firmware_through_wireless_close_the_TCP_connection_and_verify_firmware_upgrade_functionality")
+
+    firmware_path = '/app/manifest/RS9116W.2.4.1.17.rps'
+
+    testcase = "test_C19382_2"
+    logger().info(f"testcase : {testcase}")
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,timeout=50)
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    status = ping(device_ip, 10)
+    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
+
+    current_version = wifi_dut.interfaces.wifi.version()
+    logger().info(f"Current version: {current_version}")
+    wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
+    # configures the values from harness on given ip address of web page
+    alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
+        ip_address=device_ip, firmware_file_path= firmware_path, upgrade_wait_time=10)
+    logger().info(f"upgraded message: {alert_msg}")
+    logger().info("RSI_FWUP_RSP_FAILED")
+    #input()
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+
+    # starting iperf
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.start()
+
+    # open socket and send traffic
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp is not None
+    __print_throughput(tp)
+    logger().info("UDP data transfer is successful")
+    wifi_dut.reset()
+    logger().info("*************Need to add de init functionality instead of reset*********")
+    wifi_dut.interfaces.wifi.set_state("init")
+    wifi_dut.interfaces.wifi.associated = False
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    status = ping(device_ip, 10)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+
+    wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.config(
@@ -273,256 +530,9 @@ def test_C19378(wifi_dut, wifi_client,wiseconnect_web):
     logger().info(f"upgraded message: {alert_msg}")
     assert "Firmware Upgraded Successfully" in alert_msg, alert_msg
     wifi_dut.reset()
+    logger().info("*************Need to add de init functionality instead of reset*********")
     time.sleep(90)
     wifi_dut.interfaces.wifi.wireless_init()
     upgraded_version = wifi_dut.interfaces.wifi.version()
     logger().info(f"Upgraded version: {upgraded_version}")
 
-
-
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPSServer | RS9116TCPIPFeatureBitMap.SSL,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        #"ca_cert": "ca-chain.cert.pem",
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
-        "rejoin_max_retry": 0,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
-#@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_C19381(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
-    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        raise NotImplementedError(
-            "This test case is only currently implemented for SAPI"
-        )
-    testcase = "test_Firmware_upgrade_using_HTTPs_server"
-    logger().info(f"testcase : {testcase}")
-    # firmware_path = '/app/test_package/RS9116.NB0.WC.GENR.OSI.2.3.0.0001.rps'
-    logger().info("This testcase will fail ,see issue RSC-8849")
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-
-    logger().info("start capturing with Sniffer by giving the test case name as filename")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-
-    firmware_path = '/app/manifest/RS9116W.2.4.1.17.rps'
-
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    status = ping(device_ip, 10)
-    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
-
-    current_version = wifi_dut.interfaces.wifi.version()
-    logger().info(f"Current version: {current_version}")
-    wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
-
-    #input()
-    # configures the values from harness on given ip address of web page
-    alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
-        ip_address=device_ip, firmware_file_path=firmware_path, upgrade_wait_time=300,use_https=True)
-    logger().info(f"upgraded message: {alert_msg}")
-    assert "Firmware Upgraded Successfully" in alert_msg, alert_msg
-    wifi_dut.reset()
-    time.sleep(90)
-    wifi_dut.interfaces.wifi.wireless_init()
-    upgraded_version = wifi_dut.interfaces.wifi.version()
-    logger().info(f"Upgraded version: {upgraded_version}")
-    wifi_sniffer.interfaces.capture.stop_capture()
-#
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    "rejoin_max_retry": 0,
-    "scan_interval": 6,
-    "beacon_missed_count": 40,
-    "first_time_retry": 0,
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-#@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_C19382_1(wifi_sniffer,wifi_dut,wifi_access_point, wiseconnect_web,wifi_client, net_perf_client,protocol):
-    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        raise NotImplementedError(
-            "This test case is only currently implemented for SAPI"
-        )
-
-    logger().info("testcase : While_upgrading_Firmware_through_wireless_close_the_TCP_connection_and_verify_firmware_upgrade_functionality")
-
-    firmware_path = '/app/manifest/RS9116W.2.4.1.17.rps'
-
-    testcase = "test_C19382_1"
-    logger().info(f"testcase : {testcase}")
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-
-    logger().info("start capturing with Sniffer by giving the test case name as filename")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,timeout=50)
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    status = ping(device_ip, 10)
-    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
-    #
-    current_version = wifi_dut.interfaces.wifi.version()
-    logger().info(f"Current version: {current_version}")
-    wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
-    # configures the values from harness on given ip address of web page
-    alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
-        ip_address=device_ip, firmware_file_path= firmware_path, upgrade_wait_time=10)
-    logger().info(f"upgraded message: {alert_msg}")
-    logger().info("RSI_FWUP_RSP_FAILED")
-    #input()
-    host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
-    # starting iperf as Client
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip)
-    # creating results object for sharing between host and dut
-    result = Result(net_perf_client.interfaces.net_perf.protocol)
-
-    # open socket and start listening
-    with wifi_dut.interfaces.wifi.start_socket_reader(
-            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
-            result=result,
-            protocol=net_perf_client.interfaces.net_perf.protocol,
-            port=net_perf_client.interfaces.net_perf.client_port,
-            device_ip=device_ip,
-            data_len=net_perf_client.interfaces.net_perf.client_data_len,
-            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
-        # start iperf
-        net_perf_client.interfaces.net_perf.start()
-        # capture device output
-        wifi_dut.interfaces.wifi.read_from_device(obj,net_perf_client.interfaces.net_perf.client_timeout)
-
-    # get and print throughput
-    tp = net_perf_client.interfaces.net_perf.process_output(result)
-
-    logger().info("UDP data transfer is successful")
-    wifi_dut.reset()
-    logger().info("*************Need to add de init functionality instead of reset*********")
-    wifi_dut.interfaces.wifi.set_state("init")
-    #wifi_dut.interfaces.wifi.wireless_init()
-    wifi_dut.interfaces.wifi.associated = False
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    status = ping(device_ip, 10)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-
-    wifi_sniffer.interfaces.capture.stop_capture()
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    "rejoin_max_retry": 0,
-    "scan_interval": 6,
-    "beacon_missed_count": 40,
-    "first_time_retry": 0,
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-#@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_C19382_2(wifi_sniffer,wifi_dut,wifi_access_point, wiseconnect_web,wifi_client, net_perf_client,protocol):
-    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        raise NotImplementedError(
-            "This test case is only currently implemented for SAPI"
-        )
-
-    logger().info("testcase : While_upgrading_Firmware_through_wireless_close_the_TCP_connection_and_verify_firmware_upgrade_functionality")
-
-    firmware_path = '/app/manifest/RS9116W.2.4.1.17.rps'
-
-    testcase = "test_C19382_2"
-    logger().info(f"testcase : {testcase}")
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-
-    logger().info("start capturing with Sniffer by giving the test case name as filename")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,timeout=50)
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    status = ping(device_ip, 10)
-    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
-    #
-    current_version = wifi_dut.interfaces.wifi.version()
-    logger().info(f"Current version: {current_version}")
-    wifi_dut.interfaces.wifi.register_http_server_callbacks(1)
-    # configures the values from harness on given ip address of web page
-    alert_msg = wiseconnect_web.interfaces.wiseconnect_ui.admin_firmware_upgrade(
-        ip_address=device_ip, firmware_file_path= firmware_path, upgrade_wait_time=10)
-    logger().info(f"upgraded message: {alert_msg}")
-    logger().info("RSI_FWUP_RSP_FAILED")
-    #input()
-    host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
-    # starting iperf
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
-    net_perf_client.interfaces.net_perf.start()
-
-    # open socket and send traffic
-    wifi_dut.interfaces.wifi.send_traffic_from_device(
-        host_ip,
-        device_ip,
-        net_perf_client.interfaces.net_perf.server_port,
-        net_perf_client.interfaces.net_perf.protocol,
-        net_perf_client.interfaces.net_perf.client_options,
-    )
-
-    # get and print throughput
-    tp = net_perf_client.interfaces.net_perf.process_output()
-
-    logger().info("UDP data transfer is successful")
-    wifi_dut.reset()
-    logger().info("*************Need to add de init functionality instead of reset*********")
-    wifi_dut.interfaces.wifi.set_state("init")
-    #wifi_dut.interfaces.wifi.wireless_init()
-    wifi_dut.interfaces.wifi.associated = False
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    status = ping(device_ip, 10)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-
-    wifi_sniffer.interfaces.capture.stop_capture()
-#
-#
