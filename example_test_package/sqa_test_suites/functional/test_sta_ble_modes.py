@@ -27,7 +27,6 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116CustomFeatureBitMap
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.thread_base import ThreadBase
-import time
 import string
 import random
 from random import randint
