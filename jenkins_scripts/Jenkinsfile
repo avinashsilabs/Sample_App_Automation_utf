@@ -68,18 +68,14 @@ pipeline {
                                         }
                                     }
                                     dir('rs9116_binary'){
-                                        if(BUILD_LOCATION == "build_artifacts"){
-                                            sh  '''
-                                                rm -f ../manifest/rs9116*.rps
-                                                cp -f firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
-                                            '''
-                                        }else {
-                                            sh  '''
-                                                unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                                rm -f ../manifest/rs9116*.rps
-                                                cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
-                                            '''                                            
-                                        }
+                                        sh '''
+                                        if [ -d venv/bin ]; then
+                                           . venv/bin/activate
+                                        elif [ -d venv/Scripts ]; then
+                                           . venv/Scripts/activate
+                                        fi
+                                        python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                        '''
                                     }
                                 }
                             } else {
