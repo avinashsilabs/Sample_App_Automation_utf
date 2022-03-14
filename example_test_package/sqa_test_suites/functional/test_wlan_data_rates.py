@@ -77,9 +77,10 @@ class IopTcpIpSockets:
         return connect_status
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -142,12 +143,14 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -229,9 +232,10 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
         assert True
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -290,12 +294,14 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Data/Null/Qos packets data rates'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -312,7 +318,7 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
     send_bytes = 1000
     validation = True
 
-    '''Set data rate to 11b rates, and verify all following packets with all data ratesAssoc Req,Assoc Resp.ReAssoc 
+    '''Set data rate to 11b rates, and verify all following packets with all data rates Assoc Req,Assoc Resp.ReAssoc 
     Req,Re Assoc Resp.Probe Req,Probe RespBeacon.DisAssoc.'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_b_mode')
@@ -335,10 +341,12 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
+    # Validating Data/Qos/Null packet for 11 Mbps data rates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or ' \
                      f'wlan.fc.type_subtype == 0x0024 and wlan_radio.data_rate == 11 and !wlan.mgt '
 
+    # Validating Assoc Req, Assoc Resp, ReAssoc Req, ReAssoc Resp. Probe Req,Probe Resp for 1 Mbps data rates
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == ' \
                      f'0x0000 ' \
@@ -366,13 +374,17 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find any packets for Data/Qos/Null packet for 11 Mbps dat rates'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find packets for Assoc Req, Assoc Resp, ReAssoc Req, ReAssoc Resp. Probe Req,Probe Resp for 1 Mbps ' \
+        'data rates'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -411,10 +423,12 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating Data/Qos/Null packet for 54 Mbps data rates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
                      f'0x0024 and wlan_radio.data_rate == 54 and !wlan.mgt'
 
+    # Validating Assoc Req, Assoc Resp, ReAssoc Req, ReAssoc Resp. Probe Req,Probe Resp for 1 Mbps data rates
     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == ' \
                      f'0x0000 ' \
@@ -442,14 +456,18 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find any packets for Data/Qos/Null packet for 54 Mbps dat rates'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find packets for Assoc Req, Assoc Resp, ReAssoc Req, ReAssoc Resp. Probe Req,Probe Resp for 1 Mbps ' \
+        'data rates'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -487,7 +505,8 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    #Verify Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame
+
+    # Verify Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == ' \
                      f'0x0000 ' \
@@ -516,12 +535,14 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -586,12 +607,14 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find any packet for Data/Null/Qos packets'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -605,13 +628,12 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
 )
 def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, wifi_dut):
     """Verification of Block ack req/res, RTS/CTS mgmt packets data rates for 12 Mbps"""
-    """Block Ack/RTS/CTS and will not transmit at 12 Mbps data rate """
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
 
-    '''Set Fixed data rate to 12Mbps and verify which data rate is using for 4GHz .Block ACK Req,(Qos)Block Ack(Qos)
-       Ps-PollRTSCTSACK'''
+    '''Set Fixed data rate to 12Mbps and verify which data rate is using for 2.4GHz .Block ACK Req,(Qos)Block Ack(Qos)
+       Ps-Poll, RTS, CTS, ACK'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_rts_cts_12mbps')
     time.sleep(5)
@@ -633,9 +655,10 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
+    # Validating Block ACK Req, RTS for data rates 12 Mbps
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate ' \
-                     f'== 12 '
+                     f'== 12'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -658,12 +681,14 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find packets for Block ACK Req, RTS for data rates 12 Mbps'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -722,96 +747,14 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture(validation)
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find packets for EAPOL packets for 1 Mbps data rates'
 
 
-# @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
-# @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.config(
-#     "wifi_dut",
-#
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-#         "custom_features": RS9116CustomFeatureBitMap.Default
-#     },
-# )
-# def test_basic_data_rates(wifi_sniffer, wifi_access_point, wifi_dut):
-#     Will remove the test case after discussion with QA team
-#     """Verification of Basic data rates for Association req & Probe response"""
-#     tcp_socket_obj = IopTcpIpSockets()
-#     send_bytes = 1000
-#     validation = True
-#     
-#     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-#     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_basic_data_rates')
-#     time.sleep(5)
-#     result = wifi_dut.interfaces.wifi.scan(ssid=None)
-#     ap_bssid = str(result[0]).split(' ')[11].strip(')')
-#     logger().info(f'AP BSSID = {ap_bssid}')
-#     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-#     time.sleep(5)
-#     result = wifi_dut.interfaces.wifi.start_ip()
-#     dut_ip = result.ip.decode()
-#     logger().info(f"DUT ip address : {dut_ip}")
-#
-#     logger().info(f"*****Enable Max PSP in DUT******")
-#     wifi_dut.interfaces.wifi.power_save(2, 0)
-#     wifi_dut.interfaces.wifi.bt_power_save(
-#         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-#     )
-#     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-#     logger().info(f"DUT MAC_Address: {mac_address}")
-#     # Assoc req & Basic data rates
-#     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
-#                      f'and wlan.fc.type_subtype == 0x0000 and frame[103:10] == 01:08:82:84:8b:96:24:30:48:6c'
-#     # Probe Response & Basic data rates
-#     packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {ap_bssid} ' \
-#                      f'and wlan.fc.type_subtype == 0x0005 and frame[111:10] == 01:08:82:84:8b:96:24:30:48:6c'
-#     # Probe req & basic data rates
-#     packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
-#                      f'and wlan.fc.type_subtype == 0x0004 and frame[99:7] == 01:05:82:84:8c:98:b0'
-#
-#     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-#     time.sleep(5)
-#     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-#     if connect_status is False:
-#         logger().info("Unable to connect with Server")
-#         assert connect_status
-#     else:
-#         send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-#         logger().info(f'SEND-RESPONSE = {send_response}')
-#         if 'status 10' in str(send_response):
-#             result = send_response.decode().replace("\r\n", '').strip()
-#             match = re.findall(r"\d+", result)
-#             if int(match[1]) == send_bytes:
-#                 logger().info(f"Send {send_bytes} bytes successfully")
-#         time.sleep(30)
-#         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
-#         wifi_dut.interfaces.wifi.leave()
-#         time.sleep(2)
-#     wifi_sniffer.interfaces.capture.stop_capture()
-#     logger().info("Stop Sniffer finally")
-#     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
-#     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)['packet_count']
-#     result3 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)['packet_count']
-#
-#     if result1 is False or result2 is False or result3 is False:
-#         logger().info(
-#             f"Expected packet validation failed, Assoc req = {result1}, Probe req = {result3}, Probe res = {result2}")
-#         assert False
-#     else:
-#         logger().info(
-#             f"Assoc req = {result1}, Probe res = {result2}, Probe req = {result3}")
-#         logger().info("Sniffer validation Passed")
-#         assert True
-
-
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
