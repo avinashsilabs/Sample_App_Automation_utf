@@ -9,7 +9,10 @@ rs9116_firmware = sys.argv[2]
 current_directory = os.getcwd()
 
 dir_list = os.listdir(".")
+
+print('-----------Line 13-------------')
 print(dir_list)
+print('-----------Line 15-------------')
 
 if build_location == "build_artifacts":
     if "2.5.0" in rs9116_firmware:
