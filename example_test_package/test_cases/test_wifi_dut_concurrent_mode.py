@@ -47,6 +47,9 @@ def test_device_as_sta_and_ap(firmware_loader, net_perf_client, wifi_access_poin
     logger.info("dut station mode ip: " + device_ip_dut_as_client)
     logger.info("access point ip: " + str(acces_point_ip))
 
+    #@Todo need to fix some thing in testagent to work for Iperf and Sockets. 
+    #@Todo as of now test agent changes support for ping. Comment below lines to pass this test
+
     #preparing wifi_client for tcp server using iperf
     if wifi_access_point != wifi_client:
         wifi_client.interfaces.wifi.join_ap(wifi_access_point)

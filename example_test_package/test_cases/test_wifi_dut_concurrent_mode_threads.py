@@ -30,7 +30,10 @@ class DUTSTAThread(ThreadBase):
         logger().info("Running DUT in Station Mode")
         logger().info("dut station mode ip: " + device_ip)
         logger().info("access point ip: " + str(acces_point_ip))
-        
+
+        #@Todo need to fix some thing in testagent to work for Iperf and Sockets. 
+        #@Todo as of now test agent changes support for ping. Comment below lines to pass this test
+
         # preparing wifi_client for iperf server
         if self.wifi_access_point != self.wifi_client:
             self.wifi_client.interfaces.wifi.join_ap(self.wifi_access_point)
