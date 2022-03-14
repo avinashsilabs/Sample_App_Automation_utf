@@ -21,16 +21,16 @@ def __print_throughput(iperf_throughput: dict):
     wifi={
         "oper_mode": RS9116OperatingMode.ConcurrentMode,
         "features": RS9116FeatureBitMap.PSKSecurity,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping ,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 3
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 3}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -38,7 +38,7 @@ def __print_throughput(iperf_throughput: dict):
 def test_device_as_sta_and_ap(firmware_loader, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, logger):
     #preparing wifi_dut as STA - STA Mode
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
     wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
@@ -47,7 +47,7 @@ def test_device_as_sta_and_ap(firmware_loader, net_perf_client, wifi_access_poin
     logger.info("dut station mode ip: " + device_ip_dut_as_client)
     logger.info("access point ip: " + str(acces_point_ip))
 
-    # preparing wifi_client for tcp server using iperf
+    #preparing wifi_client for tcp server using iperf
     if wifi_access_point != wifi_client:
         wifi_client.interfaces.wifi.join_ap(wifi_access_point)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
