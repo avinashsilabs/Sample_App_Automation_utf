@@ -19,6 +19,7 @@ if build_location == "build_artifacts":
             if os.path.exists(package_directory + "/RS9116.2.5.0."+str(version_number)+".rps"):
                 os.rename("RS9116.2.5.0."+str(version_number)+".rps", "RS9116W.2.5.0."+str(version_number)+".rps")
 
+    os.chdir(current_directory)
     for f in os.listdir("./firmware"):
         if f.startswith("RS91") and f.endswith(".rps"):
             shutil.copy2("./firmware/"+f, "../manifest")
