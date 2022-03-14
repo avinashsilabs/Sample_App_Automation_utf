@@ -51,7 +51,9 @@ def test_fetch_profiles_from_RD1_C19860(wifi_dut,  ble_client):
     
     logger().info(" *******Scanning and connecting to ble client ******* ")
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    assert exc_info.value.error_code == 0x0003 # No AP Found
     wifi_dut.interfaces.wifi.ble_stop_scanning()
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
@@ -95,7 +97,9 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_client):
     assert bt_client_address is not None, "Could not get the client address"
     logger().info(" *******Scanning and connecting to ble client ******* ")
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    assert exc_info.value.error_code == 0x0003  # No AP Found
     wifi_dut.interfaces.wifi.ble_stop_scanning()
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
