@@ -3,7 +3,7 @@ import time
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes
 
 def logger():
     return get_logger(__name__)
@@ -22,6 +22,17 @@ def logger():
 
     Author: Aravind
 """
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+)
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -42,8 +53,19 @@ def logger():
         }
     }
 )
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+
+    # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    # enables the rejoin in dut
+    logger().info(" Enabling rejoin...")
+    wifi_dut.interfaces.wifi.rejoin()
+    logger().info(" scan initiated...")
     scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     time.sleep(20)
     logger().info(scan_results)
@@ -52,17 +74,23 @@ def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
     logger().info(f"scan_list : {scan_list}")
     logger().info("Validating the scan list...")
     for item in scan_list:
-        security = str(item).split(" ")[3]
         ssid = str(item).split(" ")[9]
-        logger().info(f"security :{security}")
-        logger().info(f"ssid :{ssid}")
         if (ssid == wifi_access_points[0].interfaces.wifi.ssid) or (ssid == wifi_access_points[1].interfaces.wifi.ssid):
            ssid_count = ssid_count + 1
     logger().info(f"ssid count:{ssid_count}")
     assert ssid_count == 2, "Two aps are not scanned "
-    logger().info("2 aps with same ssid and password are scanned successfully")
+    logger().info(f'2 Aps with same ssid: {wifi_access_points[0].interfaces.wifi.ssid} are scanned successfully')
 
-
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_access_points",
@@ -85,25 +113,37 @@ def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
         }
     }
 )
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+
 def test_same_2aps_diff_security_c19066(wifi_dut, wifi_access_points):
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+
+    # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    # enables the rejoin in dut
+    logger().info(" Enabling rejoin...")
+    wifi_dut.interfaces.wifi.rejoin()
+    logger().info(" scan initiated...")
     time.sleep(20)
     scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     logger().info(scan_results)
     scan_list = list(scan_results)
+
     ssid_count = 0
     logger().info(f"scan_list : {scan_list}")
     logger().info("Validating the scan list...")
     for item in scan_list:
         security = str(item).split(" ")[3]
         ssid = str(item).split(" ")[9]
-        logger().info(f"security :{security}")
-        logger().info(f"ssid :{ssid}")
         if (ssid == wifi_access_points[0].interfaces.wifi.ssid) or (ssid == wifi_access_points[1].interfaces.wifi.ssid):
             ssid_count = ssid_count + 1
     logger().info(f"ssid count:{ssid_count}")
     assert ssid_count == 2, "Two aps are not scanned "
-    logger().info("2 aps with same ssid and different password are scanned successfully")
+    logger().info(f'2 aps with same ssid :{wifi_access_points[1].interfaces.wifi.ssid}and different password :WPA2 and '
+                  f'WPA scanned successfully')
 
 #####19069###
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -129,10 +169,19 @@ def test_same_2aps_diff_security_c19066(wifi_dut, wifi_access_points):
         "module_type": 1,
     }
 )
-
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_and_connect_in_EU_domain_c19069(wifi_dut, wifi_access_point, wifi_sniffer):
     validation = True
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+
+    # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    # enables the rejoin in dut
+    logger().info(" Enabling rejoin...")
+    wifi_dut.interfaces.wifi.rejoin()
     channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     # channel_list = [2]
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -149,7 +198,7 @@ def test_scan_and_connect_in_EU_domain_c19069(wifi_dut, wifi_access_point, wifi_
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_scan_and_connect_in_EU_domain_c19069')
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
         logger().info(scan_results)
-        time.sleep(26)
+        time.sleep(30)
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter8 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address}' \
@@ -158,6 +207,7 @@ def test_scan_and_connect_in_EU_domain_c19069(wifi_dut, wifi_access_point, wifi_
             'packet_count'], 'Unable to find Probe req packet  in sniffer'
         logger().info(f'probe request is success in channel : {channel}')
 
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_access_points",
     wifi={
@@ -192,10 +242,11 @@ def test_scan_and_connect_in_EU_domain_c19069(wifi_dut, wifi_access_point, wifi_
         "module_type": 1,
     }
 )
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, wifi_sniffer):
-
     with TimeMeasurer() as t:
+        logger().info(" Enabling rejoin...")
+        wifi_dut.interfaces.wifi.rejoin()
         validation = True
         channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -256,6 +307,8 @@ def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, w
         # validating ps poll with power managment bit set to 1
         packet_filter6 = f'wlan.addr == {dut_mac_address} or wlan.fc.type_subtype == 0x001a'
 
+        time.sleep(20)
+
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -279,6 +332,8 @@ def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, w
 
 
 ###################19078#####################
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
         "wifi_dut",
         wifi=
@@ -302,12 +357,13 @@ def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, w
         "module_type": 1,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"channel": 6, "standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_and_connect_in_world_domain_c19078(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
+        logger().info(" Enabling rejoin...")
+        wifi_dut.interfaces.wifi.rejoin()
+
         validation = True
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
