@@ -9,13 +9,9 @@ rs9116_firmware = sys.argv[2]
 current_directory = os.getcwd()
 
 if build_location == "build_artifacts":
-    for f in os.listdir("../manifest"):
-        if f.startswith("rs91") and f.endswith(".rps"):
-            os.remove("../manifest/"+f)
-
     for f in os.listdir("./firmware"):
         if f.startswith("RS91") and f.endswith(".rps"):
-            shutil.copy2("./firmware/"+f, "../manifest/"+rs9116_firmware+".rps")
+            shutil.copy2("./firmware/"+f, "../manifest")
 else:
     with zipfile.ZipFile(rs9116_firmware + ".zip", "r") as zf:
         zf.extractall()
