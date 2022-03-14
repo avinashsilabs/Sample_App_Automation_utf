@@ -1,8 +1,7 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap
 from utf.interfaces.bluetooth import BTSocketRole
 from utf.utils.logger import get_logger
-from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.wifi import WlanError
 import time
 
@@ -324,7 +323,8 @@ def test_ble_scan_connectable_undirected_adv_C19805(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr is available in scan list...")
-    assert str(bt_client_address) in str(result)
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -341,13 +341,13 @@ def test_ble_scan_connectable_directed_adv_C19806(bt_dut, ble_client):
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  
-                       "0x40 0x00 "  
-                       "0x01 "  
-                       "0x00 "  
-                       "0x00 "  
+        hci_adv_params="0x40 0x00 "
+                       "0x40 0x00 "
+                       "0x01 "
+                       "0x00 "
+                       "0x00 "
                        "0xCF 0x3A 0xc2 0x55 0xc9 0x80 " #configure the dut bt address for this param
-                       "0x07 "  
+                       "0x07 "
                        "0x00"
     )
     assert bt_client_address is not None
@@ -358,7 +358,8 @@ def test_ble_scan_connectable_directed_adv_C19806(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result)
+    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -374,13 +375,13 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(bt_dut, ble_client):
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  
-                       "0x40 0x00 "  
-                       "0x03 "  
-                       "0x00 "  
-                       "0x00 "  
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  
-                       "0x07 "  
+        hci_adv_params="0x40 0x00 "
+                       "0x40 0x00 "
+                       "0x03 "
+                       "0x00 "
+                       "0x00 "
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "
+                       "0x07 "
                        "0x00"
     )
     assert bt_client_address is not None
@@ -391,7 +392,8 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result)
+    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -407,13 +409,13 @@ def test_ble_scannable_undirected_adv_C19808(bt_dut, ble_client):
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  
-                       "0x40 0x00 "  
-                       "0x02 "  
-                       "0x00 "  
-                       "0x00 "  
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  
-                       "0x07 "  
+        hci_adv_params="0x40 0x00 "
+                       "0x40 0x00 "
+                       "0x02 "
+                       "0x00 "
+                       "0x00 "
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "
+                       "0x07 "
                        "0x00"
     )
     assert bt_client_address is not None
@@ -424,7 +426,8 @@ def test_ble_scannable_undirected_adv_C19808(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result)
+    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -448,7 +451,8 @@ def test_ble_adv_report_C19848(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result)
+    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -483,7 +487,8 @@ def test_ble_adv_state_in_scan_C19840(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr is available in scan list...")
-    assert str(bt_client_address) in str(result)
+    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -517,7 +522,6 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
     with pytest.raises(WlanError) as exc_info:
         bt_dut.interfaces.bluetooth.ble_stop_advertising()
     assert exc_info.value.error_code == 0x4E0C
-
     logger().info("disconnecting the dut..")
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
@@ -599,3 +603,169 @@ def test_directed_connectable_adv_C19802(bt_dut, ble_client, bt_logs):
     )
     bt_logs.device_characteristics(bt_dut.interfaces.bluetooth.ble_address)
     assert 'Connectable undirected - ADV_IND (0x81)' in bt_logs.device_adv_type
+
+" ============ ble-gap pdu length test cases ====================== "
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+    },
+)
+def test_ble_scan_resp_8_bytes_C19821(bt_dut, ble_client):
+    logger().info("start ble dut....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address is not None
+
+    #pdu name -- automate
+    logger().info("start ble client with pdu length 8 bytes....")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x0a 0x09 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65  "
+                                "0x00 0x00 0x00 0x00 " \
+                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+    )
+    assert bt_client_address is not None
+    time.sleep(1)
+    logger().info("Start ble scanning...")
+    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+    },
+)
+def test_ble_scan_resp_20_bytes_C19822(bt_dut, ble_client):
+    logger().info("start ble dut....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address is not None
+
+    # pdu name -- letmeusethisaspdulen
+    logger().info("start ble client with pdu length 8 bytes....")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x16 0x15 0x09 0x6c 0x65 0x74 0x6d 0x65 0x75 0x73 0x65  "
+                                "0x74 0x68 0x69 0x73 " \
+                                "0x61 0x73 0x70 0x64 0x75 0x6c 0x65 0x6e 0x00 "
+                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+    )
+    assert bt_client_address is not None
+    time.sleep(1)
+    logger().info("Start ble scanning...")
+    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+    },
+)
+def test_ble_scan_resp_30_bytes_C19823(bt_dut, ble_client):
+    logger().info("start ble dut....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address is not None
+
+    # pdu name -- thisispdulengthofthirteeybytes
+    logger().info("start ble client with pdu length 30 bytes....")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x20 0x1f 0x09 0x74 0x68 0x69 0x73 0x69 0x73 0x70 0x64  "
+                                "0x75 0x6c 0x65 0x6e " \
+                                "0x67 0x74 0x68 0x6f 0x66 0x74 0x68 0x69 0x72 0x74 0x65 0x65 "
+                                "0x79 0x62 0x79 0x74 0x65 0x73 0x00 0x00"
+
+    )
+    assert bt_client_address is not None
+    time.sleep(1)
+    logger().info("Start ble scanning...")
+    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+    },
+)
+def test_ble_scan_resp_32_bytes_C19824(bt_dut, ble_client):
+    logger().info("NOTE: As per test rail this case is for 39 bytes due to hci command limiting to 32 bytes from RPI")
+    time.sleep(5)
+    logger().info("start ble dut....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address is not None
+
+    # pdu name -- thisispdulengthofthirteeytobytes
+    logger().info("start ble client with pdu length 30 bytes....")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x22 0x21 0x09 0x74 0x68 0x69 0x73 0x69 0x73 0x70 0x64  "
+                                "0x75 0x6c 0x65 0x6e " \
+                                "0x67 0x74 0x68 0x6f 0x66 0x74 0x68 0x69 0x72 0x74 0x65 0x65 "
+                                "0x79 0x74 0x6f 0x62 0x79 0x74 0x65 0x73"
+
+    )
+    assert bt_client_address is not None
+    time.sleep(1)
+    logger().info("Start ble scanning...")
+    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
