@@ -47,7 +47,7 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
 
     logger().info("configuring bt name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="rs9916bt")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="rs9116bt")
 
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
     pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
@@ -57,7 +57,7 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
 
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-    assert bt_client_address is not None
+    assert bt_client_address, "failed to fetch client bt address"
 
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
@@ -68,7 +68,7 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected
 
-        # Initiating power save
+        logger().info("enabling power save after bt connection...")
         if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
             bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
             bt_dut.interfaces.bluetooth.power_save(
@@ -78,11 +78,14 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
             )
 
-        # Ping dut
+        logger().info("pinging dut...")
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
         )
-        # Close connection
+        logger().info("disconnecting bt host....")
+        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
+        logger().info("closing bt socket...")
         bt_server_socket.close()
 
 def test_bt_non_connectable_C19975(bt_dut, bt_client):
@@ -109,7 +112,7 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected
 
-        # Initiating power save
+        logger().info("enabling power save after bt connection...")
         if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
             bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
             bt_dut.interfaces.bluetooth.power_save(
@@ -122,8 +125,11 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
         )
-        # Close connection
-        logger().info("closing bt connection.....")
+
+        logger().info("disconnecting bt host...")
+        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
+        logger().info("closing bt socket.....")
         bt_server_socket.close()
 
 def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
@@ -140,7 +146,7 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
 
     logger().info("configuring bt name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="rs9916bt")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="rs9116bt")
 
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
     pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
@@ -161,7 +167,7 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected
 
-        # Initiating power save
+        logger().info("enabling power save after bt connection...")
         if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
             bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
             bt_dut.interfaces.bluetooth.power_save(
@@ -170,11 +176,16 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_power_save(
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
             )
-        # Ping dut
+
+        logger().info("pinging dut...")
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
         )
-        # Close connection
+
+        logger().info("disconnecting bt host....")
+        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
+        logger().info("closing bt socket....")
         bt_server_socket.close()
 
         time.sleep(20)
@@ -198,7 +209,7 @@ def test_bt_non_connec_connectable_non_connece_C19977(bt_dut, bt_client):
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
 
     logger().info("configuring bt name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="rs9916bt")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="rs9116bt")
 
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
     pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
@@ -218,7 +229,7 @@ def test_bt_non_connec_connectable_non_connece_C19977(bt_dut, bt_client):
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected
 
-        # Initiating power save
+        logger().info("enabling power save after bt connection....")
         if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
             bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
             bt_dut.interfaces.bluetooth.power_save(
@@ -227,11 +238,16 @@ def test_bt_non_connec_connectable_non_connece_C19977(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_power_save(
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
             )
-        # Ping dut
+
+        logger().info("pinging dut...")
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
         )
-        # Close connection
+
+        logger().info("disconnecting bt host....")
+        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
+        logger().info("closing bt socket...")
         bt_server_socket.close()
 
         time.sleep(20)
