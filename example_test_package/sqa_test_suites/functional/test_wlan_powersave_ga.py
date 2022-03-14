@@ -17,7 +17,6 @@ from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
 import time
 
-
 """This function runs below test steps for DUT-RS9116
     Step1: 1. Configuration of DUT in 2G mode
     Step2 : Do Scan the AP
@@ -55,17 +54,15 @@ def logger():
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_connect_and_disconnect_when_module_is_in_power_save_mode_C3990(wifi_dut, wifi_access_point, wifi_sniffer):
     validation = True
-    packet_filter2 = False
-
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_beacon_interval_APUT_C19443')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C3990')
     # Scan for the AP's
-
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
-    
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
         # Initiating power save
     wifi_dut.interfaces.wifi.power_save(2, 0)
@@ -79,8 +76,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C3990(wifi_dut
     wifi_dut.interfaces.wifi.leave()
     time.sleep(5)
         # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None, "No AP Found"
+    result_scan= wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
         # Connect to the AP
     result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     assert result is not None, "Could not connect to the AP"
@@ -110,17 +107,15 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C3990(wifi_dut
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C3991(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan= wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
-
+    result_ap= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
     # Initiating power save1
     result= wifi_dut.interfaces.wifi.power_save(1, 0)
@@ -168,11 +163,11 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C3991(net_perf_client, wifi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_C3993(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -223,11 +218,11 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_C3993(net_perf_client, wifi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_C3994(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -280,11 +275,11 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_C3994(net_perf_client, wifi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C3996(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -337,11 +332,11 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C3996(net_perf_client, wifi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C3997(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
    #scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None, "No AP Found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Obtained the device ip address, {device_ip}")
@@ -445,14 +440,15 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C4000(net_perf_client, wifi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C4001(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Obtained the device ip address, {device_ip}")
+    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
     # Initiating power save3
     wifi_dut.interfaces.wifi.power_save(3, 0)
     assert result is not None, "Device did not go to powersave mode3"
@@ -505,11 +501,11 @@ def test_powersave_mode_switching_after_association_case3_C4004(wifi_access_poin
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
       #Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
@@ -519,18 +515,21 @@ def test_powersave_mode_switching_after_association_case3_C4004(wifi_access_poin
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
     time.sleep(30)
+    logger().info(f"*****Disable Power save in DUT******")
      #Disable powersave mode
     wifi_dut.interfaces.wifi.power_save(0, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveDisabled
         )
-     # validate NULL data frame with PM bit set to '1'
+    # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                          f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+                     f'and (wlan.da == {bssid}))'
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+
 
 @pytest.mark.config(
          "wifi_dut",
@@ -554,11 +553,11 @@ def test_powersave_mode_switching_after_association_case1_C4004(wifi_access_poin
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
    # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
-    assert result is not None , "No AP found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None , "No AP found"
     # Connect to the AP
-    result= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
       #Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
        #Initiating power save1
@@ -569,19 +568,21 @@ def test_powersave_mode_switching_after_association_case1_C4004(wifi_access_poin
         )
     time.sleep(30)
      #Disable powersave mode
+    logger().info(f"*****Disable Enhanced Max Power save in DUT******")
     wifi_dut.interfaces.wifi.power_save(0, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveDisabled
         )
-     # validate NULL data frame with PM bit set to '1'
+    # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                          f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+                     f'and (wlan.da == {bssid}))'
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info('Validation for NULL packet with pm bit 1')
-    
-    
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -596,7 +597,6 @@ def test_powersave_mode_switching_before_association_case1_C4005(wifi_dut, wifi_
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case1_C4005.txt')
-    logger().info(f"Fetches the DUT mac address")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
@@ -608,19 +608,23 @@ def test_powersave_mode_switching_before_association_case1_C4005(wifi_dut, wifi_
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode8
     )
         # Disable powersave mode
+    logger().info(f"*****Disable Enhanced Max Power save in DUT******")
     wifi_dut.interfaces.wifi.power_save(0, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveDisabled
     )
    # scan the AP
-    result= wifi_dut.interfaces.wifi.scan()
+    result_scan = wifi_dut.interfaces.wifi.scan()
     assert result is not None , "No AP found"
     wifi_sniffer.interfaces.capture.stop_capture()
     # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                       f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+                     f'and (wlan.da == {bssid}))'
     logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
 
 @pytest.mark.config(
@@ -636,7 +640,9 @@ def test_powersave_mode_switching_before_association_case2_C4005(wifi_dut, wifi_
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case2_C4005.txt')
+    logger().info(f"Fetches the DUT mac address")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
         #Initiating powersave mode9
@@ -646,6 +652,7 @@ def test_powersave_mode_switching_before_association_case2_C4005(wifi_dut, wifi_
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode9
     )
     # Disable powersave mode
+    logger().info(f"*****Disable Enhanced Max Power save in DUT******")
     wifi_dut.interfaces.wifi.power_save(0, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveDisabled
@@ -655,12 +662,14 @@ def test_powersave_mode_switching_before_association_case2_C4005(wifi_dut, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                       f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    logger().info("Stop Sniffer finally")  
-    
-    
-    
+                     f'and (wlan.da == {bssid}))'
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+
+
 @pytest.mark.config(
         "wifi_dut",
         wifi=
@@ -696,12 +705,14 @@ def test_Power_save_mode_8_with_LP_mode_C4007(wifi_dut, wifi_access_point, wifi_
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode8
     )
-      # validate NULL data frame with PM bit set to '1'
+    # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                       f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    logger().info("Stop Sniffer finally") 
-
+                     f'and (wlan.da == {bssid}))'
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
 
 @pytest.mark.config(
@@ -745,13 +756,15 @@ def test_Power_save_mode_9_with_LP_mode_C4008(wifi_sniffer, wifi_dut, wifi_acces
     wifi_dut.interfaces.wifi.send_ack(timeout=10)
        # scan the AP
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-      # validate NULL data frame with PM bit set to '1'
+    # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    logger().info("Stop Sniffer finally") 
-        
-        
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+
 
 @pytest.mark.config(
         "wifi_dut",
@@ -767,7 +780,6 @@ def test_Power_save_mode_9_with_LP_mode_C4008(wifi_sniffer, wifi_dut, wifi_acces
 
 def test_power_save_mode_9_with_ULP_mode_C4010(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
-    packet_filter2 = False
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Powersave9_ULP_C4007')
        # init
@@ -793,12 +805,12 @@ def test_power_save_mode_9_with_ULP_mode_C4010(wifi_sniffer, wifi_dut, wifi_acce
       # scan the Ap
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     # validate NULL data frame with PM bit set to '1'
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                     f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}))'
     logger().info("Stop Sniffer finally")
-
-
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
 
 @pytest.mark.config(
@@ -817,15 +829,16 @@ def test_power_save_mode_9_with_ULP_mode_C4010(wifi_sniffer, wifi_dut, wifi_acce
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_TCP_Rx_data_transfer_in_powersave_mode(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    wifi_dut.interfaces.wifi.scan()
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
     # Connect to the AP
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # preparing wifi_dut
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    result_ap= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
     # Initiating power save3
-    logger().info(f"*****Enable Powersave3 in ULP mode in  DUT******")
+    logger().info(f"*****Enable Powersave3 in DUT******")
     wifi_dut.interfaces.wifi.power_save(3, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode3
@@ -870,18 +883,17 @@ def test_TCP_Rx_data_transfer_in_powersave_mode(net_perf_client, wifi_access_poi
      )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
-def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
+def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # scan the AP
-    wifi_dut.interfaces.wifi.scan()
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
     # Connect to the AP
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # preparing wifi_dut
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger().info(f"*****Enable Powersave3 in DUT******")
     # Initiating power save3
-    logger().info(f"*****Enable Powersave3 in ULP mode in  DUT******")
     wifi_dut.interfaces.wifi.power_save(3, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode3
@@ -935,15 +947,15 @@ def test_powersave_mode_after_rejoin_C4013(wifi_access_point, wifi_dut, wifi_sni
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
       #scan the AP
-    result = wifi_dut.interfaces.wifi.scan()
-    assert result is not None, "No AP Found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
       #Connect to the AP
-    result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
       #Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
+    logger().info(f"*****Enable Powersave3 in  DUT******")
        #Initiating power save2
-    logger().info(f"*****Enable Powersave2  in  DUT******")
     result = wifi_dut.interfaces.wifi.power_save(2, 0)
     assert result is not None , "Device has not gone to powersave mode" 
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -956,16 +968,17 @@ def test_powersave_mode_after_rejoin_C4013(wifi_access_point, wifi_dut, wifi_sni
     # Start the ap
     wifi_access_point.interfaces.wifi.start_ap()
     logger.info("Reconnecting from the AP")
-    #Validate sniffer packet filter1
+    # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {bssid}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     logger().info("Stop Sniffer finally")
-    
-    
-    
-    
- @pytest.mark.config(
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+
+
+@pytest.mark.config(
          "wifi_dut",
         wifi=
          {
@@ -987,26 +1000,29 @@ def test_powersave_disable_functionality_case1_C4006(wifi_access_point, wifi_dut
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
       #scan the AP
-    result = wifi_dut.interfaces.wifi.scan()
-    assert result is not None, "No AP Found"
+    result_ap = wifi_dut.interfaces.wifi.scan()
+    assert result_ap is not None, "No AP Found"
       #Connect to the AP
-    result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
       #Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
        #Initiating power save1
-    logger().info(f"*****Enable Powersave1 in DUT******")
     result = wifi_dut.interfaces.wifi.power_save(1, 0)
-
+    logger().info(f"*****Enable Powersave1 in  DUT******")
     wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
         )
     assert result is not None, "Device didnot enable in powersave mode1"
     time.sleep(30)
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    wifi_sniffer.interfaces.capture.stop_capture()
+    # validate NULL data frame with PM bit set to '1'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
     logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
 
 @pytest.mark.config(
@@ -1025,31 +1041,32 @@ def test_powersave_disable_functionality_case2_C4006(wifi_access_point, wifi_dut
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C4006.txt')
-    logger().info(f"Fetches the DUT mac address")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
     # bssid = wifi_access_point.interfaces.wifi.bssid
       #scan the AP
-    result = wifi_dut.interfaces.wifi.scan()
-    assert result is not None, "No AP Found"
+    result_scan = wifi_dut.interfaces.wifi.scan()
+    assert result_scan is not None, "No AP Found"
       #Connect to the AP
-    result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result is not None, "Could not connect to the AP"
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
       #Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
+    logger().info(f"*****Enable Powersave2 in  DUT******")
        #Initiating power save2
-    logger().info(f"*****Enable Powersave2 in ULP mode in  DUT******")
     result = wifi_dut.interfaces.wifi.power_save(2, 0)
     assert result is not None
     wifi_dut.interfaces.wifi.bt_power_save(
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
     time.sleep(30)
+    # validate NULL data frame with PM bit set to '1'
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}))'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
 
 @pytest.mark.config(
@@ -1069,7 +1086,7 @@ def test_Power_save_mode_8_with_ULP_mode_C4009(wifi_sniffer, wifi_dut, wifi_acce
         validation = True
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Powersave8_ULP_C4009')
-        logger().info(f"*****Enable Powersave mode8 in ULP mode in DUT******")
+        logger().info(f"*****Enable Powersave mode8 in DUT******")
         # Initiating power save
         wifi_dut.interfaces.wifi.power_save(8, 0)
         wifi_dut.interfaces.wifi.bt_power_save(
@@ -1081,8 +1098,11 @@ def test_Power_save_mode_8_with_ULP_mode_C4009(wifi_sniffer, wifi_dut, wifi_acce
         assert result is not None, "No AP Found"
         #Initiate powersave mode8
         wifi_dut.interfaces.wifi.power_save(8, 0)
+        # validate NULL data frame with PM bit set to '1'
         packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}))'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-        wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('Validation for NULL packet with pm bit 1')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
