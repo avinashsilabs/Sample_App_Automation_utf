@@ -8,17 +8,11 @@ rs9116_firmware = sys.argv[2]
 
 current_directory = os.getcwd()
 
-dir_list = os.listdir(".")
-
-print('-----------Line 13-------------')
-print(dir_list)
-print('-----------Line 15-------------')
-
 if build_location == "build_artifacts":
     if "2.5.0" in rs9116_firmware:
         version_number = int(rs9116_firmware.rsplit(".", 1)[1])
         if 1 <= version_number <= 19:
-            package_directory = current_directory + "/RS916W.2.5.0."+str(version_number)+"/firmware"
+            package_directory = current_directory + "/firmware"
             os.chdir(package_directory)
             if os.path.exists(package_directory + "/RS916.2.5.0."+str(version_number)+".rps"):
                 os.rename("RS916.2.5.0."+str(version_number)+".rps", "RS916W.2.5.0."+str(version_number)+".rps")
