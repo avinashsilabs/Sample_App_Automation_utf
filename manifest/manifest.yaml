@@ -18,9 +18,6 @@ firmware_applications:
       filename: 'sqa_test_agent.hex'
     test_concurrent_mode:
     # List of devices and their firmware images for this marker
-    - device_type: 'rs911x'
-      device_subtype: 'rs9116'
-      filename: 'RS9116W.2.4.1.17.rps'
     - device_type: 'efx32'
       device_subtype: 'efr32'
       filename: 'sqa_test_agent_for_concur_mode.hex'
