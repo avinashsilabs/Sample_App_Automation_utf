@@ -365,6 +365,36 @@ devices:
                             interface: 'wlan0'
             defaults: { }
 
+    secondary_raspi_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.1.154'
+                image: 'utfsilabs/rpi_ubuntu_secondary'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
         interfaces:
@@ -678,6 +708,10 @@ defaults:
     power_meter: 'keysight_power_analyzer'
 
     ble_client: 'raspi_ble_client'
+
+    ble_clients:
+        - 'secondary_raspi_ble_client'
+        - 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
 
