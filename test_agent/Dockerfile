@@ -35,6 +35,11 @@ RUN --mount=type=ssh \
 
 RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 
+ENV UID_OF_DOCKERUSER 1000
+RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
+    chown -R dockerUser:users /home/dockerUser
+USER dockerUser
+
 COPY src/ ./src/
 COPY map_file_parser.py .
 
@@ -46,15 +51,6 @@ ENV PROJECT_LIST="generic_test_agent"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
-
-ENV UID_OF_DOCKERUSER 1000
-
-RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
-    chown -R dockerUser:users /home/dockerUser
-
-RUN chown dockerUser ${SRC_ROOT}
-USER dockerUser
-
 WORKDIR ${SRC_ROOT}
 RUN ./generate_test_agents.sh
 
