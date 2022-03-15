@@ -154,7 +154,7 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
 def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client):
     # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    result = wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip(timeout=25)
     # Set up DUT for BLE advertising
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
@@ -173,15 +173,13 @@ def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client
         logger.error(f"Unable to find device {wifi_dut.interfaces.wifi.ble_address} within 30 sec.")
     ble_client.interfaces.bluetooth.stop_scanning()
 
-    # See that we found our device
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
-    time.sleep(1)
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    time.sleep(2)
+
+    ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                            min_conn_interval=160,
+                                            max_conn_interval=160,
+                                            conn_latency=0,
+                                            supervision_timeout=2000)
 
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)

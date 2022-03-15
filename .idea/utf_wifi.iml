@@ -6,8 +6,9 @@
       <sourceFolder url="file://$MODULE_DIR$/utf_wiseconnect" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/test_agent" />
       <excludeFolder url="file://$MODULE_DIR$/tcmgr" />
+      <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (utf_wiseconnect_sqa)" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
