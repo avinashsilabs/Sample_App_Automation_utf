@@ -18,6 +18,26 @@ from utf.interfaces.cli import CLITransportException
 def logger():
     return get_logger(__name__)
 
+class FilterPacket:
+    '''This function is responsible to create a list for ARP announcement packet time delta '''
+    def delta_between_probe_packet(self):
+        packet_filter = "Time delta from previous captured frame"
+        count = 0
+        time_diff_list = []
+
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+        for x in line:
+            count = count + 1
+            if packet_filter in x:
+                time_delta_from_previous_packet = line[count].strip().split(':')[1].replace(']', '').strip().replace(
+                    'seconds', '')
+                logger().info(f'time_delta_from_previous_packet={time_delta_from_previous_packet}')
+                time_diff_list.append(float(time_delta_from_previous_packet))
+
+        filter_file.close()
+        return time_diff_list
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -435,4 +455,172 @@ def test_verify_rejoin_func_with_specific_channel_using_SCFG_TC2398(wifi_sniffer
         time.sleep(30)
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniffer):
+    validation = True
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Store_Config_LP_Power_Save_C19089')
+
+    # DUT connects to AP after join_ap API is executed
+    logger().info("===========DUT connects to AP after join_ap API is executed===========")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Fetches the DUT MAC Address
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Actual MAC_Address: {mac_address}")
+
+    # Enables the DHCP in DUT
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    # Save the wireless configuration in the flash
+    wifi_dut.interfaces.wifi.config_save()
+
+    # Enable the wireless configuration in the flash
+    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+    time.sleep(10)
+    # resetting the dut
+    for count in range(0,5):
+        wifi_dut.interfaces.wifi.reset_soft()
+        time.sleep(4)
+        logger().info("=========Wireless Init============")
+        wifi_dut.interfaces.wifi.wireless_init()
+        wifi_dut.interfaces.wifi.wlan_get_status()
+        # Enables the power Save in wifi mode
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1)
+        # Enables the power Save in BT mode
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode1)
+
+        # Validating the power management bit
+        packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {mac_address}'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),'Sniffer validation failed for NULL data frame with PM bit 1'
+
+        # Initiate ping from third party wifi-client to DUT
+        status = ping(device_ip, 10)
+        assert status == 1,"DUT is not responding to ping request from third party device before store configuration"
+
+        # Wlan Disconnect
+        wifi_dut.interfaces.wifi.leave()
+
+    # Disable store configuration
+    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation |RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "rejoin_max_retry": 0,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_access_point, wifi_dut):
+    validation = True
+    time_delta = 4
+    packet_filter2 = 'Probe Request'
+    prob_req_obj = FilterPacket()
+
+    logger().info("========= Enabling rejoin on dut ==============")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Enables the DHCP in DUT
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    # Save the wireless configuration in the flash
+    wifi_dut.interfaces.wifi.config_save()
+
+    # Enable the wireless configuration in the flash
+    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+    time.sleep(10)
+
+    # resetting the dut
+    wifi_dut.interfaces.wifi.reset_soft()
+    time.sleep(2)
+    # Wireless Init
+    wifi_dut.interfaces.wifi.wireless_init()
+    #ping
+    status = ping(device_ip, 10)
+    assert status == 1, "DUT is not responding to ping request from third party device before store configuration"
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_verify_rejoin_func_with_max_retry_count_C19102')
+
+    logger().info("==========stopping access point========")
+    wifi_access_point.interfaces.wifi.stop_ap()
+    time.sleep(10)
+
+    # Fetches the DUT Mac Address
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Actual MAC_Address: {mac_address}")
+
+    #Validating Prob Request
+    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
+    time.sleep(120)
+
+    #Stop Sniffer
+    wifi_sniffer.interfaces.capture.stop_capture()
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count']
+
+    probe_packets_time_delta_list = prob_req_obj.delta_between_probe_packet()
+    probe_packets_time_delta_list.pop(0)
+    logger().info(f'APR packet time delta list after removing 0 = {probe_packets_time_delta_list}')
+    for time_diff in probe_packets_time_delta_list:
+        logger().info(int(time_diff))
+        is_between = int(time_diff) in range(time_delta, time_delta + 1)
+        if is_between is False:
+            logger().info(is_between)
+            status = is_between
+            break
+        else:
+            logger().info(is_between)
+            status = is_between
+    if status is True:
+        logger().info(f'Expected Valid Probe Request packet time delay is {status}')
+        assert True
+    else:
+        logger().info('Expected Valid Probe Request packet time delay is not {status}')
+        assert False
+
+    # Wlan Disconnect
+    wifi_dut.interfaces.wifi.leave()
+
+    # Enables the store configuration
+    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+
 

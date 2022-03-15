@@ -89,6 +89,7 @@ def main(
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
+
     docker_manager = WiFiDockerManager(
         target,
         harness,

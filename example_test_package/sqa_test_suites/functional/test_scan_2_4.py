@@ -76,11 +76,11 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     assert scan_count > 0
     previous_rssi = 0
     for count in scan_results:
-        assert previous_rssi >= count.rssi
+        assert previous_rssi >= count.rssi, "scan result is not based on the rssi"
         previous_rssi = count.rssi
+        logger().info("scan results are based on rssi")
     logger().info(f"Scan in {t.duration} seconds")
 
-# This test case verifies the scan with 32 byte SSID name
 def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -104,7 +104,6 @@ def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
     assert len(scan_results) == 1
     logger().info(f"Scan in {t.duration} seconds")
 
-# This test case verifies the scan functionality on channles 1,6,8
 def test_scan_selective_channel_c19058(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -311,7 +310,6 @@ def test_scan_hidden_mode_scan_with_all_channels_c19062(wifi_dut,wifi_access_poi
                         assert count.ssid == 'test_ssid'
     logger().info(f"Scan in {t.duration} seconds")
 
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"ssid":"hidden_ssid", "broadcast_ssid": False})
@@ -328,7 +326,7 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
     # Enables the rejoin feature on DUT
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
-    channel = 0
+    channel = [1,5,9]
     channel_list = [1,5,9]
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
@@ -337,10 +335,12 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
         scan_expected_time += 100
     scan_feature_extend = 0
 
-    with TimeMeasurer() as t:
-
+    for channel in channel:
+        logger().info("Starting the access point with custom channel...")
+        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+        with TimeMeasurer() as t:
         # enables the scan in DUT with the given channel bitmap value
-        logger().info("Initiating Scan...")
+            logger().info("Initiating Scan...")
         scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid="hidden_ssid",scan_bitmap_2_4=channel_bitmap_2_4,scan_feature=scan_feature_extend)
         logger().info(scan_results)
         assert len(scan_results) >= 1
@@ -353,7 +353,6 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
                     channel_selected = channel_selected + 1
             assert (channel_selected <= len(scan_results))
     logger().info(f"Scan in {t.duration} seconds")
-
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -393,7 +392,6 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_poin
                                                                            scan_feature=scan_feature_extend)
             assert exc_info.value.error_code == 0x03,"Observing wrong error expected error code is 0x03"
         logger().info(f"Scan in {t.duration} seconds")
-
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
