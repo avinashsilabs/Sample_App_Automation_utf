@@ -21,7 +21,7 @@ docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --buil
 rm -rf build
 mkdir -p build
 
-docker run --user "$(id -u):$(id -g)" --rm -t -v ${PWD}/build:/build/src/build wifi_test_agent_build
+docker run --rm -t -v ${PWD}/build:/build/src/build wifi_test_agent_build
 
 popd
 
