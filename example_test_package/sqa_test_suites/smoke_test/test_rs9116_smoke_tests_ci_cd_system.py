@@ -15,6 +15,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.skip
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
     "wifi_dut",
