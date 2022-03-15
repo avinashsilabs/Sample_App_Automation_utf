@@ -46,8 +46,16 @@ ENV PROJECT_LIST="generic_test_agent"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
+
+ENV UID_OF_DOCKERUSER 1000
+
+RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
+    chown -R dockerUser:users /home/dockerUser
+
+RUN chown dockerUser ${SRC_ROOT}
+USER dockerUser
+
 WORKDIR ${SRC_ROOT}
-RUN ["chmod", "-R", "777", "/build/src"]
 RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
