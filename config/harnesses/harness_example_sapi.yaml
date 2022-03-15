@@ -158,6 +158,17 @@ devices:
                 shell: 'local_shell'
                 interface: 'wlp0s20f3'
                 capture_file: 'Test_Enhanced_'
+    50pa500_attenuator:
+        interfaces:
+            attenuator:
+                type: 'attenuator.50pa500'
+                shell: 'telnet_shell'
+            telnet_shell:
+                type: 'shell.telnet_shell'
+                remote: '192.168.10.185'
+                port: 3001
+                username: null
+                password: null
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -202,6 +213,9 @@ defaults:
     iop_sockets:
         server_ip: '192.168.1.10'
         server_port: '8008'
+        att_channel: 1
+        db_value: 2
+        att_enable: true
 
     aws_iot:
         hostname: "a3gk26lvc3j6ud-ats.iot.us-east-2.amazonaws.com"

@@ -25,15 +25,14 @@ if exist build (
     rd /s /q build
 )
 mkdir build
-docker run --rm -it -v %CD%/build:/build/rs911x/Host_MCU/test/sqa_test_agent/build/build wifi_test_agent_build
+docker run --rm -it -v %CD%/build:/build/src/build wifi_test_agent_build
 if %errorlevel% neq 0 (
    exit /b 1
 )
 
 popd
 
-copy test_agent\build\debug\sqa_test_agent.hex manifest
 
-:: run python script to parse map file to view memory usage
-call venv\scripts\activate
-python test_agent\map_file_parser.py test_agent\build\debug\sqa_test_agent.map 1024
+copy test_agent\build\*.hex manifest
+
+

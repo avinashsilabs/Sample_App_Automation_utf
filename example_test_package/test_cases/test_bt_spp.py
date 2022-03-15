@@ -5,6 +5,7 @@ from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 import time
+from utf.utils.thread_base import ThreadBase
 
 pytestmark = [
     pytest.mark.config(
@@ -35,13 +36,16 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None
 
+        # Added set class to 400100 to avoid [Errno 112] Host is down issue
+        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
         ) as bt_server_socket:
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_server_socket.create_server()
-                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
+                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
                 assert connected
 
             # Initiating power save
@@ -94,15 +98,18 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
         time.sleep(0.5)
 
+        # Added set class to 400100 to avoid [Errno 112] Host is down issue
+        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
         ) as bt_client_socket:
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
-                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=12)
-                assert addr == bt_dut_address
+                result = ThreadBase.call_functions_simultaneously([(wifi_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 20)])
+                assert result[1] == bt_dut_address
+                logger().info(f"Result from Callable Function {result}")
 
             # Initiating power save
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -155,13 +162,16 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
         assert bt_client_address is not None
 
+        # Added set class to 400100 to avoid [Errno 112] Host is down issue
+        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
         ) as bt_server_socket:
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_server_socket.create_server()
-                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=0)
+                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
                 time.sleep(1)
                 assert not connected
             bt_server_socket.close()
@@ -184,10 +194,14 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
 
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp(bt_pin_code="1234")
         assert bt_dut_address is not None
+        time.sleep(0.5)
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="9876")
         assert bt_client_address is not None
         time.sleep(1)
+
+        # Added set class to 400100 to avoid [Errno 112] Host is down issue
+        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
@@ -195,12 +209,13 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
-                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=12)
-                assert addr is None
+                result = ThreadBase.call_functions_simultaneously(
+                    [(wifi_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 60)])
+                assert result[1] is None
             bt_client_socket.close()
 
         recieved_authentication_failure = False
+        time.sleep(1)
         events = wifi_dut.interfaces.wifi.get_async_events()
         if len(events):
             for event in events:

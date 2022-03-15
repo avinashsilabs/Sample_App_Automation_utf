@@ -68,18 +68,14 @@ pipeline {
                                         }
                                     }
                                     dir('rs9116_binary'){
-                                        if(BUILD_LOCATION == "build_artifacts"){
-                                            sh  '''
-                                                rm -f ../manifest/rs9116*.rps
-                                                cp -f firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
-                                            '''
-                                        }else {
-                                            sh  '''
-                                                unzip -o ${RS9116_FIRMWARE}.zip "${RS9116_FIRMWARE}/firmware/${RS9116_FIRMWARE}.rps"
-                                                rm -f ../manifest/rs9116*.rps
-                                                cp -f ${RS9116_FIRMWARE}/firmware/RS9116*.rps ../manifest/${RS9116_FIRMWARE}.rps
-                                            '''                                            
-                                        }
+                                        sh '''
+                                        if [ -d venv/bin ]; then
+                                           . venv/bin/activate
+                                        elif [ -d venv/Scripts ]; then
+                                           . venv/Scripts/activate
+                                        fi
+                                        python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                        '''
                                     }
                                 }
                             } else {
@@ -151,13 +147,33 @@ pipeline {
                             rm -rf reports
                             export SKIP_PROCESSING_ARTIFACTS=1
 
-                            . venv/bin/activate
-                            cd executor
-                            python launch_utf_tests.py --target ${SSH_TARGET} --harness ${HARNESS_NAME} --docker_flags "-e BUILD_URL=${BUILD_URL},-e BUILD_NUMBER=${BUILD_NUMBER},-e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL},-e JOB_NAME=${JOB_NAME},-e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE},-e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/,-e TEST_SUITE=OT_Smoke_brd4161a,-e BRANCH_NAME=${RS9116_FIRMWARE},-e SSH_TARGET=${SSH_TARGET}"
+                            if [ -d venv/bin ]; then
+                               . venv/bin/activate
+                            else
+                               . venv/Scripts/activate
+                            fi
+
+                            export PYTHONPATH=/opt/jenkins/jenkins-worker/workspace/UTF_WiFi/utf_core/src
+                            echo $PYTHONPATH
+                            echo $UTF_PYTEST_COMMAND
+
+                            python executor/launch_utf_tests.py \
+                                --target ${SSH_TARGET} \
+                                --pytest_command "${UTF_PYTEST_COMMAND}" \
+                                --harness ${HARNESS_NAME} \
+                                --docker_flags "-e BUILD_URL=${BUILD_URL}, \
+                                    -e BUILD_NUMBER=${BUILD_NUMBER}, \
+                                    -e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL}, \
+                                    -e JOB_NAME=${JOB_NAME}, \
+                                    -e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
+                                    -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
+                                    -e TEST_SUITE=OT_Smoke_brd4161a, \
+                                    -e BRANCH_NAME=${RS9116_FIRMWARE}, \
+                                    -e SSH_TARGET=${SSH_TARGET}" \
                         '''
                         archiveArtifacts 'example_test_package/**'
                         archiveArtifacts 'reports/**'
-                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}.yaml"
+                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                         junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                     }
                 }
