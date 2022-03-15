@@ -35,12 +35,6 @@ RUN --mount=type=ssh \
 
 RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 
-ENV UID_OF_DOCKERUSER 1000
-RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
-    chown -R dockerUser:users /home/dockerUser
-RUN chown dockerUser /build
-USER dockerUser
-
 COPY src/ ./src/
 COPY map_file_parser.py .
 
@@ -56,5 +50,3 @@ WORKDIR ${SRC_ROOT}
 RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
-
-
