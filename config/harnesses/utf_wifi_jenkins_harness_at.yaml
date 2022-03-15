@@ -19,6 +19,7 @@ devices:
         # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
         # In the case of a 9116 device, the type 'rs911x' should be used
         type: 'rs911x'
+        subtype: 'rs9116'
         src_dir: 'utf_wiseconnect'
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
@@ -90,6 +91,7 @@ devices:
         # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
         # In the case of a 9116 device, the type 'rs911x' should be used
         type: 'rs911x'
+        subtype: 'rs9116'
         src_dir: 'utf_wiseconnect'
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
@@ -140,6 +142,7 @@ devices:
     #EFR32 configuration
     efr32_4180b:
         type: 'efx32'
+        subtype: 'efr32'
         interfaces:
             vcom:
                 type: 'serial'
@@ -645,6 +648,11 @@ defaults:
     dut: 'rs9116'
 
     efx32: 'efr32_4180b'
+
+    # List of devices on test bed, used for loading/upgrading firmware at test case level
+    wiseconnect_duts:
+        - 'rs9116'
+        - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
