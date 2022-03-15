@@ -1,0 +1,6 @@
+label: "WiSeConnect SQA Test Agents"
+project:
+- id: general_test_agent
+  path: general_test_agent/general_test_agent.slcp
+- id: concurrent_test_agent
+  path: concurrent_test_agent/concurrent_test_agent.slcp

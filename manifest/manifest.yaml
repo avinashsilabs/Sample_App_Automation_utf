@@ -1,6 +1,6 @@
 firmware:
   rs911x: RS9116W.2.4.1.17.rps
-  efx32: sqa_test_agent.hex
+  efx32: generic_test_agent.hex
 
 # List of devices to be reset when needed
 # reset of efx32 runs reset sequence for rs911x so no need to reset rs911x

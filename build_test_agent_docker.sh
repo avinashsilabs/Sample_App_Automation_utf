@@ -21,8 +21,8 @@ docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --buil
 rm -rf build
 mkdir -p build
 
-docker run -u $UID --rm -t -v ${PWD}/build:/build/rs911x/Host_MCU/test/sqa_test_agent/build/build wifi_test_agent_build
+docker run -u $UID --rm -t -v ${PWD}/build:/build/src/build wifi_test_agent_build
 
 popd
 
-cp ./test_agent/build/debug/sqa_test_agent.hex manifest
+cp ./test_agent/build/*.hex manifest
