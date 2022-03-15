@@ -42,6 +42,7 @@
 #include "rsi_ble_apis.h"
 #include "rsi_ble_gatt_device_info.h"
 #include "rsi_bt_common_apis.h"
+#include "rsi_common_config.h"
 #include "rsi_ble_gatt_config.h"
 #include "rsi_gatt_common_config.h"
 
@@ -296,7 +297,7 @@ uint8_t rsi_check_dev_list(uint8_t *remote_dev_name, uint8_t *adv_dev_addr)
     slave_device_found = DEV_FOUND;
   } else if (!strcmp(RSI_BLE_DEV_3_ADDR, (char *)adv_dev_addr)) {
     slave_device_found = DEV_FOUND;
-  } else if (!strcmp((char *)target_ble_remote_dev_addr, (char *)adv_dev_addr)) { 
+  } else if (!strcmp((char *)target_ble_remote_dev_addr, (char *)adv_dev_addr)) {
     //TODO : This is new else clause
     // Review - target_ble_remote_dev_addr is assigned when ble_start_scanning is called can be found in ble_commands.c
      slave_device_found = DEV_FOUND;
@@ -712,7 +713,7 @@ void rsi_ble_simple_peripheral_on_remote_features_event_gatt(rsi_ble_event_remot
 void rsi_ble_simple_central_on_adv_report_event_gatt(rsi_ble_event_adv_report_t *adv_report)
 {
   // LOG_PRINT("rsi_ble_simple_central_on_adv_report_event_gatt\n");
-  LOG_EVENT("Found : %s\n", rsi_6byte_dev_address_to_ascii(remote_dev_addr, (uint8_t *)adv_report->dev_addr)); 
+  LOG_EVENT("Found : %s\n", rsi_6byte_dev_address_to_ascii(remote_dev_addr, (uint8_t *)adv_report->dev_addr));
   uint8_t device_already_connected = 0;
   if (adv_report->report_type == 0x02)
     return; // return for NON CONN ADV PACKETS
@@ -1320,10 +1321,10 @@ static void rsi_ble_on_read_resp_event_gatt(uint16_t event_status, rsi_ble_event
   memcpy(&rsi_ble_conn_info[ble_conn_id].rsi_char_descriptors,
          rsi_ble_event_att_val,
          sizeof(rsi_ble_event_att_value_t));
-  
+
   LOG_EVENT("\nrsi_ble_on_read_resp_event_gatt - att_value - %d\n", *(uint8_t *)rsi_ble_conn_info[ble_conn_id].rsi_char_descriptors.att_value);
   LOG_EVENT("\nrsi_ble_on_read_resp_event_gatt - resolved\n");
-    
+
    //! set conn specific event
   //! signal conn specific task
   rsi_ble_app_set_task_event(ble_conn_id, RSI_BLE_GATT_DESC_SERVICES);
@@ -1729,12 +1730,12 @@ static int32_t rsi_ble_dual_role(void)
                                   rsi_ble_on_event_write_resp_gatt,
                                   rsi_ble_on_event_indication_confirmation_gatt,
                                   NULL);
-  LOG_PRINT("rsi_ble_gatt_register_callbacks\n");  
+  LOG_PRINT("rsi_ble_gatt_register_callbacks\n");
 
   rsi_ble_gatt_extended_register_callbacks(rsi_ble_on_event_mtu_exchange_info_gatt);
   rsi_ble_gap_extended_register_callbacks(rsi_ble_simple_peripheral_on_remote_features_event_gatt,
                                           rsi_ble_more_data_req_event_gatt);
-  LOG_PRINT("rsi_ble_gatt_extended_register_callbacks\n");  
+  LOG_PRINT("rsi_ble_gatt_extended_register_callbacks\n");
 
 #if SMP_ENABLE
   //! registering the SMP callback functions
@@ -1754,7 +1755,7 @@ static int32_t rsi_ble_dual_role(void)
                                  NULL
 #endif
   );
-  LOG_PRINT("rsi_ble_smp_register_callbacks\n");  
+  LOG_PRINT("rsi_ble_smp_register_callbacks\n");
 #endif
 
   //! initializing the application events map
@@ -1766,7 +1767,7 @@ static int32_t rsi_ble_dual_role(void)
   //! Set local IRK Value
   //! This value should be fixed on every reset
   // status = rsi_ble_set_local_irk_value(local_irk);
-  // LOG_PRINT("rsi_ble_set_local_irk_value\n");  
+  // LOG_PRINT("rsi_ble_set_local_irk_value\n");
   // print_status(status);
   // if (status != RSI_SUCCESS) {
   //   LOG_PRINT("Setting the Local IRK Value Failed = %lx\n", status);
@@ -1807,7 +1808,7 @@ static int32_t rsi_ble_dual_role(void)
 
   //   //! set device in advertising mode.
   //   status = rsi_ble_start_advertising();
-  //   LOG_PRINT("rsi_ble_start_advertising\n");  
+  //   LOG_PRINT("rsi_ble_start_advertising\n");
   //   print_status(status);
   //   if (status != RSI_SUCCESS) {
   //     LOG_PRINT("advertising failed \n");
@@ -1820,7 +1821,7 @@ static int32_t rsi_ble_dual_role(void)
   // if (RSI_BLE_MAX_NBR_SLAVES > 0) {
   //   //! start scanning
   //   status = rsi_ble_start_scanning();
-  //   LOG_PRINT("rsi_ble_start_scanning\n");  
+  //   LOG_PRINT("rsi_ble_start_scanning\n");
   //   print_status(status);
   //   if (status != RSI_SUCCESS) {
   //     return status;
@@ -1948,8 +1949,8 @@ void rsi_ble_main_app_task()
                 &rsi_parsed_conf.rsi_ble_config.rsi_ble_conn_config[RSI_BLE_MAX_NBR_SLAVES + master_task_instances],
                 RSI_BLE_APP_TASK_PRIORITY,
                 &ble_app_task_handle[master_conn_id]);
-              
-              
+
+
               LOG_PRINT("rsi_task_create master_conn_id %d \n", master_conn_id);
               print_status(status);
 
@@ -1999,7 +2000,7 @@ void rsi_ble_main_app_task()
                 &rsi_parsed_conf.rsi_ble_config.rsi_ble_conn_config[RSI_BLE_MAX_NBR_SLAVES + master_task_instances],
                 RSI_BLE_APP_TASK_PRIORITY,
                 &ble_app_task_handle[master_conn_id]);
-              
+
               LOG_PRINT("rsi_task_create master_conn_id %d \n", master_conn_id);
               print_status(status);
               if (status != RSI_ERROR_NONE) {
@@ -2089,7 +2090,7 @@ void rsi_ble_main_app_task()
         rsi_ble_app_clear_event(RSI_BLE_SCAN_RESTART_EVENT);
 
         status = rsi_ble_stop_scanning();
-        LOG_PRINT("rsi_ble_stop_scanning\n");  
+        LOG_PRINT("rsi_ble_stop_scanning\n");
         print_status(status);
         if (status != RSI_SUCCESS) {
           LOG_PRINT("scanning stop cmd status = %lx\n", status);
@@ -2101,7 +2102,7 @@ void rsi_ble_main_app_task()
         LOG_PRINT("Restarting scanning\n");
 
         status = rsi_ble_start_scanning();
-        LOG_PRINT("rsi_ble_start_scanning\n");  
+        LOG_PRINT("rsi_ble_start_scanning\n");
         print_status(status);
         if (status != RSI_SUCCESS) {
           LOG_PRINT("scanning start cmd status = %lx\n", status);

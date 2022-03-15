@@ -72,9 +72,9 @@
 #define RSI_BLE_DEV_1_ADDR "00:1A:7D:DA:71:16"
 #define RSI_BLE_DEV_2_ADDR "00:1A:7D:DA:71:74"
 #define RSI_BLE_DEV_3_ADDR "00:1A:7D:DA:73:13"
-//TODO: Review this variable is used in ble_commands to assign target bt address while scanning
-extern uint8_t target_ble_remote_dev_addr[18];
 #endif
+
+
 
 /***********************************************************************************************************************************************/
 //! BLE connection specific configurations
