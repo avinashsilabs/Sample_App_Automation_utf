@@ -47,7 +47,7 @@ ENV PROJECT_LIST="generic_test_agent"
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
-RUN ["chmod", "-R", "777", "./test_agent"]
+RUN ["chmod", "-R", "777", "/build/src"]
 RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
