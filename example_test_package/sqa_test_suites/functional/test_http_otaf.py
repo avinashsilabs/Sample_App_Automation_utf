@@ -7,7 +7,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ConfigFeatureBitMap,
     RS9116FeatureBitMap,
     RS9116AsyncEventType
-    )
+)
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
@@ -15,13 +15,14 @@ from utf.utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
+
 """
     setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-    
+
      Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
         2. Scan and Join the access point and enable the dhcp
@@ -32,11 +33,12 @@ def logger():
     Author: RaviNemali
 """
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
+        "coex_mode": RS9116CoexMode.WLANOnly,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
@@ -44,38 +46,45 @@ def logger():
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade failure in DUT over the http connection whe dut is not connected
-def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_dut, wifi_access_point, logger):
+def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_dut, wifi_access_point):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
 
     # This API gets the host ip for the http server
     logger().info(" fetching the host IP for http server")
     host_ip = get_host_ip()
+    logger().info(f"host ip is {host_ip}")
 
-    # performs the soft reset on DUT
-    logger().info("Performing DUT reset...")
-    wifi_dut.interfaces.wifi.reset_soft()
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
 
-    logger().info("Fetching the DUT version...")
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
 
-    # DUT wifi initialization
-    logger().inof("Initialising DUT....")
-    wifi_dut.interfaces.wifi.init()
-    with pytest.raises(WlanError) as exc_info:
+    logger().info("scanning for ap...")
+    wifi_dut.interfaces.wifi.scan(ssid=None)
 
+    with pytest.raises(WlanError) as exc_info:
         # performs the firmware upgrade on DUT over the http port
         logger().info("Performing firmware upgrade....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+        time.sleep(20)
     assert exc_info.value.error_code == 0x0021, "observed wrong error code expected is 0x0021"
+    time.sleep(10)
 
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
+        "coex_mode": RS9116CoexMode.WLANOnly,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
@@ -84,33 +93,50 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_d
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
 
-        },
-    )
-
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan mode
-def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, wifi_dut, wifi_access_point,
+                                                                   wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    # logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780')
+
+    logger().info("dut fw version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
 
     # Joins the AP with given ssid and passphrase
-    logger().info("Joing the ap....")
+    logger().info("Joining the ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     # Enables and assign the dhcp in DUT
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching the host ip for server....")
-    host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
     # performs the firmware upgrade on DUT over the http port
     logger().info("Performing firmware upgrade....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
     logger().info("Fetching the otaf status....")
@@ -131,11 +157,8 @@ def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, 
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
-    logger().info("performing dut reset after reset....")
+    logger().info("performing dut reset....")
     wifi_dut.interfaces.wifi.reset_soft()
     time.sleep(60)
 
@@ -146,6 +169,11 @@ def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, 
     # gets DUT fw version
     logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
+
+    logger().info("Stop Sniffer capture...")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -159,10 +187,37 @@ def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, 
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan and bluetooth mode
-def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781')
+
+    logger().info("dut fw version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
+
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -171,18 +226,9 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host IP for server....")
-    host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
     # performs the firmware upgrade on DUT over the http port
     logger().info("Performing firmware upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -204,9 +250,6 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
     logger().info("resetting DUT....")
     wifi_dut.interfaces.wifi.reset_soft()
@@ -220,6 +263,12 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
     logger().info("fetching dut version after init....")
     wifi_dut.interfaces.wifi.version()
 
+    time.sleep(10)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -232,10 +281,37 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan and BLE mode
-def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wifi_dut, wifi_access_point,
+                                                                 wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782')
+
+    logger().info("Fetching the DUT version...")
+    wifi_dut.interfaces.wifi.version()
+
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -244,19 +320,9 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host IP for server....")
-    host_ip = get_host_ip()
-    time.perf_counter_ns()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
     # performs the firmware upgrade on DUT over the http port
     logger().info("Performing fw upgrade on DUT....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -278,27 +344,30 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
     logger().info("resetting the DUT after upgrade....")
     wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(30)
+    time.sleep(60)
 
     # performs the wifi initialization
     logger().info("Initializing DUT....")
     wifi_dut.interfaces.wifi.init()
+    time.sleep(10)
 
     # gets DUT fw version
-    logger().info("fetching DUT version aftre init....")
+    logger().info("fetching DUT version after init....")
     wifi_dut.interfaces.wifi.version()
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE | RS9116CoexMode.Bluetooth,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
@@ -306,27 +375,46 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan and dual bluetooth mode
-def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server, wifi_dut, wifi_access_point):
-    # Joins the AP with given ssid and passphrase
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server, wifi_dut, wifi_access_point,
+                                                                    wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
 
-    # Enables and assign the dhcp in DUT
-    wifi_dut.interfaces.wifi.start_ip()
-
-    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
     start_time = time.perf_counter_ns()
     async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
 
-    logger().info("Fetching the DUT version...")
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783')
+
+    logger().info("Fetching DUT fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
 
+    # Joins the AP with given ssid and passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+
     # performs the firmware upgrade on DUT over the http port
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
     wifi_dut.interfaces.wifi.get_http_otaf_status()
@@ -345,9 +433,6 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
     logger().info("resetting dut after upgrade....")
     wifi_dut.interfaces.wifi.reset_soft()
@@ -356,12 +441,18 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
     # performs the wifi initialization
     logger().info("Initializing dut after reset....")
     wifi_dut.interfaces.wifi.init()
+    time.sleep(10)
 
     # gets DUT fw version
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
 
+
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -374,11 +465,27 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection on DUT connection in access point 11g mode
-@pytest.mark.config('wifi_access_point',wifi ={"standard": '11g'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11g'})
 def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
     logger().info("This Test case is not listed in test rail cases and automated from confluence")
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
@@ -388,19 +495,13 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
     logger().info("fetching the otaf async events after the upgrade....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching the otaf async events after the upgrade....")
-    host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
-    logger().info("Fetching the DUT version...")
+    logger().info("Fetching the DUT fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on DUT....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf status after upgrade....")
@@ -421,9 +522,6 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
     logger().info("resetting dut....")
     wifi_dut.interfaces.wifi.reset_soft()
@@ -438,6 +536,7 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.version()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -450,11 +549,26 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
-@pytest.mark.config('wifi_access_point',wifi ={"standard": '11n'})
+    },
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n'})
 # These test case verifies the firmware upgrade in DUT over the http connection on DUT connection in access point 11n mode
 def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
     logger().info("This test case is not listed in testrail and automated from confluence")
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
@@ -464,19 +578,13 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
     logger().info("starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host Ip for server....")
-    host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
     logger().info("fetching the DUT version...")
     wifi_dut.interfaces.wifi.version()
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
     logger().info("fetching otaf upgrade status....")
@@ -496,9 +604,6 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
-
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
 
     # API does soft reset on DUT
     logger().info("resetting dut....")
@@ -526,10 +631,37 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection on DUT SPI connection
-def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_dut, wifi_access_point):
+def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789')
+
+    logger().info("Fetching the DUT version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
+
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -538,19 +670,10 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
     logger().info("starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
-    host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
     logger().info("fetching upgrade status....")
@@ -571,9 +694,6 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
     logger().info("resetting dut....")
     wifi_dut.interfaces.wifi.reset_soft()
@@ -587,6 +707,12 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
+
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -599,10 +725,26 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection by enabling the power save mode in DUT
 def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_dut, wifi_access_point):
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -619,18 +761,12 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
     logger().info("enabling bt power save....")
     wifi_dut.interfaces.wifi.bt_power_save(2)
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
-    host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-
-    logger().info("Fetching the DUT version...")
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
     time.sleep(90)
 
     # API fetches the DUT otaf status
@@ -652,9 +788,6 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
     logger().info("resetting dut....")
     wifi_dut.interfaces.wifi.reset_soft()
@@ -667,6 +800,7 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
     # gets DUT fw version
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -681,34 +815,51 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
         "band": 0
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection on single band Q7 board
-def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point):
-    # Joins the AP with given ssid and passphrase
-    logger().info("fetching the otaf async events after the upgrade....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # Enables and assign the dhcp in DUT
-    logger().info("starting dhcp....")
-    wifi_dut.interfaces.wifi.start_ip()
+def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
 
     # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
     start_time = time.perf_counter_ns()
     async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
 
-    logger().info("Fetching the DUT version...")
+    # logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792')
+
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
 
+    # Joins the AP with given ssid and passphrase
+    logger().info("Joining the ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Enables and assign the dhcp in DUT
+    logger().info("Starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+
     # performs the firmware upgrade on DUT over the http port
-    logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    logger().info("Performing firmware upgrade....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
-    logger().info("fetching otaf upgrade status....")
+    logger().info("Fetching the otaf status....")
     wifi_dut.interfaces.wifi.get_http_otaf_status()
     time.sleep(10)
 
@@ -726,21 +877,23 @@ def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_d
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
-    logger().info("resetting dut....")
+    logger().info("performing dut reset....")
     wifi_dut.interfaces.wifi.reset_soft()
     time.sleep(60)
 
     # performs the wifi initialization
-    logger().info("Initializing dut....")
+    logger().info("Initialising DUT after the reset....")
     wifi_dut.interfaces.wifi.init()
 
     # gets DUT fw version
-    logger().info("fetching fw version after dut init....")
+    logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
+
+    logger().info("Stop Sniffer capture...")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -755,34 +908,52 @@ def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_d
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
         "band": 2
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade in DUT over the http connection on dual band A7 board
-def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point):
-    # Joins the AP with given ssid and passphrase
-    logger().info("joinig ap....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    # Enables and assign the dhcp in DUT
-    logger().info("starting ap....")
-    wifi_dut.interfaces.wifi.start_ip()
+def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
 
     # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
     start_time = time.perf_counter_ns()
     async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
 
-    logger().info("Fetching the DUT version...")
+    # logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_in_A7_board_and_measure_time_C19792')
+
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
 
+    # Joins the AP with given ssid and passphrase
+    logger().info("Joining the ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Enables and assign the dhcp in DUT
+    logger().info("Starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+
     # performs the firmware upgrade on DUT over the http port
-    logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
-    time.sleep(90)
+    logger().info("Performing firmware upgrade....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    time.sleep(40)
 
     # API fetches the DUT otaf status
-    logger().info("fetching otaf upgrade status....")
+    logger().info("Fetching the otaf status....")
     wifi_dut.interfaces.wifi.get_http_otaf_status()
     time.sleep(10)
 
@@ -800,21 +971,23 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("Fetching the DUT fw version after upgrade...")
-    wifi_dut.interfaces.wifi.version()
-
     # API does soft reset on DUT
-    logger().info("resetting dut....")
+    logger().info("performing dut reset....")
     wifi_dut.interfaces.wifi.reset_soft()
     time.sleep(60)
 
     # performs the wifi initialization
-    logger().info("Initializing dut....")
+    logger().info("Initialising DUT after the reset....")
     wifi_dut.interfaces.wifi.init()
 
     # gets DUT fw version
-    logger().info("fetching fw version after init....")
+    logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
+
+    logger().info("Stop Sniffer capture...")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -828,10 +1001,34 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade failure in DUT over the http connection on providing the empty rps file
-def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wifi_access_point, logger):
+def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_failure_with_empty_rps_C19800')
+
+    logger().info("dut fw version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
+
     # Joins the AP with given ssid and passphrase
     logger().info("Joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -840,63 +1037,20 @@ def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wi
     logger().info("starting ap....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
-    host_ip = get_host_ip()
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut with empty rps file....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_empty.rps")
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
-
         # API fetches the DUT otaf status
+        logger().info("fetching otaf status...")
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xBBE2 | 0xbb38
+    assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-                          | RS9116TCPIPFeatureBitMap.SSL
-                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
-# These test case verifies the firmware upgrade failure in DUT over the http connection on providing the corrupted rps file
-def test_http_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi_access_point, logger):
-    # Joins the AP with given ssid and passphrase
-    logger().info("joining ap....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    logger().info("Stop Sniffer capture...")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
 
-    # Enables and assign the dhcp in DUT
-    logger().info("starting dhcp....")
-    wifi_dut.interfaces.wifi.start_ip()
-
-    # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
-    host_ip = get_host_ip()
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
-    # performs the firmware upgrade on DUT over the http port
-    logger().info("performing fw upgrade on dut with corrupted rps....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
-    time.sleep(90)
-    with pytest.raises(WlanError) as exc_info:
-
-        # API fetches the DUT otaf status
-        wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
 
 @pytest.mark.config(
     "wifi_dut",
@@ -910,10 +1064,35 @@ def test_http_otaf_corrupted_firmware_neg_testcase2(http_server, wifi_dut, wifi_
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default
-        },
-    )
+    },
+)
 # These test case verifies the firmware upgrade failure in DUT over the http connection,when http is disabled in DUT
-def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_dut, wifi_access_point, logger):
+def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_failure_without_enabling_http_C19799')
+
+    logger().info("dut fw version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
+
     # Joins the AP with given ssid and passphrase
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -922,21 +1101,17 @@ def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_
     logger().info("starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
-    # This API gets the host ip for the http server
-    logger().info("fetching host ip for server....")
-    host_ip = get_host_ip()
-
-    logger().info("Fetching the DUT version...")
-    wifi_dut.interfaces.wifi.version()
-
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
     with pytest.raises(WlanError) as exc_info:
-
         # API fetches the DUT otaf status
         wifi_dut.interfaces.wifi.get_http_otaf_status()
     assert exc_info.value.error_code == 0xFF74, "observed wrong error code expected is 0xff74"
+    time.sleep(10)
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -946,15 +1121,28 @@ def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
-    },
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF,
+        "skip_radio_init": True
+    }
 )
-def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut, logger):
-    logger().info("fetching host for server....")
+def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut):
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    time.sleep(30)
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
     logger().info("Fetching the DUT version...")
     wifi_dut.interfaces.wifi.version()
+
     with pytest.raises(WlanError) as exc_info:
         logger().info("performing fw upgrade on dut....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
@@ -972,16 +1160,64 @@ def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_d
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, logger):
-    logger().info("fetching host ip for server....")
+def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    time.sleep(30)
-    logger().info("Fetching the DUT version...")
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Connectivity_with_11n_only_mode_AP_C19707')
+
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
+
+    logger().info("joining ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # Enables and assign the dhcp in DUT
+    logger().info("starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+
+    # performs the firmware upgrade on DUT over the http port
+    logger().info("performing fw upgrade on dut with corrupted rps....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
+    time.sleep(40)
     with pytest.raises(WlanError) as exc_info:
-        logger().info("performing fw upgrade on dut....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
-    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+        # API fetches the DUT otaf status
+        wifi_dut.interfaces.wifi.get_http_otaf_status()
+    assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
+
+    # API does soft reset on DUT
+    logger().info("performing dut reset....")
+    wifi_dut.interfaces.wifi.reset_soft()
+    time.sleep(60)
+
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.init()
+
+    # gets DUT fw version
+    logger().info("fetching the fw version after init....")
+    wifi_dut.interfaces.wifi.version()
+
+    logger().info("Stop Sniffer capture...")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -991,19 +1227,34 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, log
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
+        "skip_radio_init": True
     },
 )
-def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_dut, logger):
-    logger().info("fetching host ip for server....")
+def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_dut):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    time.sleep(30)
-    logger().info("Fetching the DUT version...")
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
+
     with pytest.raises(WlanError) as exc_info:
         logger().info("performing fw upgrade on dut....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_removing.rps")
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1016,16 +1267,64 @@ def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
-def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, logger):
-    logger().info("fetching host ip for server....")
+def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+    """ ******* SERVER CHECKS ***** """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    time.sleep(30)
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_failure_with_non_rps_C19798')
+
+    logger().info("dut fw version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
+
+    logger().info("Joining ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("configuring dhcp...")
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    logger().info(f'device ip {device_ip}')
+
+    logger().info("performing fw upgrade on dut....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.xml")
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.get_http_otaf_status()
+    assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
+
+    time.sleep(10)
+    logger().info("resetting dut....")
+    wifi_dut.interfaces.wifi.reset_soft()
+    time.sleep(60)
+
+    logger().info("Initializing dut...")
+    wifi_dut.interfaces.wifi.init()
+    time.sleep(10)
+
     logger().info("Fetching the DUT version...")
     wifi_dut.interfaces.wifi.version()
-    with pytest.raises(WlanError) as exc_info:
-        logger().info("performing fw upgrade on dut....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.xml")
-    assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    time.sleep(10)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1035,16 +1334,30 @@ def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, logg
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
+        "skip_radio_init": True
     },
 )
-def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, wifi_dut, logger):
-    logger().info("fetching host ip for server....")
+def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, wifi_dut):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    # This API gets the host ip for the http server
+    logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    time.sleep(30)
-    logger().info("Fetching the DUT version...")
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
+
     with pytest.raises(WlanError) as exc_info:
         logger().info("performing fw upgrade on dut....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_empty.rps")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
