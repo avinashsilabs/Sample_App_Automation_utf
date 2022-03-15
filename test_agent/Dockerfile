@@ -51,4 +51,3 @@ RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
 
-

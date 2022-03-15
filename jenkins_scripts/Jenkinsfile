@@ -105,9 +105,9 @@ pipeline {
                                             git checkout utf/dev
                                             cd ../..
                                             
-                                            rm -f manifest/sqa_test_agent*.hex
+                                            rm -f manifest/generic_test_agent*.hex
                                             ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION}
-                                            cp -f manifest/sqa_test_agent.hex manifest/${SQA_TEST_AGENT}.hex
+                                            cp -f manifest/generic_test_agent.hex manifest/${SQA_TEST_AGENT}.hex
                                         '''
                                     }
                                 }
