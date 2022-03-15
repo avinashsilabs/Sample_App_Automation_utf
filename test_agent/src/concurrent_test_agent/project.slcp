@@ -66,6 +66,8 @@ define:
 - name: RSI_BLE_ENABLE
 - name: RSI_BT_ENABLE
 - name: RSI_ANT_ENABLE
+- name: CONCURRENT_MODE
+  value: '1'
 
 
 component:
