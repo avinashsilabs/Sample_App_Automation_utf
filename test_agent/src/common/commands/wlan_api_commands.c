@@ -146,6 +146,19 @@ void rsa_wlan_set_mac_address(sl_cli_command_arg_t* arguments)
     print_status(status);
 }
 
+void rsi_set_join_bssid(sl_cli_command_arg_t* arguments)
+{
+	uint8_t mac_address[6];
+	char* mac_addr_str = sl_cli_get_argument_string(arguments, 0);
+	for (int i = 0; i < 6; i++) {
+		int val;
+		sscanf(mac_addr_str + 3 * i, "%02X", &val);
+		mac_address[i] = (uint8_t)val;
+	}
+	int32_t status = rsi_wlan_set(RSI_JOIN_BSSID, mac_address, (uint16_t)sizeof(mac_address));
+	print_status(status);
+}
+
 void rsa_wlan_get_mac_address(sl_cli_command_arg_t* arguments)
 {
     (void)arguments;
@@ -663,7 +676,6 @@ void rsi_wlan_set_multicast_filter(sl_cli_command_arg_t* arguments)
     int32_t status = rsi_wlan_set(RSI_MULTICAST_FILTER, (uint8_t*)&filter_mac_address, (uint16_t)sizeof(filter_mac_address));
     print_status(status);
 }
-
 
 
 void rsi_wlan_scan_features_command(sl_cli_command_arg_t* arguments)

@@ -70,7 +70,8 @@ uint8_t g_dtim_aligned_type = 0;
 uint16_t g_monitor_interval = 50;
 uint8_t g_num_of_dtim_skip = 0;
 
-
+//globals for rsi_set_tx_wait_time settings, referenced by #defines in rsi_wlan_config.h
+uint32_t g_tx_wait_time = 0;
 
 extern rsi_rsp_ipv4_parmas_t current_ip;
 
@@ -496,4 +497,25 @@ void rsi_set_power_save_params(sl_cli_command_arg_t* arguments)
 	uint16_t g_monitor_interval = sl_cli_get_argument_uint16(arguments, 1);
 	uint8_t g_num_of_dtim_skip = sl_cli_get_argument_uint8(arguments, 2);
 	print_status(RSI_ERROR_NONE);
+}
+
+void rsi_set_tx_wait_time(sl_cli_command_arg_t* arguments)
+{
+	g_tx_wait_time = sl_cli_get_argument_uint32(arguments, 0);
+}
+
+void rsi_device_power_save_listen_interval(sl_cli_command_arg_t* arguments)
+{
+	uint8_t psp_mode = sl_cli_get_argument_uint8(arguments, 0);
+	uint8_t psp_type = sl_cli_get_argument_uint8(arguments, 1);
+	uint16_t listen_interval = sl_cli_get_argument_uint8(arguments, 2);
+	int32_t status = rsi_wlan_power_save_with_listen_interval(psp_mode, psp_type, listen_interval);
+	print_status(status);
+}
+
+void wlan_request_radio_command(sl_cli_command_arg_t* arguments)
+{
+	uint8_t radio_enable = sl_cli_get_argument_uint8(arguments, 0);
+	int32_t status = rsi_wlan_req_radio(radio_enable);
+	print_status(status);
 }

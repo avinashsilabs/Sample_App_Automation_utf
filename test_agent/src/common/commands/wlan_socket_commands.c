@@ -420,6 +420,7 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 	char* ip_string = sl_cli_get_argument_string(arguments, 1);
 	char* subnet_string = sl_cli_get_argument_string(arguments, 2);
 	char* gateway_ip_string = sl_cli_get_argument_string(arguments, 3);
+	uint8_t vap_id = sl_cli_get_argument_string(arguments, 4);
 
 	if (strncmp(mode_string, "static", 6) == 0) {
 		mode = RSI_STATIC;
@@ -435,7 +436,7 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 		print_status(RSI_ERROR_INVALID_PARAM);
 		return;
 	}
-	int32_t status = rsi_config_ipaddress(RSI_IP_VERSION_4, mode, &ip_address, &subnet_mask, &gateway, (uint8_t*)&current_ip, sizeof(current_ip), 0);
+	int32_t status = rsi_config_ipaddress(RSI_IP_VERSION_4, mode, &ip_address, &subnet_mask, &gateway, (uint8_t*)&current_ip, sizeof(current_ip), vap_id);
 	if (status == RSI_ERROR_NONE) {
 		printf("IP:      %d.%d.%d.%d\n", current_ip.ipaddr[0], current_ip.ipaddr[1], current_ip.ipaddr[2], current_ip.ipaddr[3]);
 		printf("netmask: %d.%d.%d.%d\n", current_ip.netmask[0], current_ip.netmask[1], current_ip.netmask[2], current_ip.netmask[3]);
@@ -1249,3 +1250,79 @@ void rsi_sntp_client_create_response_handler(uint16_t status, const uint8_t cmd_
 	printf("\r\nSAPI+SNTP_STATUS: %d\r\n", rsp_received);
 }
 
+
+void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
+{
+	int32_t sock_list = sl_cli_get_argument_int32(arguments, 0);
+	int32_t data_len = sl_cli_get_argument_int32(arguments,1);
+	uint16_t ttl_sec = sl_cli_get_argument_uint16(arguments,2);
+	int32_t no_of_pkts = sl_cli_get_argument_int32(arguments,3);
+
+	int32_t tt_start = 0, tt_end = 0;
+	uint8_t sock_no=0;
+	uint32_t status =0;
+	uint32_t tx_stats[10][5] = {0};
+	uint8_t max_sock=0;
+	uint8_t flag=0;
+
+	max_sock = (g_rsi_ltcp_sockets+g_rsi_client_sockets);
+
+	if (data_len == 0) {
+		data_len = 1460;
+	}
+
+	int8_t* buffer = malloc(data_len);
+	if (buffer == NULL) {
+		printf("\r\n Unable to allocate the required buffer for the requested data size, %ld bytes", data_len);
+		//checkStatus(-1, "malloc(recv_size)", socketID, 0, 1);
+		return;
+	}
+	// generate random buffer
+	set_random_bytes(buffer, data_len);
+
+	tt_start = rsi_hal_gettickcount();
+	while(1)
+	{
+		if((((tt_end - tt_start) / 1000) > ttl_sec) || (flag == max_sock))
+		{
+			break;
+		}
+		if((sock_list & (1<<sock_no)) && (!(tx_stats[sock_no][4])))
+		{
+			status = rsi_send(sock_no, buffer, data_len, 0);
+			if(status > 0)
+			{
+				tx_stats[sock_no][0] += status;
+				tx_stats[sock_no][1] = tt_end - tt_start;
+				tx_stats[sock_no][3]++;
+				if(tx_stats[sock_no][3]==no_of_pkts)
+				{
+					tx_stats[sock_no][4]=1;
+					flag++;
+				}
+			}
+			else if(status < 0)
+			{
+				tx_stats[sock_no][1] = tt_end - tt_start;
+				tx_stats[sock_no][2] = status;
+				tx_stats[sock_no][4]=1;
+				flag++;
+			}
+		}
+		sock_no++;
+		if(sock_no==max_sock)
+		{
+			sock_no=0;
+		}
+		tt_end = rsi_hal_gettickcount();
+	}
+	free(buffer);
+	printf("\ntx_stats:");
+
+	for(sock_no=0;sock_no <max_sock; sock_no++)
+	{
+		printf("%d,%d,%d-",tx_stats[sock_no][0],tx_stats[sock_no][1],tx_stats[sock_no][2]);
+	}
+	printf("\n");
+	print_status(RSI_ERROR_NONE);
+}

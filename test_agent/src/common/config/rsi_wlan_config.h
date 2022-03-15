@@ -125,6 +125,8 @@ extern uint8_t g_dtim_aligned_type ;
 extern uint16_t g_monitor_interval ;
 extern uint8_t g_num_of_dtim_skip ;
 
+extern uint32_t g_tx_wait_time;
+
 // Enable feature
 #define RSI_ENABLE 1
 // Disable feature
@@ -747,3 +749,5 @@ extern uint8_t g_num_of_dtim_skip ;
 
 //! set wmm UAPSD bitmap
 #define RSI_WMM_PS_UAPSD_BITMAP 15
+
+#define TX_WAIT_TIME  g_tx_wait_time

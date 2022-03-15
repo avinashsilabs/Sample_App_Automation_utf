@@ -676,6 +676,7 @@ template_contribution:
     - {type: string, help: ip}
     - {type: string, help: gateway}
     - {type: string, help: subnetmask}
+    - {type: uint8, help: vap_id}
 - name: cli_command
   priority: 0
   value:
@@ -1344,6 +1345,14 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
+    name: set_join_bssid
+    handler: rsi_set_join_bssid
+    help: Set the AP BSSID to connect to the AP
+    argument:
+    - {type: string, help: AP mac address}
+- name: cli_command
+  priority: 0
+  value:
     name: get_socket_rx_stats
     handler: rsi_async_data_receive
     help: 'close socket and get stats'
@@ -1876,4 +1885,44 @@ template_contribution:
     argument:
     - {type: uint8, help:Max socket no opened}
     - {type: uint8, help:starting socket no}
-   
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_tx_wait_time
+    handler: rsi_set_tx_wait_time
+    help: Set tx wait time in case of rejoin
+    argument:
+    - {type: uint32, help: tx time}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_power_save_listen_interval
+    handler: rsi_device_power_save_listen_interval
+    help: Set power save mode
+    argument:
+    - {type: uint8, help: psp mode}
+    - {type: uint8, help: psp type}
+    - {type: uint16, help: listen_interval}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: tx_data_on_multiple_sockets
+    handler: send_data_on_multiple_sockets
+    help: Send data on multiple sockets
+    argument:
+    - {type: uint32, help: socket list}
+    - {type: uint32, help: data_len}
+    - {type: uint16, help: time_interval}
+    - {type: uint32, help: Number of packets}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_request_radio
+    handler: wlan_request_radio_command
+    help: Request wlan radio
+    argument:
+    - {type: uint8, help: enable or disable}
