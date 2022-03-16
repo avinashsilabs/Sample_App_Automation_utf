@@ -25,6 +25,10 @@ echo --------- DEBUG OUTSIDE DOCKER ---------
 ls -ll
 whoami
 
+ls -R -ll ./build
+ls -R -ll ./src
+
+
 docker run -u $UID --rm -t -v ${PWD}/build:/build/src/build wifi_test_agent_build
 
 popd
