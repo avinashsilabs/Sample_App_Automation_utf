@@ -98,10 +98,6 @@ class WifiThread(ThreadBase):
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         logger().info(f"Found device ip: {device_ip}")
 
-        # Fetches the DUT mac address
-        dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"Device mac address: {dut_mac_address}")
-
         #This API Enables the wifi power save mode in DUT
         self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
@@ -113,6 +109,10 @@ class WifiThread(ThreadBase):
         status = ping(device_ip, 100)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
+
+        # Fetches the DUT mac address
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
 
         packet_filter1 = f'wlan_radio.channel == {self.wifi_access_point.interfaces.wifi.channel} and ' \
                          f'wlan.da == {dut_mac_address} and wlan.ta == {self.wifi_access_point.interfaces.wifi.bssid} and ' \
@@ -467,7 +467,7 @@ def test_ble_master_connection_testcase33(wifi_dut, ble_client):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
-    
+
 
 
 
