@@ -1,5 +1,15 @@
 FROM utfsilabs/test_agent_build_base:latest
 
+ENV GROUP_ID=997
+ENV USER_ID=995
+ENV USERNAME=jenkins
+
+RUN groupadd -g $GROUP_ID $USERNAME
+RUN useradd -r -u $USER_ID -g $USERNAME -d /home/$USERNAME $USERNAME
+RUN chown $USERNAME:$USERNAME /home/$USERNAME
+
+USER $USERNAME
+
 WORKDIR /build
 
 COPY mini_gecko_sdk/ ./mini_gecko_sdk/
