@@ -14,6 +14,15 @@ BUILD_LOCATION=$3
 if [ -z "$3" ]; then
    BUILD_LOCATION=release_packages
 fi
+
+JENKINS_USER_NAME=$4
+JENKINS_USER_ID=$5
+JENKINS_GROUP_ID=$6
+
+echo "$JENKINS_USER_NAME"
+echo "$JENKINS_USER_ID"
+echo "$JENKINS_GROUP_ID"
+
 export DOCKER_BUILDKIT=1
 set -e
 docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --build-arg BUILD_LOCATION=$BUILD_LOCATION -t wifi_test_agent_build --ssh default=$SSH_KEY .
