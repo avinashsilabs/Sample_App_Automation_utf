@@ -48,11 +48,6 @@ ENV PROJECT_LIST="generic_test_agent"
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
 
-ENV UID_OF_DOCKERUSER 1000
-RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
-    chown -R dockerUser:users ${SRC_ROOT}
-USER dockerUser
-
 RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
