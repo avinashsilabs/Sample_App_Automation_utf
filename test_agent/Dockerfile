@@ -1,9 +1,5 @@
 FROM utfsilabs/test_agent_build_base:latest
 
-ENV GROUP_ID=997
-ENV USER_ID=995
-ENV USERNAME=jenkins
-
 WORKDIR /build
 
 COPY mini_gecko_sdk/ ./mini_gecko_sdk/
@@ -15,6 +11,10 @@ RUN slc signature trust --sdk $GECKO_SDK
 
 ARG RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
 ARG BUILD_LOCATION=release_packages
+
+ARG GROUP_ID=997
+ARG USER_ID=995
+ARG USERNAME=jenkins
 
 RUN --mount=type=ssh \ 
     if [ ! "${RELEASE_PACKAGE_VERSION}" = "RS916W.2.5.0.14" ]; then \
@@ -52,14 +52,14 @@ ENV PROJECT_LIST="generic_test_agent"
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
 
-RUN ./generate_test_agents.sh
-
 RUN groupadd -g $GROUP_ID $USERNAME
 RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
 RUN chown -R $USERNAME:$USERNAME /build
 RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
 
 USER $USERNAME
+
+RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
 
