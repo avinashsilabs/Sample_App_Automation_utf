@@ -3,6 +3,10 @@
 
 set -e
 
+echo --------- DEBUG INSIDE DOCKER build_test_agents.sh ---------
+ls -ll
+whoami
+
 output_base_dir=${PWD}/build
 map_file_parser=${PWD}/../map_file_parser.py
 

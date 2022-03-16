@@ -2,6 +2,10 @@
 
 set -e
 
+echo --------- DEBUG INSIDE DOCKER generate_test_agent.sh ---------
+ls -ll
+whoami
+
 generate_project () {
     pushd $1
 
