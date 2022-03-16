@@ -9,7 +9,7 @@ WORKDIR /build
 RUN groupadd -g $GROUP_ID $USERNAME
 RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
 RUN chown $USERNAME:$USERNAME /build
-RUN chown $USERNAME:$USERNAME /opt/uc_cli
+RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
 
 USER $USERNAME
 
