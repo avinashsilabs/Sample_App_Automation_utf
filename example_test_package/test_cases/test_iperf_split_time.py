@@ -1,0 +1,123 @@
+from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
+import pytest
+from utf.interfaces.iperf.iperf_device_output_parser import Result
+from utf.utils.iperf.iperf_utils import print_dict
+
+
+def __print_throughput(iperf_throughput: dict):
+    if iperf_throughput is not None:
+        print_dict("##     ", iperf_throughput)
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
+    # preparing wifi_dut
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+    # preparing wifi_client
+    if wifi_access_point != wifi_client:
+        wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
+    # preparing iperf for Split 1
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=20)
+
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
+
+    # open socket and start listening
+    with wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=net_perf_client.interfaces.net_perf.protocol,
+            port=net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=net_perf_client.interfaces.net_perf.client_data_len,
+            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
+        # start iperf
+        net_perf_client.interfaces.net_perf.start()
+        # capture device output
+        wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output(result)
+    assert tp is not None
+    __print_throughput(tp)
+
+    # preparing iperf for Split 2
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=30)
+
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
+
+    # open socket and start listening
+    with wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=net_perf_client.interfaces.net_perf.protocol,
+            port=net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=net_perf_client.interfaces.net_perf.client_data_len,
+            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
+        # start iperf
+        net_perf_client.interfaces.net_perf.start()
+        # capture device output
+        wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output(result)
+    assert tp is not None
+    __print_throughput(tp)
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
+    # preparing wifi_dut
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+    # preparing wifi_client
+    if wifi_access_point != wifi_client:
+        wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
+    # starting iperf split 1
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=20)
+    net_perf_client.interfaces.net_perf.start()
+
+    # open socket and send traffic
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp is not None
+    __print_throughput(tp)
+
+    # starting iperf split 2
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=30)
+    net_perf_client.interfaces.net_perf.start()
+
+    # open socket and send traffic
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp is not None
+    __print_throughput(tp)
