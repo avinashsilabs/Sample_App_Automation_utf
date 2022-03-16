@@ -56,7 +56,10 @@ def firmware_loader(request, wiseconnect_duts):
 
 @pytest.fixture(autouse=True, scope='session')
 def store_environment_info(request, harness: Harness):
-    request.config._metadata['Milestone'] = os.environ["MILESTONE"]
+    if os.environ.get("GIT_BRANCH") is not None:
+        request.config._metadata['Milestone'] = os.environ["GIT_BRANCH"]
+    else:
+        request.config._metadata['Milestone'] = os.environ["MILESTONE"]
     request.config._metadata['DUT Firmware Version'] = parse_version()
     dut = UtfConfig.instance().defaults.get("dut", {})
     dut_type = UtfConfig.instance().data.get("devices", {}).get(dut, {}).get("type", "")
