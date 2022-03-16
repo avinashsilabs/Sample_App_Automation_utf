@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Start') {
             agent {
-                label 'swarm && linux64'
+                label 'rama_kathare'
             }
             stages{
                 stage('Toolchain Setup'){
