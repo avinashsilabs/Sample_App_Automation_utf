@@ -6,13 +6,6 @@ ENV USERNAME=jenkins
 
 WORKDIR /build
 
-RUN groupadd -g $GROUP_ID $USERNAME
-RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
-RUN chown $USERNAME:$USERNAME /build
-RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
-
-USER $USERNAME
-
 COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 COPY sdk_patches/ ./sdk_patches/
 
@@ -58,6 +51,13 @@ ENV PROJECT_LIST="generic_test_agent"
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
+
+RUN groupadd -g $GROUP_ID $USERNAME
+RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
+RUN chown -R $USERNAME:$USERNAME /build
+RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
+
+USER $USERNAME
 
 RUN ./generate_test_agents.sh
 
