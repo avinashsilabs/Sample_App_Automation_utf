@@ -172,6 +172,8 @@ class BleThread_Connection(ThreadBase):
 
             self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
+            time.sleep(50)
+
             logger().info("Device is connected as a BLE slave")
             self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
@@ -346,7 +348,7 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
  )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","disassociated"])
 def test_connectivity_and_ping_in_STA_BLE_coex_mode(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
        testcase = "test_connectivity_and_ping_in_STA_BLE_coex_mode"
        logger().info(f"testcase : {testcase}")
@@ -465,6 +467,9 @@ def test_ble_master_connection_testcase33(wifi_dut, ble_client):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
+    time.sleep(50)
+    logger().info(f"Disconnecting the REMOTE device")
+    ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
 
 
 
