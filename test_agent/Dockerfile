@@ -54,12 +54,18 @@ WORKDIR ${SRC_ROOT}
 
 RUN ./generate_test_agents.sh
 
-RUN groupadd -g $GROUP_ID $USERNAME
-RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
-RUN chown -R $USERNAME:$USERNAME /build
-RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
+ENV UID_OF_DOCKERUSER 1000
+RUN useradd -m -s /bin/bash -g users -u ${UID_OF_DOCKERUSER} dockerUser && \
+    chown -R dockerUser:users /build && \
+    chown -R dockerUser:users /opt/uc_cli
+USER dockerUser
 
-USER $USERNAME
+#RUN groupadd -g $GROUP_ID $USERNAME
+#RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
+#RUN chown -R $USERNAME:$USERNAME /build
+#RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
+#
+#USER $USERNAME
 
 CMD ["./build_test_agents.sh"]
 
