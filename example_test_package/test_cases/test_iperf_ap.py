@@ -3,6 +3,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants
 import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
+import time
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -99,3 +100,37 @@ def test_host_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
     tp = net_perf_client.interfaces.net_perf.process_output()
     assert tp is not None
     __print_throughput(tp)
+
+@pytest.mark.config("wifi_dut", wifi={"oper_mode": RS9116OperatingMode.AccessPoint})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_device_as_ap_with_two_clients_connected(net_perf_client, wifi_dut, wifi_clients, protocol):
+    host_ips = []
+    wifi_dut.interfaces.wifi.start_ap()
+
+    for wifi_client in wifi_clients:
+        wifi_client.interfaces.wifi.join()
+        host_ips.extend([wifi_client.interfaces.wifi.get_ip_address()])
+        time.sleep(0.5)
+        assert (
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
+        )
+
+    # preparing iperf server
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ips[0], device_ip=None, protocol=protocol)
+    net_perf_client.interfaces.net_perf.start()
+
+    # preparing iperf client
+    net_perf_client.interfaces.net_perf.init_client(host_ip=None, device_ip=host_ips[1], protocol=protocol)
+    net_perf_client.interfaces.net_perf.start()
+
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output(result)
+    assert tp is not None
+    __print_throughput(tp)
+
