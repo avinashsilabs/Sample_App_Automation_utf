@@ -52,14 +52,14 @@ ENV PROJECT_LIST="generic_test_agent"
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
 
+RUN ./generate_test_agents.sh
+
 RUN groupadd -g $GROUP_ID $USERNAME
 RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
 RUN chown -R $USERNAME:$USERNAME /build
 RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
 
 USER $USERNAME
-
-RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]
 
