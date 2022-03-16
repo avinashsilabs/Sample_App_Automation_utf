@@ -4,13 +4,13 @@ ENV GROUP_ID=997
 ENV USER_ID=995
 ENV USERNAME=jenkins
 
+WORKDIR /build
+
 RUN groupadd -g $GROUP_ID $USERNAME
 RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
 RUN chown $USERNAME:$USERNAME /build
 
 USER $USERNAME
-
-WORKDIR /build
 
 COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 COPY sdk_patches/ ./sdk_patches/
