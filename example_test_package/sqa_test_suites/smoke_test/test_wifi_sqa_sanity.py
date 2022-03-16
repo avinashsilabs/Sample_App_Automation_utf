@@ -467,10 +467,7 @@ def test_ble_master_connection_testcase33(wifi_dut, ble_client):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
-    time.sleep(50)
-    logger().info(f"Disconnecting the REMOTE device")
-    ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
-
+    
 
 
 
