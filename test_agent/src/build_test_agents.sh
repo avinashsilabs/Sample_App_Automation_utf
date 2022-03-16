@@ -3,6 +3,12 @@
 
 set -e
 
+echo --------- DEBUG INSIDE DOCKER build_test_agents.sh ---------
+ls -ll
+echo $UID
+ls -ll /build/src/generic_test_agent/build
+pwd
+
 output_base_dir=${PWD}/build
 map_file_parser=${PWD}/../map_file_parser.py
 
