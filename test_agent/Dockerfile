@@ -48,6 +48,10 @@ ENV PROJECT_LIST="generic_test_agent"
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
 
+RUN echo --------- DEBUG INSIDE DOCKER ---------
+RUN ls -ll
+RUN whoami
+
 RUN ./generate_test_agents.sh
 
 CMD ["./build_test_agents.sh"]

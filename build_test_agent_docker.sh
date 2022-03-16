@@ -25,4 +25,8 @@ docker run -u $UID --rm -t -v ${PWD}/build:/build/src/build wifi_test_agent_buil
 
 popd
 
+RUN echo --------- DEBUG OUTSIDE DOCKER ---------
+RUN ls -ll
+RUN whoami
+
 cp ./test_agent/build/*.hex manifest
