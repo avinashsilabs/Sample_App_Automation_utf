@@ -5,8 +5,8 @@ ENV USER_ID=995
 ENV USERNAME=jenkins
 
 RUN groupadd -g $GROUP_ID $USERNAME
-RUN useradd -r -u $USER_ID -g $USERNAME -d /home/$USERNAME $USERNAME
-RUN chown $USERNAME:$USERNAME /home/$USERNAME
+RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
+RUN chown $USERNAME:$USERNAME /build
 
 USER $USERNAME
 
