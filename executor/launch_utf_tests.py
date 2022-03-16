@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from utf.utils.executor.docker_manager import DockerManager, BuildError, DockerImage
+import subprocess
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -16,6 +17,14 @@ class WiFiDockerManager(DockerManager):
             dockerfile=DOCKERFILE_PATH,
         )
         return image, logs
+
+
+def get_git_branch(path=None):
+    if path is None:
+        path = os.path.curdir
+    command = 'git rev-parse --abbrev-ref HEAD'.split()
+    branch = subprocess.Popen(command, stdout=subprocess.PIPE, cwd=path).stdout.read()
+    return branch.strip().decode('utf-8')
 
 
 @click.command()
@@ -89,7 +98,8 @@ def main(
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
-
+    branch = get_git_branch()
+    docker_flags = " -e MILESTONE=" + branch + ", " + docker_flags
     docker_manager = WiFiDockerManager(
         target,
         harness,

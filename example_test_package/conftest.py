@@ -1,3 +1,5 @@
+import os
+
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
 import pytest
 from utf.utils.firmware_manager import FirmwareManager
@@ -54,7 +56,7 @@ def firmware_loader(request, wiseconnect_duts):
 @pytest.fixture(autouse=True, scope='session')
 def store_environment_info(request):
     #TODO: Add Milestone information
-    request.config._metadata['Milestone'] = ""
+    request.config._metadata['Milestone'] = os.environ["MILESTONE"]
     request.config._metadata['DUT Firmware Version'] = parse_version()
     dut = UtfConfig.instance().defaults.get("dut", {})
     dut_type = UtfConfig.instance().data.get("devices", {}).get(dut, {}).get("type", "")
