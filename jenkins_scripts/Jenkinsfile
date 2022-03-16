@@ -169,7 +169,7 @@ pipeline {
                                     -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
                                     -e TEST_SUITE=OT_Smoke_brd4161a, \
                                     -e BRANCH_NAME=${RS9116_FIRMWARE}, \
-                                    -e SSH_TARGET=${SSH_TARGET}", \
+                                    -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
                         '''
                         archiveArtifacts 'example_test_package/**'
