@@ -38,11 +38,6 @@ docker build --build-arg RELEASE_PACKAGE_VERSION=$RELEASE_PACKAGE_VERSION --buil
 rm -rf build
 mkdir -p build
 
-echo --------- DEBUG OUTSIDE DOCKER ---------
-ls -ll
-whoami
-
-
 docker run -u $UID --rm -t -v ${PWD}/build:/build/src/build wifi_test_agent_build
 
 popd
