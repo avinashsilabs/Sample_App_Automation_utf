@@ -177,6 +177,7 @@ pipeline {
                                     -e SSH_TARGET=${SSH_TARGET}" \
                         '''
                         archiveArtifacts 'example_test_package/**'
+                        archiveArtifacts 'manifest/**'
                         archiveArtifacts 'reports/**'
                         archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                         junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
