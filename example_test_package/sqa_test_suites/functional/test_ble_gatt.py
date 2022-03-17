@@ -264,8 +264,6 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
         },
     )
 def test_validate_add_services_in_server_slave_C19878(wifi_dut, ble_client):
-    service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-    char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
     logger().info(" ******* start ble GATT service ******* ")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address,"Failed to load bt address..."
