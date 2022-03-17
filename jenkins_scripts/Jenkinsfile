@@ -80,7 +80,7 @@ pipeline {
                                            . venv/Scripts/activate
                                         fi
                                         python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                        ls ./*
+                                        ls ./*/*
                                         '''
                                     }
                                 }
