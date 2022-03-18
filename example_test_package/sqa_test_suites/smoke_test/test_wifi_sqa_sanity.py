@@ -153,6 +153,8 @@ class BleThread_Connection(ThreadBase):
             # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
             logger().info(f"Initiating connection.")
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=120)
+
+            time.sleep(50)
             # Disconnect
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
@@ -193,8 +195,8 @@ class BleThread_Connection(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
-def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, wifi_sniffer):
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+def test_Connectivity_with_WPA2_Security_AP_C19707(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
 
@@ -202,7 +204,7 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
         logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Connectivity_with_11n_only_mode_AP_C19707')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Connectivity_with_WPA2_Security_AP_C19707')
 
         logger().info("scan for the ap's.....")
         ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -318,7 +320,7 @@ def test_rejoin(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
-    time.sleep(5)
+    time.sleep(10)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
         'packet_count']
@@ -410,12 +412,14 @@ def test_ble_connect_T3275(wifi_dut, ble_client):
     logger().info(f"Connecting DUT to REMOTE device")
     ble_client.interfaces.bluetooth.connect(wifi_dut.interfaces.wifi.ble_address)
 
+    time.sleep(50)
+
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in slave mode"
     logger().info(f"DUT has connected to BLE CLIENT and is in Slave Mode")
-    time.sleep(50)
+
     logger().info(f"Disconnecting the REMOTE device")
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
 
@@ -463,10 +467,14 @@ def test_ble_master_connection_testcase33(wifi_dut, ble_client):
     logger().info("enabling bt power save mode in DUT......")
     wifi_dut.interfaces.wifi.bt_power_save(2)
 
+    time.sleep(50)
+
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
+    # Disconnect
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
 
