@@ -83,7 +83,6 @@ class IopTcpIpSockets:
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -482,7 +481,7 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
                                                         scan_bitmap_2_4=channel_bitmap_2_4,
                                                         scan_bitmap_5=channel_bitmap_5,
                                                         scan_feature=scan_feature_extend)
-        wifi_dut.interfaces.wifi.join(bgscan_flag=True)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
         result = wifi_dut.interfaces.wifi.start_ip()
         dut_ip = result.ip.decode()
         logger().info(f"DUT ip address : {dut_ip}")
@@ -619,6 +618,7 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter2 = 'Data Rate:'
 
     ''' Verify RSI_STA connectivity by enabling BG scan in 5Ghz band '''
+    wifi_access_point.interfaces.wifi.stop_ap()
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(10)
@@ -1023,7 +1023,7 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
                                                         scan_bitmap_5=channel_bitmap_5g,
                                                         scan_feature=scan_feature_extend)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_5G')
-        wifi_dut.interfaces.wifi.join(bgscan_flag=True)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
         result = wifi_dut.interfaces.wifi.start_ip()
         dut_ip = result.ip.decode()
         logger().info(f"DUT ip address : {dut_ip}")
