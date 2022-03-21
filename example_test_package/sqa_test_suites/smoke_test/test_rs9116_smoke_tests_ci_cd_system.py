@@ -15,27 +15,27 @@ def logger():
     return get_logger(__name__)
 
 
-# @pytest.mark.dut("rs9116")
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-#         }
-#     )
-# @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-# def test_version_testcase_id1(wifi_dut):
-#     expected_version = parse_version()
-#     if expected_version is None:
-#         pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
-#
-#     logger().info(f"Expected FW version: {expected_version}")
-#     result = wifi_dut.interfaces.wifi.version()
-#     logger().info(f"Actual version: {result}")
-#     assert result == expected_version
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+def test_version_testcase_id1(wifi_dut):
+    expected_version = parse_version()
+    if expected_version is None:
+        pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
+
+    logger().info(f"Expected FW version: {expected_version}")
+    result = wifi_dut.interfaces.wifi.version()
+    logger().info(f"Actual version: {result}")
+    assert result == expected_version
 
 
 @pytest.mark.dut("rs9116_sapi")
