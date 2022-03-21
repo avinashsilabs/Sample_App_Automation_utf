@@ -80,7 +80,6 @@ pipeline {
                                            . venv/Scripts/activate
                                         fi
                                         python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                        ls ./*/*
                                         '''
                                     }
                                 }
@@ -111,9 +110,7 @@ pipeline {
                                             git checkout utf/dev
                                             cd ../..
                                             
-                                            # rm -f manifest/generic_test_agent*.hex
                                             ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
-                                            # cp -f manifest/generic_test_agent.hex manifest/${SQA_TEST_AGENT}.hex
                                         '''
                                     }
                                 }
