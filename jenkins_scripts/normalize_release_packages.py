@@ -9,9 +9,9 @@ def fix_filename(version):
     for filename in os.listdir():
         f = os.path.join("./", filename)
         if os.path.isfile(f) and f.endswith(".rps"):
-            if "RS916" in f:
+            if f.startswith("RS916"):
                 os.rename(f, f"./RS916W{version}.rps")  # fix missing w and make sure that version always matches
-            if "RS9116" in f:
+            if f.startswith("RS9116"):
                 os.rename(f, f"./RS9116W{version}.rps")  # fix missing w and make sure that version always matches
 
 
