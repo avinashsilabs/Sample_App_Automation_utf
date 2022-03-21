@@ -13,7 +13,7 @@ def fix_filename(version):
             for fv in firmware_variants:
                 if f.startswith(fv):
                     # fix missing w and make sure that version always matches
-                    # W is hardcoded here and works for WiseConnect firmwares with starts with RS91(1)6 only
+                    # W is hardcoded here and works for WiseConnect firmwares which starts with RS91(1)6 only
                     os.rename(f, f"{fv}W{version}.rps")
 
 
