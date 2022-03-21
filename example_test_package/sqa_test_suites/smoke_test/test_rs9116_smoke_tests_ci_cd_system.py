@@ -15,6 +15,8 @@ def logger():
     return get_logger(__name__)
 
 
+# Skipping this as running both AT and SAPI modes causing AT mode to fail
+@pytest.mark.skip
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
     "wifi_dut",
