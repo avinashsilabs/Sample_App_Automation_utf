@@ -954,7 +954,7 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
     time.sleep(2)
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
         'Unable to find HT capabilities packet'
