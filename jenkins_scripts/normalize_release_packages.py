@@ -4,15 +4,17 @@ import sys
 import zipfile
 import re
 
+firmware_variants = ["RS916", "RS9116"]
+
 
 def fix_filename(version):
-    for filename in os.listdir():
-        f = os.path.join("./", filename)
+    for f in os.listdir():
         if os.path.isfile(f) and f.endswith(".rps"):
-            if "RS916" in f:
-                os.rename(f, f"./RS916W{version}.rps")  # fix missing w and make sure that version always matches
-            if "RS9116" in f:
-                os.rename(f, f"./RS9116W{version}.rps")  # fix missing w and make sure that version always matches
+            for fv in firmware_variants:
+                if f.startswith(fv):
+                    # fix missing w and make sure that version always matches
+                    # W is hardcoded here and works for WiseConnect firmwares with starts with RS91(1)6 only
+                    os.rename(f, f"{fv}W{version}.rps")
 
 
 def normalize_firmware(build_location, rs9116_firmware):
