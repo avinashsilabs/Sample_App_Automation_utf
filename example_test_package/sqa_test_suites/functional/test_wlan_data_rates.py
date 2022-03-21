@@ -304,7 +304,6 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -327,7 +326,7 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
     logger().info(f'AP BSSID = {ap_bssid}')
 
     """set data rate in b(11Mbps) mode and Verify """
-    wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_11)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_11)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -408,7 +407,7 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
     wifi_dut.interfaces.wifi.scan(ssid=None)
 
     """set data rate in g mode(54 Mbps) and Verify """
-    wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_54)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_54)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -491,7 +490,7 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
     wifi_dut.interfaces.wifi.scan(ssid=None)
 
     # set data rate in n mode
-    wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_54)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_54)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -566,7 +565,7 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
     wifi_dut.interfaces.wifi.scan(ssid=None)
 
     # set data rate in 12 Mbps
-    wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_12)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_12)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -641,7 +640,7 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
     ap_bssid = str(result[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
 
-    wifi_dut.interfaces.wifi.join(channel=wifi_access_point.interfaces.wifi.channel, data_rate=RS9116DataRate.Mbps_12)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_12)
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
     logger().info(f"DUT ip address : {dut_ip}")
@@ -765,7 +764,7 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
         "custom_features": RS9116CustomFeatureBitMap.Default
     },
 )
-def test_basic_data_rates_T6865(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
