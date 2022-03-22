@@ -1434,29 +1434,29 @@ def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger)
         try:
             join_fail = 1
             # DUT connects to AP after join_ap API is executed
-            logger().info("Joining the Wifi Access Point")
+            logger.info("Joining the Wifi Access Point")
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
             join_fail = 0
             break
         except:
-            logger().info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
+            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
             time.sleep(1)
     if join_fail:
-        logger().info(f"Joining to the AP has failed")
+        logger.info(f"Joining to the AP has failed")
         return
     for count in range(1, 3):
         ip_fail = 1
         try:
             # DUT gets ipaddress through DHCP process after start_ip API is executed
-            logger().info("DUT gets ipaddress through DHCP ")
+            logger.info("DUT gets ipaddress through DHCP ")
             wifi_dut.interfaces.wifi.start_ip()
             ip_fail = 0
             break
         except:
-            logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
             time.sleep(1)
     if ip_fail:
-        logger().info(f"DUT unable to get IP address")
+        logger.info(f"DUT unable to get IP address")
         return
 
     logger.info(f"*****Enable Max PSP in DUT******")
