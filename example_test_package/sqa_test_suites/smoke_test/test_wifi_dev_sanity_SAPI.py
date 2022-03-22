@@ -603,23 +603,32 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
                                     first_time_retry=0)
     for count in range(1, 3):
         try:
+            join_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Joining the Wifi Access Point")
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
             break
         except:
             logger().info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
             time.sleep(1)
-
+    if join_fail:
+        logger().info(f"Joining to the AP has failed")
+        return
     for count in range(1, 3):
+        ip_fail = 1
         try:
             # DUT gets ipaddress through DHCP process after start_ip API is executed
             logger().info("DUT gets ipaddress through DHCP ")
             wifi_dut.interfaces.wifi.start_ip()
+            ip_fail = 0
             break
         except:
             logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
             time.sleep(1)
+    if ip_fail:
+        logger().info(f"DUT unable to get IP address")
+        return
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     # Ping to dut from third party device
@@ -659,7 +668,7 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
     packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-    logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+    logger().info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
 
 
 @pytest.mark.config(
@@ -953,23 +962,32 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
     # DUT connects to AP after join_ap API is executed
     for count in range(1, 3):
         try:
+            join_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger.info("Joining the Wifi Access Point")
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
             break
         except:
             logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
             time.sleep(1)
-
+    if join_fail:
+        logger.info(f"Joining to the AP has failed")
+        return
     for count in range(1, 3):
+        ip_fail = 1
         try:
             # DUT gets ipaddress through DHCP process after start_ip API is executed
             logger.info("DUT gets ipaddress through DHCP ")
             wifi_dut.interfaces.wifi.start_ip()
+            ip_fail = 0
             break
         except:
             logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
             time.sleep(1)
+    if ip_fail:
+        logger.info(f"DUT unable to get IP address")
+        return
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
@@ -1092,23 +1110,32 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
     # DUT connects to AP after join_ap API is executed
     for count in range(1, 3):
         try:
+            join_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger.info("Joining the Wifi Access Point")
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
             break
         except:
             logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
             time.sleep(1)
-
+    if join_fail:
+        logger.info(f"Joining to the AP has failed")
+        return
     for count in range(1, 3):
+        ip_fail = 1
         try:
             # DUT gets ipaddress through DHCP process after start_ip API is executed
             logger.info("DUT gets ipaddress through DHCP ")
             wifi_dut.interfaces.wifi.start_ip()
+            ip_fail = 0
             break
         except:
             logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
             time.sleep(1)
+    if ip_fail:
+        logger.info(f"DUT unable to get IP address")
+        return
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
@@ -1256,8 +1283,7 @@ def test_get_rtc_testcase47(
     set_time_sec = ((set_minutes * 60) + set_seconds)
     firmware_version = wifi_dut.interfaces.wifi.version()
     logger.info(f"Firmware version-> {firmware_version}")
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"DUT MAC_Address: {mac_address}")
+
     # This API starts RTC timer in DUT
     wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hour=set_hour,
                                      month_day=set_month_day,
@@ -1270,6 +1296,8 @@ def test_get_rtc_testcase47(
             except:
                 logger.info(f"Scanning to the Wifi Access point is failed. retry count -> {count}")
                 time.sleep(1)
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger.info(f"DUT MAC_Address: {mac_address}")
     scan_time = t.duration
     logger.info(f"Time taken for scan -> {scan_time} seconds")
     logger.info(f"wait for {wait_time} seconds")
@@ -1294,23 +1322,32 @@ def test_get_rtc_testcase47(
     with TimeMeasurer() as t:
         for count in range(1, 3):
             try:
+                join_fail = 1
                 # DUT connects to AP after join_ap API is executed
                 logger.info("Joining the Wifi Access Point")
                 wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+                join_fail = 0
                 break
             except:
                 logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
                 time.sleep(1)
-
+        if join_fail:
+            logger.info(f"Joining to the AP has failed")
+            return
         for count in range(1, 3):
+            ip_fail = 1
             try:
                 # DUT gets ipaddress through DHCP process after start_ip API is executed
                 logger.info("DUT gets ipaddress through DHCP ")
                 wifi_dut.interfaces.wifi.start_ip()
+                ip_fail = 0
                 break
             except:
                 logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
                 time.sleep(1)
+        if ip_fail:
+            logger.info(f"DUT unable to get IP address")
+            return
     join_time = t.duration
     logger.info(f"Time taken for connecting to the AP, getting IP and ping for 10 sec  -> {join_time} seconds")
     logger.info(f"wait for 100 seconds")
@@ -1395,23 +1432,32 @@ def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger)
                                     first_time_retry=0)
     for count in range(1, 3):
         try:
+            join_fail = 1
             # DUT connects to AP after join_ap API is executed
-            logger.info("Joining the Wifi Access Point")
+            logger().info("Joining the Wifi Access Point")
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
             break
         except:
-            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
+            logger().info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
             time.sleep(1)
-
+    if join_fail:
+        logger().info(f"Joining to the AP has failed")
+        return
     for count in range(1, 3):
+        ip_fail = 1
         try:
             # DUT gets ipaddress through DHCP process after start_ip API is executed
-            logger.info("DUT gets ipaddress through DHCP ")
+            logger().info("DUT gets ipaddress through DHCP ")
             wifi_dut.interfaces.wifi.start_ip()
+            ip_fail = 0
             break
         except:
-            logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
             time.sleep(1)
+    if ip_fail:
+        logger().info(f"DUT unable to get IP address")
+        return
 
     logger.info(f"*****Enable Max PSP in DUT******")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
