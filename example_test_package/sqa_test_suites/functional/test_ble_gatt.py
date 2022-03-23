@@ -78,7 +78,7 @@ def test_fetch_profiles_from_RD1_C19860(wifi_dut,  ble_client):
     uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
     assert BatteryService.UUID in uuids is not None, "Could not fetch the battery profile"
 
-  # Disconnect
+     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
     logger().info(" Issued BLE disconnect ")
 
@@ -132,7 +132,7 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_client):
     assert start_handle is not None, "failed to fetch the RD1 address.."
     assert end_handle is not None, "failed to fetch the UUID.."
 
-  # Disconnect
+    # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
     logger().info(" Issued BLE disconnect.... ")
 
@@ -253,7 +253,7 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
     assert start_handle is not None, "failed to fetch the RD1 address.."
     assert end_handle is not None, "failed to fetch the UUID.."
 
-  # Disconnect
+    # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
     logger().info(" Issued BLE disconnect.... ")
 
@@ -285,11 +285,16 @@ def test_validate_add_services_in_server_slave_C19878(wifi_dut, ble_client):
     assert (
     found_devices[wifi_dut.interfaces.wifi.ble_address]
         == wifi_dut.interfaces.wifi.ble_advertising_data
-        )
-    logger().info(" Connected to the BLE device ")
+        ),"failed to find dut in scan list..."
+
     logger().info("connecting to dut....")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
     time.sleep(2)
+
+    logger().info("verifying dut state after the conn......")
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
     logger().info("disconnecting from dut...")
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-    logger().info(" Issued BLE disconnect ")
