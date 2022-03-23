@@ -614,7 +614,7 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
             time.sleep(1)
     if join_fail:
         logger().info(f"Joining to the AP has failed")
-        return
+        assert join_fail == 0, "Joining to the AP is failed"
     for count in range(1, 3):
         ip_fail = 1
         try:
@@ -628,7 +628,7 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
             time.sleep(1)
     if ip_fail:
         logger().info(f"DUT unable to get IP address")
-        return
+        assert ip_fail == 0, "ip setting in DUT has failed"
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     # Ping to dut from third party device
@@ -637,6 +637,7 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
 
     # Save the wireless configuration in the flash
     logger().info("Save the Wireless Configuration in the flash")
+    logger().info("Storing the configuration in flash without enabling power save due to limitation in firmware")
     wifi_dut.interfaces.wifi.config_save()
     # Enable the wireless configuration in the flash
     logger().info("Enables the Wireless Configuration in the flash")
@@ -973,7 +974,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
             time.sleep(1)
     if join_fail:
         logger.info(f"Joining to the AP has failed")
-        return
+        assert join_fail == 0, "Joining to the AP is failed"
     for count in range(1, 3):
         ip_fail = 1
         try:
@@ -987,7 +988,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
             time.sleep(1)
     if ip_fail:
         logger.info(f"DUT unable to get IP address")
-        return
+        assert ip_fail == 0, "ip setting in DUT has failed"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
@@ -1121,7 +1122,7 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
             time.sleep(1)
     if join_fail:
         logger.info(f"Joining to the AP has failed")
-        return
+        assert join_fail == 0, "Joining to the AP is failed"
     for count in range(1, 3):
         ip_fail = 1
         try:
@@ -1135,7 +1136,7 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
             time.sleep(1)
     if ip_fail:
         logger.info(f"DUT unable to get IP address")
-        return
+        assert ip_fail == 0, "ip setting in DUT has failed"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"DUT ip : {device_ip}")
     logger.info(f"Initiating ping to DUT ip {device_ip}")
@@ -1333,7 +1334,7 @@ def test_get_rtc_testcase47(
                 time.sleep(1)
         if join_fail:
             logger.info(f"Joining to the AP has failed")
-            return
+            assert join_fail == 0, "Joining to the AP is failed"
         for count in range(1, 3):
             ip_fail = 1
             try:
@@ -1347,7 +1348,7 @@ def test_get_rtc_testcase47(
                 time.sleep(1)
         if ip_fail:
             logger.info(f"DUT unable to get IP address")
-            return
+            assert ip_fail == 0, "ip setting in DUT has failed"
     join_time = t.duration
     logger.info(f"Time taken for connecting to the AP, getting IP and ping for 10 sec  -> {join_time} seconds")
     logger.info(f"wait for 100 seconds")
@@ -1443,7 +1444,7 @@ def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger)
             time.sleep(1)
     if join_fail:
         logger.info(f"Joining to the AP has failed")
-        return
+        assert join_fail == 0, "Joining to the AP is failed"
     for count in range(1, 3):
         ip_fail = 1
         try:
@@ -1457,7 +1458,7 @@ def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger)
             time.sleep(1)
     if ip_fail:
         logger.info(f"DUT unable to get IP address")
-        return
+        assert ip_fail == 0, "ip setting in DUT has failed"
 
     logger.info(f"*****Enable Max PSP in DUT******")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
