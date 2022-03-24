@@ -235,6 +235,7 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
+                region: 'Japan'
 
     raspi_wifi_ssh:
         interfaces:
