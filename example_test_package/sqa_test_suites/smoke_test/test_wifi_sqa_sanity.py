@@ -646,7 +646,7 @@ def test_join_WORLD_2_4_C34788(wifi_dut,wifi_access_point, net_perf_client,  wif
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region World domain")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
+    wifi_dut.interfaces.wifi.set_region(region=1, region_code=4, module_type=1)
 
     with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
                         net_perf_client, protocol,test_type,iteration=1):
