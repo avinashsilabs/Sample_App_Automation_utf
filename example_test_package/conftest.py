@@ -1,9 +1,14 @@
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
 import pytest
+import os
 from utf.utils.firmware_manager import FirmwareManager
 from utf.devices import Device
 from typing import Generator, List
 from utf.utils.logger import get_logger
+from utf_wiseconnect.utils.rs911x_version import parse_version
+from utf.utf_config import UtfConfig
+from utf.utils.fixtures import harness
+from utf.harness.harness import Harness
 
 
 @pytest.fixture()
@@ -47,3 +52,21 @@ def firmware_loader(request, wiseconnect_duts):
 
         #load default firmware
         fw_mgr.load_default_firmware_at_test_case_teardown(app_name)
+
+
+@pytest.fixture(autouse=True, scope='session')
+def store_environment_info(request, harness: Harness):
+    if os.environ.get("GIT_BRANCH") is not None:
+        request.config._metadata['Milestone'] = os.environ["GIT_BRANCH"]
+    else:
+        request.config._metadata['Milestone'] = os.environ["MILESTONE"]
+    request.config._metadata['DUT Firmware Version'] = parse_version()
+    dut = UtfConfig.instance().defaults.get("dut", {})
+    dut_type = UtfConfig.instance().data.get("devices", {}).get(dut, {}).get("type", "")
+    request.config._metadata['DUT Type'] = dut_type
+    dut_subtype = UtfConfig.instance().data.get("devices", {}).get(dut, {}).get("subtype", "")
+    request.config._metadata['DUT Sub Type'] = dut_subtype
+    access_point = UtfConfig.instance().defaults.get("wifi_access_point")
+    access_point_type = UtfConfig.instance().data.get("devices", {}).get(access_point, {}).get("interfaces", {}).get("wifi", {}).get("type", "")
+    access_point_type = access_point_type.split(".")[-1]
+    request.config._metadata['Access point Type'] = access_point_type
