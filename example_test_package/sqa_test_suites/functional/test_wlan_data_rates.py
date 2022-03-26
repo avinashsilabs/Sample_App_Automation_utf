@@ -217,7 +217,7 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
@@ -292,7 +292,7 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
             assert send_response
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find Data/Null/Qos packets data rates'
@@ -371,7 +371,7 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find any packets for Data/Qos/Null packet for 11 Mbps dat rates'
@@ -453,7 +453,7 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find any packets for Data/Qos/Null packet for 54 Mbps dat rates'
@@ -532,7 +532,7 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame'
@@ -604,7 +604,7 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find any packet for Data/Null/Qos packets'
@@ -678,7 +678,7 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find packets for Block ACK Req, RTS for data rates 12 Mbps'
@@ -744,7 +744,7 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find packets for EAPOL packets for 1 Mbps data rates'
@@ -829,7 +829,7 @@ def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
         time.sleep(2)
-    wifi_sniffer.interfaces.capture.stop_capture(validation)
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
