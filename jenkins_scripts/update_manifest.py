@@ -14,7 +14,7 @@ with open("./manifest/manifest.yaml", "r+") as f:
 
     if flash_rs9116 == 'true':
         if rs9116_package_name != "Internal.rps":
-            if chip_version == "1.4":
+            if chip_version == "1.4" or chip_version == "1.3":
                 rs9116_package_name = rs9116_package_name.replace("916", "9116")
             y['firmware']['rs911x'] = rs9116_package_name
     else:
