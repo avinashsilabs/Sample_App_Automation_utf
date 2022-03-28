@@ -128,7 +128,7 @@ pipeline {
                             else
                                . venv/Scripts/activate
                             fi
-                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps generic_test_agent.hex ${FLASH_RS9116} ${FLASH_EFR32}
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps generic_test_agent.hex ${FLASH_RS9116} ${FLASH_EFR32} 1.4
                         '''
                     }
                 }
