@@ -31,7 +31,7 @@ import re
 @pytest.mark.end_state(
     "wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"]
 )
-def test_ssl_server_no_server_cert_testcase3(
+def test_socket_command_with_regular_expression(
     wifi_dut, wifi_access_point, ssl_client, logger
 ):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -55,7 +55,7 @@ def test_ssl_server_no_server_cert_testcase3(
     ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5002)
 
     result = wifi_dut.interfaces.wifi.accept(
-        socket_id=sock, expected=re.compile(r"0xFFFFFFFF")
+        socket_id=sock, expected=re.compile(r"0xFFFFFFFF"), timeout=120
     )
     assert "0xFFFFFFFF" in str(
         result
