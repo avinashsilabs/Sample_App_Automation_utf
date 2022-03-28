@@ -1,7 +1,4 @@
-import time
 import pytest
-
-from utf.interfaces.cli import CLITransportException
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
@@ -9,15 +6,8 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116CertificateType,
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap,
-    RS9116ExtCustomFeatureBitMap,
-    RS9116PowerSaveModes,
-    SocketOptions,
-    SocketType,
-    Cipher,
+    RS9116ExtCustomFeatureBitMap
 )
-
-from utf.interfaces.wifi import WlanError
-from utf.utils.subprocess_manager import SubprocessManager
 import re
 
 @pytest.mark.config(
