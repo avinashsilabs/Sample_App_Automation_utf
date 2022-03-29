@@ -54,8 +54,10 @@ def test_socket_command_with_regular_expression(
 
     ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5002)
 
+    # Example: 1. Search with status and error code then pattern is "status: 0x([0-9a-fA-F]+)"
+    # 2. Search for either success or Error code 0xFFFFFFFF then pattern is "/success | 0xFFFFFFFF/"
     result = wifi_dut.interfaces.wifi.accept(
-        socket_id=sock, expected=re.compile(r"0xFFFFFFFF"), timeout=120
+        socket_id=sock, expected=re.compile(r"/success | 0xFFFFFFFF/"), timeout=120
     )
     assert "0xFFFFFFFF" in str(
         result
