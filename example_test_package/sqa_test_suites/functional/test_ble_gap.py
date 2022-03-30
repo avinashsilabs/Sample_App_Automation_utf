@@ -13,13 +13,12 @@ def logger():
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
-        4. Access Point(Third Party AP's
 
     Test Steps:
         1. Initiates the DUT Coex wlan and BT mode
         2. Initiates the DUT in master Spp mode for the capability
-        3. Initiates the client in slave spp with capabilty enables
-        4. Opnes Bt socket and connects to the remote client.
+        3. Initiates the client in slave spp with capability enables
+        4. Opens Bt socket and connects to the remote client.
         5. Verifies ping after the connection.
 
     Author: RaviNemali
@@ -34,35 +33,35 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_displayonly_C19851(bt_dut,ble_client,logger):
+def test_ble_io_cap_displayonly_C19851(bt_dut,ble_client):
 
-    logger.info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.blurtooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+    logger().info("Setting the dut IO capability to display only.....")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
 
     # Set up DUT for BLE advertising
-    logger.info("Initiate ble service in DUT")
-    bt_dut_address = bt_dut.interfaces.blurtooth.ble_start()
+    logger().info("Initiate ble service in DUT")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "unable to fetch dut bd address...."
 
-    logger.info("Set DUT in advertise mode")
+    logger().info("Set DUT in advertise mode")
     bt_dut.interfaces.bluetooth.ble_start_advertising()
 
-    logger.info("Start smp scan from the remote device")
+    logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
     time.sleep(5)
-    logger.info("stop scanning ....")
+    logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     # See that we found our device
-    logger.info("Check the dut is listed...")
+    logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
-    logger.info("Connect to the dut with mac address..")
+    logger().info("Connect to the dut with mac address..")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
-    logger.info("Disconnecting the bt host....")
+    logger().info("Disconnecting the bt host....")
     bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 @pytest.mark.config(
@@ -72,33 +71,33 @@ def test_ble_io_cap_displayonly_C19851(bt_dut,ble_client,logger):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_display_yesno_C19852(bt_dut,ble_client,logger):
+def test_ble_io_cap_display_yesno_C19852(bt_dut,ble_client):
 
-    logger.info("Setting the dut IO capability to display yes no.....")
+    logger().info("Setting the dut IO capability to display yes no.....")
     bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=1)
 
-    logger.info("Initiate ble service in DUT")
+    logger().info("Initiate ble service in DUT")
     bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address is not None
 
-    logger.info("Set DUT in advertise mode")
+    logger().info("Set DUT in advertise mode")
     bt_dut.interfaces.bluetooth.ble_start_advertising()
 
-    logger.info("Start smp scan from the remote device")
+    logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
     time.sleep(5)
-    logger.info("stop scanning ....")
+    logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
-    logger.info("Check the dut is listed...")
+    logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
-    logger.info("Connect to the dut with mac address..")
+    logger().info("Connect to the dut with mac address..")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
-    logger.info("Disconnecting the bt host....")
+    logger().info("Disconnecting the bt host....")
     bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 @pytest.mark.config(
@@ -108,34 +107,33 @@ def test_ble_io_cap_display_yesno_C19852(bt_dut,ble_client,logger):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_keyboard_only_C19853(bt_dut,ble_client,logger):
+def test_ble_io_cap_keyboard_only_C19853(bt_dut,ble_client):
 
-    logger.info("Setting the dut IO capability to keyboard only.....")
+    logger().info("Setting the dut IO capability to keyboard only.....")
     bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=2)
 
-    logger.info("Initiate ble service in DUT")
+    logger().info("Initiate ble service in DUT")
     bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address is not None
 
-    logger.info("Set DUT in advertise mode")
+    logger().info("Set DUT in advertise mode")
     bt_dut.interfaces.bluetooth.ble_start_advertising()
 
-    logger.info("Start smp scan from the remote device")
+    logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
     time.sleep(5)
-    logger.info("stop scanning ....")
+    logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
-    # See that we found our device
-    logger.info("Check the dut is listed...")
+    logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
-    logger.info("Connect to the dut with mac address..")
+    logger().info("Connect to the dut with mac address..")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
-    logger.info("Disconnecting the bt host....")
+    logger().info("Disconnecting the bt host....")
     bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 @pytest.mark.config(
@@ -145,33 +143,33 @@ def test_ble_io_cap_keyboard_only_C19853(bt_dut,ble_client,logger):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_No_input_output_C19854(bt_dut,ble_client,logger):
+def test_ble_io_cap_No_input_output_C19854(bt_dut,ble_client):
 
-    logger.info("Setting the dut IO capability to No input output.....")
+    logger().info("Setting the dut IO capability to No input output.....")
     bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=3)
 
-    logger.info("Initiate ble service in DUT")
+    logger().info("Initiate ble service in DUT")
     bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address is not None
 
-    logger.info("Set DUT in advertise mode")
+    logger().info("Set DUT in advertise mode")
     bt_dut.interfaces.bluetooth.ble_start_advertising()
 
-    logger.info("Start smp scan from the remote device")
+    logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
     time.sleep(5)
-    logger.info("stop scanning ....")
+    logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
-    logger.info("Check the dut is listed...")
+    logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
-    logger.info("Connect to the dut with mac address..")
+    logger().info("Connect to the dut with mac address..")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
-    logger.info("Disconnecting the bt host....")
+    logger().info("Disconnecting the bt host....")
     bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 '''======================= Ble-gap IO test cases dut as initiator ====================='''
