@@ -39,6 +39,23 @@ RUN --mount=type=ssh \
 
 RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 
+# Due to a breaking change in RS911X Firmware code for the following verions we need have a patch versionof rsi_driver.h
+# The fix is planned to be included in the source code as part of the next release.
+# Refer https://jira.silabs.com/browse/UTF-950
+RUN --mount=type=ssh \
+    if \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.1" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.2" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.3" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.4" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.5" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.6" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.7" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.8" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.9" ]; then \
+        cp -f mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include/rsi_driver_2.6.0.0.h mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include/rsi_driver.h; \
+    fi
+
 COPY src/ ./src/
 COPY map_file_parser.py .
 

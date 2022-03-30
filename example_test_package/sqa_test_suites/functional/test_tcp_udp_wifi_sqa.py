@@ -114,7 +114,7 @@ def test_wifi_tcp_data_receive_check_TC3758(wifi_dut, wifi_access_point, remote_
     tx_buffer = "12345678901234567890123456789012345678901234567890"
     buffer_length = len(tx_buffer)
     # send 50 bytes of data from tcp server opened remotely
-    remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
+    remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
     # DUT receives data over tcp socket after execution of below api
     buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
     assert buffer_length == buffer_length_rx, "buffer length sent and received is not matched"
