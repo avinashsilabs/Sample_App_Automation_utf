@@ -36,8 +36,9 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None
 
-        # Added set class to 400100 to avoid [Errno 112] Host is down issue
-        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+        if not found:
+            logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
@@ -79,8 +80,9 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
                 dest_addr=bt_dut_address
             )
 
-            # Close connection
+            wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_server_socket.close()
+            wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
 
 
@@ -96,10 +98,15 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
         assert bt_client_address is not None
-        time.sleep(0.5)
+        time.sleep(1)
 
-        # Added set class to 400100 to avoid [Errno 112] Host is down issue
-        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+        found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                              inquiry_type=2,
+                                                              inquiry_duration_ms=20000,
+                                                              timeout=22,
+                                                              retry_counts=3)
+        if not found:
+            logger().error(f"Dut unable to find the bt client device. The test case may fail.")
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
@@ -107,7 +114,10 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
-                result = ThreadBase.call_functions_simultaneously([(wifi_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 20)])
+                result = ThreadBase.call_functions_simultaneously(
+                    [(wifi_dut.interfaces.wifi.bt_connect, bt_client_address),
+                    (bt_client_socket.accept, 20)]
+                )
                 assert result[1] == bt_dut_address
                 logger().info(f"Result from Callable Function {result}")
 
@@ -148,6 +158,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
                 0.2
             )  # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+            wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
 
 
@@ -162,8 +173,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
         assert bt_client_address is not None
 
-        # Added set class to 400100 to avoid [Errno 112] Host is down issue
-        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+        bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
@@ -184,6 +194,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
                     recieved_authentication_failure = b"4E05" in event.event_data
                     break
         assert recieved_authentication_failure
+        wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
 
 
@@ -200,8 +211,11 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
         time.sleep(1)
 
-        # Added set class to 400100 to avoid [Errno 112] Host is down issue
-        bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
+        wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                       inquiry_type=2,
+                                                       inquiry_duration_ms=20000,
+                                                       timeout=22,
+                                                       retry_counts=3)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Client
@@ -223,4 +237,5 @@ def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
                     recieved_authentication_failure = b"4E05" in event.event_data
                     break
         assert recieved_authentication_failure
+        wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
