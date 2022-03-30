@@ -101,16 +101,18 @@ def test_host_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
     assert tp is not None
     __print_throughput(tp)
 
+#@pytest.mark.net_perf_client("static_iperf")
 @pytest.mark.config("wifi_dut", wifi={"oper_mode": RS9116OperatingMode.AccessPoint})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+#@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_device_as_ap_with_two_clients_connected(net_perf_client, wifi_dut, wifi_clients, protocol):
+def test_device_as_ap_with_two_clients_connected(net_perf_client, net_perf_seconary_client, wifi_dut, wifi_clients, protocol):
     host_ips = []
     wifi_dut.interfaces.wifi.start_ap()
 
     for wifi_client in wifi_clients:
         wifi_client.interfaces.wifi.join()
-        host_ips.extend([wifi_client.interfaces.wifi.get_ip_address()])
+        #device_ip1 = wifi_client.interfaces.wifi.client_gateway_ip
+        #host_ip1 = wifi_client.interfaces.wifi.get_ip_address()
         time.sleep(0.5)
         assert (
             wifi_client.interfaces.wifi.ping(
@@ -118,19 +120,30 @@ def test_device_as_ap_with_two_clients_connected(net_perf_client, wifi_dut, wifi
             )
             < 0.1
         )
+        host_ips.extend([wifi_client.interfaces.wifi.client_ip_address])
 
+    #host_ips = ['192.168.100.76', '10.207.16.1']
     # preparing iperf server
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ips[0], device_ip=None, protocol=protocol)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ips[0], device_ip=host_ips[1], protocol=protocol, host_role=IperfConstants.SERVER_MODE)
     net_perf_client.interfaces.net_perf.start()
+    time.sleep(2)
+    #tp = net_perf_client.interfaces.net_perf.process_output()
+    #assert tp is not None
+    #__print_throughput(tp)
 
     # preparing iperf client
-    net_perf_client.interfaces.net_perf.init_client(host_ip=None, device_ip=host_ips[1], protocol=protocol)
-    net_perf_client.interfaces.net_perf.start()
-
+    net_perf_seconary_client.interfaces.net_perf.init_client(host_ip=host_ips[1], device_ip=host_ips[0], protocol=protocol, host_role=IperfConstants.CLIENT_MODE)
+    #result = Result(net_perf_seconary_client.interfaces.net_perf.protocol)
+    net_perf_seconary_client.interfaces.net_perf.start()
+    
+    #time.sleep(2)
+    time.sleep(net_perf_client.interfaces.net_perf.client_timeout)
+    tp_server = net_perf_client.interfaces.net_perf.process_output()
+    assert tp_server is not None
+    __print_throughput(tp_server)
     # creating results object for sharing between host and dut
-    result = Result(net_perf_client.interfaces.net_perf.protocol)
+    #result = Result(net_perf_seconary_client.interfaces.net_perf.protocol)
     # get and print throughput
-    tp = net_perf_client.interfaces.net_perf.process_output(result)
-    assert tp is not None
-    __print_throughput(tp)
-
+    #tp = net_perf_seconary_client.interfaces.net_perf.process_output(result)
+    #assert tp is not None
+    #__print_throughput(tp)

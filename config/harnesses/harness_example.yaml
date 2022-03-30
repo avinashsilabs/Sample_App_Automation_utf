@@ -158,9 +158,10 @@ devices:
                 # is a statically configured access point, assumed
                 # to be set up ahead of time with the settings below
                 type: 'wifi.access_points.static'
-                security: WPA
-                ssid: 'Codecom123'
-                passphrase: 'thisisatestnework'
+                security: WPA2
+                ssid: 'MACHANI_SIVAPRASAD_BSNLFIBER'
+                passphrase: 'ygr294548'
+                channel: 2
 
 
     # This represents another access point configuration.
@@ -172,14 +173,14 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '192.168.0.1'
-                web_ui_port: 80
+                ip_address: '10.207.18.16'
+                web_ui_port: 4040
                 admin_password: '12345678'
                 security: WPA
                 ssid: 'Dlink-10-207-18-11'
                 passphrase: 'thisisatestnetwo11'
                 supports: 'wifi_ap'
-                channel: 1
+                channel: 11
 
 
     # This represents another access point configuration.
@@ -240,7 +241,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 192.168.0.152
+                remote: 10.207.18.15
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -252,7 +253,7 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
-                ip_address: '192.168.0.152'
+                ip_address: '10.207.18.15'
 
     raspi_ble_client:
         interfaces:
@@ -659,6 +660,18 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
+    
+    seconday_raspi_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "192.168.1.5"
+                host_username: "pi"
+                host_password: "raspberry"
+
     static_iperf:
         interfaces:
             net_perf:
@@ -666,16 +679,16 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.2"
-                host_username: "test"
-                host_password: "test123"
+                host_ip: "192.168.1.5"
+                host_username: "pi"
+                host_password: "raspberry"
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
@@ -690,7 +703,7 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
+        #- 'raspi_wifi'
         - 'static_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
@@ -748,6 +761,8 @@ defaults:
     wiseconnect_web: 'wiseconnect_web'
 
     net_perf_client: 'raspi_iperf'
+
+    net_perf_seconary_client : 'seconday_raspi_iperf'
 
     wiseconnect_ui:
         mode: 'Client'
