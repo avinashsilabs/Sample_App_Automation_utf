@@ -1526,10 +1526,8 @@ def test_rejoin_first_time_retry_C19740(wifi_sniffer, wifi_access_point, wifi_du
                                     first_time_retry=1)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_first_time_retry')
-    time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
     try:
-        wifi_dut.interfaces.wifi.join(passphrase="12345679", timeout=150)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, passphrase="12345679", timeout=150)
     except pytest.raises(WlanError) as exc_info:
         assert exc_info.value.error_code == 0x0008
     except pytest.raises(WlanError) as exc_info:

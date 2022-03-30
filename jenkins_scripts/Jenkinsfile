@@ -5,6 +5,11 @@ pipeline {
             agent {
                 label 'swarm && linux64'
             }
+            environment {
+                JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
+                JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
+                JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
+            }
             stages{
                 stage('Toolchain Setup'){
                     steps {
@@ -105,9 +110,7 @@ pipeline {
                                             git checkout utf/dev
                                             cd ../..
                                             
-                                            rm -f manifest/generic_test_agent*.hex
-                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION}
-                                            cp -f manifest/generic_test_agent.hex manifest/${SQA_TEST_AGENT}.hex
+                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
                                         '''
                                     }
                                 }
@@ -125,7 +128,7 @@ pipeline {
                             else
                                . venv/Scripts/activate
                             fi
-                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SQA_TEST_AGENT}.hex ${FLASH_RS9116} ${FLASH_EFR32}
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps generic_test_agent.hex ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV}
                         '''
                     }
                 }
@@ -173,6 +176,7 @@ pipeline {
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
                         '''
                         archiveArtifacts 'example_test_package/**'
+                        archiveArtifacts 'manifest/**'
                         archiveArtifacts 'reports/**'
                         archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                         junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'

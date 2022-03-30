@@ -12,6 +12,10 @@ RUN slc signature trust --sdk $GECKO_SDK
 ARG RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
 ARG BUILD_LOCATION=release_packages
 
+ARG GROUP_ID=997
+ARG USER_ID=995
+ARG USERNAME=jenkins
+
 RUN --mount=type=ssh \ 
     if [ ! "${RELEASE_PACKAGE_VERSION}" = "RS916W.2.5.0.14" ]; then \
         if [ "${BUILD_LOCATION}" = "release_packages" ]; then \
@@ -46,7 +50,15 @@ ENV PROJECT_LIST="generic_test_agent concurrent_test_agent generic_test_agent_no
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
 WORKDIR ${SRC_ROOT}
+
 RUN ./generate_test_agents.sh
+
+RUN groupadd -g $GROUP_ID $USERNAME
+RUN useradd -r -u $USER_ID -g $USERNAME -d /build $USERNAME
+RUN chown -R $USERNAME:$USERNAME /build
+RUN chown -R $USERNAME:$USERNAME /opt/uc_cli
+
+USER $USERNAME
 
 CMD ["./build_test_agents.sh"]
 

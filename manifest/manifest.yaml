@@ -15,7 +15,7 @@ firmware_applications:
       filename: 'RS9116W.2.4.1.17.rps'
     - device_type: 'efx32'
       device_subtype: 'efr32'
-      filename: 'sqa_test_agent.hex'
+      filename: 'generic_test_agent.hex'
 
     test_concurrent_mode:
     - device_type: 'efx32'
