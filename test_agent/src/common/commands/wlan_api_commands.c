@@ -98,6 +98,9 @@ uint16_t g_rsi_timeout_value = 10;
 uint8_t g_region_config = 0;
 uint8_t g_region_code[4] = "US ";
 
+//globals for AP mode ht caps parameters, referenced by #defines in rsi_wlan_config.h
+uint16_t g_rsi_ht_caps_bitmap = 0;
+
 extern int sli_cli_io_getchar();
 extern int32_t rsi_wlan_pmk_generate(int8_t type, int8_t* psk, int8_t* ssid, uint8_t* pmk, uint16_t length);
 
@@ -751,6 +754,12 @@ void rsi_set_rejoin_command(sl_cli_command_arg_t* arguments)
     g_rsi_rejoin_beacon_missed_count = sl_cli_get_argument_uint32(arguments, 2);
     g_rsi_rejoin_first_time_retry = sl_cli_get_argument_uint32(arguments, 3);
 
+    print_status(RSI_ERROR_NONE);
+}
+
+void rsi_set_ht_caps_params(sl_cli_command_arg_t* arguments)
+{
+    g_rsi_ht_caps_bitmap = sl_cli_get_argument_uint16(arguments, 0);
     print_status(RSI_ERROR_NONE);
 }
 
