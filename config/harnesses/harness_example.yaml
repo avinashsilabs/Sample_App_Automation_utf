@@ -662,7 +662,7 @@ devices:
                 zip_results: 'Y'
 
     
-    seconday_raspi_iperf:
+    secondary_raspi_iperf:
         interfaces:
             net_perf:
                 type: 'iperf.static_iperf'
@@ -795,7 +795,7 @@ defaults:
 
     net_perf_client: 'raspi_iperf'
 
-    net_perf_seconary_client : 'seconday_raspi_iperf'
+    secondary_net_perf_client : 'secondary_raspi_iperf'
 
     wiseconnect_ui:
         mode: 'Client'
