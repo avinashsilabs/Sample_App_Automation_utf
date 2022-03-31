@@ -502,6 +502,7 @@ void rsi_set_power_save_params(sl_cli_command_arg_t* arguments)
 void rsi_set_tx_wait_time(sl_cli_command_arg_t* arguments)
 {
 	g_tx_wait_time = sl_cli_get_argument_uint32(arguments, 0);
+	print_status(RSI_ERROR_NONE);
 }
 
 void rsi_device_power_save_listen_interval(sl_cli_command_arg_t* arguments)

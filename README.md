@@ -25,6 +25,9 @@ Initial [Workspace Setup](docs/WorkspaceSetup.md).
 
 [HWMux Integration](docs/HWMuxIntegration.md): use the HWMux to store test bed configurations and reserve test hardware
 
+# Firmware Loading
+[Firmware Loading](docs/FirmwareLoading.md) to load custom firmware on wiseconnect devices.
+
 # Contributing
 [Extending UTF](docs/UTFExtensions.md) to support new devices & communication protocols.
 

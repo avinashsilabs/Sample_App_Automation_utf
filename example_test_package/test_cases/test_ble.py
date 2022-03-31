@@ -501,9 +501,6 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
-# This test case needs a sqa_test_agent_utf_pr_52.hex file to be loaded on EFR.
-# We will have to handle this manually until https://jira.silabs.com/browse/UTF-812 is done
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -511,7 +508,8 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, ble_client):
     # # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -560,15 +558,10 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     write_handle = int(write_handles[index], 16)
     assert write_handle > 0
 
-    # write value
-    new_value = 89
-    wifi_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
-                                                     char_property=write_handle, value=new_value)
-
     # read value
     val=wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
                                                      char_property=write_handle)
-    assert val == f'{new_value}'
+    assert int(val) > 0
 
     # enable notifications
     since_time = time.perf_counter_ns()
@@ -578,16 +571,16 @@ def test_ble_gatt_client_master(wifi_dut, wifi_access_point, ble_client):
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
     assert len(events) > 0
     latest_val = events[-1].event_data #capturing the last value notified by Gatt server
+    assert int(latest_val) < int(val)
 
     # read value
     val = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
                                                                 char_property=write_handle)
-    assert val == latest_val
+    assert int(val) <= int(latest_val)
 
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
 
 @pytest.mark.config(
     "wifi_dut",
