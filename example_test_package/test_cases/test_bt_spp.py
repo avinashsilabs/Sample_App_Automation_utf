@@ -1,5 +1,6 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType, \
+    RS9116ExtCustomFeatureBitMap
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
@@ -14,6 +15,8 @@ pytestmark = [
             {
                 "oper_mode": 0,
                 "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+                "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default |
+                                       RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid
             }
     )
 ]
@@ -79,9 +82,8 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
-
-            wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_server_socket.close()
+            time.sleep(2)
             wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
 
@@ -155,9 +157,10 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
             # Close connection
             bt_client_socket.close()
             time.sleep(
-                0.2
-            )  # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
+                1
+            )
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+            time.sleep(2)
             wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
 

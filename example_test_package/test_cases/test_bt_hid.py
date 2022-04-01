@@ -1,6 +1,6 @@
 import time
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116ExtCustomFeatureBitMap
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.interfaces.bluetooth.hid_recorder import HidRecorder
 from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
@@ -16,6 +16,8 @@ pytestmark = [
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.Bluetooth,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default |
+                                   RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid
         }
     )
 ]
@@ -59,6 +61,7 @@ def test_bt_hid_dut_as_slave(wifi_dut, bt_client, logger, enable_ssp):
         with wifi_dut.interfaces.wifi.run_bt_task():
             connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
             assert connected
+            time.sleep(1)
 
         with HidRecorder() as hid_recorder:
             for item in test_data:
