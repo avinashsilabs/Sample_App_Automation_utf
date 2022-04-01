@@ -52,7 +52,8 @@ RUN --mount=type=ssh \
     [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.6" ] || \
     [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.7" ] || \
     [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.8" ] || \
-    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.9" ]; then \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.9" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.10" ]; then \
         cp -f mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include/rsi_driver_2.6.0.0.h mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include/rsi_driver.h; \
     fi
 
