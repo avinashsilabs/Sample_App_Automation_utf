@@ -1,7 +1,6 @@
 import time
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode
-from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116ExtCustomFeatureBitMap
 from utf.interfaces.bluetooth.hid_recorder import HidRecorder
 from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
 from utf.utils.logger import get_logger
@@ -49,6 +48,8 @@ pytestmark = [
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.Bluetooth,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default |
+                                   RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid
         }
     )
 ]
@@ -447,6 +448,7 @@ def test_hid_conn_and_disconn_C20019(bt_dut, bt_client, enable_ssp):
 
     logger().info("disconnecting bt hid from device...")
     bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(10)
 
 @pytest.mark.parametrize("enable_ssp", [True])
 def test_hid_disconn_in_device_role_C20018(bt_dut, bt_client, enable_ssp):
@@ -480,7 +482,7 @@ def test_hid_disconn_in_device_role_C20018(bt_dut, bt_client, enable_ssp):
             logger().info(f'device connection state is {connected}')
 
         logger().info("disconnecting bt hid from device...")
-        bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_client):
 
