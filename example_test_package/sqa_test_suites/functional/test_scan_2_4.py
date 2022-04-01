@@ -357,7 +357,7 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the scan in us region with cahnnels 12,13,14
-def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_point):
+def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     logger().info(" ***** Configuring the dut in US region *****")
     wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
     # Enables the wifi power save in DUT
@@ -371,7 +371,6 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_poin
     # Enables the rejoin feature on DUT
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
-    channel = [12,13,14]
     channel_list =[12,13,14]
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
@@ -379,19 +378,16 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut,wifi_access_poin
     for count in channel_list:
         channel_bitmap_2_4 += 1 << (count - 1)
         scan_expected_time += 100
-    for channel in channel:
-        # initiates the access point with channel given in list
-        logger().info("Starting the access point with custom channel...")
-        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-        with TimeMeasurer() as t:
-            with pytest.raises(WlanError) as exc_info:
-                # enables the scan in DUT with the given channel bitmap value
-                logger().info("Initiating Scan...")
-                wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+
+    with TimeMeasurer() as t:
+         with pytest.raises(WlanError) as exc_info:
+              # enables the scan in DUT with the given channel bitmap value
+              logger().info("Initiating Scan...")
+              wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_feature=scan_feature_extend)
-            assert exc_info.value.error_code == 0x03,"Observing wrong error expected error code is 0x03"
-        logger().info(f"Scan in {t.duration} seconds")
+         assert exc_info.value.error_code == 0xA,"Observing wrong error expected error code is 0xA"
+    logger().info(f"Scan in {t.duration} seconds")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
