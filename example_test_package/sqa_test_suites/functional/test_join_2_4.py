@@ -58,7 +58,7 @@ pytestmark = [
         }
     )
 ]
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
@@ -99,10 +99,10 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b)'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate dhcp
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -126,6 +126,10 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         logger().info(" Validate dhcp")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-ASUS-hidden","broadcast_ssid": False})
@@ -165,16 +169,18 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate hidden mode
         packet_filter4 = f'(wlan.ssid == "") and (wlan.sa == {ap_bssid})'
 
         # Validate dhcp
-        packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
+        packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
+
+        packet_filter6 = f'dhcp.hw.mac_addr == {dut_mac_address}'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
@@ -196,9 +202,17 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find hidden in sniffer '
 
-        logger().info(" Validate dhcp")
+        logger().info(" Validate all data packets")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info(" Validate dhcp")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
+            'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
 
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": 'WPA2'})
 def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
@@ -240,10 +254,10 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate the eapol 4 key
         packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
@@ -297,6 +311,10 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
         assert time_taken <= 60
         logger().info(f"time taken to connect is: {time_taken}")
 
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
@@ -336,10 +354,10 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate the eapol 4 key
         packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
@@ -392,6 +410,10 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         assert time_taken <= 60
         logger().info(f"time taken to connect is: {time_taken}")
 
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
 @pytest.mark.config('wifi_access_point', wifi={"passphrase": 'test123@random'})
 def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sniffer):
         validation = True
@@ -429,10 +451,10 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate dhcp
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -456,6 +478,10 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
         logger().info(" Validate dhcp")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
@@ -495,10 +521,10 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate dhcp
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -522,6 +548,10 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
         logger().info(" Validate dhcp")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
 
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "pmkwithwrongpsk", "passphrase": 'thisisatestnetwork', "security": 'WPA2'})
@@ -609,10 +639,10 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate dhcp
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -636,6 +666,10 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         logger().info(" Validate dhcp")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
 
 @pytest.mark.config('wifi_access_point', wifi=
 {"ssid": "Testssid", "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnmkloirgrgrtyuio1234567890o", "security": "WPA2"})
@@ -675,10 +709,10 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate dhcp
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -702,6 +736,10 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
         logger().info(" Validate dhcp")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
 
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "123456789qwertyuio123456789qwertyuio123456789zxcvbnm123456789zx",
@@ -743,10 +781,10 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b))'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # Validate dhcp
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -770,6 +808,11 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
         logger().info(" Validate dhcp")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find dhcp in sniffer '
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'testing', "security": 'WPA2', "channel": 7})
@@ -812,10 +855,10 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
             # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
             packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                              f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                             f'(wlan.fc.type_subtype == 0x000b))'
+                             f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
             # Validating the power management bit
-            packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+            packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
             # Validate dhcp
             packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
@@ -842,4 +885,5 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
 
             logger().info("disconnecting to ap.....")
             wifi_dut.interfaces.wifi.leave()
+            time.sleep(10)
     logger().info(f"Associated and ping in {t.duration} seconds")
