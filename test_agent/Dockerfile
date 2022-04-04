@@ -63,7 +63,7 @@ COPY map_file_parser.py .
 ###########################################################
 # Update the project list here if new projects are added
 ###########################################################
-ENV PROJECT_LIST="generic_test_agent concurrent_test_agent generic_test_agent_no_bt bt_test_agent ap_htcaps_enable"
+ENV PROJECT_LIST="generic_test_agent concurrent_test_agent generic_test_agent_no_bt bt_test_agent ap_htcaps_enable generic_test_agent_without_aws"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
