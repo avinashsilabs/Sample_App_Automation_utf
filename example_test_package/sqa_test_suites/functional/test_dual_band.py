@@ -33,13 +33,14 @@ pytestmark = [
 def test_dual_band_scan_with_different_regions(wifi_access_point, wifi_dut):
     # Enables the wifi power save in DUT
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
-
-    # Enables the bt power save in DUT
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
     channel = 149
-    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
     # set_region_code is used to set region code,those  values are US=1,EU=2,JP=3,WORLD=4
     set_region_code = 1
+    # Enables the bt power save in DUT
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+
+    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+
     with TimeMeasurer() as t:
             # This loop enables DUT in different regions.
             while set_region_code < 5:
@@ -49,7 +50,7 @@ def test_dual_band_scan_with_different_regions(wifi_access_point, wifi_dut):
                 # enables the scan in DUT with the given channel bitmap value
                 scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
                 logger().info(scan_results)
-                assert (len(scan_results) >= 1)
+                assert (len(scan_results) >= 1), 'unable to scan the results'
                 set_region_code = set_region_code+1
                 wifi_dut.interfaces.wifi.reset_soft()
                 wifi_dut.interfaces.wifi.init()
@@ -68,7 +69,7 @@ def test_dual_band_connection_with_country_IE_Mismatch(wifi_access_point, wifi_d
         # enables the scan in DUT with the given channel bitmap value
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
         logger().info(scan_results)
-        assert (len(scan_results) >= 1)
+        assert (len(scan_results) >= 1), 'unable to scan the results'
         # This API connects STA to the third party AP
         result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         assert result
