@@ -100,7 +100,6 @@ class WifiThread(ThreadBase):
         self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http, self.index_path)
         logger().info(f"Http download is successful")
 
-
     def run(self):
 
         validation = True
@@ -110,7 +109,6 @@ class WifiThread(ThreadBase):
 
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        #time.sleep(5)
 
         for i in range(0,3):
             try:
@@ -130,8 +128,6 @@ class WifiThread(ThreadBase):
         # Join Wi-Fi Access Point
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
         logger().info(f"Successfully connected to AP")
-
-        #time.sleep(5)
         # This API Enables the DHCP in DUT
         ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
@@ -153,9 +149,12 @@ class WifiThread(ThreadBase):
         dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"Device mac address: {dut_mac_address}")
 
-        # #Validating the power management bit in QOS data frames
-        # packet_filter1 = f'wlan_radio.channel == {self.wifi_access_point.interfaces.wifi.channel} and '\
-        #     f'wlan.addr == {dut_mac_address} and wlan.fc.pwrmgt == 1 and  wlan.fc.type_subtype == 0x0028'
+
+        packet_filter3 = (
+            f"!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or "
+            f"(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or "
+            f"(wlan.fc.type_subtype == 0x000b))"
+        )
 
         packet_filter1 = f'wlan_radio.channel == {self.wifi_access_point.interfaces.wifi.channel} and ' \
                 f'wlan.da == {dut_mac_address} and wlan.ta == {self.wifi_access_point.interfaces.wifi.bssid} and '\
@@ -166,6 +165,12 @@ class WifiThread(ThreadBase):
 
         self.wifi_sniffer.interfaces.capture.stop_capture()
 
+        logger().info(
+            f"Validate Probe req(Broadcast/Unicast), authentication ,association, eapol"
+        )
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapole'
+
         logger().info(f"Validating more data bit in QOS data frames")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find power management bit in sniffer capture'
@@ -173,7 +178,6 @@ class WifiThread(ThreadBase):
         logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find ps polls in sniffer capture'
-
 
         if self.net_perf_client:
             self.run_traffic(device_ip)
@@ -214,9 +218,10 @@ class BleThread_Advertise(ThreadBase):
             if self.wifi_dut.interfaces.wifi.ble_address in found_devices:
                 break
         self.ble_client.interfaces.bluetooth.stop_scanning()
+        self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+
         assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
         logger().info(f"*****Logic Analyzer validation is pending*******")
-
 
 
 #this thread used for sta+ble as a slave
@@ -228,11 +233,9 @@ class BleThread_Scan(ThreadBase):
         self.ble_scan_interval=int(ble_scan_interval/0.625)
         self.ble_scan_window=int(ble_scan_window/0.625)
 
-
     def run(self):
         bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address is not None
-
         logger().info(f"{bt_dut_address}")
 
         # Start ble client
@@ -241,16 +244,16 @@ class BleThread_Scan(ThreadBase):
         time.sleep(1)
 
         logger().info(f"advertised remote BLE device")
-
         # Start scanning
         self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, \
                                                              ble_scan_interval=self.ble_scan_interval, \
                                                              ble_scan_window=self.ble_scan_window, timeout=1500)
 
         logger().info(f"Remote device found in scan results ,BLE scanning is successful")
-
         logger().info(f"*****Logic Analyzer validation is pending*******")
         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        self.ble_client.interfaces.bluetooth.stop_advertising()
+
 
 
 # this thread used for sta+ble as a slave
@@ -353,9 +356,10 @@ class ScanThread(ThreadBase):
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20164(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-       testcase = "test_C20164"
-       logger().info(f"testcase : test_Wifi_scan_with_BLE_advertising_interval_of_20ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_Wifi_scan_BLE_AI_20ms_C20164(wifi_sniffer, wifi_access_point, wifi_dut,  ble_client):
+       testcase = "test_Wifi_scan_BLE_AI_20ms_C20164"
+       logger().info(f"testcase : test_Wifi_scan_BLE_AI_20ms_C20164")
        with ScanThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase),BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
         time.sleep(5)
 
@@ -378,9 +382,11 @@ def test_C20164(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
  )
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20165(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-    testcase = "test_C20165"
-    logger().info("testcase : test_AP_connection_with_BLE_advertising_interval_of_20ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_AP_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+    testcase = "test_AP_connection_BLE_AI_20ms_C20165"
+    logger().info("testcase : test_AP_connection_BLE_AI_20ms_C20165")
     with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
         time.sleep(5)
 
@@ -407,10 +413,12 @@ def test_C20165(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-def test_C20166(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_Data_BLE_AI_20ms_C20166(wifi_sniffer,wifi_access_point,wifi_dut,wifi_client,\
                                                                   net_perf_client,ble_client,protocol):
-    testcase = "test_C20166"
-    logger().info(f"testcase : test_Wifi_Data_transfer_with_BLE_advertising_interval_of_20ms")
+    testcase = "test_Wifi_Data_BLE_AI_20ms_C20166"
+    logger().info(f"testcase : test_Wifi_Data_BLE_AI_20ms_C20166")
 
     with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, net_perf_client,protocol),\
             BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
@@ -435,9 +443,11 @@ def test_C20166(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
  )
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20167	(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-       testcase = "test_C20167"
-       logger().info("testcase : test_Wifi_scan_with_BLE_advertising_interval_of_10240ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_scan_BLE_AI_10240ms_C20167(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+       testcase = "test_Wifi_scan_BLE_AI_10240ms_C20167"
+       logger().info("testcase : test_Wifi_scan_BLE_AI_10240ms_C20167")
        with ScanThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase),\
                BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
         time.sleep(5)
@@ -460,15 +470,16 @@ def test_C20167	(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
     }
  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20168(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-    testcase = "test_C20168"
-    logger().info("testcase : test_AP_connection_with_BLE_advertising_interval_of_10240ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_AP_connection_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+    testcase = "test_AP_connection_BLE_AI_10240ms_C20168"
+    logger().info("testcase : test_AP_connection_BLE_AI_10240ms_C20168")
     with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), \
             BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
         time.sleep(5)
 
-#
-#
+
 
 
 @pytest.mark.config(
@@ -488,13 +499,15 @@ def test_C20168(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
  )
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-def test_C20169(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
+def test_Wifi_Data_BLE_AI_10240ms_C20169(wifi_sniffer,wifi_access_point,wifi_dut,wifi_client,\
                                                                   net_perf_client,protocol,ble_client):
-    testcase = "test_C20169"
-    logger().info("testcase : test_Wifi_Data_transfer_with_BLE_advertising_interval_of_10240ms")
+    testcase = "test_Wifi_Data_BLE_AI_10240ms_C20169"
+    logger().info("testcase : test_Wifi_Data_BLE_AI_10240ms_C20169")
 
     with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, net_perf_client,protocol), \
          BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
@@ -529,11 +542,13 @@ def test_C20169(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20176(wifi_sniffer,http_server,wifi_dut, wifi_access_point,\
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_http_dwnld_BLE_AI_20ms_C20176(wifi_sniffer,http_server,wifi_access_point,wifi_dut,\
                                                              ble_client,index_path):
-    testcase = "test_C20176"
-    logger().info("testcase : test_Wifi_http_download_BLE_advertising_interval_of_20ms")
-    with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path),\
+    testcase = "test_Wifi_http_dwnld_BLE_AI_20ms_C20176"
+    logger().info("testcase : test_Wifi_http_dwnld_BLE_AI_20ms_C20176")
+    with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server=http_server, index_path=index_path),\
          BleThread_Advertise(wifi_dut, ble_client, adv_int=20):
         time.sleep(5)
 
@@ -559,11 +574,14 @@ def test_C20176(wifi_sniffer,http_server,wifi_dut, wifi_access_point,\
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
-@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
-def test_C20177(wifi_sniffer,http_server,wifi_dut, wifi_access_point,ble_client,index_path):
+@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2',"passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_http_dwnld_BLE_AI_10240ms_C20177(wifi_sniffer,http_server, wifi_access_point, wifi_dut, ble_client,index_path):
 
-    testcase = "test_C20177"
-    logger().info("testcase : test_Wifi_http_download_BLE_advertising_interval_of_10240ms")
+    testcase = "test_Wifi_http_dwnld_BLE_AI_10240ms_C20177"
+    logger().info("testcase : test_Wifi_http_dwnld_BLE_AI_10240ms_C20177")
     with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path), \
             BleThread_Advertise(wifi_dut, ble_client, adv_int=10240):
         time.sleep(5)
@@ -587,9 +605,10 @@ def test_C20177(wifi_sniffer,http_server,wifi_dut, wifi_access_point,ble_client,
  )
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20173(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-       testcase = "test_C20173"
-       logger().info("testcase : test_Wifi_scan_with_BLE_Scan_interval_of_10240ms_scan_window_5000ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_Wifi_scan_BLE_SI_10240ms_SW_5000ms_C20173(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+       testcase = "test_Wifi_scan_BLE_SI_10240ms_SW_5000ms_C20173"
+       logger().info("testcase : test_Wifi_scan_BLE_SI_10240ms_SW_5000ms_C20173")
        with ScanThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase),\
                BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=5000):
            time.sleep(15)
@@ -611,9 +630,11 @@ def test_C20173(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
     }
  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20174(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-       testcase = "test_C20174"
-       logger().info("testcase : test_AP_connection_with_BLE_Scan_interval_of_10240ms_scan_window_5000ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_AP_conn_BLE_SI_10240ms_SW_5000ms_C20174(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+       testcase = "test_AP_conn_BLE_SI_10240ms_SW_5000ms_C20174"
+       logger().info("testcase : test_AP_conn_BLE_SI_10240ms_SW_5000ms_C20174")
        with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), \
                BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=5000):
         time.sleep(5)
@@ -639,11 +660,13 @@ def test_C20174(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-def test_C20175(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_Data_BLE_SI_10240ms_SW_5000ms_C20175(wifi_sniffer,wifi_access_point,wifi_dut,wifi_client,\
                                                                   net_perf_client,protocol,ble_client):
 
-    testcase = "test_C20175"
-    logger().info("testcase : test_Wifi_Data_transfer_with_BLE_Scan_interval_of_10240ms_scan_winodw_5000ms")
+    testcase = "test_Wifi_Data_BLE_SI_10240ms_SW_5000ms_C20175"
+    logger().info("testcase : test_Wifi_Data_BLE_SI_10240ms_SW_5000ms_C20175")
 
     with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, net_perf_client,protocol), \
          BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=5000):
@@ -674,9 +697,11 @@ def test_C20175(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20179(wifi_sniffer,http_server,wifi_dut, wifi_access_point,ble_client,index_path):
-       testcase = "test_C20179"
-       logger().info("testcase : test_Wifi_http_download_with_BLE_scan_interval_of_10240ms_and_scan_window_of_5000ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_http_dwnld_BLE_SI_10240ms_SW_5000ms_C20179(wifi_sniffer,http_server, wifi_access_point, wifi_dut,ble_client,index_path):
+       testcase = "test_Wifi_http_dwnld_BLE_SI_10240ms_SW_5000ms_C20179"
+       logger().info("testcase : test_Wifi_http_dwnld_BLE_SI_10240ms_SW_5000ms_C20179")
        with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path), \
             BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=10240,ble_scan_window=5000):
             time.sleep(15)
@@ -698,11 +723,11 @@ def test_C20179(wifi_sniffer,http_server,wifi_dut, wifi_access_point,ble_client,
 
     }
  )
-#
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20170(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-       testcase = "test_C20170"
-       logger().info("testcase : test_Wifi_scan_with_BLE_Scan_interval_of_5ms_scan_window_2point5ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_Wifi_scan_BLE_SI_5ms_SW_2point5ms_C20170(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+       testcase = "test_Wifi_scan_BLE_SI_5ms_SW_2point5ms_C20170"
+       logger().info("testcase : test_Wifi_scan_BLE_SI_5ms_SW_2point5ms_C20170")
        with ScanThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase),\
                BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=5,ble_scan_window=2.5):
            time.sleep(15)
@@ -724,9 +749,11 @@ def test_C20170(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
     }
  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20171(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
-       testcase = "test_C20171"
-       logger().info("testcase : test_AP_connection_with_BLE_Scan_interval_of_5ms_scan_window_2point5ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_AP_conn_BLE_SI_5ms_SW_2point5ms_C20171(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+       testcase = "test_AP_conn_BLE_SI_5ms_SW_2point5ms_C20171"
+       logger().info("testcase : test_AP_conn_BLE_SI_5ms_SW_2point5ms_C20171")
        with WifiThread(wifi_sniffer,wifi_dut, wifi_access_point,testcase=testcase), \
                BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=5,ble_scan_window=2.5):
         time.sleep(5)
@@ -751,11 +778,13 @@ def test_C20171(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-def test_C20172(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_Data_BLE_SI_5ms_SW_2point5ms_C20172(wifi_sniffer,wifi_access_point,wifi_dut,wifi_client,\
                                                                   net_perf_client,protocol,ble_client):
 
-    testcase = "test_C20172"
-    logger().info("testcase : test_Wifi_Data_transfer_with_BLE_Scan_interval_of_5ms_scan_winodw_2point5ms")
+    testcase = "test_Wifi_Data_BLE_SI_5ms_SW_2point5ms_C20172"
+    logger().info("testcase : test_Wifi_Data_BLE_SI_5ms_SW_2point5ms_C20172")
 
     with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,wifi_client, net_perf_client,protocol), \
          BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=5,ble_scan_window=2.5):
@@ -785,9 +814,11 @@ def test_C20172(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,\
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_C20178(wifi_sniffer,http_server,wifi_dut, wifi_access_point,ble_client,index_path):
-       testcase = "test_C20178"
-       logger().info("testcase : test_Wifi_http_download_with_BLE_scan_interval_of_5ms_and_scan_window_of_2point5ms")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_Wifi_http_dwnld_BLE_SI_5ms_SW_2point5ms_C20178(wifi_sniffer,http_server, wifi_access_point,wifi_dut,ble_client,index_path):
+       testcase = "test_Wifi_http_dwnld_BLE_SI_5ms_SW_2point5ms_C20178"
+       logger().info("testcase : test_Wifi_http_dwnld_BLE_SI_5ms_SW_2point5ms_C20178")
        with WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase,http_server = http_server, index_path=index_path), \
             BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=5,ble_scan_window=2.5):
             time.sleep(15)

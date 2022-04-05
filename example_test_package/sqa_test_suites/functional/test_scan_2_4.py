@@ -380,14 +380,15 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
         scan_expected_time += 100
 
     with TimeMeasurer() as t:
-         with pytest.raises(WlanError) as exc_info:
-              # enables the scan in DUT with the given channel bitmap value
-              logger().info("Initiating Scan...")
-              wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
-                                                                           scan_bitmap_2_4=channel_bitmap_2_4,
-                                                                           scan_feature=scan_feature_extend)
-         assert exc_info.value.error_code == 0xA,"Observing wrong error expected error code is 0xA"
+        with pytest.raises(WlanError) as exc_info:
+            # enables the scan in DUT with the given channel bitmap value
+            logger().info("Initiating Scan...")
+            wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                                       scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                       scan_feature=scan_feature_extend)
+        assert exc_info.value.error_code == 0xA,"Observing wrong error expected error code is 0xA"
     logger().info(f"Scan in {t.duration} seconds")
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
