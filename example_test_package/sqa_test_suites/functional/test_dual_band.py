@@ -31,11 +31,11 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
 def test_dual_band_scan_with_different_regions(wifi_access_point, wifi_dut):
-    # Enables the wifi power save in DUT
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
     channel = 149
     # set_region_code is used to set region code,those  values are US=1,EU=2,JP=3,WORLD=4
     set_region_code = 1
+    # Enables the wifi power save in DUT
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
     # Enables the bt power save in DUT
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
