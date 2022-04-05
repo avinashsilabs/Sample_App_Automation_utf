@@ -27,10 +27,10 @@ pytestmark = [
 
 # This test case verifies All Channels Scan in Dual band by giving  different region codes(US,EU,JP,WORLD) and channel number as Zero
 # This test case covers T2243,T2244,T2245,T2246
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
-def test_dual_band_scan_with_different_regions(wifi_dut, wifi_access_point):
+def test_dual_band_scan_with_different_regions(wifi_access_point, wifi_dut):
     # Enables the wifi power save in DUT
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
@@ -60,7 +60,7 @@ def test_dual_band_scan_with_different_regions(wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_access_point1", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
-def test_dual_band_connection_with_country_IE_Mismatch(wifi_dut, wifi_access_point):
+def test_dual_band_connection_with_country_IE_Mismatch(wifi_access_point, wifi_dut):
     channel = 11
     wifi_access_point.interfaces.wifi.start_ap(channel=channel)
     with TimeMeasurer() as t:
