@@ -284,17 +284,22 @@ def test_scan_selective_channel_c19057(wifi_dut, wifi_access_point):
 
 
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 1,
+        "module_type": 1,
+    },
+)
 # Verifies the scan functionality in us region
 def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
+    # Sets the DUT with the us region
+    logger().info(" ***** Configuring DUT in US region ***** ")
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
@@ -304,11 +309,6 @@ def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
     with TimeMeasurer() as t:
-
-        # Sets the DUT with the us region
-        logger().info(" ***** Configuring DUT in US region ***** ")
-        wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
-
         # enables the scan in DUT with the given channel bitmap value
         logger().info("Initiating the scan in dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
@@ -447,21 +447,24 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
     logger().info(f"Scan in {t.duration} seconds")
 
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 1,
+        "module_type": 1,
+    },
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the scan in us region with cahnnels 12,13,14
 def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     logger().info(" ***** Configuring the dut in US region *****")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
+
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
