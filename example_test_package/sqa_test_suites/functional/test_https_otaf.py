@@ -47,6 +47,8 @@ def logger():
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("Verifying server stats...")
@@ -99,6 +101,8 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_d
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server, wifi_dut, wifi_access_point,wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("Verifying server stats....")
@@ -180,6 +184,8 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wifi_dut, wifi_access_point,wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -262,6 +268,8 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, wifi_dut, wifi_access_point,wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
@@ -344,6 +352,8 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server, wifi_dut, wifi_access_point,wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -427,6 +437,8 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11g'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
     logger().info(" joinig ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -492,6 +504,8 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11g'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -555,6 +569,8 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -637,6 +653,8 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_dut, wifi_access_point):
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -706,6 +724,8 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     logger().info("Verifying server stats....")
     server_stat = http_server.interfaces.http.started
@@ -786,6 +806,8 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -842,6 +864,8 @@ def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, w
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -907,6 +931,8 @@ def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wi
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -961,6 +987,8 @@ def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("Verifying server stats....")

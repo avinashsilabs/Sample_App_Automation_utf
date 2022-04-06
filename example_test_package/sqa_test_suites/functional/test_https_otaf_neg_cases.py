@@ -47,6 +47,8 @@ def logger():
     },
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_dut, wifi_access_point):
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
@@ -83,6 +85,8 @@ def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_
     },
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi_dut, wifi_access_point):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
@@ -120,6 +124,8 @@ def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi
     },
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, wifi_dut, wifi_access_point):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
@@ -157,6 +163,8 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
     },
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ***** """
     logger().info("checking server stats....")

@@ -48,6 +48,8 @@ def logger():
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade failure in DUT over the http connection whe dut is not connected
 def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_dut, wifi_access_point):
     """ ******* SERVER CHECKS ******* """
@@ -95,6 +97,8 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_d
 
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan mode
 def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, wifi_dut, wifi_access_point,
                                                                    wifi_sniffer):
@@ -189,6 +193,8 @@ def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan and bluetooth mode
 def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
@@ -283,6 +289,8 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan and BLE mode
 def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wifi_dut, wifi_access_point,
                                                                  wifi_sniffer):
@@ -377,6 +385,8 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan and dual bluetooth mode
 def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server, wifi_dut, wifi_access_point,
                                                                     wifi_sniffer):
@@ -467,6 +477,8 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection on DUT connection in access point 11g mode
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11g'})
 def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
@@ -551,6 +563,8 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n'})
 # These test case verifies the firmware upgrade in DUT over the http connection on DUT connection in access point 11n mode
 def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
@@ -633,6 +647,8 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection on DUT SPI connection
 def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
@@ -727,6 +743,8 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection by enabling the power save mode in DUT
 def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_dut, wifi_access_point):
     logger().info("checking weather server is running....")
@@ -817,6 +835,8 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
         "band": 0
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection on single band Q7 board
 def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     logger().info("checking weather server is running....")
@@ -910,6 +930,8 @@ def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_d
         "band": 2
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade in DUT over the http connection on dual band A7 board
 def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
@@ -1003,6 +1025,8 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade failure in DUT over the http connection on providing the empty rps file
 def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
@@ -1066,6 +1090,8 @@ def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 # These test case verifies the firmware upgrade failure in DUT over the http connection,when http is disabled in DUT
 def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
@@ -1125,6 +1151,8 @@ def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_
         "skip_radio_init": True
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut):
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
@@ -1160,6 +1188,8 @@ def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_d
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -1231,6 +1261,8 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, wif
         "skip_radio_init": True
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_dut):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -1267,6 +1299,8 @@ def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     """ ******* SERVER CHECKS ***** """
     logger().info("checking weather server is running....")
@@ -1338,6 +1372,8 @@ def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, wifi
         "skip_radio_init": True
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, wifi_dut):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
