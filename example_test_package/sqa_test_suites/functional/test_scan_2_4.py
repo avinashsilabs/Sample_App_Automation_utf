@@ -371,7 +371,6 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     # Enables the rejoin feature on DUT
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
-    channel = [12,13,14]
     channel_list =[12,13,14]
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
@@ -388,7 +387,8 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
                                                                        scan_bitmap_2_4=channel_bitmap_2_4,
                                                                        scan_feature=scan_feature_extend)
         assert exc_info.value.error_code == 0xA,"Observing wrong error expected error code is 0xA"
-        logger().info(f"Scan in {t.duration} seconds")
+    logger().info(f"Scan in {t.duration} seconds")
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])

@@ -74,6 +74,7 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
 
     # Added set class to 400100 to avoid [Errno 112] Host is down issue
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
+    time.sleep(2)
 
     ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
     logger().info(f"l2ping response {ping_response}")
@@ -95,10 +96,10 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
             bt_dut.interfaces.bluetooth.bt_power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
+                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
 
-        time.sleep(20)
+        time.sleep(30)
         logger().info("pinging dut...")
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
@@ -137,15 +138,18 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
 
     logger().info("configuring dut in non-connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_non_connectable()
+    time.sleep(2)
 
     logger().info("initialising dut in spp....")
     bt_dut.interfaces.bluetooth.bt_spp_init()
+    time.sleep(2)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
 
     # Added set class to 400100 to avoid [Errno 112] Host is down issue
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
+    time.sleep(2)
 
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
@@ -191,9 +195,11 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
 
     logger().info("configuring dut in connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_connectable()
+    time.sleep(2)
 
     logger().info("initialising dut in spp....")
     bt_dut.interfaces.bluetooth.bt_spp_init()
+    time.sleep(2)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
@@ -222,10 +228,10 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
             bt_dut.interfaces.bluetooth.bt_power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
+                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
 
-        time.sleep(20)
+        time.sleep(30)
         logger().info("pinging dut...")
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
@@ -235,11 +241,13 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
 
         logger().info("closing bt socket...")
         bt_server_socket.close()
+        time.sleep(10)
 
         logger().info("==== configuring dut in non-connectable mode ====")
 
         logger().info("starting bt module in dut.....")
         bt_dut.interfaces.bluetooth.bt_start()
+        time.sleep(2)
 
         logger().info("fetching dut bd address....")
         bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
@@ -317,15 +325,18 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
 
     logger().info("configuring dut in non-connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_non_connectable()
+    time.sleep(2)
 
     logger().info("initialising dut in spp....")
     bt_dut.interfaces.bluetooth.bt_spp_init()
+    time.sleep(2)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
 
     # Added set class to 400100 to avoid [Errno 112] Host is down issue
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
+    time.sleep(2)
 
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
@@ -364,9 +375,11 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
 
     logger().info("configuring dut in connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_connectable()
+    time.sleep(2)
 
     logger().info("initialising dut in spp....")
     bt_dut.interfaces.bluetooth.bt_spp_init()
+    time.sleep(2)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
@@ -394,10 +407,10 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
             bt_dut.interfaces.bluetooth.bt_power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
+                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
 
-        time.sleep(20)
+        time.sleep(30)
         logger().info("pinging dut...")
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
