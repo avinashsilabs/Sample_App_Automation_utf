@@ -108,8 +108,10 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
         packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
+        logger().info("pinging to dut.....")
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -181,7 +183,8 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -261,7 +264,8 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point,wifi_sniffer):
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         time.sleep(10)
 
@@ -360,7 +364,8 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -452,7 +457,8 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -521,7 +527,8 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer):
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -650,7 +657,8 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -721,7 +729,8 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -793,7 +802,8 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -867,7 +877,8 @@ def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wif
 
             # Initiate ping from third party wifi-client to DUT
             status = ping(device_ip, 10)
-            assert status == 1
+            assert status == 1,"DUT not responding for ping request......"
+            logger().info("ping to DUT is successful....")
 
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
