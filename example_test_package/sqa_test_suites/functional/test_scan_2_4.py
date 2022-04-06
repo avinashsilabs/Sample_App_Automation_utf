@@ -1,3 +1,4 @@
+import time
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
@@ -24,8 +25,8 @@ def logger():
     Author: RaviNemali
 """
 
-pytestmark = [
-    pytest.mark.config(
+
+@pytest.mark.config(
         "wifi_dut",
         wifi=
         {
@@ -35,7 +36,6 @@ pytestmark = [
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             }
         )
-    ]
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -55,6 +55,16 @@ def test_scan_c19056(wifi_dut, wifi_access_point):
     assert (len(scan_results) > 1 and (t.duration < (1.2 + 0.2)))
     logger().info(scan_results)
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the scan Response Based on RSSI
@@ -81,6 +91,16 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
         logger().info("scan results are based on rssi")
     logger().info(f"Scan in {t.duration} seconds")
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -104,6 +124,17 @@ def test_scan_ssid_32bytes_c19064(wifi_dut, wifi_access_point):
     assert len(scan_results) == 1
     logger().info(f"Scan in {t.duration} seconds")
 
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 def test_scan_selective_channel_c19058(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -146,6 +177,17 @@ def test_scan_selective_channel_c19058(wifi_dut, wifi_access_point):
         assert (channel_selected == len(scan_results))
         logger().info(f"Scan in {t.duration} seconds")
 
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 # Verifies the scan functionality with the channel 1,3,6,11
 def test_scan_selective_channel_c19059(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
@@ -190,6 +232,16 @@ def test_scan_selective_channel_c19059(wifi_dut, wifi_access_point):
         assert (channel_selected == len(scan_results))
         logger().info(f"Scan in {t.duration} seconds")
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 # This test case verifies the scan functionality for channles 1-11
 def test_scan_selective_channel_c19057(wifi_dut, wifi_access_point):
         # Enables the wifi power save in DUT
@@ -230,6 +282,17 @@ def test_scan_selective_channel_c19057(wifi_dut, wifi_access_point):
                         channel_selected = channel_selected + 1
         assert (channel_selected <= len(scan_results))
 
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 # Verifies the scan functionality in us region
 def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
@@ -252,7 +315,16 @@ def test_scan_us_region_2_4_c19067(wifi_dut, wifi_access_point):
     logger().info(scan_results)
     assert (len(scan_results) >= 1)
 
-
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the scan functionality with max scan of dut
@@ -283,6 +355,16 @@ def test_scan_selective_channel_c19061(wifi_dut, wifi_access_point):
         assert len(scan_results) >= 11
     logger().info(f"Scan in {t.duration} seconds")
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -310,6 +392,16 @@ def test_scan_hidden_mode_scan_with_all_channels_c19062(wifi_dut,wifi_access_poi
                         assert count.ssid == 'test_ssid'
     logger().info(f"Scan in {t.duration} seconds")
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"ssid":"hidden_ssid", "broadcast_ssid": False})
@@ -354,6 +446,16 @@ def test_scan_hidden_mode_scan_with_selected_channels_c19063(wifi_dut,wifi_acces
             assert (channel_selected <= len(scan_results))
     logger().info(f"Scan in {t.duration} seconds")
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            }
+        )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the scan in us region with cahnnels 12,13,14
@@ -390,14 +492,35 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     logger().info(f"Scan in {t.duration} seconds")
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 2,
+        "module_type": 1,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# Verifies scan on all channels in by setting EU region on DUT
-def test_scan_all_channels_in_EU_region_c19070(wifi_dut,wifi_access_point):
-    # enables the region to europe in DUT
-    logger().info(" ***** Configuring DUT in EU region ***** ")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=2, module_type=1)
-    # Enables the wifi power save in DUT
+def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_client):
+    testcase = "test_scan_all_channels_in_EU_region_c19070"
+
+    logger().info("DUT region is set to Europe")
+
+    validation = True
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=12)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    time.sleep(10)
+
+    #Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
@@ -409,22 +532,64 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut,wifi_access_point):
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
 
-    with TimeMeasurer() as t:
-        # enables the scan in DUT with the given channel bitmap value
-        logger().info("Initiating Scan...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-    logger().info(scan_results)
+    for i in range(0, 3):
+        try:
+            # enables the scan in dut on channel
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
+            logger().info(f"scan results : {scan_results}")
+            if len(scan_results):
+                break
+        except:
+            # enables the scan in dut on channel
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            logger().info(f"scan results : {scan_results}")
+            if len(scan_results):
+                break
     assert (len(scan_results) >= 1)
-    logger().info(f"Scan in {t.duration} seconds")
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+    # Fetches the DUT mac address
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f"wlan.fc.type_subtype==4 and wlan.ta=={dut_mac_address}"
+
+    logger().info("validating the probe requests sent be DUT")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), \
+        f"Probe request packets not found in sniffer"
+    logger().info("sniffer validation is successful")
+    logger().info("dut is able to scan successfully in Europe region")
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 3,
+        "module_type": 1,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# Verifies scan on all channels in by setting japan region on DUT
-def test_scan_all_channels_in_japan_region_c19071(wifi_dut,wifi_access_point):
-    # enables the region to japan in DUT
-    logger().info(" ***** Configuring DUT in japan region *****")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=3, module_type=1)
-    # Enables the wifi power save in DUT
+def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_client):
+    testcase = "test_scan_all_channels_in_japan_region_c19071"
+
+    logger().info("DUT region is set to Japan")
+
+    validation = True
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=13)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    time.sleep(10)
+
+    #Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
@@ -436,10 +601,31 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut,wifi_access_point):
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
 
-    with TimeMeasurer() as t:
-        # enables the scan in DUT with the given channel bitmap value
-        logger().info("Initiating Scan...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-    logger().info(scan_results)
+    for i in range(0, 3):
+        try:
+            # enables the scan in dut on channel
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
+            logger().info(f"scan results : {scan_results}")
+            if len(scan_results):
+                break
+        except:
+            # enables the scan in dut on channel
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            logger().info(f"scan results : {scan_results}")
+            if len(scan_results):
+                break
     assert (len(scan_results) >= 1)
-    logger().info(f"Scan in {t.duration} seconds")
+
+    # Fetches the DUT mac address
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f"wlan.fc.type_subtype==4 and wlan.ta=={dut_mac_address}"
+
+    logger().info("validating the probe requests sent be DUT")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), \
+        f"Probe request packets not found in sniffer"
+    logger().info("sniffer validation is successful")
+    logger().info("dut is able to scan successfully in Japan region")
+
+
