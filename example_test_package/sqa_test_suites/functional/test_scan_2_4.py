@@ -531,20 +531,15 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_clie
     # initiates the rejoin in dut
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
-
-    for i in range(0, 3):
-        try:
+    try:
             # enables the scan in dut on channel
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
             logger().info(f"scan results : {scan_results}")
-            if len(scan_results):
-                break
-        except:
+    except:
             # enables the scan in dut on channel
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
             logger().info(f"scan results : {scan_results}")
-            if len(scan_results):
-                break
+
     assert (len(scan_results) >= 1)
 
     # Fetches the DUT mac address
@@ -601,19 +596,15 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_c
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
 
-    for i in range(0, 3):
-        try:
-            # enables the scan in dut on channel
-            scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
-            logger().info(f"scan results : {scan_results}")
-            if len(scan_results):
-                break
-        except:
-            # enables the scan in dut on channel
-            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            logger().info(f"scan results : {scan_results}")
-            if len(scan_results):
-                break
+    try:
+        # enables the scan in dut on channel
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
+        logger().info(f"scan results : {scan_results}")
+    except:
+        # enables the scan in dut on channel
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(f"scan results : {scan_results}")
+
     assert (len(scan_results) >= 1)
 
     # Fetches the DUT mac address
