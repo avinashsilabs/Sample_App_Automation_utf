@@ -202,6 +202,7 @@ static void ble_task(void* arg)
                 //! event invokes when disconnection was completed
                 LOG_EVENT("\nRSI_BLE_DISCONN_EVENT \n");     
                 rsi_ble_app_clear_event(RSI_BLE_DISCONN_EVENT);
+                device_found = 0;
                 // if(current_ble_role == BLE_SLAVE_ROLE){
                 //     //! start the advertising
                 //     LOG_PRINT("\nSending rsi_ble_start_advertising\n");
@@ -437,6 +438,7 @@ void rsi_ble_start_scanning_command(sl_cli_command_arg_t* arguments){
 
 	strcpy((char *)target_ble_remote_dev_addr,remote_dev_addr);
 
+    device_found = 0;
 	int32_t status = rsi_ble_start_scanning();
 	//This assignment may change when we implement dual role
 	if(status == RSI_SUCCESS){

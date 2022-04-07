@@ -24,7 +24,7 @@
 /*******************************************************************************
 * CONSTANTS:
 *******************************************************************************/
-#define SCAN_RESULT_COUNT (10)
+#define SCAN_RESULT_COUNT (11)
 #define SCAN_RESULT_SIZE  (sizeof(rsi_rsp_scan_t) * SCAN_RESULT_COUNT)
 #define RSI_HTTP_OTAF_UPGRADE_SUCCESS 1
 #define RSI_HTTP_OTAF_UPGRADE_FAILED 2
@@ -251,9 +251,11 @@ void rsi_wlan_scan_command(sl_cli_command_arg_t* arguments)
 {
     rsi_rsp_scan_t* scan_results = malloc(SCAN_RESULT_SIZE);
     if (scan_results == NULL) {
+        printf("unable to allocate memory for scan results\n");
         return;
     }
 
+    memset(scan_results, '\0', SCAN_RESULT_SIZE);
     char* ssid = sl_cli_get_argument_string(arguments, 0);
     uint8_t channel = sl_cli_get_argument_uint8(arguments, 1);
     int32_t status = rsi_wlan_scan((int8_t*)ssid, channel, scan_results, SCAN_RESULT_SIZE);
@@ -596,8 +598,11 @@ void rsi_wlan_scan_with_bitmap_options_command(sl_cli_command_arg_t* arguments)
 {
     rsi_rsp_scan_t* scan_results = malloc(SCAN_RESULT_SIZE);
     if (scan_results == NULL) {
+        printf("unable to allocate memory for scan results\n");
         return;
     }
+
+    memset(scan_results, '\0', SCAN_RESULT_SIZE);
 
     char* ssid = sl_cli_get_argument_string(arguments, 0);
     uint8_t channel = sl_cli_get_argument_uint8(arguments, 1);
