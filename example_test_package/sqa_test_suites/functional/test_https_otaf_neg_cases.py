@@ -221,5 +221,5 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
