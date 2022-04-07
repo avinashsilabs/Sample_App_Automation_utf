@@ -167,10 +167,6 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
        Ps-PollRTSCTSACK'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates_rts_cts')
-    time.sleep(5)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {ap_bssid}')
-
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     result = wifi_dut.interfaces.wifi.start_ip()
@@ -179,6 +175,9 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
