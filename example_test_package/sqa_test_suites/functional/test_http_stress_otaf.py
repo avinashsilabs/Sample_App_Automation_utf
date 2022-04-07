@@ -115,7 +115,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
             wifi_dut.interfaces.wifi.version()
 
             logger().info("Stop Sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+            wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(10)
 
 @pytest.mark.config(
@@ -183,7 +183,7 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
             wifi_dut.interfaces.wifi.version()
 
             logger().info("Stop Sniffer capture...")
-            wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+            wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(10)
 
 @pytest.mark.config(
@@ -257,5 +257,5 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
             wifi_dut.interfaces.wifi.version()
 
             logger().info("Stop Sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+            wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(10)

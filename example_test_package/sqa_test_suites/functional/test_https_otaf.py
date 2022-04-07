@@ -82,7 +82,7 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_d
     time.sleep(10)
 
     logger().info("Stop Sniffer capture...")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -163,7 +163,7 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer capture...")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -245,7 +245,7 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
 
     time.sleep(10)
     logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -327,7 +327,7 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -408,7 +408,7 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.skip()
@@ -619,7 +619,7 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.skip()
@@ -769,7 +769,7 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer capture...")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -825,7 +825,7 @@ def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, w
     assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
     logger().info("Stop Sniffer capture...")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -890,7 +890,7 @@ def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wi
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer capture...")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -943,7 +943,7 @@ def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi
         wifi_dut.interfaces.wifi.get_http_otaf_status()
     assert exc_info.value.error_code == 0xFF74, "observed wrong error code expected is 0xff74"
     time.sleep(10)
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
 @pytest.mark.config(
@@ -1025,5 +1025,5 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
     wifi_dut.interfaces.wifi.version()
 
     logger().info("Stop Sniffer capture...")
-    wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
