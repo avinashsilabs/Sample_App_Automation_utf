@@ -1213,6 +1213,54 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
     wifi=
     {
         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_AWS_SDK_cloud_connectivity_testcase45(wifi_access_point, wifi_dut):
+    topic_1 = "sdk/test/Python"
+    message = '{"message": "my payload"}'
+
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.aws_iot_connect()
+    time.sleep(2)
+    wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, 0)
+
+    wifi_dut.interfaces.wifi.aws_iot_publish(
+        topic_1, message, 0
+        )
+    time.sleep(10)
+    events = wifi_dut.interfaces.wifi.get_async_events()
+
+    if len(events):
+        for event in events:
+            assert topic_1 == event.event_data.topic, "message is not received on subscribed topic"
+            assert message == event.event_data.payload, "sent and received messages are not matching"
+    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1)
+    wifi_dut.interfaces.wifi.aws_iot_disconnect()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
