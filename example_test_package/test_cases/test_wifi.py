@@ -1,5 +1,5 @@
 from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
-from utf_wiseconnect.utils.rs911x_version import parse_version
+from utf_wiseconnect.utils.rs911x_version import parse_version, parse_version_from_server
 from utf.utils.time_measurer import TimeMeasurer
 import pytest
 from utf.utils.logger import get_logger
@@ -108,3 +108,14 @@ def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client):
         )
         < 0.1
     )
+
+
+def test_parse_verion_from_web_server(http_server, http_client):
+    server_stat = http_server.interfaces.http.started
+    assert server_stat, "server not started"
+    status, content = http_client.interfaces.http.http_request(
+        http_server.interfaces.http, "GET", '/RS9116.2.5.0.4.rps'
+    )
+    assert status == 200
+    version = parse_version_from_server(content)
+    assert version == '1610.2.5.0.0.4'
