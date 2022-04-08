@@ -1,5 +1,5 @@
 from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
-from utf_wiseconnect.utils.rs911x_version import parse_version, parse_version_from_server
+from utf_wiseconnect.utils.rs911x_version import parse_version, extract_version
 from utf.utils.time_measurer import TimeMeasurer
 import pytest
 from utf.utils.logger import get_logger
@@ -117,5 +117,5 @@ def test_parse_verion_from_web_server(http_server, http_client):
         http_server.interfaces.http, "GET", '/RS9116.2.5.0.4.rps'
     )
     assert status == 200
-    version = parse_version_from_server(content)
+    version = extract_version(content)
     assert version == '1610.2.5.0.0.4'
