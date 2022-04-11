@@ -6,6 +6,7 @@ COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 COPY sdk_patches/ ./sdk_patches/
 
 ENV GECKO_SDK=/build/mini_gecko_sdk
+ENV SDK_PATCHES=/build/sdk_patches
 RUN slc configuration -s $GECKO_SDK -gcc $ARM_GCC_DIR
 RUN slc signature trust --sdk $GECKO_SDK
 
@@ -37,7 +38,7 @@ RUN --mount=type=ssh \
     fi
     
 
-RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
+#RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 
 # Due to a breaking change in RS911X Firmware code for the following verions we need have a patch versionof rsi_driver.h
 # The fix is planned to be included in the source code as part of the next release.
@@ -62,7 +63,9 @@ COPY map_file_parser.py .
 ###########################################################
 # Update the project list here if new projects are added
 ###########################################################
-ENV PROJECT_LIST="generic_test_agent concurrent_test_agent generic_test_agent_no_bt bt_test_agent ap_htcaps_enable"
+
+ENV PROJECT_LIST="multi_gatt_generic_test_agent"
+#ENV PROJECT_LIST="generic_test_agent multi_gatt_generic_test_agent concurrent_test_agent generic_test_agent_no_bt bt_test_agent ap_htcaps_enable"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src

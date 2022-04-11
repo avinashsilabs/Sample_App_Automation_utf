@@ -24,9 +24,5 @@ mkdir -p ${output_base_dir}/memory_summaries
 IFS=' '
 for project in $PROJECT_LIST
 do
- echo $project
-   echo $project $SRC_ROOT $GECKO_SDK
-   cp -r ${SDK_PATCHES}/* ${GECKO_SDK}/platform/radio/wifi/rs9116
-   cp -r ${SRC_ROOT}/${CURRENT_PROJ_PATH}/sdk_patches/* ${GECKO_SDK}/platform/radio/wifi/rs9116
    build_project $project
 done
