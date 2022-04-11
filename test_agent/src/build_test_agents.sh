@@ -8,9 +8,9 @@ map_file_parser=${PWD}/../map_file_parser.py
 
 build_project () {
     pushd $1
-    
+  
     rm -rf ${output_base_dir}/$1
-    
+  
     make -C build -f $1.Makefile -j
     cp -r build ${output_base_dir}/$1
     cp ${output_base_dir}/$1/build/debug/$1.hex ${output_base_dir}/$1.hex
@@ -24,5 +24,5 @@ mkdir -p ${output_base_dir}/memory_summaries
 IFS=' '
 for project in $PROJECT_LIST
 do
-   build_project $project
+    build_project $project
 done
