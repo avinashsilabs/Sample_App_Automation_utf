@@ -26,6 +26,8 @@ def logger():
 
 '''=================== Ble-gap IO test cases ===================== '''
 
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -541,6 +543,7 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
     time.sleep(5)
+    logger().info("stopping the ble scan from remote le device...")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     found_devices = ble_client.interfaces.bluetooth.get_devices()
@@ -580,11 +583,12 @@ def test_directed_connectable_adv_C19802(bt_dut, ble_client, bt_logs):
 
     logger().info("start ble in dut....")
     bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    logger().info("starting the advertisement on the Dut")
     bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129) #high duty cycle
-
+    logger().info("enabling the power save mode")
     bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     bt_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
+    logger().info("enabling the power save mode")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address, "unable to fetch dut bd address..."
     time.sleep(5)
