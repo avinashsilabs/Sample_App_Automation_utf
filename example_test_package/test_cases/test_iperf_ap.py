@@ -3,6 +3,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants
 import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
+import time
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -99,3 +100,76 @@ def test_host_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
     tp = net_perf_client.interfaces.net_perf.process_output()
     assert tp is not None
     __print_throughput(tp)
+
+@pytest.mark.config("wifi_dut", wifi={"oper_mode": RS9116OperatingMode.AccessPoint})
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}} })
+@pytest.mark.config("secondary_net_perf_client", net_perf={"device": {"TCP": {"port": 5201,"data_len": 1460},"UDP": {"port": 5202, "data_len": 1460}}})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP,IperfConstants.UDP])
+def test_device_as_ap_with_two_sta_connected_primary_raspi_as_server(net_perf_client, secondary_net_perf_client, wifi_dut, wifi_clients, protocol):
+    host_ips = []
+    wifi_dut.interfaces.wifi.start_ap()
+
+    # connecting raspi to dut access point
+    for wifi_client in wifi_clients:
+        wifi_client.interfaces.wifi.join()
+        time.sleep(0.5)
+        assert (
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
+        )
+        host_ips.extend([wifi_client.interfaces.wifi.client_ip_address])
+
+    # preparing iperf server with primary raspi
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ips[0], device_ip=host_ips[1], protocol=protocol, host_role=IperfConstants.SERVER_MODE)
+    net_perf_client.interfaces.net_perf.start()
+    time.sleep(2)
+
+    # preparing iperf client with secondary raspi
+    secondary_net_perf_client.interfaces.net_perf.init_client(host_ip=host_ips[1], device_ip=host_ips[0], protocol=protocol, host_role=IperfConstants.CLIENT_MODE)
+    secondary_net_perf_client.interfaces.net_perf.start()
+    
+    #waiting till time out for iperf client send data to iperf server
+    time.sleep(net_perf_client.interfaces.net_perf.client_timeout)
+    tp_server = net_perf_client.interfaces.net_perf.process_output()
+    secondary_net_perf_client.interfaces.net_perf.clean_files()
+    assert tp_server is not None
+    __print_throughput(tp_server)
+
+@pytest.mark.config("wifi_dut", wifi={"oper_mode": RS9116OperatingMode.AccessPoint})
+@pytest.mark.config("secondary_net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}} })
+@pytest.mark.config("net_perf_client", net_perf={"device": {"TCP": {"port": 5201,"data_len": 1460},"UDP": {"port": 5202, "data_len": 1460}}})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+def test_device_as_ap_with_two_sta_connected_secondary_raspi_as_server(net_perf_client, secondary_net_perf_client, wifi_dut, wifi_clients, protocol):
+    host_ips = []
+    wifi_dut.interfaces.wifi.start_ap()
+
+    # connecting raspi to dut access point
+    for wifi_client in wifi_clients:
+        wifi_client.interfaces.wifi.join()
+        time.sleep(0.5)
+        assert (
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
+        )
+        host_ips.extend([wifi_client.interfaces.wifi.client_ip_address])
+
+    # preparing iperf server with secpndary raspi
+    secondary_net_perf_client.interfaces.net_perf.init_server(host_ip=host_ips[1], device_ip=host_ips[0], protocol=protocol, host_role=IperfConstants.SERVER_MODE)
+    secondary_net_perf_client.interfaces.net_perf.start()
+    time.sleep(2)
+
+    # preparing iperf client with primary raspi
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ips[0], device_ip=host_ips[1], protocol=protocol, host_role=IperfConstants.CLIENT_MODE)
+    net_perf_client.interfaces.net_perf.start()
+    
+    #waiting till time out for iperf client send data to iperf server
+    time.sleep(secondary_net_perf_client.interfaces.net_perf.client_timeout)
+    tp_server = secondary_net_perf_client.interfaces.net_perf.process_output()
+    net_perf_client.interfaces.net_perf.clean_files()
+    assert tp_server is not None
+    __print_throughput(tp_server)
+
