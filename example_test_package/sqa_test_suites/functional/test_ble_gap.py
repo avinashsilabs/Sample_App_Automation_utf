@@ -769,5 +769,5 @@ def test_ble_scan_resp_32_bytes_C19824(bt_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    assert str(bt_client_address) in str(result), "failed to find client bt address in scan list...."
     logger().info("found BT client address")
