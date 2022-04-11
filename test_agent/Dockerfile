@@ -6,7 +6,6 @@ COPY mini_gecko_sdk/ ./mini_gecko_sdk/
 COPY sdk_patches/ ./sdk_patches/
 
 ENV GECKO_SDK=/build/mini_gecko_sdk
-
 RUN slc configuration -s $GECKO_SDK -gcc $ARM_GCC_DIR
 RUN slc signature trust --sdk $GECKO_SDK
 

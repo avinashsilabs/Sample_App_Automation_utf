@@ -3,7 +3,7 @@
 set -e
 
 generate_project () {
-    cp -r -f ${SDK_PATCHES}/* ${GECKO_SDK}/platform/radio/wifi/rs9116
+    cp -r -f /build/sdk_patches/* ${GECKO_SDK}/platform/radio/wifi/rs9116
     cp -r -f ${SRC_ROOT}/$project/sdk_patches/* ${GECKO_SDK}/platform/radio/wifi/rs9116 2>/dev/null || :
 
     pushd $1
