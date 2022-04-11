@@ -690,18 +690,12 @@ devices:
             ftplib_ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
-                # this is fixed as we are creating user in docker file so that user will get created while creating container
-                username: "ftpuser"
-                password: "ftpuser"
     
     raspi_ftp_client_tls:
         interfaces:
             ftplib_ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: true
-                # this is fixed as we are creating user in docker file so that user will get created while creating container
-                username: "ftpuser"
-                password: "ftpuser"
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
