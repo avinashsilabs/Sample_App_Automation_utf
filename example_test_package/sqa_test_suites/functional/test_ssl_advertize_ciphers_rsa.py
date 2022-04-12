@@ -90,6 +90,7 @@ def select_cipher_list(cipher_list):
 
 def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename,
                          cipher_list, logger, mode, server_cert=None, server_key=None, test_run_time=120):
+    ping_count = 10
     if not len(cipher_list):
         expected_cipher = DefaultCipher.cipher_list
     else:
@@ -167,7 +168,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
+    ping(device_ip, ping_count)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -340,6 +341,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
 
 def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename,
                                 cipher_list, logger, server_cert=None, server_key=None, test_run_time=120):
+    ping_count = 10
     logger.info(f"********Running the test for {test_run_time} seconds*******")
     if not len(cipher_list):
         expected_cipher = DefaultCipher.cipher_list
@@ -436,7 +438,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-        ping(device_ip, 10)
+        ping(device_ip, ping_count)
         # The below api parses DUTs IP address
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -662,57 +664,69 @@ def test_advertise_ciphers_ssl_rx_TC19611(
                          logger, 1)
 
 
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "disable_cipher"])
-# @pytest.mark.parametrize("cipher_list",
-#                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
-# def test_advertise_ciphers_ssl_tx_TC19612(
-#         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
-#         ):
-#     capture_filename = "test_advertise_ciphers_ssl_tx_TC19612"
-#     ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
-#                          logger, 0)
-#
-#
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "disable_cipher"])
-# @pytest.mark.parametrize("cipher_list",
-#                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
-# def test_advertise_ciphers_ssl_rx_TC19613(
-#         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
-#         ):
-#     capture_filename = "test_advertise_ciphers_ssl_rx_TC19613"
-#     ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
-#                          logger, 1)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "disable_cipher"])
+@pytest.mark.parametrize("cipher_list",
+                         [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
+# TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384' ciphers are not supported in python
+# 3.9. Need to change the implementation for these test cases
+@pytest.mark.skip()
+def test_advertise_ciphers_ssl_tx_TC19612(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        ):
+    capture_filename = "test_advertise_ciphers_ssl_tx_TC19612"
+    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+                         logger, 0)
 
 
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "disable_cipher"])
-# @pytest.mark.parametrize("cipher_list",
-#                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
-# def test_advertise_ciphers_ssl_tx_TC19614(
-#         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
-#         ):
-#     capture_filename = "test_advertise_ciphers_ssl_tx_TC19614"
-#     ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
-#                          logger, 0)
-#
-#
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "disable_cipher"])
-# @pytest.mark.parametrize("cipher_list",
-#                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
-# def test_advertise_ciphers_ssl_rx_TC19615(
-#         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
-#         ):
-#     capture_filename = "test_advertise_ciphers_ssl_rx_TC19615"
-#     ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
-#                          logger, 1)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "disable_cipher"])
+@pytest.mark.parametrize("cipher_list",
+                         [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
+# TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384' ciphers are not supported in python
+# 3.9. Need to change the implementation for these test cases
+@pytest.mark.skip()
+def test_advertise_ciphers_ssl_rx_TC19613(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        ):
+    capture_filename = "test_advertise_ciphers_ssl_rx_TC19613"
+    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+                         logger, 1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "disable_cipher"])
+@pytest.mark.parametrize("cipher_list",
+                         [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
+# TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384' ciphers are not supported in python
+# 3.9. Need to change the implementation for these test cases
+@pytest.mark.skip()
+def test_advertise_ciphers_ssl_tx_TC19614(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        ):
+    capture_filename = "test_advertise_ciphers_ssl_tx_TC19614"
+    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+                         logger, 0)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "disable_cipher"])
+@pytest.mark.parametrize("cipher_list",
+                         [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
+# TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384' ciphers are not supported in python
+# 3.9. Need to change the implementation for these test cases
+@pytest.mark.skip()
+def test_advertise_ciphers_ssl_rx_TC19615(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        ):
+    capture_filename = "test_advertise_ciphers_ssl_rx_TC19615"
+    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+                         logger, 1)

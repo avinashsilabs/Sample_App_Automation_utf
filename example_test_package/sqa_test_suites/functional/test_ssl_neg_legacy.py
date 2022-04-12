@@ -40,6 +40,7 @@ import time
 
 
 def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+    ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
     # configure interface for the channel of the access point
@@ -108,7 +109,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
+    ping(device_ip, ping_count)
     return mac_address
 
 

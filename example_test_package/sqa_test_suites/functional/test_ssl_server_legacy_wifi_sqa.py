@@ -41,6 +41,7 @@ import time
 
 
 def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+    ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
     # configure interface for the channel of the access point
@@ -109,7 +110,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
+    ping(device_ip, ping_count)
     return mac_address
 
 
@@ -135,7 +136,8 @@ pytestmark = [
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_testcase_TC19110(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger
         ):
@@ -184,7 +186,8 @@ def test_ssl_server_testcase_TC19110(
     [Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_diff_cipher_suite_testcase_TC19132(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger, cipher_list
         ):
@@ -237,7 +240,8 @@ def test_ssl_server_diff_cipher_suite_testcase_TC19132(
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_1_0version_client_1_2_testcase_TC19115(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger
         ):
@@ -282,9 +286,9 @@ def test_ssl_server_1_0version_client_1_2_testcase_TC19115(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_no_server_cert_testcase_TC19111(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger
         ):
@@ -324,7 +328,8 @@ def test_ssl_server_no_server_cert_testcase_TC19111(
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_tcp_client, logger
         ):
