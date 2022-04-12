@@ -660,6 +660,18 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
+    
+    secondary_raspi_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "192.168.0.152"
+                host_username: "pi"
+                host_password: "raspberry"
+
     static_iperf:
         interfaces:
             net_perf:
@@ -690,18 +702,12 @@ devices:
             ftplib_ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
-                # this is fixed as we are creating user in docker file so that user will get created while creating container
-                username: "ftpuser"
-                password: "ftpuser"
     
     raspi_ftp_client_tls:
         interfaces:
             ftplib_ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: true
-                # this is fixed as we are creating user in docker file so that user will get created while creating container
-                username: "ftpuser"
-                password: "ftpuser"
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -778,9 +784,18 @@ defaults:
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
 
+        pll_mode: 0
+        rf_type: 1
+        wireless_mode: 0
+        enable_ppp: 0
+        afe_type: 1
+        features_enable: 0
+
     wiseconnect_web: 'wiseconnect_web'
 
     net_perf_client: 'raspi_iperf'
+
+    secondary_net_perf_client : 'secondary_raspi_iperf'
 
     wiseconnect_ui:
         mode: 'Client'

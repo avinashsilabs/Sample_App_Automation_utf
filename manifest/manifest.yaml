@@ -25,4 +25,4 @@ firmware_applications:
     test_multi_gatt_conn:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'sqa_test_agent_multi_gatt.hex'
+        filename: 'multi_gatt_generic_test_agent.hex'

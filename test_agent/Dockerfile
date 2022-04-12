@@ -35,9 +35,6 @@ RUN --mount=type=ssh \
             rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}; \
         fi \
     fi
-    
-
-RUN cp -r sdk_patches/* mini_gecko_sdk/platform/radio/wifi/rs9116
 
 # Due to a breaking change in RS911X Firmware code for the following verions we need have a patch versionof rsi_driver.h
 # The fix is planned to be included in the source code as part of the next release.
@@ -63,7 +60,13 @@ COPY map_file_parser.py .
 ###########################################################
 # Update the project list here if new projects are added
 ###########################################################
-ENV PROJECT_LIST="generic_test_agent concurrent_test_agent generic_test_agent_no_bt bt_test_agent ap_htcaps_enable generic_test_agent_without_aws"
+ENV PROJECT_LIST="generic_test_agent \
+                    multi_gatt_generic_test_agent \
+                    concurrent_test_agent \
+                    generic_test_agent_no_bt \
+                    bt_test_agent \
+                    ap_htcaps_enable \
+                    generic_test_agent_without_aws"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
