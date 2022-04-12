@@ -175,7 +175,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
     if len(cipher_list):
         cipher = select_cipher_list(cipher_list)
         wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=cipher)
-    if mode == 3:
+    if mode == 3:  # if mode is set to 3, socket open, connect to server, send data, disconnect test is done in loop
         logger.info(f"********Running the test for {test_run_time} seconds*******")
         pkt_count = 100
         bytes_sent = (pkt_count * buffer_length)
@@ -262,7 +262,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
         else:
             ssl_server.interfaces.ssl.start_server(server_cert=server_cert, server_key=server_key)
         # Open ssl client socket in the DUT
-        if mode == 0:
+        if mode == 0:  # if mode is set to 0, socket open, tx over the socket test will be initiated
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
             assert sock == 0, f"socket id received is wrong, expected is 0"
         elif mode == 1:
@@ -304,7 +304,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
                                                  f"not matched on socket {server_socket_no} "
             logger.info(
                 f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
-        elif mode == 1:
+        elif mode == 1:  # if mode is set to 1, socket open, rx over the socket test will be initiated
             ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length)
             time.sleep(240)
             result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
