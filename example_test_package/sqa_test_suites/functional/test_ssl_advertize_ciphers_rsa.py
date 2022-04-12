@@ -127,7 +127,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
         capture_file=f"{capture_filename}.pcap"
         )
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
                                     beacon_missedcount=40,
                                     first_time_retry=0)
@@ -396,7 +396,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
             logger.info(f"Scanning to the AP has failed")
             assert scan_fail == 0, "Scanning to the AP is failed"
 
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                         scan_interval=6,
                                         beacon_missedcount=40,
                                         first_time_retry=0)

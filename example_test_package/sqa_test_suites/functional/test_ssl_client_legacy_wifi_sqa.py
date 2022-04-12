@@ -70,7 +70,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         capture_file=f"{capture_filename}.pcap"
         )
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
                                     beacon_missedcount=40,
                                     first_time_retry=0)

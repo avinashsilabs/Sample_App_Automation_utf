@@ -1,7 +1,7 @@
 # Test author: Vinod.G
 # Test suite: SSL_CLIENT
 import pytest
-from devices.rs911x import (
+from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
@@ -18,7 +18,7 @@ from devices.rs911x import (
     DeviceConstants,
     )
 
-from interfaces.wifi import WlanError
+from utf.interfaces.wifi import WlanError
 from utf.utils.iperf.iperf_utils import ping
 import time
 
@@ -68,7 +68,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         capture_file=f"{capture_filename}.pcap"
         )
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
                                     beacon_missedcount=40,
                                     first_time_retry=0)
