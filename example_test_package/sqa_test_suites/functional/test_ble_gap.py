@@ -4,6 +4,8 @@ from utf.interfaces.bluetooth import BTSocketRole
 from utf.utils.logger import get_logger
 from utf.interfaces.wifi import WlanError
 import time
+import datetime
+from utf.interfaces.bluetooth import BLEDeviceState
 
 def logger():
     return get_logger(__name__)
@@ -61,10 +63,22 @@ def test_ble_io_cap_displayonly_C19851(bt_dut,ble_client):
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    connect_time=datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address,"unable to connect to the given address"
+    time.sleep(30)
+    #checing if the connection exists to disconnect
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  { disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
 
-    logger().info("Disconnecting the bt host....")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"connection existed for {disconnect_time-connect_time}")
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -97,11 +111,22 @@ def test_ble_io_cap_display_yesno_C19852(bt_dut,ble_client):
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+    # checking if the connection exists to disconnect
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
 
-    logger().info("Disconnecting the bt host....")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -133,10 +158,22 @@ def test_ble_io_cap_keyboard_only_C19853(bt_dut,ble_client):
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+    # checking if the connection exists to disconnect
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
 
-    logger().info("Disconnecting the bt host....")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -169,10 +206,22 @@ def test_ble_io_cap_No_input_output_C19854(bt_dut,ble_client):
     assert bt_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+    # checking if the connection exists to disconnect
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
 
-    logger().info("Disconnecting the bt host....")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 '''======================= Ble-gap IO test cases dut as initiator ====================='''
 @pytest.mark.config(
@@ -198,11 +247,25 @@ def test_ble_io_cap_displayonly_C19855(bt_dut,ble_client):
     logger().info("dut start scanning.....")
     bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
-    logger().info("Disconnect from the host")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    connect_time = datetime.datetime.now(bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -227,11 +290,25 @@ def test_ble_io_cap_display_yesno_C19856(bt_dut,ble_client):
     logger().info("dut start scanning.....")
     bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
-    logger().info("Disconnect from the host")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    connect_time = datetime.datetime.now(bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -256,11 +333,26 @@ def test_ble_io_cap_keyboard_only_C19857(bt_dut,ble_client):
     logger().info("dut start scanning.....")
     bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
-    logger().info("Disconnect from the host")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    connect_time = datetime.datetime.now(
+        bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -285,11 +377,26 @@ def test_ble_io_cap_no_input_output_C19858(bt_dut,ble_client):
     logger().info("dut start scanning.....")
     bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
-    logger().info("Disconnect from the host")
-    bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    connect_time = datetime.datetime.now(
+        bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
+
 
 """============================ Ble-gap dut scan for adv types ============================================="""
 @pytest.mark.config(
@@ -517,13 +624,24 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
             == bt_dut.interfaces.bluetooth.ble_advertising_data
     )
     logger().info("connect to dut from remote le device....")
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
-
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
         bt_dut.interfaces.bluetooth.ble_stop_advertising()
     assert exc_info.value.error_code == 0x4E0C
-    logger().info("disconnecting the dut..")
-    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("disconnecting the dut..")
+        disconnect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.disconnect(bt_dut_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -553,14 +671,27 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
             == bt_dut.interfaces.bluetooth.ble_advertising_data
     )
     logger().info("connect to dut from remote le device....")
-    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
 
     with pytest.raises(WlanError) as exc_info:
         bt_dut.interfaces.bluetooth.ble_stop_advertising()
     assert exc_info.value.error_code == 0x4E0C
 
-    logger().info("disconnecting the dut..")
-    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    # checking if the connection exists to disconnect
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 @pytest.mark.config(
         "wifi_dut",
