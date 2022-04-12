@@ -260,10 +260,10 @@ class BleThread_Connection(ThreadBase):
         if (self.mode == "ble_master"):
             # Start DUT
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None
+            assert bt_dut_address is not None,f"Unable to fetch MAC address from DUT"
             # Start ble client
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None
+            assert bt_client_address is not None,f"Unable to fetch MAC address from Remote device"
             time.sleep(1)
             # Start scanning and connect to ble client
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
@@ -273,14 +273,22 @@ class BleThread_Connection(ThreadBase):
 
             logger().info("Device is connected as a BLE master")
 
-            time.sleep(10)
+            time.sleep(60)
+
+            logger.info("Initiating disconnect from DUT")
             # Disconnect
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+            logger.info("Initiating stop scanning")
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+
+            logger.info("Initiating stop advertising")
+            self.ble_client.interfaces.bluetooth.stop_advertising()
 
         if (self.mode == "ble_slave"):
             # Set up DUT for BLE advertising
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None
+            assert bt_dut_address is not None,f"Unable to fetch MAC address from DUT"
 
             logger().info("Advertising the DUT")
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
@@ -288,25 +296,329 @@ class BleThread_Connection(ThreadBase):
             logger().info("Initiating scan from BLE client")
             # Begin Scanning for BLE devices
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None
-            time.sleep(5)
+            assert bt_client_address is not None,"Unable to fetch MAC address from Remote device"
+
+            logger().info(f"Remote BT device address : {bt_client_address}")
             # See that we found our device
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
+            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices,"DUT not found in scan results"
 
             logger().info("Initiating connection from DUT")
 
             self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
             logger().info("Device is connected as a BLE slave")
 
-            time.sleep(10)
+            time.sleep(60)
 
             logger().info("Initiating disconnect from BLE client")
             self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
 
+@pytest.mark.config(
+    "wifi_dut",
 
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 4,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'Asia'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_WORLD_2_4_C34788"
+    test_type = "iperf"
+
+    logger().info("DUT set to Region -. World domain")
+    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                        net_perf_client, protocol,test_type,iteration=1):
+
+        time.sleep(5)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 2,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 12, "region": 'Europe'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_EU_2_4_C34786"
+    test_type = "iperf"
+    logger().info("Setting the DUT to Region Europe")
+    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                        net_perf_client, protocol, test_type, iteration=1):
+        time.sleep(5)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 0,
+        "region": 1,
+        "region_code": 1,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'US'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_US_2_4_C34785"
+    test_type = "iperf"
+
+    logger().info("Setting the DUT to Region US")
+    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                        net_perf_client, protocol, test_type, iteration=1):
+        time.sleep(5)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+
+        "band": 1,
+        "region": 1,
+        "region_code": 1,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 36, "region": 'US'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_US_5Ghz_C34789(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_US_5Ghz_C34789"
+    test_type = "iperf"
+    logger().info("Setting the DUT to Region US")
+    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                        net_perf_client, protocol, test_type, iteration=1):
+        time.sleep(5)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 1,
+        "region": 1,
+        "region_code": 2,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 48, "region": 'Europe'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_EU_5Ghz_C34790(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_EU_5Ghz_C34790"
+    test_type = "iperf"
+
+    logger().info("Setting the DUT to Region Europe")
+    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                        net_perf_client, protocol, test_type, iteration=1):
+        time.sleep(5)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 1,
+        "region": 1,
+        "region_code": 4,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 44, "region": 'Asia'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_WORLD_5Ghz_C34792(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_WORLD_5Ghz_C34792"
+    test_type = "iperf"
+
+    logger().info("Setting the DUT to Region World")
+    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                        net_perf_client, protocol, test_type, iteration=1):
+        time.sleep(5)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2,
+        "region": 1,
+        "region_code": 1,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"region": "US","channel": 6})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_US_dual_band_C34793(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_US_dual_band_C34793"
+    test_type = "iperf"
+
+    logger().info("Setting the DUT to Region US")
+    dual_channel = [6, 36]
+    for channel in dual_channel:
+        testcase = f"test_join_US_dual_band_{channel}_"
+        wifi_access_point.interfaces.wifi.config['channel'] = channel
+        # Set the region value in AP side
+        wifi_access_point.interfaces.wifi.config['region'] = 'US'
+        # Set the region value in DUT side
+
+        wifi_access_point.interfaces.wifi.start_ap()
+        time.sleep(10)
+        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                            net_perf_client, protocol, test_type, iteration=1):
+            time.sleep(5)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2,
+        "region": 1,
+        "region_code": 2,
+        "module_type": 1,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"region": "Europe","channel": 12})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_EU_dual_band_C34794(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_EU_dual_band_C34794"
+    test_type = "iperf"
+    logger().info("Setting the DUT to Region Europe")
+    dual_channel = [12, 48]
+    for channel in dual_channel:
+        testcase = f"test_join_EU_dual_band_{channel}_"
+        wifi_access_point.interfaces.wifi.config['channel'] = channel
+        # Set the region value in AP side
+        wifi_access_point.interfaces.wifi.config['region'] = 'Europe'
+        # Set the region value in DUT side
+
+        wifi_access_point.interfaces.wifi.start_ap()
+        time.sleep(10)
+        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                            net_perf_client, protocol, test_type, iteration=1):
+            time.sleep(5)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "band": 2,
+        "region": 1,
+        "region_code": 4,
+        "module_type": 1,
+    },
+)
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"region": "Asia","channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_join_WORLD_dual_band_C34796(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+    testcase = "test_join_WORLD_dual_band_C34796"
+    test_type = "iperf"
+    logger().info("Setting the DUT to Region World mode")
+    dual_channel = [1, 44]
+    for channel in dual_channel:
+        testcase = f"test_join_WORLD_dual_band_{channel}_"
+        wifi_access_point.interfaces.wifi.config['channel'] = channel
+        # Set the region value in AP side
+        wifi_access_point.interfaces.wifi.config['region'] = 'Asia'
+        # Set the region value in DUT side
+
+        wifi_access_point.interfaces.wifi.start_ap()
+
+        #wifi_dut.interfaces.wifi.set_region(region=1,region_code=4,module_type=1)
+
+        time.sleep(10)
+        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
+                            net_perf_client, protocol, test_type, iteration=1):
+            time.sleep(5)
 
 
 
@@ -324,7 +636,7 @@ class BleThread_Connection(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2',"passphrase": '123456789'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Connectivity_with_WPA2_security_AP_C34757(wifi_dut, wifi_access_point, wifi_sniffer):
+def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut,  wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
 
@@ -357,6 +669,8 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_dut, wifi_access_point, 
 
         logger().info("fetching dut mac address....")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+
+        logger().info(f"dut_mac_address : {dut_mac_address}")
 
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
@@ -393,18 +707,15 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_dut, wifi_access_point, 
 
 
 
-
-
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
+
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    }
-
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost
+    },
 )
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '123456789'})
@@ -460,9 +771,9 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
         'packet_count']
-    wifi_access_point.interfaces.wifi.start_ap()
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_procedure')
+    wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(60)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -493,7 +804,7 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","disassociated"])
-def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_sniffer,wifi_dut, wifi_access_point, ble_client):
+def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_access_point, wifi_dut,  ble_client,wifi_sniffer):
        testcase = "test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778"
        logger().info(f"testcase : {testcase}")
        mode = "ble_slave"
@@ -503,23 +814,20 @@ def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_sniffer,wifi_dut
            time.sleep(5)
 
 
+
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
-        }
-    )
+    }
+ )
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -554,9 +862,10 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     )
     logger().info(f"Connecting DUT to REMOTE device")
     ble_client.interfaces.bluetooth.connect(wifi_dut.interfaces.wifi.ble_address)
-    time.sleep(10)
+    time.sleep(60)
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    logger().info(f"Getting device state : {state} ")
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in slave mode"
     logger().info(f"Dut is in connected state {state_int}")
@@ -565,23 +874,20 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
+
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
-        }
-    )
+    }
+ )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
@@ -608,9 +914,11 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     logger().info("enabling bt power save mode in DUT......")
     wifi_dut.interfaces.wifi.bt_power_save(2)
 
-    time.sleep(10)
+    time.sleep(60)
 
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
+
+    logger().info(f"Getting device state : {state} ")
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
 
@@ -618,332 +926,5 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 0,
-        "region": 1,
-        "region_code": 4,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'Asia'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_join_WORLD_2_4_C34788(wifi_dut,wifi_access_point, net_perf_client,  wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_WORLD_2_4_C34788"
-    test_type = "iperf"
-
-    logger().info("Setting the DUT to Region World domain")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=4, module_type=1)
-
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
-                        net_perf_client, protocol,test_type,iteration=1):
-
-        time.sleep(5)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 0,
-        "region": 1,
-        "region_code": 2,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 12, "region": 'Europe'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_EU_2_4_C34786(wifi_dut, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_EU_2_4_C34786"
-    test_type = "iperf"
-    logger().info("Setting the DUT to Region Europe")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=2, module_type=1)
-
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 0,
-        "region": 1,
-        "region_code": 1,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'US'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_US_2_4_C34785(wifi_dut, wifi_access_point, net_perf_client,  wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_US_2_4_C34785"
-    test_type = "iperf"
-
-    logger().info("Setting the DUT to Region US")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
-
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-
-        "band": 1,
-        "region": 1,
-        "region_code": 1,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36, "region": 'US'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_US_5Ghz_C34789(wifi_dut, wifi_access_point, net_perf_client,  wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_US_5Ghz_C34789"
-    test_type = "iperf"
-
-    logger().info("Setting the DUT to Region US")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
-
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 1,
-        "region": 1,
-        "region_code": 2,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 48, "region": 'Europe'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_EU_5Ghz_C34790(wifi_dut, wifi_access_point, net_perf_client,  wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_EU_5Ghz_C34790"
-    test_type = "iperf"
-
-    logger().info("Setting the DUT to Region Europe")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=2, module_type=1)
-
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 1,
-        "region": 1,
-        "region_code": 4,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 44, "region": 'Asia'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_WORLD_5Ghz_C34792(wifi_dut, wifi_access_point, net_perf_client,  wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_WORLD_5Ghz_C34792"
-    test_type = "iperf"
-
-    logger().info("Setting the DUT to Region World")
-    wifi_dut.interfaces.wifi.set_region(region=1, region_code=4, module_type=1)
-
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 2,
-        "region": 1,
-        "region_code": 1,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_US_dual_band_C34793(wifi_dut, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_US_dual_band_C34793"
-    test_type = "iperf"
-    dual_channel = [6, 36]
-    for channel in dual_channel:
-        testcase = f"test_join_US_dual_band_{channel}_"
-        wifi_access_point.interfaces.wifi.config['channel'] = channel
-        # Set the region value in AP side
-        wifi_access_point.interfaces.wifi.config['region'] = 'US'
-        # Set the region value in DUT side
-
-        wifi_access_point.interfaces.wifi.start_ap()
-        time.sleep(10)
-
-        logger().info("Setting the DUT to Region US")
-        wifi_dut.interfaces.wifi.set_region(region=1, region_code=1, module_type=1)
-
-        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                            net_perf_client, protocol, test_type, iteration=1):
-            time.sleep(5)
-
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 2,
-        "region": 1,
-        "region_code": 2,
-        "module_type": 1,
-    },
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_EU_dual_band_C34794(wifi_dut, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_EU_dual_band_C34794"
-    test_type = "iperf"
-    dual_channel = [12, 48]
-    for channel in dual_channel:
-        testcase = f"test_join_EU_dual_band_{channel}_"
-        wifi_access_point.interfaces.wifi.config['channel'] = channel
-        # Set the region value in AP side
-        wifi_access_point.interfaces.wifi.config['region'] = 'Europe'
-        # Set the region value in DUT side
-
-        wifi_access_point.interfaces.wifi.start_ap()
-        time.sleep(10)
-
-        logger().info("Setting the DUT to Region Europe")
-        wifi_dut.interfaces.wifi.set_region(region=1, region_code=2, module_type=1)
-
-        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                            net_perf_client, protocol, test_type, iteration=1):
-            time.sleep(5)
-
-
-
-
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "band": 2,
-        "region": 1,
-        "region_code": 4,
-        "module_type": 1,
-    },
-)
-
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"region": 'Asia'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_WORLD_dual_band_C34796(wifi_dut, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
-    testcase = "test_join_WORLD_dual_band_C34796"
-    test_type = "iperf"
-    dual_channel = [1, 44]
-    for channel in dual_channel:
-        testcase = f"test_join_WORLD_dual_band_{channel}_"
-        wifi_access_point.interfaces.wifi.config['channel'] = channel
-        # Set the region value in AP side
-        wifi_access_point.interfaces.wifi.config['region'] = 'Asia'
-        # Set the region value in DUT side
-
-        wifi_access_point.interfaces.wifi.start_ap()
-
-        logger().info("Setting the DUT to Region World mode")
-        wifi_dut.interfaces.wifi.set_region(region=1,region_code=4,module_type=1)
-
-
-        time.sleep(10)
-        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                            net_perf_client, protocol, test_type, iteration=1):
-            time.sleep(5)
 
 
