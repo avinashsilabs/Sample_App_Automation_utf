@@ -127,6 +127,14 @@ extern uint8_t g_num_of_dtim_skip ;
 
 extern uint32_t g_tx_wait_time;
 
+//globals for rsi_send_feature_frame parameters, referenced in #defines below
+extern uint8_t g_pll_mode;
+extern uint8_t g_rf_type;
+extern uint8_t g_wireless_mode;
+extern uint8_t g_enable_ppp;
+extern uint8_t g_afe_type;
+extern uint32_t g_features_enable;
+
 // Enable feature
 #define RSI_ENABLE 1
 // Disable feature
@@ -166,13 +174,21 @@ extern uint32_t g_tx_wait_time;
 
 // Feature frame parameters
 /*=======================================================================*/
-#define PLL_MODE      0
-#define RF_TYPE       1  // 0 - External RF 1- Internal RF
-#define WIRELESS_MODE 12 // HP mode - 0 ;LP mode - 12
-#define ENABLE_PPP    0
-#define AFE_TYPE      1
-#define FEATURE_ENABLES \
-  (RSI_FEAT_FRAME_PREAMBLE_DUTY_CYCLE | RSI_FEAT_FRAME_LP_CHAIN | RSI_FEAT_FRAME_IN_PACKET_DUTY_CYCLE)
+//#define PLL_MODE      0
+//#define RF_TYPE       1  // 0 - External RF 1- Internal RF
+//#define WIRELESS_MODE 12 // HP mode - 0 ;LP mode - 12
+//#define ENABLE_PPP    0
+//#define AFE_TYPE      1
+//#define FEATURE_ENABLES \
+//  (RSI_FEAT_FRAME_PREAMBLE_DUTY_CYCLE | RSI_FEAT_FRAME_LP_CHAIN | RSI_FEAT_FRAME_IN_PACKET_DUTY_CYCLE)
+
+
+#define PLL_MODE      g_pll_mode
+#define RF_TYPE       g_rf_type
+#define WIRELESS_MODE g_wireless_mode
+#define ENABLE_PPP    g_enable_ppp
+#define AFE_TYPE      g_afe_type
+#define FEATURE_ENABLES g_features_enable
 
 // Band command parameters
 /*=======================================================================*/
