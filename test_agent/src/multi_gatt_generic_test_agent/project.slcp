@@ -1926,4 +1926,18 @@ template_contribution:
     help: Request wlan radio
     argument:
     - {type: uint8, help: enable or disable}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_feature_frame_settings
+    handler: rsi_set_feature_frame_settings
+    help: Set the feature bitmaps for rsi_send_feature_frame() API
+    argument:
+    - {type: uint8, help: 'pll mode'}
+    - {type: uint8, help: 'rf type'}
+    - {type: uint8, help: 'wireless mode'}
+    - {type: uint8, help: 'enable ppp'}
+    - {type: uint8, help: 'afe type'}
+    - {type: uint32, help: 'feature enables'}
    
