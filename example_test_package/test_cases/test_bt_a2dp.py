@@ -40,8 +40,17 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
 
         #A2DP Connection
-        wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address, expect="")
-        time.sleep(0.5)
+        found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
+            bt_client_address=bt_client_address,
+            inquiry_type=2,
+            inquiry_duration_ms=20000,
+            timeout=22,
+            retry_counts=3,
+        )
+        if not found:
+            logger.error(
+                f"Dut unable to find the bt client device. The test case may fail."
+            )
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
         time.sleep(10)
 
@@ -93,8 +102,17 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         assert bt_client_address is not None
 
         #A2DP Connection
-        wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address, expect="")
-        time.sleep(0.5)
+        found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
+            bt_client_address=bt_client_address,
+            inquiry_type=2,
+            inquiry_duration_ms=20000,
+            timeout=22,
+            retry_counts=3,
+        )
+        if not found:
+            logger.error(
+                f"Dut unable to find the bt client device. The test case may fail."
+            )
         wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
         time.sleep(10)
 
