@@ -82,6 +82,8 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
+
+            # Close connection
             bt_server_socket.close()
             time.sleep(2)
             wifi_dut.interfaces.wifi.leave()
@@ -156,10 +158,6 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
 
             # Close connection
             bt_client_socket.close()
-            time.sleep(
-                1
-            )
-            wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             time.sleep(2)
             wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
