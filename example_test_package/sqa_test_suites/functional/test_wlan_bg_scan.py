@@ -375,6 +375,9 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
        If it successfully rejoin to AP bgscan should happen. '''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+
+    time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     result = wifi_dut.interfaces.wifi.start_ip()
@@ -386,7 +389,7 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=2000, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
@@ -820,14 +823,15 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     time.sleep(20)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_rejoin')
 
+    time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
     logger().info(f"DUT ip address : {dut_ip}")
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=2000, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
@@ -887,7 +891,10 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
 
-
+@pytest.mark.parametrize(
+    "channel_list",
+    [52, 56, 60, 64],
+)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -901,27 +908,29 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
-        "band": 1,
+        "band": 1
     },
 )
-def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = 'Data Rate:'
 
     '''Verify BG Scan response when enable DFS channels'''
-    wifi_access_point.interfaces.wifi.config['channel'] = 149
+    wifi_access_point.interfaces.wifi.config['channel'] = channel_list
+    wifi_access_point.interfaces.wifi.config['region'] = 'US'
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(20)
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_dfs_ch')
+    time.sleep(10)
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel_list)
+    file_name = f'BGSCAN_DFS_CH_{channel_list}'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+
+    time.sleep(2)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -931,9 +940,8 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-
     # Validating HT capabilities
-    packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) && (wlan.sa == {dut_mac_address})) && (wlan.tag.number == 45)'
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) and (wlan.sa == {dut_mac_address})) and (wlan.tag.number == 45)'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)

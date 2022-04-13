@@ -80,12 +80,10 @@ class IopTcpIpSockets:
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
-
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
@@ -103,9 +101,8 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates')
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -150,10 +147,9 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -171,10 +167,6 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
        Ps-PollRTSCTSACK'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates_rts_cts')
-    time.sleep(5)
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     result = wifi_dut.interfaces.wifi.start_ip()
@@ -183,6 +175,9 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
 
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
@@ -235,10 +230,9 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -301,7 +295,7 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -321,8 +315,8 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
     Req,Re Assoc Resp.Probe Req,Probe RespBeacon.DisAssoc.'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_b_mode')
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
     """set data rate in b(11Mbps) mode and Verify """
@@ -383,10 +377,9 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -404,7 +397,6 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
        Req,Re Assoc RespProbe Req,Probe Resp'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_g_mode')
-    wifi_dut.interfaces.wifi.scan(ssid=None)
 
     """set data rate in g mode(54 Mbps) and Verify """
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_54)
@@ -466,10 +458,9 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n'})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -487,7 +478,6 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
        Req,Re Assoc RespProbe Req,Probe RespBeaconDisAssoc'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_n_mode')
-    wifi_dut.interfaces.wifi.scan(ssid=None)
 
     # set data rate in n mode
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_54)
@@ -541,10 +531,9 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -562,7 +551,6 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
        Data'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_data_packets_12mbps')
-    wifi_dut.interfaces.wifi.scan(ssid=None)
 
     # set data rate in 12 Mbps
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_12)
@@ -613,10 +601,9 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -636,8 +623,8 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_rts_cts_12mbps')
     time.sleep(5)
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_12)
@@ -687,10 +674,9 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
 
         "oper_mode": 0,
@@ -707,8 +693,7 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Data rates used for EAPOL key exchanges and GTK key renewal exchanges with auto rate'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_eapol')
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
+
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     result = wifi_dut.interfaces.wifi.start_ip()
@@ -753,10 +738,9 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -773,8 +757,8 @@ def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture()
     time.sleep(5)
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

@@ -75,6 +75,14 @@ uint32_t g_tx_wait_time = 0;
 
 extern rsi_rsp_ipv4_parmas_t current_ip;
 
+//globals for rsi_set_feature_frame_settings, referenced by #defines in rsi_wlan_config.h
+uint8_t g_pll_mode = 0;
+uint8_t g_rf_type = 0;
+uint8_t g_wireless_mode = 0;
+uint8_t g_enable_ppp = 0;
+uint8_t g_afe_type = 0;
+uint32_t g_features_enable = 0;
+
 /*******************************************************************************
 * MACROS:
 *******************************************************************************/
@@ -132,6 +140,17 @@ void rsi_set_features(sl_cli_command_arg_t* arguments)
     print_status(RSI_ERROR_NONE);
 }
 
+void rsi_set_feature_frame_settings(sl_cli_command_arg_t* arguments)
+{
+
+    g_pll_mode = sl_cli_get_argument_uint8(arguments, 0);
+    g_rf_type = sl_cli_get_argument_uint8(arguments, 1);
+    g_wireless_mode = sl_cli_get_argument_uint8(arguments, 2);
+    g_enable_ppp = sl_cli_get_argument_uint8(arguments, 3);
+    g_afe_type = sl_cli_get_argument_uint8(arguments, 4);
+    g_features_enable = sl_cli_get_argument_uint32(arguments, 5);
+    print_status(rsi_send_feature_frame());
+}
 
 void rsi_set_socket_limit(sl_cli_command_arg_t* arguments)
 {

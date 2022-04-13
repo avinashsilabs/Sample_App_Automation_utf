@@ -35,7 +35,7 @@ RUN --mount=type=ssh \
             rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}; \
         fi \
     fi
-    
+
 # Due to a breaking change in RS911X Firmware code for the following verions we need have a patch versionof rsi_driver.h
 # The fix is planned to be included in the source code as part of the next release.
 # Refer https://jira.silabs.com/browse/UTF-950
@@ -49,7 +49,8 @@ RUN --mount=type=ssh \
     [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.6" ] || \
     [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.7" ] || \
     [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.8" ] || \
-    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.9" ]; then \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.9" ] || \
+    [ "${RELEASE_PACKAGE_VERSION}" = "RS9116W.2.6.0.10" ]; then \
         cp -f mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include/rsi_driver_2.6.0.0.h mini_gecko_sdk/platform/radio/wifi/rs9116/sapi/include/rsi_driver.h; \
     fi
 
@@ -59,8 +60,13 @@ COPY map_file_parser.py .
 ###########################################################
 # Update the project list here if new projects are added
 ###########################################################
-
-ENV PROJECT_LIST="generic_test_agent concurrent_test_agent multi_gatt_generic_test_agent generic_test_agent_no_bt bt_test_agent ap_htcaps_enable"
+ENV PROJECT_LIST="generic_test_agent \
+                    multi_gatt_generic_test_agent \
+                    concurrent_test_agent \
+                    generic_test_agent_no_bt \
+                    bt_test_agent \
+                    ap_htcaps_enable \
+                    generic_test_agent_without_aws"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src

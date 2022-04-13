@@ -50,6 +50,8 @@ time_lapse = 30
         "ca_cert": "ca-chain.cert.pem"
         }
     )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     t_end = time.time() + 60 * time_lapse
     while time.time() < t_end:
@@ -117,7 +119,7 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         wifi_dut.interfaces.wifi.version()
 
         logger().info("Stop Sniffer capture...")
-        wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+        wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
 
 @pytest.mark.config(
@@ -135,6 +137,8 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         "ca_cert": "ca-chain.cert.pem"
         }
     )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     t_end = time.time() + 60 * time_lapse
     while time.time() < t_end:
@@ -185,7 +189,7 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         wifi_dut.interfaces.wifi.version()
 
         logger().info("Stop Sniffer capture...")
-        wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+        wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
 
 
@@ -204,6 +208,8 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     t_end = time.time() + 60 * time_lapse
     while time.time() < t_end:
@@ -262,5 +268,5 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         wifi_dut.interfaces.wifi.version()
 
         logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+        wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)

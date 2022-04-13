@@ -47,6 +47,8 @@ time_lapse = 30
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
         },
     )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
 
         t_end = time.time() + 60 * time_lapse
@@ -115,7 +117,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
             wifi_dut.interfaces.wifi.version()
 
             logger().info("Stop Sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+            wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(10)
 
 @pytest.mark.config(
@@ -132,6 +134,8 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
         },
     )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
 
         t_end = time.time() + 60 * time_lapse
@@ -183,7 +187,7 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
             wifi_dut.interfaces.wifi.version()
 
             logger().info("Stop Sniffer capture...")
-            wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+            wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(10)
 
 @pytest.mark.config(
@@ -200,6 +204,8 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
         },
     )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
 
         t_end = time.time() + 60 * time_lapse
@@ -257,5 +263,5 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
             wifi_dut.interfaces.wifi.version()
 
             logger().info("Stop Sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture(sniffer_validation=False)
+            wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(10)
