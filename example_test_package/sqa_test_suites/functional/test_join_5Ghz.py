@@ -6,7 +6,6 @@ from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap,\
     RS9116CustomFeatureBitMap
 
-
 def logger():
     return get_logger(__name__)
 
@@ -25,6 +24,23 @@ def logger():
 
     Author: RaviNemali
 """
+
+logger().info(" ********* READ DESCRIPTION AT LINE-29,FOR HARNESS CHANGES AND CONFIG'S **********")
+""""
+++++++++ Harness Changes & test limites ++++++++
+
+    Harness configs:
+                 CONFIG1: configure DUT type  -- rs9116_sapi in default section of harness.
+                 CONFIG2: Ap details -- IP addr, Port,login details in ap section of harness.
+                 CONFIG3: Default Ap -- Set your ap name as default ap for tests in harness.
+                 CONFIG4: Sniffer -- Set IP addr,login details of NUC in airpcap fields of harness.
+    Test Limits: This test plan limits to the 5ghz band of dut for DFS and Non-DFS channels.
+    AP Configs: Access point is configured from 36 - 64, above that ap support ends.
+    
+"""
+
+# configure the ping count for dut
+ping_count = 10
 
 @pytest.mark.config(
         "wifi_dut",
@@ -87,13 +103,12 @@ def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point,wifi_sniffer):
 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b)) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+        # validating data rates in 11n mode connection
+        packet_filter1 = f'(wlan.addr=={dut_mac_address}) and (wlan.fc.type_subtype == 0x0028) or (radiotap.datarate == 54) or ' \
+                         f'(radiotap.datarate == 48) or (radiotap.datarate == 36)'
 
         logger().info("pinging to dut ip")
-        status = ping(device_ip, 10)
+        status = ping(device_ip, ping_count)
         assert status == 1,"ping dut failed..."
         logger().info("ping to dut is successful...")
 
@@ -102,13 +117,12 @@ def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point,wifi_sniffer):
 
         logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                             'in sniffer'
+            'packet_count'], 'Unable to find 11n data rates packets in sniffer'
 
         logger().info("disconnecting from ap....")
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
-    logger().info(f"Associated and ping in {t.duration} seconds")
+    logger().info(f"test completed in {t.duration} seconds")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -149,6 +163,7 @@ def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point,wifi_sniffer):
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
+        # added this sleep for DFS channel beaconning to start in access point after setting the channel in ap
         time.sleep(70)
         logger().info("scan for the ap's.....")
         ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
@@ -177,26 +192,24 @@ def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point,wifi_sniffer):
 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b)) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+        # Validating the power management bit
+        packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
         # initiates the ping in dut
         logger().info("pinging to dut ip")
-        status = ping(device_ip, 10)
+        status = ping(device_ip, ping_count)
         assert status == 1,"Failed to ping DUT..."
         logger().info("ping to dut is successful...")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        logger().info(" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                             'in sniffer'
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
         time.sleep(10)
-    logger().info(f"Associated in {t.duration} seconds")
+    logger().info(f"test completed in {t.duration} seconds")
 
 @pytest.mark.config(
         "wifi_dut",
@@ -269,23 +282,20 @@ def test_join_5ghz_dfs_channels_100_and_140_C19390(wifi_dut, wifi_access_point,w
 
             dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-            packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                             f'(wlan.fc.type_subtype == 0x000b)) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+            # Validating the power management bit
+            packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
             logger().info("pinging to dut ip")
-            status = ping(device_ip, 10)
+            status = ping(device_ip, ping_count)
             assert status == 1,"ping to dut failed..."
             logger().info("ping to dut is successful...")
 
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
 
-            logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+            logger().info(" Validate power management bit 1")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                                 'in sniffer'
+                'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
             logger().info("disconnecting from ap...")
             wifi_dut.interfaces.wifi.leave()
