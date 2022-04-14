@@ -1,3 +1,4 @@
+import time
 import pytest
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import ping
@@ -25,8 +26,7 @@ def logger():
     Author: RaviNemali
 """
 
-pytestmark = [
-    pytest.mark.config(
+@pytest.mark.config(
         "wifi_dut",
         wifi=
         {
@@ -37,26 +37,39 @@ pytestmark = [
             "band": 1
             }
         )
-
-    ]
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
-# This test case verifies the dut connect functionality in 5ghz mode of access point
-def test_join_5ghz_mode(wifi_dut, wifi_access_point):
+def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
+        rejoin_max = 10
+        scan_interval = 6
+        beacon_missedcount = 40
+        first_time_retry = 0
+        timeout = 10
+        validation = True
 
-        # enables the rejoin feature on dut
-        logger().info("enabling Re-joining")
-        wifi_dut.interfaces.wifi.rejoin()
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
-        # Joins the access point with given ssid and password
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_join_5ghz_mode_C19388')
+
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
+                                        beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
+                                        timeout=timeout)
+
+        logger().info("scan for the ap's.....")
+        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+        ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
+        logger().info(f'AP BSSID = {ap_bssid}')
+
         logger().info("Joining the AP")
         status= wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         assert status, 'Unable to join ap '
 
-        # assigns and enables the dhcp in dut
         logger().info("Starting dhcp")
         result = wifi_dut.interfaces.wifi.start_ip()
         assert isinstance(
@@ -64,52 +77,88 @@ def test_join_5ghz_mode(wifi_dut, wifi_access_point):
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        # Enables the wifi power save in dut
         logger().info("enabling wifi power save")
         enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
         assert enable_wifi_ps, 'failed to enable'
 
-        # Enables the bt power save in dut
         logger().info("enabling bt powersave")
         enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
         assert enable_bt_ps, 'failed to enable'
 
-        # initiates the ping in dut
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b)) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+
         logger().info("pinging to dut ip")
         status = ping(device_ip, 10)
-        assert status == 1
-    logger().info(f"Asociated and ping in {t.duration} seconds")
+        assert status == 1,"ping dut failed..."
+        logger().info("ping to dut is successful...")
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+
+        logger().info("disconnecting from ap....")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+    logger().info(f"Associated and ping in {t.duration} seconds")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
-            "band": 1
-            }
-        )
-    ]
+            "band": 1,
+            "region": 1,
+            "region_code": 1,
+            "module_type": 1
+
+        }
+    )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2', "channel": 56})
-# This test case verifies the dut connect functionality in 5ghz dfs channel mode of access point
-def test_join_5ghz_dfs_channel(wifi_dut, wifi_access_point):
+@pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2', "channel": 52})
+def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
-        # enables the rejoin feature on dut
-        logger().info("enabling Re-joining")
-        wifi_dut.interfaces.wifi.rejoin()
+        rejoin_max = 10
+        scan_interval = 6
+        beacon_missedcount = 40
+        first_time_retry = 0
+        timeout = 10
+        validation = True
 
-        # Joins the access point with given ssid and password
+        logger().info(" ====== configuring the sniffer with the access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Init_Scan_Join_Disconnect_30min_C19710')
+
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
+                                        beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
+                                        timeout=timeout)
+        time.sleep(70)
+        logger().info("scan for the ap's.....")
+        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+        ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
+        logger().info(f'AP BSSID = {ap_bssid}')
+
         logger().info("Joining the AP")
         status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         assert status, 'Unable to join ap '
 
-        # assigns and enables the dhcp in dut
         logger().info("Starting dhcp")
         result = wifi_dut.interfaces.wifi.start_ip()
 
@@ -118,24 +167,38 @@ def test_join_5ghz_dfs_channel(wifi_dut, wifi_access_point):
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        # Enables the wifi power save in dut
         logger().info("enabling wifi power save")
         enable_wifi_ps= wifi_dut.interfaces.wifi.power_save(8)
         assert enable_wifi_ps, 'failed to enable'
 
-        # Enables the bt power save in dut
         logger().info("enabling bt power save")
         enable_bt_ps= wifi_dut.interfaces.wifi.bt_power_save(8)
         assert enable_bt_ps, 'failed to enable'
 
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                         f'(wlan.fc.type_subtype == 0x000b)) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+
         # initiates the ping in dut
         logger().info("pinging to dut ip")
         status = ping(device_ip, 10)
-        assert status == 1
+        assert status == 1,"Failed to ping DUT..."
+        logger().info("ping to dut is successful...")
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
+        time.sleep(10)
     logger().info(f"Associated in {t.duration} seconds")
 
-pytestmark = [
-    pytest.mark.config(
+@pytest.mark.config(
         "wifi_dut",
         wifi=
         {
@@ -144,43 +207,51 @@ pytestmark = [
             "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
-            "band": 1
+            "band": 1,
+            "region": 1,
+            "region_code": 1,
+            "module_type": 1
             }
         )
-    ]
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
-# This test case verifies the dut connect functionality in 5ghz dfs mode of access point for channels 100 and 140
-def test_join_5ghz_dfs_channels_100_and_140(wifi_dut, wifi_access_point, wifi_sniffer):
+def test_join_5ghz_dfs_channels_100_and_140_C19390(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
-
-        channel_list = [100,140]
+        logger().info("Using the channels 52-64 instead of 100-140 as limitation from AP")
+        channel_list = {1: 52, 2: 56,3: 60,4: 64}
         for channel in channel_list:
+            rejoin_max = 10
+            scan_interval = 6
+            beacon_missedcount = 40
+            first_time_retry = 0
+            timeout = 10
             validation = True
-            packet_filter2 = False
 
             logger().info("configuring the Sniffer with the channel")
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
             logger().info("start capturing with Sniffer by giving the test case name as filename")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Joining_time_PMK_C19711')
+            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_join_5ghz_dfs_channels_100_and_140_C19390')
 
-            # initiates the access point with channel given in list
             logger().info("Starting AP...")
-            wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+            wifi_access_point.interfaces.wifi.start_ap(channel=channel_list[channel])
+            time.sleep(70)
 
-            # enables the rejoin feature on dut
-            logger().info("enabling Re-joining")
-            wifi_dut.interfaces.wifi.rejoin()
+            logger().info("Enabling rejoin...")
+            wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
+                                            beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
+                                            timeout=timeout)
+            logger().info("scan for the ap's.....")
+            ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel_list[channel])
+            ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
+            logger().info(f'AP BSSID = {ap_bssid}')
 
-            # Joins the access point with given ssid and password
             logger().info("Joining the AP")
             status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-            assert status, 'Unable to join ap '
+            assert status, 'failed to join ap '
 
-            # assigns and enables the dhcp in dut
             logger().info("Starting dhcp")
             result = wifi_dut.interfaces.wifi.start_ip()
             assert isinstance(
@@ -188,28 +259,35 @@ def test_join_5ghz_dfs_channels_100_and_140(wifi_dut, wifi_access_point, wifi_sn
             ), f"Failed to get IP address. Result = {result}"
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-            # Enables the wifi power save in dut
             logger().info("enabling wifi power save")
             enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
             assert enable_wifi_ps, 'failed to enable'
 
-            # Enables the bt power save in dut
             logger().info("enabling bt power save")
             enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
             assert enable_bt_ps, 'failed to enable'
 
-            # Fetches the DUT mac address
             dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-            # Validating the power management bit
-            packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+            packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                             f'(wlan.fc.type_subtype == 0x000b)) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
-            # initiates the ping in dut
             logger().info("pinging to dut ip")
             status = ping(device_ip, 10)
-            assert status == 1
-            logger().info("Validating powermanagement bit")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-                'packet_count'], 'Unable to find power management bit in sniffer'
+            assert status == 1,"ping to dut failed..."
+            logger().info("ping to dut is successful...")
 
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                                 'in sniffer'
+
+            logger().info("disconnecting from ap...")
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(10)
     logger().info(f"Associated and ping in {t.duration} seconds")
