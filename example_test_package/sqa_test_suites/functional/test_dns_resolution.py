@@ -53,9 +53,21 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19300_301_311')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -82,9 +94,6 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-    time.sleep(2)
     logger().info("=======Initiating DNS Get command========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
     logger().info(result.decode())
@@ -120,9 +129,21 @@ def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19302')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -146,10 +167,6 @@ def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-
-    time.sleep(2)
     logger().info("=======DNS get command with primary & Secondary Static IPs for DNS server========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
@@ -183,9 +200,21 @@ def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19303')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -209,9 +238,6 @@ def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-    time.sleep(2)
     logger().info("=======DNS get command with Primary DNS server IP only========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "NULL")
     logger().info(result.decode())
@@ -245,9 +271,21 @@ def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19304')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -271,10 +309,6 @@ def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-
-    time.sleep(2)
     logger().info("=======DNS get command with Secondary DNS server IP ========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "10.8.4.10")
     logger().info(result.decode())
@@ -308,9 +342,21 @@ def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19305')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -333,10 +379,6 @@ def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-
-    time.sleep(2)
     logger().info("=======DNS get command with Primary & Secondary DNS server IP's are 0's ========")
     with pytest.raises(WlanError) as exc_info:
         result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "0.0.0.0", "0.0.0.0")
@@ -372,9 +414,21 @@ def test_dns_resolution_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -396,10 +450,6 @@ def test_dns_resolution_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    time.sleep(2)
-
-    status = ping(device_ip, 4)
-    assert status == 1
     time.sleep(2)
 
     with pytest.raises(WlanError) as exc_info:
@@ -438,9 +488,21 @@ def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -466,9 +528,6 @@ def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-    time.sleep(2)
     logger().info("#### Get DNS response when DUT get static IP and with wrong gateway ####")
     with pytest.raises(WlanError) as exc_info:
         result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
@@ -505,9 +564,21 @@ def test_dns_resolution_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -528,10 +599,6 @@ def test_dns_resolution_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    time.sleep(2)
-
-    status = ping(device_ip, 4)
-    assert status == 1
     time.sleep(2)
 
     with pytest.raises(WlanError) as exc_info:
@@ -567,9 +634,21 @@ def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -590,10 +669,6 @@ def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    time.sleep(2)
-
-    status = ping(device_ip, 4)
-    assert status == 1
     time.sleep(2)
 
     with pytest.raises(WlanError) as exc_info:
@@ -631,9 +706,21 @@ def test_dns_resolution_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
     time.sleep(2)
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(1)
+
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
@@ -657,10 +744,6 @@ def test_dns_resolution_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-
-    time.sleep(2)
     logger().info("=======DNS get command with Primary & Secondary DNS server IP's twice ========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
