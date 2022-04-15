@@ -54,9 +54,20 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_server_c19297')
     time.sleep(2)
 
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(2)
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -84,9 +95,6 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-    time.sleep(2)
     logger().info("=======DNS SERVER WITH DHCP========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
     logger().info(result.decode())
@@ -123,9 +131,20 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_server_c19297')
     time.sleep(2)
 
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(2)
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -151,9 +170,6 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-    time.sleep(2)
     logger().info("=======DNS SERVER WITH DHCP========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
@@ -183,9 +199,20 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
 def test_dns_server_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info(f"***********this test_case to validate DNS_SERVER without enabling DNS feature*******")
 
-    logger().info(f"***** Initiating Scan ******")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    time.sleep(2)
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -206,9 +233,6 @@ def test_dns_server_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
-    status = ping(device_ip, 4)
-    assert status == 1
-    time.sleep(2)
     logger().info("=======DNS SERVER WITHOUT ENABLING DNS FEATURE========")
     with pytest.raises(WlanError) as exc_info:
         result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
