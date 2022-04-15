@@ -480,7 +480,7 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_n_mode')
 
     # set data rate in n mode
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_54)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.MCS4)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -501,7 +501,9 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
                      f'0x0000 ' \
                      f'or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and wlan.tag.number == 45 and' \
                      f' !(wlan.fc.type_subtype == ' \
-                     f'0x000d) and !(wlan.fc.type_subtype == 0x0020) '
+                     f'0x000d) and !(wlan.fc.type_subtype == 0x0020)'
+
+    packet_filter2 = f'wlan.sa == {mac_address} and radiotap.mcs.index == 4'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -526,6 +528,8 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find the MCS rate 4 in data packets'
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
