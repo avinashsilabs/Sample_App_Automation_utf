@@ -44,6 +44,10 @@ def logger():
 #This test case is used to switch the Slave to Master Role
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_bt_spp_dut_as_slave_roleswitch_C19991(wifi_dut, bt_client):
+    inq_type = 1
+    duration = 10000
+    max_no_dev = 10
+    event_data = ""
     send_text = "AMFJTEJRTOLGWSGJWT"
 
     logger().info("configuring dut in spp slave role")
@@ -55,21 +59,26 @@ def test_bt_spp_dut_as_slave_roleswitch_C19991(wifi_dut, bt_client):
     assert bt_client_address is not None, "Unable to find bt client address"
     logger().info(f"BT Client address {bt_client_address}")
 
-    logger().info("Searching for the bt client address")
-    device_found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
-    if not device_found:
-        logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
-    logger().info(f"BT found device is {device_found}, found bt client address {bt_client_address}")
+    logger().info(f'Start BT inquiry from DUT')
+    wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
+    time.sleep(duration / 1000)
+    # Get Asynchronous messages
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    assert len(events) > 0
+    # Search for Inquiry type and Remote BT device address
+    for event in events:
+        event_data = event_data + str(event.event_data.decode())
+        if bt_client_address in event_data:
+            logger().info(f'Remote BT address found ==> {bt_client_address}')
+            break
 
     with bt_client.interfaces.bluetooth.bt_socket(
         mode=BTSocketRole.Server
         ) as bt_server_socket:
-        # SPP Connection
-        logger().info("========Spp Connection=======")
         with wifi_dut.interfaces.wifi.run_bt_task():
             bt_server_socket.create_server()
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-            assert connected, "Unable to connect device"
+            assert connected, "Unable to connect to bt dut"
 
             logger().info("Keeping 30 seconds time duration for connection stability ")
             time.sleep(30)
