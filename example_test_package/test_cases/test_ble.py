@@ -1,7 +1,5 @@
 import time
 import pytest
-import os
-
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
