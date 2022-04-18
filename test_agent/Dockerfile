@@ -10,7 +10,7 @@ RUN slc configuration -s $GECKO_SDK -gcc $ARM_GCC_DIR
 RUN slc signature trust --sdk $GECKO_SDK
 
 ARG RELEASE_PACKAGE_VERSION=RS916W.2.5.0.14
-ARG BUILD_LOCATION=release_packages
+ARG BUILD_LOCATION=source_code
 
 ARG GROUP_ID=997
 ARG USER_ID=995
@@ -26,6 +26,13 @@ RUN --mount=type=ssh \
             cp -r ${RELEASE_PACKAGE_VERSION}/platforms/efx32 mini_gecko_sdk/platform/radio/wifi/rs9116 && \
             cp -r ${RELEASE_PACKAGE_VERSION}/third_party mini_gecko_sdk/platform/radio/wifi/rs9116 && \
             rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}.zip && rm -rf ${RELEASE_PACKAGE_VERSION}; \
+        
+        elif [ "${BUILD_LOCATION}" = "source_code" ]; then \
+              git clone -b development --depth 1 --single-branch https://stash.silabs.com/scm/redpine/rs911x.git rs911x  && \
+              echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" && \
+              cp -r rs911x/Host_MCU/sapi mini_gecko_sdk/platform/radio/wifi/rs9116 && \
+              cp -r rs911x/Host_MCU/platforms/efx32 mini_gecko_sdk/platform/radio/wifi/rs9116 && \
+              cp -r rs911x/Host_MCU/third_party mini_gecko_sdk/platform/radio/wifi/rs9116 \
         else \
             git archive --remote ssh://git@stash.silabs.com/redpine/build_artifacts.git --format tar ${RELEASE_PACKAGE_VERSION}/build -o ${RELEASE_PACKAGE_VERSION}.tar && \
             mkdir ${RELEASE_PACKAGE_VERSION} && tar -xvf ${RELEASE_PACKAGE_VERSION}.tar -C ${RELEASE_PACKAGE_VERSION} && \
