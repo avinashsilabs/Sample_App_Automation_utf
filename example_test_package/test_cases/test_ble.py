@@ -187,9 +187,10 @@ def test_ble_conn_params(wifi_dut, ble_client):
             "This test case is only currently implemented for SAPI"
         )
 
+    # TODO: Provide valid folder path "bt_log_path" to create the btmon log file.
     with BleLogs(
             start_collecting_logs=True,
-            bt_log_path=f"./reports/Update_Connection2_test_ble_undirected_connectable_adv_T3244_{int(time.time())}.log",
+            bt_log_path=f"./test_ble_undirected_connectable_adv_T3244_{int(time.time())}.log",
     ) as bt_logs:
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address is not None
@@ -230,14 +231,14 @@ def test_ble_conn_params(wifi_dut, ble_client):
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
 
-        updated_bt_conn_config = bt_logs.validate_bt_connection_update_params()
+        bt_conn_config = bt_logs.fetch_bt_connection_params()
         # Validate BT connection params *Start*
-        if updated_bt_conn_config:
-            assert updated_bt_conn_config['Status'] == "Success"
-            assert updated_bt_conn_config['Min connection interval'] == conn_params["min_conn_interval"]
-            assert updated_bt_conn_config['Max connection interval'] == conn_params["max_conn_interval"]
-            assert updated_bt_conn_config['Connection latency'] == conn_params["conn_latency"]
-            assert updated_bt_conn_config['Supervision timeout'] == conn_params["supervision_timeout"]
+        if bt_conn_config:
+            assert bt_conn_config['Status'] == "Success"
+            assert bt_conn_config['Min connection interval'] == conn_params["min_conn_interval"]
+            assert bt_conn_config['Max connection interval'] == conn_params["max_conn_interval"]
+            assert bt_conn_config['Connection latency'] == conn_params["conn_latency"]
+            assert bt_conn_config['Supervision timeout'] == conn_params["supervision_timeout"]
         # Validate BT connection params *End*
 
         ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
