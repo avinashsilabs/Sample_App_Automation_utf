@@ -59,7 +59,7 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -90,6 +90,12 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======Initiating DNS Get command========")
@@ -141,7 +147,7 @@ def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -170,6 +176,12 @@ def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======DNS get command with primary & Secondary Static IPs for DNS server========")
@@ -218,7 +230,7 @@ def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -247,6 +259,12 @@ def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======DNS get command with Primary DNS server IP only========")
@@ -295,7 +313,7 @@ def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -324,6 +342,12 @@ def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======DNS get command with Secondary DNS server IP ========")
@@ -372,7 +396,7 @@ def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -399,6 +423,12 @@ def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======DNS get command with Primary & Secondary DNS server IP's are 0's ========")
@@ -472,6 +502,12 @@ def test_dns_resolution_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+    time.sleep(2)
+
     with pytest.raises(WlanError) as exc_info:
         logger().info("=======DNS get command with Primary & Secondary DNS server IP's which are wrong ========")
         result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.210.91", "10.81.44.13")
@@ -521,7 +557,7 @@ def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -552,6 +588,12 @@ def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("#### Get DNS response when DUT get static IP and with wrong gateway ####")
@@ -603,7 +645,7 @@ def test_dns_resolution_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -672,7 +714,7 @@ def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -699,6 +741,12 @@ def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     with pytest.raises(WlanError) as exc_info:
@@ -743,7 +791,7 @@ def test_dns_resolution_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
@@ -772,6 +820,12 @@ def test_dns_resolution_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======DNS get command with Primary & Secondary DNS server IP's twice ========")
