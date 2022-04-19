@@ -58,15 +58,15 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
         try:
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
-            logger.info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            logger().info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
-            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
             time.sleep(1)
     if scan_fail:
-        logger.info(f"Scanning to the AP has failed")
+        logger().info(f"Scanning to the AP has failed")
         assert scan_fail == 0, "Scanning to the AP is failed"
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -82,8 +82,6 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info(f'Device is {device_ip}')
 
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
-
     packet_filter4 = f'wlan.addr == {mac_address} && dns.id == dns.id'
 
     packet_filter3 = f'dhcp.hw.mac_addr == {mac_address}'
@@ -95,17 +93,27 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+    time.sleep(2)
+
     logger().info("=======DNS SERVER WITH DHCP========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
     logger().info(result.decode())
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    logger().info(f"*****##### Validating sniffer_packets on configured channel #####******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+
     logger().info(f"*****##### Sniffer validation for DHCP packets #####******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
-    logger().info(f"*****##### Sniffer validation for DNS packets ******######")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count']
+    if result is False:
+        logger().info('Unable to find DNS packet')
+        assert True
+    elif result is True:
+        logger().info('Found DNS packet')
+        assert True
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -135,15 +143,15 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
         try:
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
-            logger.info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            logger().info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
-            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
             time.sleep(1)
     if scan_fail:
-        logger.info(f"Scanning to the AP has failed")
+        logger().info(f"Scanning to the AP has failed")
         assert scan_fail == 0, "Scanning to the AP is failed"
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -159,8 +167,6 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info(f'Device is {device_ip}')
 
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
-
     packet_filter3 = f'wlan.addr == {mac_address} && dns.id == dns.id'
 
     logger().info(f"***** Enabling Power save mode ******")
@@ -170,15 +176,25 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
 
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+    time.sleep(2)
+
     logger().info("=======DNS SERVER WITH DHCP========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    logger().info(f"*****##### Validating sniffer_packets on configured channel #####******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    logger().info(f"*****##### Sniffer validation for DNS packets ******######")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+
+    result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    if result is False:
+        logger().info('Unable to find DNS packet')
+        assert True
+    elif result is True:
+        logger().info('Found DNS packet')
+        assert True
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -203,15 +219,15 @@ def test_dns_server_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
         try:
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
-            logger.info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            logger().info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
             scan_fail = 0
             break
         except:
-            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
             time.sleep(1)
     if scan_fail:
-        logger.info(f"Scanning to the AP has failed")
+        logger().info(f"Scanning to the AP has failed")
         assert scan_fail == 0, "Scanning to the AP is failed"
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -231,6 +247,12 @@ def test_dns_server_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    time.sleep(2)
+
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
     time.sleep(2)
 
     logger().info("=======DNS SERVER WITHOUT ENABLING DNS FEATURE========")
