@@ -188,7 +188,7 @@ def test_ble_conn_params(wifi_dut, ble_client):
     # TODO: Provide valid folder path "bt_log_path" to create the btmon log file.
     with BleLogs(
             start_collecting_logs=True,
-            bt_log_path=f"./test_ble_undirected_connectable_adv_T3244_{int(time.time())}.log",
+            bt_log_path=f"./reports/test_ble_undirected_connectable_adv_T3244_{int(time.time())}.log",
     ) as bt_logs:
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address is not None
@@ -209,12 +209,11 @@ def test_ble_conn_params(wifi_dut, ble_client):
         ble_client.interfaces.bluetooth.stop_scanning()
         assert device_found
 
-        # BT connection parameters
-        conn_params = {
-            "min_conn_interval": 40,
-            "max_conn_interval": 40,
-            "conn_latency": 0,
-            "supervision_timeout": 120}
+        # Provide BT connection parameter's value
+        conn_params = {"min_conn_interval": 40,
+                       "max_conn_interval": 40,
+                       "conn_latency": 0,
+                       "supervision_timeout": 120}
 
         ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
                                                 min_conn_interval=conn_params["min_conn_interval"],
@@ -229,7 +228,13 @@ def test_ble_conn_params(wifi_dut, ble_client):
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
 
-        bt_conn_config = bt_logs.fetch_bt_connection_params()
+        # Provide the list of command parameters to be tested
+        ble_connection_params = {'Min connection interval': None,
+                                 'Max connection interval': None,
+                                 'Connection latency': None,
+                                 'Supervision timeout': None}
+        bt_conn_config = bt_logs.read_ble_connection_params(ble_connection_params)
+
         # Validate BT connection params *Start*
         if bt_conn_config:
             assert bt_conn_config['Status'] == "Success"
