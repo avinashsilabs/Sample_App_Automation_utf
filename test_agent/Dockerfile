@@ -15,6 +15,7 @@ ARG BUILD_LOCATION=release_packages
 ARG GROUP_ID=997
 ARG USER_ID=995
 ARG USERNAME=jenkins
+
 RUN --mount=type=ssh \ 
     if [ ! "${RELEASE_PACKAGE_VERSION}" = "RS916W.2.5.0.14" ]; then \
         if [ "${BUILD_LOCATION}" = "release_packages" ]; then \
