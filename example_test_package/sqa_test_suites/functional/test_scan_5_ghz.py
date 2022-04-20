@@ -27,7 +27,7 @@ def logger():
 
     Author: RaviNemali
 """
-logger().info(" ********* READ DESCRIPTION AT LINE-29,FOR HARNESS CHANGES AND CONFIG'S **********")
+logger().info(" ********* READ DESCRIPTION AT LINE-31,FOR HARNESS CHANGES AND CONFIG'S **********")
 """"
 ++++++++ Harness Changes & test limit's ++++++++
 
@@ -84,6 +84,9 @@ def test_scan_5Ghz_usregion_C19400(wifi_dut, wifi_access_point,wifi_sniffer):
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid=wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [36,40,44,48,52,56,60,64,149,153,157,161,165]
         for channel in channel_list:
             logger().info("Starting access point with custom channel...")
@@ -97,7 +100,7 @@ def test_scan_5Ghz_usregion_C19400(wifi_dut, wifi_access_point,wifi_sniffer):
             time.sleep(10)
 
             #validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -180,6 +183,8 @@ def test_scan_5Ghz_euregion_C19401(wifi_dut, wifi_access_point,wifi_sniffer):
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
 
         channel_list = [36,40,44,48,52,56,60,64]
         for channel in channel_list:
@@ -194,7 +199,7 @@ def test_scan_5Ghz_euregion_C19401(wifi_dut, wifi_access_point,wifi_sniffer):
             time.sleep(10)
 
             #validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -278,6 +283,9 @@ def test_scan_5Ghz_jp_region_C19402(wifi_dut, wifi_access_point,wifi_sniffer):
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [36, 52]
         for channel in channel_list:
             logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -341,15 +349,20 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1(wifi_dut, w
         first_time_retry = 0
         timeout = 10
         validation = True
-        testcase = test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1
+        testcase = 'test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1'
         time.sleep(60)
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
         time.sleep(10)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
         # validating beacons from AP
-        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -430,8 +443,11 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2(wifi_dut, w
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
     time.sleep(10)
 
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"ap bssid: {ap_bssid}")
+
     # validating beacons from AP
-    packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+    packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -509,12 +525,15 @@ def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_p
         testcase = test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3
         time.sleep(60)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
         time.sleep(10)
 
         # validating beacons from AP
-        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -603,6 +622,9 @@ def test_scan_connect_5Ghz_DFS_euregion_C19404_case4(wifi_dut, wifi_access_point
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [36, 48, 52, 149]
         for channel in channel_list:
             logger().info("Starting access point with custom channel...")
@@ -616,7 +638,7 @@ def test_scan_connect_5Ghz_DFS_euregion_C19404_case4(wifi_dut, wifi_access_point
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -848,7 +870,10 @@ def test_scan_all_channels_in_5Ghz_C19406(wifi_dut, wifi_access_point,wifi_sniff
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
-        channel_list = [36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161, 165]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
+        channel_list = [36,40,44,48,52,56,60,64,149,153,157,161,165]
         for channel in channel_list:
             logger().info("Starting access point with custom channel...")
             wifi_access_point.interfaces.wifi.start_ap(channel=channel)
@@ -861,7 +886,7 @@ def test_scan_all_channels_in_5Ghz_C19406(wifi_dut, wifi_access_point,wifi_sniff
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -942,7 +967,10 @@ def test_all_channels_scan_by_giving_channel_as_zero_C19407(wifi_dut, wifi_acces
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
-        channel_list = [36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161, 165]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
+        channel_list = [36,40,44,48,52,56,60,64,149,153,157,161,165]
         for channel in channel_list:
             logger().info("Starting access point with custom channel...")
             wifi_access_point.interfaces.wifi.start_ap(channel=channel)
@@ -955,7 +983,7 @@ def test_all_channels_scan_by_giving_channel_as_zero_C19407(wifi_dut, wifi_acces
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1038,6 +1066,8 @@ def test_scan_all_channels_by_giving_channels_in_bitmap_C19409(wifi_dut, wifi_ac
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
 
         channel_list = [36,40,44,48,52,56,60,64,149,153,157,161,165]
         channel_bitmap_5 = 0
@@ -1058,7 +1088,7 @@ def test_scan_all_channels_by_giving_channels_in_bitmap_C19409(wifi_dut, wifi_ac
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1101,7 +1131,6 @@ def test_scan_all_channels_by_giving_channels_in_bitmap_C19409(wifi_dut, wifi_ac
                     'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1138,6 +1167,8 @@ def test_scan_all_channels_in_dual_band_C19408(wifi_dut, wifi_access_point,wifi_
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
 
         channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161, 165]
         for channel in channel_list:
@@ -1152,7 +1183,7 @@ def test_scan_all_channels_in_dual_band_C19408(wifi_dut, wifi_access_point,wifi_
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1228,6 +1259,9 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410(wi
         scan_feature_extend = 0
         testcase = test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         for count in channel_list1:
             channel_bitmap_5 += 1 << (count - 1)
             scan_expected_time += 100
@@ -1247,7 +1281,7 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410(wi
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1296,7 +1330,7 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410(wi
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter2 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter2 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1372,6 +1406,9 @@ def test_scan_for_channels_36_40_48_52_100_149_157_161_165_C19411(wifi_dut, wifi
         channel_bitmap_5 = 0
         scan_feature_extend = 0
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         for count in channel_list:
             channel_bitmap_5 += 1 << (count - 1)
 
@@ -1387,7 +1424,7 @@ def test_scan_for_channels_36_40_48_52_100_149_157_161_165_C19411(wifi_dut, wifi
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1423,9 +1460,7 @@ def test_scan_for_channels_36_40_48_52_100_149_157_161_165_C19411(wifi_dut, wifi
         logger().info("Validate probe request packet")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find probe request packet in sniffer '
-
     logger().info(f"test completed in {t.duration} seconds")
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1464,6 +1499,9 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [6]
         channel_list1 = [36]
         channel_bitmap_2_4 = 0
@@ -1481,7 +1519,7 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1530,7 +1568,7 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1567,7 +1605,6 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1606,6 +1643,9 @@ def test_scan_5ghz_band_for_channels_36_40_52_56_149_161_165_C19413(wifi_dut, wi
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [36,40,52,56,149,161,165]
         channel_bitmap_5 = 0
         scan_feature_extend = 0
@@ -1625,7 +1665,7 @@ def test_scan_5ghz_band_for_channels_36_40_52_56_149_161_165_C19413(wifi_dut, wi
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1660,9 +1700,7 @@ def test_scan_5ghz_band_for_channels_36_40_52_56_149_161_165_C19413(wifi_dut, wi
             logger().info("Validate probe request packet")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
                 'packet_count'], 'Unable to find probe request packet in sniffer '
-
     logger().info(f"test completed in {t.duration} seconds")
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1701,7 +1739,10 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
-        channel_list = [1, 3, 6, 11]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
+        channel_list = [1,3,6,11]
         channel_list1 = [36,48,149,161,165]
         channel_bitmap_2_4 = 0
         channel_bitmap_5 = 0
@@ -1724,7 +1765,7 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1771,7 +1812,7 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1846,6 +1887,9 @@ def test_scan_for_selective_channels_in_5GHZ_C19415(wifi_dut, wifi_access_point,
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [52,68,56,64]
 
         for channel in channel_list:
@@ -1859,7 +1903,7 @@ def test_scan_for_selective_channels_in_5GHZ_C19415(wifi_dut, wifi_access_point,
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -1930,6 +1974,9 @@ def test_scan_for_selective_channels_in_5GHZ_C19416(wifi_dut, wifi_access_point,
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
+
         channel_list = [36,52,56,64]
         channel_bitmap_5 = 0
         scan_feature_extend = 0
@@ -1947,7 +1994,7 @@ def test_scan_for_selective_channels_in_5GHZ_C19416(wifi_dut, wifi_access_point,
             time.sleep(10)
 
             # validating beacons from AP
-            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+            packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
             wifi_sniffer.interfaces.capture.stop_capture()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "ap beacons not found in sniffer capture,terminating test execution"
@@ -2019,6 +2066,9 @@ def test_regional_scan_world_mode_in_5GHZ_C19418(wifi_dut, wifi_access_point,wif
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                         beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                         timeout=timeout)
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap bssid: {ap_bssid}")
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
