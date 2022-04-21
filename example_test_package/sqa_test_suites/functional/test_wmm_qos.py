@@ -15,19 +15,19 @@ from utf.utils.iperf.iperf_utils import ping
         6. Enable the power save mode in DUT
         7. Stop the sniffer  
         8. Analyzing all sniffer capture packets and find the different Qos access category packets
-        9. wlan.qos.priority == 0 — Best Effort (Best Effort)
+       
     
     traffic category for Iperf category
-        1. wlan.qos.priority == 0 — Best Effort
-        2. wlan.qos.priority == 1 — Background
-        3. wlan.qos.priority == 5 — Video
-        4. wlan.qos.priority == 6 — Voice
+        1. wlan.qos.priority == 0  Best Effort
+        2. wlan.qos.priority == 1  Background
+        3. wlan.qos.priority == 5  Video
+        4. wlan.qos.priority == 6  Voice
         
     traffic category for Ping category
-        1. wlan.qos.priority == 0 — Best Effort
-        2. wlan.qos.priority == 1 — Background
-        3. wlan.qos.priority == 4 — Video
-        4. wlan.qos.priority == 6 — Voice
+        1. wlan.qos.priority == 0  Best Effort
+        2. wlan.qos.priority == 1  Background
+        3. wlan.qos.priority == 4  Video
+        4. wlan.qos.priority == 6  Voice
                    
     setup requirement:
         1. DUT(RS9116)
@@ -52,9 +52,23 @@ def logger():
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_tcpdata_tx_with_vo_vi_be_bk_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
-    traffic_category_list = ['0x00', '0xC8', '0x80', '0x20']
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+    },
+)
+def test_tcpdata_tx_with_vo_vi_be_bk_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+                                            protocol):
+    traffic_category_list = ['0x00', '0x20', '0x80', '0xC8']
+    traffic_category_name = ['Best Effort', 'Background', 'Video', 'Voice']
+
     validation = True
+    i = 0
+    counter = 0
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='all_traffic_cat_c19752')
@@ -77,14 +91,20 @@ def test_tcpdata_tx_with_vo_vi_be_bk_c19752(wifi_sniffer, net_perf_client, wifi_
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    packet_filter1 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
+    packet_filter2 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
+    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+    logger().info(f"Host IP: {host_ip}")
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Protocol: {protocol}")
 
-    logger().info(f"***** TCP_TX traffic start ******")
+    print('\n\n ********** Calling IPERF TX, TCP traffic for all Qos services ********************\n\n')
+
     for traffic in traffic_category_list:
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
+
         logger().info(f"tos_value: {traffic}")
 
         logger().info(f"***** starting iperf ******")
@@ -100,30 +120,20 @@ def test_tcpdata_tx_with_vo_vi_be_bk_c19752(wifi_sniffer, net_perf_client, wifi_
         )
         logger().info(f"***** get and print throughput ******")
         tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp is not None
+        assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+        i = i + 1
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
 
-    packet_filter1 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
-    packet_filter2 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
-    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
-    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+        logger().info(f"***** Validating packets for {traffic_category_name[counter]}******")
+        packet_filter = f'packet_filter{i}'
 
-    logger().info(f"***** Validating packets for background ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
-        'Unable to find Background packet from the DUT side'
-    logger().info(f"***** Validating packets for best effort ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'],\
-        'Unable to find Best effort packet from the DUT side'
-    logger().info(f"***** Validating packets for video ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'],\
-        'Unable to find Video packet from the DUT side'
-    logger().info(f"***** Validating packets for voice ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'],\
-        'Unable to find Voice packet from the DUT side'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, eval(packet_filter))['packet_count'], \
+            f'Unable to find {traffic_category_name[counter]} packet from the DUT side'
+        counter = counter + 1
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -131,9 +141,23 @@ def test_tcpdata_tx_with_vo_vi_be_bk_c19752(wifi_sniffer, net_perf_client, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_udpdata_tx_with_vo_vi_be_bk_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
-    traffic_category_list = ['0x00', '0xC8', '0x80', '0x20']
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+    },
+)
+def test_udp_data_tx_with_vo_vi_be_bk_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+                                            protocol):
+    traffic_category_list = ['0x00', '0x20', '0x80', '0xC8']
+    traffic_category_name = ['Best Effort', 'Background', 'Video', 'Voice']
+
     validation = True
+    i = 0
+    counter = 0
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='all_traffic_cat_c19753')
@@ -156,20 +180,24 @@ def test_udpdata_tx_with_vo_vi_be_bk_c19753(wifi_sniffer, net_perf_client, wifi_
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
+    packet_filter1 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
+    packet_filter2 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
+    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+    logger().info(f"Host IP: {host_ip}")
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Protocol: {protocol}")
 
-    logger().info(f"***** UDP_TX traffic start ******")
+    print('\n\n ********** Calling IPERF TX, UDP traffic for all Qos services ********************\n\n')
     for traffic in traffic_category_list:
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
         logger().info(f"tos_value: {traffic}")
 
         logger().info(f"***** starting iperf ******")
         net_perf_client.interfaces.net_perf.start()
 
-        logger().info(f"***** open socket and send traffic ******")
+        logger().info(f"***** open socket and send traffic  ******")
         wifi_dut.interfaces.wifi.send_traffic_from_device(
             host_ip,
             device_ip,
@@ -179,30 +207,20 @@ def test_udpdata_tx_with_vo_vi_be_bk_c19753(wifi_sniffer, net_perf_client, wifi_
         )
         logger().info(f"***** get and print throughput ******")
         tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp is not None
+        assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+        i = i + 1
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
 
-    packet_filter1 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
-    packet_filter2 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
-    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
-    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+        logger().info(f"***** Validating packets for {traffic_category_name[counter]}******")
+        packet_filter = f'packet_filter{i}'
 
-    logger().info(f"***** Validating packets for background ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
-        'Unable to find Background packet from the DUT side'
-    logger().info(f"***** Validating packets for best effort ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'],\
-        'Unable to find Best effort packet from the DUT side'
-    logger().info(f"***** Validating packets for video ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'],\
-        'Unable to find Video packet from the DUT side'
-    logger().info(f"***** Validating packets for voice ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'],\
-        'Unable to find Voice packet from the DUT side'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, eval(packet_filter))['packet_count'], \
+            f'Unable to find {traffic_category_name[counter]} packet from the DUT side'
+        counter = counter + 1
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -210,9 +228,22 @@ def test_udpdata_tx_with_vo_vi_be_bk_c19753(wifi_sniffer, net_perf_client, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+    },
+)
 def test_tcpdata_rx_with_vo_vi_be_bk_c22115(net_perf_client,wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, protocol):
-    traffic_category_list = ['0x00', '0xC8', '0x80', '0x20']
+    traffic_category_list = ['0x00', '0x20', '0x80', '0xC8']
+    traffic_category_name = ['Best Effort', 'Background', 'Video', 'Voice']
+
     validation = True
+    i = 0
+    counter = 0
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='all_traffic_cat_c22115')
@@ -236,14 +267,18 @@ def test_tcpdata_rx_with_vo_vi_be_bk_c22115(net_perf_client,wifi_sniffer, wifi_a
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    logger().info(f"***** TCP_RX traffic start ******")
+    packet_filter1 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
+    packet_filter2 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
+    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+    logger().info(f"Host IP: {host_ip}")
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Protocol: {protocol}")
+
+    print('\n\n ********** Calling IPERF RX, TCP traffic for all Qos services ********************\n\n')
     for traffic in traffic_category_list:
         net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -265,43 +300,47 @@ def test_tcpdata_rx_with_vo_vi_be_bk_c22115(net_perf_client,wifi_sniffer, wifi_a
 
         logger().info(f"***** get and print throughput   ******")
         tp = net_perf_client.interfaces.net_perf.process_output(result)
-        assert tp is not None
+        assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
+        i = i + 1
 
-    packet_filter1 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
-    packet_filter2 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
-    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
-    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
 
-    logger().info(f"***** Validating packets for background ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
-        'Unable to find Background packet from the DUT side'
-    logger().info(f"***** Validating packets for best effort ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'],\
-        'Unable to find Best effort packet from the DUT side'
-    logger().info(f"***** Validating packets for video ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'],\
-        'Unable to find Video packet from the DUT side'
-    logger().info(f"***** Validating packets for voice ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'],\
-        'Unable to find Voice packet from the DUT side'
+        logger().info(f"***** Validating packets for {traffic_category_name[counter]}******")
+        packet_filter = f'packet_filter{i}'
 
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, eval(packet_filter))['packet_count'], \
+            f'Unable to find {traffic_category_name[counter]} packet from the DUT side'
+        counter = counter + 1
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_udpdata_rx_with_vo_vi_be_bk_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, protocol):
-    traffic_category_list = ['0x00', '0xC8', '0x80', '0x20']
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+    },
+)
+def test_udp_data_rx_with_vo_vi_be_bk_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
+                                            protocol):
+    traffic_category_list = ['0x00', '0x20', '0x80', '0xC8']
+    traffic_category_name = ['Best Effort', 'Background', 'Video', 'Voice']
+
     validation = True
+    i = 0
+    counter = 0
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='all_traffic_cat_c22116')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='all_traffic_cat_c22115')
     time.sleep(2)
 
     logger().info(f"***** preparing wifi_dut ******")
@@ -322,18 +361,22 @@ def test_udpdata_rx_with_vo_vi_be_bk_c22116(net_perf_client, wifi_sniffer, wifi_
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    logger().info(f"***** UDP_RX traffic start ******")
+    packet_filter1 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
+    packet_filter2 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
+    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+    logger().info(f"Host IP: {host_ip}")
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Protocol: {protocol}")
+
+    print('\n\n ********** Calling IPERF RX, UDP traffic for all Qos services ********************\n\n')
     for traffic in traffic_category_list:
         net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
-        logger().info(f"***** open socket and start listening  ******")
+        logger().info(f"***** open socket and start listening ******")
         with wifi_dut.interfaces.wifi.start_socket_reader(
                 log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
                 result=result,
@@ -344,40 +387,41 @@ def test_udpdata_rx_with_vo_vi_be_bk_c22116(net_perf_client, wifi_sniffer, wifi_
                 time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
             logger().info(f"***** start iperf  ******")
             net_perf_client.interfaces.net_perf.start()
-            logger().info(f"***** capture device output   ******")
+
+            logger().info(f"***** capture device output  ******")
             wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
 
         logger().info(f"***** get and print throughput   ******")
         tp = net_perf_client.interfaces.net_perf.process_output(result)
-        assert tp is not None
+        assert tp,"failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
+        i = i + 1
 
-    packet_filter1 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
-    packet_filter2 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
-    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
-    packet_filter4 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
 
-    logger().info(f"***** Validating packets for background ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Background packet from the DUT side'
-    logger().info(f"***** Validating packets for best effort ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
-        'Unable to find Best effort packet from the DUT side'
-    logger().info(f"***** Validating packets for video ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Video packet from the DUT side'
-    logger().info(f"***** Validating packets for voice ******")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
-        'Unable to find Voice packet from the DUT side'
+        logger().info(f"***** Validating packets for {traffic_category_name[counter]}******")
+        packet_filter = f'packet_filter{i}'
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, eval(packet_filter))['packet_count'], \
+            f'Unable to find {traffic_category_name[counter]} packet from the DUT side'
+        counter = counter + 1
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+    },
+)
 def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_dut, wifi_access_point):
     traffic_category_list = ['0x00', '0xC8', '0x80', '0x20']
     validation = True
@@ -408,7 +452,7 @@ def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_
     logger().info(f"***** Initiate ping from third party wifi-client to DUT ******")
     for qos_category in traffic_category_list:
         status = ping(device_ip, 20, qos=True, qos_category=qos_category)
-        assert status == 1
+        assert status == 1, "Ping failed"
 
         time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
