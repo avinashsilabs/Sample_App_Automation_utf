@@ -84,13 +84,16 @@ def test_C19454(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info(" ********** Raspberry pi Client connecting to DUT ********* ")
     assert (wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip)), \
         "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_client.interfaces.wifi.leave()
-    packet_filter1 = f'((wlan.country_info.code == "US")) && (wlan.ds.current_channel == {channel})'
+    packet_filter1 = f'((wlan.country_info.code == "US")) && (wlan.ds.current_channel == {channel})' \
+                     f'&& wlan.addr == {mac_address}'
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find Region US in Sniffer"
+        "Unable to find beacon frame with Region US in Sniffer"
     time.sleep(2)
 
 
@@ -134,13 +137,16 @@ def test_C19455(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info(" ********** Raspberry pi Client connecting to DUT ********* ")
     assert (wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip)), \
         "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_client.interfaces.wifi.leave()
-    packet_filter1 = f'((wlan.country_info.code == "EU")) && (wlan.ds.current_channel == {channel})'
+    packet_filter1 = f'((wlan.country_info.code == "EU")) && (wlan.ds.current_channel == {channel})' \
+                     f'&& wlan.addr == {mac_address}'
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find Region EU in Sniffer"
+        "Unable to find beacon frame with Region EU in Sniffer"
     time.sleep(2)
 
 
@@ -184,13 +190,16 @@ def test_C19456(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info(" ********** Raspberry pi Client connecting to DUT ********* ")
     assert (wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip)), \
         "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_client.interfaces.wifi.leave()
-    packet_filter1 = f'((wlan.country_info.code == "JP")) && (wlan.ds.current_channel == {channel})'
+    packet_filter1 = f'((wlan.country_info.code == "JP")) && (wlan.ds.current_channel == {channel})' \
+                     f'&& wlan.addr == {mac_address}'
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find Region JP in Sniffer"
+        "Unable to find beacon frame with Region JP in Sniffer"
     time.sleep(2)
 
 
@@ -319,6 +328,8 @@ def test_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, channel):
     logger().info(" ********** Raspberry pi Client connecting to DUT ********* ")
     assert (wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip)), \
         "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_client.interfaces.wifi.leave()
@@ -375,6 +386,8 @@ def test_C19443(wifi_sniffer, wifi_dut, wifi_client, beacon, channel):
     logger().info(" ********** Raspberry pi Client connecting to DUT ********* ")
     assert (wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip)), \
         "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_client.interfaces.wifi.leave()
@@ -486,6 +499,8 @@ def test_C19432(wifi_sniffer, wifi_dut, wifi_clients, channel):
             logger().info(f'Station :{i}')
             assert (wifi_clients[i].interfaces.wifi.ping(
                 server_ip=wifi_clients[i].interfaces.wifi.client_gateway_ip)), "Client failed to ping DUT"
+            device_ip = wifi_clients.interfaces.wifi.client_gateway_ip
+            logger().info(f"********* Dut IP **********: {device_ip}")
             mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"DUT MAC_Address: {mac_address}")
             wifi_clients[i].interfaces.wifi.leave()
@@ -566,6 +581,8 @@ def test_C19430_C19442(wifi_sniffer, wifi_dut, wifi_clients, channel):
             logger().info(f'Station :{i}')
             assert (wifi_clients[i].interfaces.wifi.ping(
                 server_ip=wifi_clients[i].interfaces.wifi.client_gateway_ip)), "Client failed to ping DUT"
+            device_ip = wifi_clients.interfaces.wifi.client_gateway_ip
+            logger().info(f"********* Dut IP **********: {device_ip}")
             time.sleep(5)
             mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"DUT MAC_Address: {mac_address}")
@@ -624,6 +641,8 @@ def test_C19436(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info(" ********** Raspberry pi Client connecting to DUT ********* ")
     assert (wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip)),\
         "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_client.interfaces.wifi.leave()
@@ -674,6 +693,8 @@ def test_C19447_Tx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protoco
     logger().info(f"******** Dut IP ******** {device_ip}")
     logger().info(f"******** Host IP ******** {host_ip}")
     assert wifi_client.interfaces.wifi.ping(server_ip=device_ip), "Client filed to ping AP"
+    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"********* Dut IP **********: {device_ip}")
     # starting iperf
     logger().info("***** starting iperf *****")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
