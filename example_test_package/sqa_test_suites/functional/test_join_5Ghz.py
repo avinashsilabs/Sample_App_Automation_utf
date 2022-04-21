@@ -233,7 +233,7 @@ def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point,wifi_sniffer):
 def test_join_5ghz_dfs_channels_100_and_140_C19390(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("Using the channels 52-64 instead of 100-140 as limitation from AP")
-        channel_list = {1: 52, 2: 56,3: 60,4: 64}
+        channel_list = [52,56,60,64]
         for channel in channel_list:
             rejoin_max = 10
             scan_interval = 6
@@ -242,22 +242,22 @@ def test_join_5ghz_dfs_channels_100_and_140_C19390(wifi_dut, wifi_access_point,w
             timeout = 10
             validation = True
 
+            logger().info("Starting AP...")
+            wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+            time.sleep(70)
+
             logger().info("configuring the Sniffer with the channel")
-            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
 
             logger().info("start capturing with Sniffer by giving the test case name as filename")
             wifi_sniffer.interfaces.capture.start_capture(capture_file='test_join_5ghz_dfs_channels_100_and_140_C19390')
-
-            logger().info("Starting AP...")
-            wifi_access_point.interfaces.wifi.start_ap(channel=channel_list[channel])
-            time.sleep(70)
 
             logger().info("Enabling rejoin...")
             wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                             beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                             timeout=timeout)
             logger().info("scan for the ap's.....")
-            ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel_list[channel])
+            ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
             ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
             logger().info(f'AP BSSID = {ap_bssid}')
 
