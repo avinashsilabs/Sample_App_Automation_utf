@@ -1,6 +1,6 @@
 import time
 import pytest
-
+from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
@@ -184,37 +184,67 @@ def test_ble_conn_params(wifi_dut, ble_client):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
         )
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
-    wifi_dut.interfaces.wifi.ble_start_advertising()
 
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    # TODO: Provide valid folder path "bt_log_path" to create the btmon log file.
+    with BleLogs(
+            start_collecting_logs=True,
+            bt_log_path=f"./reports/test_ble_undirected_connectable_adv_T3244_{int(time.time())}.log",
+    ) as bt_logs:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address is not None
+        wifi_dut.interfaces.wifi.ble_start_advertising()
 
-    device_found = False
-    sw = Stopwatch()
-    while sw.elapsed_sec < 30:
-        found_devices = ble_client.interfaces.bluetooth.get_devices()
-        if bt_dut_address in found_devices and \
-                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
-            device_found = True
-            break
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
 
-    ble_client.interfaces.bluetooth.stop_scanning()
-    assert device_found
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            found_devices = ble_client.interfaces.bluetooth.get_devices()
+            if bt_dut_address in found_devices and \
+                    found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+                device_found = True
+                break
 
-    ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
-                                            min_conn_interval=160,
-                                            max_conn_interval=160,
-                                            conn_latency=0,
-                                            supervision_timeout=2000)
-    time.sleep(2)
-    # Get the state of the dut
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
+        ble_client.interfaces.bluetooth.stop_scanning()
+        assert device_found
 
-    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        # Provide BT connection parameter's value
+        conn_params = {"min_conn_interval": 40,
+                       "max_conn_interval": 40,
+                       "conn_latency": 0,
+                       "supervision_timeout": 120}
+
+        ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                min_conn_interval=conn_params["min_conn_interval"],
+                                                max_conn_interval=conn_params["max_conn_interval"],
+                                                conn_latency=conn_params["conn_latency"],
+                                                supervision_timeout=conn_params["supervision_timeout"])
+        time.sleep(2)
+        bt_logs.device_characteristics(wifi_dut.interfaces.wifi.ble_address)
+
+        # Get the state of the dut
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
+
+        # Provide the list of command parameters to be tested
+        ble_connection_params = {'Min connection interval': None,
+                                 'Max connection interval': None,
+                                 'Connection latency': None,
+                                 'Supervision timeout': None}
+        bt_conn_config = bt_logs.read_ble_connection_params(ble_connection_params)
+
+        # Validate BT connection params *Start*
+        if bt_conn_config:
+            assert bt_conn_config['Status'] == "Success"
+            assert bt_conn_config['Min connection interval'] == conn_params["min_conn_interval"]
+            assert bt_conn_config['Max connection interval'] == conn_params["max_conn_interval"]
+            assert bt_conn_config['Connection latency'] == conn_params["conn_latency"]
+            assert bt_conn_config['Supervision timeout'] == conn_params["supervision_timeout"]
+        # Validate BT connection params *End*
+
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
 @pytest.mark.config(
