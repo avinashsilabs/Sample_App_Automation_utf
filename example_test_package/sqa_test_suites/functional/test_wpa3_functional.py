@@ -41,6 +41,8 @@ def __print_throughput(iperf_throughput: dict):
 def logger():
     return get_logger(__name__)
 
+ping_count = 10
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -151,10 +153,10 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
@@ -207,19 +209,15 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -301,19 +299,15 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -372,13 +366,13 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 
     }
 )
-def test_tcpdata_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                             protocol):
 
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcpdata_rx_with_wpa3_c34513')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcp_data_rx_with_wpa3_c34513')
     time.sleep(2)
 
     logger().info(f"***** preparing wifi_dut ******")
@@ -394,19 +388,15 @@ def test_tcpdata_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access_
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -435,6 +425,7 @@ def test_tcpdata_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access_
 
     logger().info(f"***** get and print throughput   ******")
     tp = net_perf_client.interfaces.net_perf.process_output(result)
+    time.sleep(5)
     assert tp, "failed to get throughtput..."
     __print_throughput(tp)
     time.sleep(5)
@@ -493,19 +484,15 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -571,13 +558,13 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
         "band": 2,
     }
 )
-def test_tcpdata_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                             protocol):
 
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcpdata_tx_with_wpa3_5g_c34516')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcp_data_tx_with_wpa3_5g_c34516')
     time.sleep(2)
 
     logger().info(f"***** preparing wifi_dut ******")
@@ -593,19 +580,15 @@ def test_tcpdata_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acce
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -688,19 +671,15 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -760,13 +739,13 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
         "band": 2,
     }
 )
-def test_tcpdata_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                             protocol):
 
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcpdata_rx_with_wpa3_5g_c34517')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcp_data_rx_with_wpa3_5g_c34517')
     time.sleep(2)
 
     logger().info(f"***** preparing wifi_dut ******")
@@ -782,19 +761,15 @@ def test_tcpdata_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acce
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
 
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -823,6 +798,7 @@ def test_tcpdata_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acce
 
     logger().info(f"***** get and print throughput   ******")
     tp = net_perf_client.interfaces.net_perf.process_output(result)
+    time.sleep(5)
     assert tp, "failed to get throughtput..."
     __print_throughput(tp)
     time.sleep(5)
@@ -883,19 +859,14 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
-
-    # logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    # wifi_dut.interfaces.wifi.power_save(2, 0)
-    # wifi_dut.interfaces.wifi.bt_power_save(
-    #     power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    # )
-    # time.sleep(2)
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    logger().info("ping successful to host")
+    time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, 5)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(2)
+    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
