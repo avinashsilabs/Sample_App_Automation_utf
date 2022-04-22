@@ -120,6 +120,7 @@ def test_scan_5Ghz_usregion_C19400(wifi_dut, wifi_access_point,wifi_sniffer):
                     scan_fail = 1
                     # DUT connects to AP after join_ap API is executed
                     logger().info("Scanning to the Wifi Access Point")
+                    time.sleep(5)
                     wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
                     scan_fail = 0
                     break
@@ -218,6 +219,7 @@ def test_scan_5Ghz_euregion_C19401(wifi_dut, wifi_access_point,wifi_sniffer):
                     scan_fail = 1
                     # DUT connects to AP after join_ap API is executed
                     logger().info("Scanning to the Wifi Access Point")
+                    time.sleep(5)
                     wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
                     scan_fail = 0
                     break
@@ -298,6 +300,7 @@ def test_scan_5Ghz_jp_region_C19402(wifi_dut, wifi_access_point,wifi_sniffer):
             wifi_access_point.interfaces.wifi.start_ap(channel=channel)
             time.sleep(90)
             logger().info("scan for the ap's.....")
+            time.sleep(5)
             ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
             logger().info(f"scan list is:{ap_mac}")
             ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
@@ -337,7 +340,6 @@ def test_scan_5Ghz_jp_region_C19402(wifi_dut, wifi_access_point,wifi_sniffer):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 56})
 def test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -347,12 +349,16 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1(wifi_dut, w
         timeout = 10
         validation = True
         testcase = "test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1"
+
+
+        channel = 56
+        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
         time.sleep(80)
 
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"ap bssid: {ap_bssid}")
 
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
         time.sleep(10)
 
@@ -365,7 +371,7 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1(wifi_dut, w
         time.sleep(10)
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
 
         time.sleep(5)
 
@@ -386,12 +392,18 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1(wifi_dut, w
                                         timeout=timeout)
 
         logger().info("Initiating scan")
+        time.sleep(5)
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         assert scan_results, "failed to scan...."
 
         logger().info("Joining ap...")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
         time.sleep(5)
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         logger().info("pinging to dut.....")
@@ -403,7 +415,7 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_euregion_C19404_case1(wifi_dut, w
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
         # Validating the probe request packets
-        packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {dut_mac_address} and wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {dut_mac_address} and wlan_radio.channel == {channel}'
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -439,12 +451,16 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2(wifi_dut, w
     timeout = 10
     validation = True
     testcase = "test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2"
+
+    channel = 64
+    wifi_access_point.interfaces.wifi.start_ap(channel=channel)
     time.sleep(80)
 
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"ap bssid: {ap_bssid}")
+    time.sleep(10)
 
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
     time.sleep(10)
 
@@ -457,7 +473,7 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2(wifi_dut, w
     time.sleep(10)
 
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
 
     time.sleep(5)
 
@@ -478,12 +494,18 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2(wifi_dut, w
                                     timeout=timeout)
 
     logger().info("Initiating scan")
+    time.sleep(5)
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     assert scan_results, "failed to scan...."
 
     logger().info("Joining ap...")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
+    logger().info("enabling dhcp in DUT.......")
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
     time.sleep(5)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info("pinging to dut.....")
@@ -495,14 +517,14 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2(wifi_dut, w
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
     # Validating the probe request packets
-    packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {dut_mac_address} and wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
+    packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {dut_mac_address} and wlan_radio.channel == {channel}'
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info("Validate probe request packet")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find probe request packet in sniffer '
+    'packet_count'], 'Unable to find probe request packet in sniffer '
 
 @pytest.mark.config(
     "wifi_dut",
@@ -520,7 +542,6 @@ def test_scan_all_channels_connect_64_5Ghz_DFS_euregion_C19404_case2(wifi_dut, w
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 52})
 def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("******* Channel limitation for 104, running this test with channel 52 *******")
@@ -531,12 +552,15 @@ def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_p
         timeout = 10
         validation = True
         testcase = "test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3"
+
+        channel = 64
+        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
         time.sleep(80)
 
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"ap bssid: {ap_bssid}")
 
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
         time.sleep(10)
 
@@ -549,7 +573,7 @@ def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_p
         time.sleep(10)
 
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
 
         time.sleep(5)
 
@@ -570,11 +594,19 @@ def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_p
                                         timeout=timeout)
 
         logger().info("Initiating scan")
+        time.sleep(5)
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=52)
         assert scan_results, "failed to scan...."
 
+
         logger().info("Joining ap...")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
 
         time.sleep(5)
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -587,7 +619,7 @@ def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_p
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
         # Validating the probe request packets
-        packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {dut_mac_address} and wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {dut_mac_address} and wlan_radio.channel == {channel}'
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -595,6 +627,7 @@ def test_scan_104_channel_5Ghz_DFS_euregion_C19404_case3(wifi_dut, wifi_access_p
         logger().info("Validate probe request packet")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find probe request packet in sniffer '
+    logger().info(f"test completed in {t.duration} seconds")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -671,6 +704,7 @@ def test_scan_connect_5Ghz_DFS_euregion_C19404_case4(wifi_dut, wifi_access_point
                     scan_fail = 1
                     # DUT connects to AP after join_ap API is executed
                     logger().info("Scanning to the Wifi Access Point")
+                    time.sleep(5)
                     wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
                     scan_fail = 0
                     break
@@ -726,6 +760,7 @@ def test_scan_all_channels_connect_56_5Ghz_DFS_jpregion_C19405_case1(wifi_dut, w
     wifi_dut.interfaces.wifi.rejoin()
 
     logger().info("Initiating scan....")
+    time.sleep(5)
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     logger().info(scan_results)
     assert scan_results, "No ap found....."
@@ -765,6 +800,7 @@ def test_scan_all_channels_connect_104_5Ghz_DFS_jpregion_C19405_case2(wifi_dut, 
         wifi_dut.interfaces.wifi.rejoin()
 
         logger().info("Initiating scan...")
+        time.sleep(5)
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         logger().info("Joinig ap...")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -834,6 +870,7 @@ def test_scan_connect_channels_36_48_52_100_149_jpregion_C19405_case4(wifi_dut, 
         for count in channel_list:
             channel_bitmap_5 += 1 << (count - 1)
             logger().info("Initiating selective channel scan...")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_5=channel_bitmap_5,
                                                                            scan_feature=scan_feature_extend)
@@ -1308,6 +1345,7 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410(wi
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
 
             logger().info("Initiating selective channel scan...")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -1326,8 +1364,8 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410(wi
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
                 'packet_count'], 'Unable to find probe request packet in sniffer '
 
-            logger().info(f"scan list is {scan_results}")
-            assert scan_results, "failed to scan..."
+        logger().info(f"scan list is {scan_results}")
+        assert scan_results, "failed to scan..."
 
         for channel in channel_list1:
             logger().info("Starting access point with custom channel...")
@@ -1358,6 +1396,7 @@ def test_all_channels_scan_by_setting_all_channels_in_bitmap_dual_band_C19410(wi
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
             logger().info("Initiating selective channel scan...")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -1452,7 +1491,8 @@ def test_scan_for_channels_36_40_48_52_100_149_157_161_165_C19411(wifi_dut, wifi
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
 
             logger().info("Initiating selective channel scan...")
-            scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=None,
+            time.sleep(5)
+            scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=0,
                                                                            scan_bitmap_5=channel_bitmap_5,
                                                                            scan_feature=scan_feature_extend)
@@ -1547,6 +1587,7 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
 
             logger().info("Initiating selective channel scan....")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0,ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=0,
@@ -1564,9 +1605,8 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
 
             logger().info("Validate probe request packet")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-                'packet_count'], 'Unable to find probe request packet in sniffer '
-
-            assert len(scan_results) >= 1, "failed to scan...."
+                'packet_count'], 'Unable to find probe request packet in sniffer'
+        assert len(scan_results) >= 1, "failed to scan...."
 
         for channel in channel_list1:
             logger().info("Starting access point with custom channel...")
@@ -1598,6 +1638,7 @@ def test_scan_in_dual_band_for_AP_channels_6_and_36_by_setting_channel_as_1_in_d
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
 
             logger().info("Initiating selective channel scan...")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0,ssid=None,
                                                                            scan_bitmap_2_4=0,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -1692,6 +1733,7 @@ def test_scan_5ghz_band_for_channels_36_40_52_56_149_161_165_C19413(wifi_dut, wi
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
 
             logger().info("Initiating selective channel scan...")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                            scan_bitmap_2_4=0,
                                                                            scan_bitmap_5=channel_bitmap_5,
@@ -1791,6 +1833,7 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'{testcase}_probe_req')
             logger().info("Initiating selective channel scan...")
+            time.sleep(5)
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=None,
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=0,
@@ -1807,9 +1850,9 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
 
-            logger().info("Validate probe request packet")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-                'packet_count'], 'Unable to find probe request packet in sniffer '
+        logger().info("Validate probe request packet")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find probe request packet in sniffer '
 
         for channel in channel_list1:
             logger().info("Starting access point with custom channel...")
