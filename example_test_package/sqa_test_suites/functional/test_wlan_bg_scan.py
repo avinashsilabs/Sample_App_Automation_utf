@@ -916,11 +916,12 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     send_bytes = 1000
     validation = True
 
+
     '''Verify BG Scan response when enable DFS channels'''
     wifi_access_point.interfaces.wifi.config['channel'] = channel_list
     wifi_access_point.interfaces.wifi.config['region'] = 'US'
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(10)
+    time.sleep(80)
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel_list)
     file_name = f'BGSCAN_DFS_CH_{channel_list}'
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
