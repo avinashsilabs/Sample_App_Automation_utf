@@ -5,9 +5,8 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, 
 import time
 import pytest
 from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import ping
+from utf.utils.iperf.iperf_utils import ping,ping_qos
 
-from utf_wifi.utf_core.src.utf.utils.iperf.iperf_utils import ping_qos
 
 """This function runs below test steps for DUT-RS9116
         1. Configuration of DUT in 2G : BGN
