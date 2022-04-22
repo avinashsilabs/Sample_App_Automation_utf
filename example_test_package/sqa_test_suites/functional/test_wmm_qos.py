@@ -7,6 +7,8 @@ import pytest
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 
+from utf_wifi.utf_core.src.utf.utils.iperf.iperf_utils import ping_qos
+
 """This function runs below test steps for DUT-RS9116
         1. Configuration of DUT in 2G : BGN
         2. Start the sniffer before connection
@@ -451,7 +453,7 @@ def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_
 
     logger().info(f"***** Initiate ping from third party wifi-client to DUT ******")
     for qos_category in traffic_category_list:
-        status = ping(device_ip, 20, qos=True, qos_category=qos_category)
+        status = ping_qos(device_ip, 20, qos_category=qos_category)
         assert status == 1, "Ping failed"
 
         time.sleep(5)
