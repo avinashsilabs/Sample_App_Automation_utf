@@ -42,6 +42,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
 def logger():
     return get_logger(__name__)
 
+ping_count = 20
 
 
 # this thread used for wifi join
@@ -157,7 +158,7 @@ class WifiJoinThread(ThreadBase):
             time.sleep(5)
 
             # Initiate ping from third party wifi-client to DUT
-            status = ping(device_ip, 10)
+            status = ping(device_ip, ping_count)
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
 
@@ -236,7 +237,7 @@ class WifiThread(ThreadBase):
         time.sleep(5)
 
         # Initiate ping from third party wifi-client to DUT
-        status = ping(device_ip, 50)
+        status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
 
@@ -262,6 +263,9 @@ class WifiThread(ThreadBase):
         logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find ps polls in sniffer capture'
+
+        logger().info("disconnecting to ap.....")
+        self.wifi_dut.interfaces.wifi.leave()
 
 # this thread used for sta+ble as a slave
 class BleThread_Connection(ThreadBase):
@@ -710,7 +714,7 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         # packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
-        status = ping(device_ip, 20)
+        status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
 
@@ -729,6 +733,8 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         # logger().info(" Validate dhcp")
         # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         #     'packet_count'], 'Unable to find dhcp in sniffer '
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 
@@ -781,7 +787,7 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     time.sleep(5)
 
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 10)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
 
@@ -816,9 +822,13 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
         'packet_count']
 
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 10)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device after rejoin"
     logger().info(f"ping is successful after rejoin")
+
+    logger().info("disconnecting to ap.....")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 
