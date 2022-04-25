@@ -10,6 +10,9 @@ with open("./manifest/manifest.yaml", "r+") as f:
     flash_efr32 = sys.argv[4]
     chip_version = sys.argv[5]
     build_location = sys.argv[6]
+    
+    print("build_location")
+    print(build_location)
 
     y=yaml.safe_load(f)
 
