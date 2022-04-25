@@ -106,11 +106,6 @@ pipeline {
 
                                             git config --file=.gitmodules submodule.mini_gecko_sdk.url ssh://git@stash.silabs.com/Redpine/mini_gecko_sdk
                                             git submodule update --init --recursive test_agent/mini_gecko_sdk
-
-                                            # git clone --no-checkout --branch=utf/dev --depth 1 ssh://git@stash.silabs.com/Redpine/utf test_agent/rs911x
-                                            # cd test_agent/rs911x
-                                            # git checkout utf/dev
-                                            # cd ../..
                                             
                                             ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
                                         '''
