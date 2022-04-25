@@ -68,6 +68,7 @@ def logger():
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_C19454(wifi_sniffer, wifi_dut, wifi_client, channel):
     validation = True
@@ -95,6 +96,7 @@ def test_C19454(wifi_sniffer, wifi_dut, wifi_client, channel):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "Unable to find beacon frame with Region US in Sniffer"
     time.sleep(2)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -122,6 +124,7 @@ def test_C19454(wifi_sniffer, wifi_dut, wifi_client, channel):
     },
 )
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_C19455(wifi_sniffer, wifi_dut, wifi_client, channel):
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -148,6 +151,7 @@ def test_C19455(wifi_sniffer, wifi_dut, wifi_client, channel):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "Unable to find beacon frame with Region EU in Sniffer"
     time.sleep(2)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -174,6 +178,7 @@ def test_C19455(wifi_sniffer, wifi_dut, wifi_client, channel):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_C19456(wifi_sniffer, wifi_dut, wifi_client, channel):
     validation = True
@@ -201,7 +206,7 @@ def test_C19456(wifi_sniffer, wifi_dut, wifi_client, channel):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "Unable to find beacon frame with Region JP in Sniffer"
     time.sleep(2)
-
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -227,6 +232,7 @@ def test_C19456(wifi_sniffer, wifi_dut, wifi_client, channel):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [36, 40, 48, 149, 165])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -285,6 +291,7 @@ def test_C19434(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, channel, p
         "in sniffer"
     )
     time.sleep(5)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -310,6 +317,7 @@ def test_C19434(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, channel, p
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("dtim", [1, 2, 3, 6, 10])
 @pytest.mark.parametrize("channel", [11])
 def test_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, channel):
@@ -342,6 +350,7 @@ def test_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, channel):
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"]
     time.sleep(5)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -367,6 +376,7 @@ def test_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, channel):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("beacon", [100, 200, 600, 1000])
 @pytest.mark.parametrize("channel", [11])
 def test_C19443(wifi_sniffer, wifi_dut, wifi_client, beacon, channel):
@@ -403,6 +413,7 @@ def test_C19443(wifi_sniffer, wifi_dut, wifi_client, beacon, channel):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"]
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)["packet_count"]
     time.sleep(2)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -428,6 +439,7 @@ def test_C19443(wifi_sniffer, wifi_dut, wifi_client, beacon, channel):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_C19435(wifi_sniffer, wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
     logger().info("********* configuring static ip to DUT *********")
@@ -436,6 +448,7 @@ def test_C19435(wifi_sniffer, wifi_dut, wifi_client):
         wifi_dut.interfaces.wifi.start_ap(channel=10)
     assert "Device must be initialized for the correct band" in str(exc_info)
     logger().info("Device must be initialized for the correct band")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -479,6 +492,7 @@ def test_C19435(wifi_sniffer, wifi_dut, wifi_client):
     }
 )
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_C19432(wifi_sniffer, wifi_dut, wifi_clients, channel):
     logger().info(f'************* Configuring Static IP *************')
@@ -518,6 +532,7 @@ def test_C19432(wifi_sniffer, wifi_dut, wifi_clients, channel):
         "in sniffer"
     )
     time.sleep(5)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -560,6 +575,7 @@ def test_C19432(wifi_sniffer, wifi_dut, wifi_clients, channel):
         },
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_C19430_C19442(wifi_sniffer, wifi_dut, wifi_clients, channel):
@@ -599,6 +615,7 @@ def test_C19430_C19442(wifi_sniffer, wifi_dut, wifi_clients, channel):
         "in sniffer"
     )
     time.sleep(5)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -624,6 +641,7 @@ def test_C19430_C19442(wifi_sniffer, wifi_dut, wifi_clients, channel):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [10])
 def test_C19436(wifi_sniffer, wifi_dut, wifi_client, channel):
     validation = True
@@ -651,6 +669,7 @@ def test_C19436(wifi_sniffer, wifi_dut, wifi_client, channel):
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"]
     time.sleep(2)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -673,6 +692,7 @@ def test_C19436(wifi_sniffer, wifi_dut, wifi_client, channel):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [36])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -722,6 +742,7 @@ def test_C19447_Tx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protoco
                      f'(wlan.fc.type_subtype == 0x000b)'
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ["packet_count"]
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -744,6 +765,7 @@ def test_C19447_Tx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protoco
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [36])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -801,6 +823,7 @@ def test_C19447_Rx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protoco
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ["packet_count"]
     time.sleep(2)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -824,6 +847,7 @@ def test_C19447_Rx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protoco
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_C19458(wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
     logger().info("********* configuring static ip to DUT *********")
@@ -832,6 +856,7 @@ def test_C19458(wifi_dut, wifi_client):
         wifi_dut.interfaces.wifi.start_ap()
     assert "Device must be initialized for the correct band" in str(exc_info)
     logger().info("Device must be initialized for the correct band")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -855,6 +880,7 @@ def test_C19458(wifi_dut, wifi_client):
         "passphrase": "12345678",
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_C19457(wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
     logger().info("********* configuring static ip to DUT *********")
@@ -863,4 +889,6 @@ def test_C19457(wifi_dut, wifi_client):
         wifi_dut.interfaces.wifi.start_ap()
     assert "Device must be initialized for the correct band" in str(exc_info)
     logger().info("Device must be initialized for the correct band")
+    wifi_dut.interfaces.wifi.leave()
+
 
