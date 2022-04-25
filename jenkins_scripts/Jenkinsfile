@@ -50,37 +50,39 @@ pipeline {
                     steps{
                         script{
                             if(FLASH_RS9116.toBoolean()){
-                                if((RS9116_FIRMWARE != "Internal") || (BUILD_LOCATION != "source_code")){
-                                    withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                               keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                               passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                               usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                        
-                                        if(BUILD_LOCATION == "build_artifacts"){
+                                if(BUILD_LOCATION != "source_code"){
+                                    if(RS9116_FIRMWARE != "Internal"){
+                                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                                keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                            
+                                            if(BUILD_LOCATION == "build_artifacts"){
+                                                sh '''
+                                                    rm -rf rs9116_binary
+                                                    export GIT_SSH=ssh
+                                                    export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                    git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
+                                                '''
+                                            } else {
+                                                sh '''
+                                                    rm -rf rs9116_binary
+                                                    export GIT_SSH=ssh
+                                                    export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                    git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                                '''
+                                            }
+                                        }
+                                        dir('rs9116_binary'){
                                             sh '''
-                                                rm -rf rs9116_binary
-                                                export GIT_SSH=ssh
-                                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                                git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
-                                            '''
-                                        } else {
-                                            sh '''
-                                                rm -rf rs9116_binary
-                                                export GIT_SSH=ssh
-                                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                                git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                            if [ -d venv/bin ]; then
+                                            . venv/bin/activate
+                                            elif [ -d venv/Scripts ]; then
+                                            . venv/Scripts/activate
+                                            fi
+                                            python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
                                             '''
                                         }
-                                    }
-                                    dir('rs9116_binary'){
-                                        sh '''
-                                        if [ -d venv/bin ]; then
-                                           . venv/bin/activate
-                                        elif [ -d venv/Scripts ]; then
-                                           . venv/Scripts/activate
-                                        fi
-                                        python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                        '''
                                     }
                                 }
                             } else {
