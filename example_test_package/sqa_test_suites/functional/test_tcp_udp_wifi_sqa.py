@@ -166,6 +166,7 @@ def test_wifi_tcp_close_TC19347(wifi_sniffer, wifi_dut, wifi_access_point, remot
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -214,6 +215,7 @@ def test_wifi_tcp_data_receive_check_TC19360(wifi_sniffer, wifi_dut, wifi_access
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -250,6 +252,7 @@ def test_wifi_udp_close_TC19348(wifi_sniffer, wifi_dut, wifi_access_point, remot
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -297,6 +300,7 @@ def test_wifi_udp_receive_TC19361(wifi_sniffer, wifi_dut, wifi_access_point, rem
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -352,6 +356,7 @@ def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, wifi_dut, wifi_access_p
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -413,3 +418,4 @@ def test_wifi_tcp_rejoin_TC19354(wifi_sniffer, wifi_dut, wifi_access_point, remo
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()

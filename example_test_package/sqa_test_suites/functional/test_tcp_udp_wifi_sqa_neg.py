@@ -143,6 +143,7 @@ def test_wifi_tcp_80_http_coexist_TC3756(wifi_sniffer, wifi_dut, wifi_access_poi
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -174,7 +175,7 @@ def test_wifi_tcp_443_https_coexist_TC3756(wifi_sniffer, wifi_dut, wifi_access_p
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 443)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.listen(sock, 1)
-    assert exc_info.value.error_code == 0xFFFFFFFF,  f"DUT sent wrong error code. expected is {0xFFFFFFFF}"
+    assert exc_info.value.error_code == 0xFFFFFFFF, f"DUT sent wrong error code. expected is {0xFFFFFFFF}"
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xFF81, f"DUT sent wrong error code. expected is {0xFF81}"
@@ -188,6 +189,7 @@ def test_wifi_tcp_443_https_coexist_TC3756(wifi_sniffer, wifi_dut, wifi_access_p
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -225,7 +227,7 @@ def test_wifi_socket_limit_TC3757(wifi_sniffer, wifi_dut, wifi_access_point, rem
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 443)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.listen(sock, 1)
-    assert exc_info.value.error_code == 0xFFFFFFFF,  f"DUT sent wrong error code. expected is {0xFFFFFFFF}"
+    assert exc_info.value.error_code == 0xFFFFFFFF, f"DUT sent wrong error code. expected is {0xFFFFFFFF}"
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xFF80, f"DUT sent wrong error code. expected is {0xFF80}"
@@ -239,3 +241,4 @@ def test_wifi_socket_limit_TC3757(wifi_sniffer, wifi_dut, wifi_access_point, rem
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
