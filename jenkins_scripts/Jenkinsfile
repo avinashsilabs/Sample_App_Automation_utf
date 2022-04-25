@@ -93,7 +93,7 @@ pipeline {
                     steps{
                         script{
                             if(FLASH_EFR32.toBoolean()){
-                                if(SQA_TEST_AGENT != "Internal"){
+                                if(SQA_TEST_AGENT != "Internal" || BUILD_LOCATION != "source_code" ){
                                     withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
                                                                keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
@@ -128,7 +128,7 @@ pipeline {
                             else
                                . venv/Scripts/activate
                             fi
-                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps generic_test_agent.hex ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV}
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps generic_test_agent.hex ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV} ${BUILD_LOCATION}
                         '''
                     }
                 }
