@@ -116,7 +116,6 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat", [10])
 def test_wifi_http_server_TC19235(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
-
     current_time = time.time()
     capture_filename = "test_wifi_http_server_TC3595"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -131,7 +130,7 @@ def test_wifi_http_server_TC19235(wifi_sniffer, wifi_dut, wifi_access_point, htt
             http_server.interfaces.http, method, index_path, server_ip=device_ip, timeout=20
             )
         logger.info(f"Length of DUTs  webpage {len(resp_content)} in iteration {count + 1}")
-        logger.info(f"***************Contents of webpage on iteration {count+1}------------->   {resp_content}\n\n\n"
+        logger.info(f"***************Contents of webpage on iteration {count + 1}------------->   {resp_content}\n\n\n"
                     f"*****")
         file_time_stamp = str(
             datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
@@ -149,6 +148,7 @@ def test_wifi_http_server_TC19235(wifi_sniffer, wifi_dut, wifi_access_point, htt
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -204,6 +204,7 @@ def test_wifi_https_server_TC19236(wifi_sniffer, wifi_dut, wifi_access_point, ht
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -227,7 +228,6 @@ def test_wifi_https_server_TC19236(wifi_sniffer, wifi_dut, wifi_access_point, ht
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_enable1_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                                 logger):
-
     current_time = time.time()
     capture_filename = "test_wifi_enable1_http_https_server_TC19238"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -261,6 +261,7 @@ def test_wifi_enable1_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_acc
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -308,6 +309,7 @@ def test_wifi_enable2_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_acc
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -354,3 +356,4 @@ def test_wifi_https_server_erase_cert_TC19237(wifi_sniffer, wifi_dut, wifi_acces
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
