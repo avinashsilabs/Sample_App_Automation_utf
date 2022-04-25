@@ -47,6 +47,7 @@ ping_count = 10
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'TESTTEST-ASUS',"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -90,7 +91,7 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None, channel=11)
+            wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
             scan_fail = 0
             break
         except:
@@ -107,7 +108,7 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid='Azeez123', channel=11)
+            wifi_dut.interfaces.wifi.scan(ssid='TESTTEST-ASUS', channel=wifi_access_point.interfaces.wifi.channel)
             scan_fail = 0
             break
         except:
