@@ -18,9 +18,9 @@ include:
   - path: rsi_common_config.h
   - path: rsi_ble_config.h
 
-- path: '../config'
+- path: './config'
   file_list:
-  - path: rsi_wlan_config.h
+  - path: rsi_power_save3_wlan_config.h
 
 - path: '../common/data'
   file_list:
