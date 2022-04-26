@@ -1935,4 +1935,20 @@ template_contribution:
     help: Request wlan radio
     argument:
     - {type: uint8, help: enable or disable}
-   
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wireless_deinit
+    handler: wireless_deinit_command
+    help: deinit wireless
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wireless_device_init
+    handler: wireless_device_init_command
+    help: initilize device
+    argument:
+    - {type: uint16, help: opermode}
+    - {type: uint16, help: coex}
