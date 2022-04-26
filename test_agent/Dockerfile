@@ -26,6 +26,13 @@ RUN --mount=type=ssh \
             cp -r ${RELEASE_PACKAGE_VERSION}/platforms/efx32 mini_gecko_sdk/platform/radio/wifi/rs9116 && \
             cp -r ${RELEASE_PACKAGE_VERSION}/third_party mini_gecko_sdk/platform/radio/wifi/rs9116 && \
             rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}.zip && rm -rf ${RELEASE_PACKAGE_VERSION}; \
+        elif [ "${BUILD_LOCATION}" = "source_code" ]; then \
+            git archive --remote ssh://git@stash.silabs.com/redpine/rs911x.git --format tar ${RELEASE_PACKAGE_VERSION} Host_MCU/sapi Host_MCU/platforms/efx32 Host_MCU/third_party -o ${RELEASE_PACKAGE_VERSION}.tar && \
+            mkdir -p ${RELEASE_PACKAGE_VERSION} && tar -xvf ${RELEASE_PACKAGE_VERSION}.tar -C ${RELEASE_PACKAGE_VERSION} && \
+            cp -r ${RELEASE_PACKAGE_VERSION}/Host_MCU/sapi mini_gecko_sdk/platform/radio/wifi/rs9116 && \
+            cp -r ${RELEASE_PACKAGE_VERSION}/Host_MCU/platforms/efx32 mini_gecko_sdk/platform/radio/wifi/rs9116 && \
+            cp -r ${RELEASE_PACKAGE_VERSION}/Host_MCU/third_party mini_gecko_sdk/platform/radio/wifi/rs9116 && \
+            rm -rf ${RELEASE_PACKAGE_VERSION}.tar && rm -rf ${RELEASE_PACKAGE_VERSION}; \
         else \
             git archive --remote ssh://git@stash.silabs.com/redpine/build_artifacts.git --format tar ${RELEASE_PACKAGE_VERSION}/build -o ${RELEASE_PACKAGE_VERSION}.tar && \
             mkdir ${RELEASE_PACKAGE_VERSION} && tar -xvf ${RELEASE_PACKAGE_VERSION}.tar -C ${RELEASE_PACKAGE_VERSION} && \
