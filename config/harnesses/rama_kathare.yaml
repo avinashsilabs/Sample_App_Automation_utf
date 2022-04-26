@@ -280,12 +280,12 @@ devices:
                 ip_version: 0
                 dut_local_socket: 5001
                 destination_socket: 5001
-                server_ip: '192.168.100.50'
                 time: 30
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
                 interface: 'eth0'
+
     raspi_bt_client:
         interfaces:
             linux_shell:
@@ -704,6 +704,8 @@ defaults:
     rf_attenuator: '50pa500_attenuator'
 
     ssl_server: 'raspi_ssl_server'
+
+    remote_socket: 'raspi_ip_socket'
     #ssl_server: 'raspi_ssl_server_static'
     #ssl_client: 'raspi_ssl_client'
 
