@@ -539,3 +539,32 @@ void wlan_request_radio_command(sl_cli_command_arg_t* arguments)
 	int32_t status = rsi_wlan_req_radio(radio_enable);
 	print_status(status);
 }
+
+void wireless_deinit_command()
+{
+	int32_t status = 0;
+	rsi_task_destroy(s_driver_task_handle);
+	status = rsi_driver_deinit();
+
+	if(status != 0)
+	{
+		printf("driver deinit failed status:%d\n",status);
+		return;
+	}
+	print_status(rsi_wireless_deinit());
+}
+
+void wireless_device_init_command(sl_cli_command_arg_t* arguments)
+{
+	uint16_t opermode = sl_cli_get_argument_uint16(arguments, 0);
+	uint16_t coex_mode = sl_cli_get_argument_uint16(arguments, 1);
+
+	rsi_task_create((rsi_task_function_t)rsi_wireless_driver_task,
+           (uint8_t*)"wireless_task",
+           RSI_DRIVER_TASK_STACK_SIZE,
+           NULL,
+           RSI_DRIVER_TASK_PRIORITY,
+           &s_driver_task_handle);
+
+	print_status(rsi_wireless_init(opermode, coex_mode));
+}

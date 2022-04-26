@@ -66,7 +66,8 @@ ENV PROJECT_LIST="generic_test_agent \
                     generic_test_agent_no_bt \
                     bt_test_agent \
                     ap_htcaps_enable \
-                    generic_test_agent_without_aws"
+                    generic_test_agent_without_aws \
+                    generic_test_agent_without_aws_powersave3"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
