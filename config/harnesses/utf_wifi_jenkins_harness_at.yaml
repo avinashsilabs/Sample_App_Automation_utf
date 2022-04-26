@@ -365,6 +365,36 @@ devices:
                             interface: 'wlan0'
             defaults: { }
 
+    secondary_raspi_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.1.154'
+                image: 'utfsilabs/rpi_ubuntu_secondary'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
         interfaces:
@@ -640,6 +670,38 @@ devices:
                 host_username: "test"
                 host_password: "test123"
 
+    raspi_ftp_server:
+        interfaces:
+            vsftpd_ftp_server:
+                type: 'ftp.server.vsftpd_ftp_server'
+                tls_enabled: false
+
+    raspi_ftp_server_tls:
+        interfaces:
+            vsftpd_ftp_server:
+                type: 'ftp.server.vsftpd_ftp_server'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+
+    raspi_ftp_client:
+        interfaces:
+            ftplib_ftp_client:
+                type: 'ftp.client.ftplib_ftp_client'
+                tls_enabled: false
+                # this is fixed as we are creating user in docker file so that user will get created while creating container
+                username: "ftpuser"
+                password: "ftpuser"
+
+    raspi_ftp_client_tls:
+        interfaces:
+            ftplib_ftp_client:
+                type: 'ftp.client.ftplib_ftp_client'
+                tls_enabled: true
+                # this is fixed as we are creating user in docker file so that user will get created while creating container
+                username: "ftpuser"
+                password: "ftpuser"
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -678,6 +740,10 @@ defaults:
     power_meter: 'keysight_power_analyzer'
 
     ble_client: 'raspi_ble_client'
+
+    ble_clients:
+        - 'secondary_raspi_ble_client'
+        - 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
 
@@ -728,6 +794,13 @@ defaults:
         bt_local_name: "rs911x_bt_spp"
         bt_pin_code: "4321"
 
+    iop_sockets:
+        server_ip: '192.168.10.212'
+        server_port: '6001'
+        att_channel: 1
+        db_value: 2
+        att_enable: true
+
     aws_iot:
         hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
         port: 8883
@@ -736,6 +809,10 @@ defaults:
         certfile: "python-thing-certificate.pem.crt"
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
+
+    ftp_server: 'raspi_ftp_server'
+
+    ftp_client: 'raspi_ftp_client'
 
     net_perf:
         server_options:
