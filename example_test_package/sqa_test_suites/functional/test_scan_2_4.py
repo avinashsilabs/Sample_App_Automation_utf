@@ -125,7 +125,6 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
         )
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config("wifi_access_point", wifi={'ssid': 'test123test123test123test123test'})
 def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_ssid_32bytes_c19064"
     validation = True
@@ -147,15 +146,21 @@ def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     # Enables the bt power save in DUT
     logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    ssid_list = ['test123test123test123test123test', "test1*@test1*#test1*@test1*$test", 'test12.test12.test12.test12.test',\
+                 "人人生而自在尊严和权利上人人生而在尊严和权利上人人生而自在尊严权"]
 
-    for i in range(0,3):
+    for ssid in ssid_list:
 
-        # enables the scan in DUT with the given channel bitmap value
-        logger().info("Initiating the scan from DUT...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+        # initiates the access point with channel given in list
+        logger().info(f"Setting access point with ssid {ssid}...")
+        wifi_access_point.interfaces.wifi.start_ap(ssid=ssid)
+        time.sleep(10)
+        logger().info(f"Initiating the scan from DUT with ssid {ssid}..")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=ssid)
         logger().info(scan_results)
-        assert len(scan_results) == 1,"Scan results not found"
+        assert len(scan_results) >= 1, f"32 bytes ssid not found in scan results"
     logger().info(f"Validate Probe req(Broadcast)")
+    wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{wifi_access_point.interfaces.wifi.channel}'
     logger().info(f"found Probe req(Broadcast) in channel:{wifi_access_point.interfaces.wifi.channel}'")
