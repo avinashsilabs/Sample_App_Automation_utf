@@ -19,9 +19,8 @@ def test_wiseconnect_web(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    status = ping(device_ip, 10)
+    status = ping(device_ip, 3)
     assert status is True, "DUT is not responding to ping request from third party device before store configuration"
-
     # configures the values from harness on given ip address of web page
     wiseconnect_web.interfaces.wiseconnect_ui.configure_submit(ip_address=device_ip)
 
@@ -30,7 +29,7 @@ def test_wiseconnect_web(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     time.sleep(10)
 
     # # Ping to dut from third party device
-    status = ping(device_ip, 10)
+    status = ping(device_ip, 3)
     logger.info(f"ping status after reset is :: {status}")
     assert status is True, "DUT is not responding to ping request from third party device after store configuration"
     time.sleep(5)
@@ -61,3 +60,25 @@ def test_wiseconnect_web_firmware_upgrade(wifi_dut, wifi_access_point, wiseconne
     wifi_dut.interfaces.wifi.wireless_init()
     upgraded_version = wifi_dut.interfaces.wifi.version()
     logger.info(f"Upgraded version: {upgraded_version}")
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "disable_store_config"])
+def test_wiseconnect_web_with_screenshot(wifi_access_point, wifi_dut, wiseconnect_web, logger):
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    status = ping(device_ip, 3)
+    assert status is True, "DUT is not responding to ping request from third party device before store configuration"
+    # configures the values from harness on given ip address of web page
+    wiseconnect_web.interfaces.wiseconnect_ui.configure_submit(ip_address=device_ip, capture_screenshot=True,
+                                                               screenshot_file_name='test_screenshot')
+
+    wifi_dut.interfaces.wifi.reset_soft()
+    wifi_dut.interfaces.wifi.wireless_init()
+    time.sleep(10)
+
+    # # Ping to dut from third party device
+    status = ping(device_ip, 3)
+    logger.info(f"ping status after reset is :: {status}")
+    assert status is True, "DUT is not responding to ping request from third party device after store configuration"
+    time.sleep(5)
