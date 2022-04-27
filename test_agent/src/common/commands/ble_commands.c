@@ -1199,3 +1199,26 @@ static void rsi_ble_on_gatt_write_event(uint16_t event_id, rsi_ble_event_write_t
     memcpy(&app_ble_write_event, rsi_ble_write, sizeof(rsi_ble_event_write_t));
     rsi_ble_app_set_event(RSI_BLE_GATT_WRITE_EVENT);
 }
+
+void rsi_ble_set_data_len_command(sl_cli_command_arg_t* arguments)
+{
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint16_t tx_len = sl_cli_get_argument_uint16(arguments, 1);
+    uint16_t tx_time = sl_cli_get_argument_uint8(arguments, 2);
+
+    uint8_t device_address[6];
+	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
+    print_status(rsi_ble_set_data_len(device_address,tx_len,tx_time));
+}
+
+void rsi_ble_read_max_data_len_command(sl_cli_command_arg_t* arguments)
+{
+    rsi_ble_read_max_data_length_t blereadmaxdatalen;
+
+    blereadmaxdatalen.maxtxoctets  = sl_cli_get_argument_uint16(arguments, 0);
+    blereadmaxdatalen.maxtxtime = sl_cli_get_argument_uint16(arguments, 1);
+    blereadmaxdatalen.maxrxoctets = sl_cli_get_argument_uint16(arguments, 2);
+    blereadmaxdatalen.maxrxtime = sl_cli_get_argument_uint16(arguments, 3);
+
+    print_status(rsi_ble_read_max_data_len(&blereadmaxdatalen));
+}
