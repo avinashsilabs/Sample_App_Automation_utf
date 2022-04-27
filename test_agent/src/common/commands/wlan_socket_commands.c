@@ -1169,7 +1169,7 @@ void async_socket_select(rsi_fd_set *fd_read, rsi_fd_set *fd_write, rsi_fd_set *
 	memset(&read_fds, 0, sizeof(rsi_fd_set));
 	memcpy(&read_fds, fd_read, sizeof(rsi_fd_set));
 	socket_select_response = 1;
-	printf("\r\nSOCKET_SELECT_EVENT fd_size:%d,fd_id:%d\r\n", read_fds.fd_count,read_fds.fd_array[0]);
+	printf("\r\nSOCKET_SELECT_EVENT fd_size:%ld,fd_id:%ld\r\n", read_fds.fd_count,read_fds.fd_array[0]);
 	socket_select_response = 0;
 }
 
@@ -1212,7 +1212,7 @@ void rsi_socket_select(sl_cli_command_arg_t* arguments)
 		}
 		else
 		{
-			printf("\nstatus:%d\n",status);
+			printf("\nstatus:%ld\n",status);
 			print_status(RSI_ERROR_NONE);
 		}
 	}
@@ -1295,14 +1295,13 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 				tx_stats[sock_no][0] += status;
 				tx_stats[sock_no][1] = tt_end - tt_start;
 				tx_stats[sock_no][3]++;
-				if(tx_stats[sock_no][3]==no_of_pkts)
+				if(tx_stats[sock_no][3] == no_of_pkts)
 				{
 					tx_stats[sock_no][4]=1;
 					flag++;
 				}
 			}
-			else if(status < 0)
-			{
+			else {
 				tx_stats[sock_no][1] = tt_end - tt_start;
 				tx_stats[sock_no][2] = status;
 				tx_stats[sock_no][4]=1;
@@ -1321,7 +1320,7 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 
 	for(sock_no=0;sock_no <max_sock; sock_no++)
 	{
-		printf("%d,%d,%d-",tx_stats[sock_no][0],tx_stats[sock_no][1],tx_stats[sock_no][2]);
+		printf("%ld,%ld,%ld-",tx_stats[sock_no][0],tx_stats[sock_no][1],tx_stats[sock_no][2]);
 	}
 	printf("\n");
 	print_status(RSI_ERROR_NONE);
