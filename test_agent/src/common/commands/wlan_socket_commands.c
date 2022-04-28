@@ -1295,7 +1295,7 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 				tx_stats[sock_no][0] += status;
 				tx_stats[sock_no][1] = tt_end - tt_start;
 				tx_stats[sock_no][3]++;
-				if(tx_stats[sock_no][3] == (UInt32)no_of_pkts)
+				if(tx_stats[sock_no][3] == (uint32_t)no_of_pkts)
 				{
 					tx_stats[sock_no][4] = 1;
 					flag++;
