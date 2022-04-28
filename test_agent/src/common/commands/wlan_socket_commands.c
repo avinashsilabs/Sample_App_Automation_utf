@@ -1117,7 +1117,7 @@ void rsi_get_sntp_server_info(sl_cli_command_arg_t* arguments)
 	int32_t status = rsi_sntp_client_server_info((uint16_t)sizeof(sntp_server_info_rsp), (uint8_t *)&sntp_server_info_rsp);
 	if(!status)
 	{
-		printf("\nsntp server info:%d,%d,",sntp_server_info_rsp.command_type,sntp_server_info_rsp.ip_version);
+		printf("\nsntp server info:%d,%d,", sntp_server_info_rsp.command_type, sntp_server_info_rsp.ip_version);
 		if((sntp_server_info_rsp.ip_version) == 4)
 		{
 			for(ii = 0; ii < 4; ii++)
