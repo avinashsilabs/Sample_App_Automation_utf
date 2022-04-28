@@ -42,6 +42,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
 def logger():
     return get_logger(__name__)
 
+ping_count = 20
 
 
 # this thread used for wifi join
@@ -63,13 +64,16 @@ class WifiJoinThread(ThreadBase):
     def run_traffic(self,device_ip):
 
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"host ip :{host_ip}")
+        logger().info(f"Remote device ip :{host_ip}")
+
+        logger().info("starting the server from Remote device")
 
         # starting iperf
         self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=self.protocol)
         self.net_perf_client.interfaces.net_perf.start()
         #self.net_perf_client.interfaces.net_perf.client_options["time"] = 50
 
+        logger().info("sending data from DUT")
         # open socket and send traffic
         self.wifi_dut.interfaces.wifi.send_traffic_from_device(
             host_ip,
@@ -78,16 +82,20 @@ class WifiJoinThread(ThreadBase):
             self.net_perf_client.interfaces.net_perf.protocol,
             self.net_perf_client.interfaces.net_perf.client_options,
         )
-
         # get and print throughput
         tp = self.net_perf_client.interfaces.net_perf.process_output()
-        assert tp is not None
+        assert tp is not None,"Throughput not found"
         logger().info("data transfer is successful")
 
 
     def run(self):
 
         validation = True
+
+        ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap_bssid : {ap_bssid}")
+
+        logger().info(f"starting the sniffer in channel {self.wifi_access_point.interfaces.wifi.channel}")
 
         self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.testcase}_beacons")
@@ -96,38 +104,43 @@ class WifiJoinThread(ThreadBase):
 
         ##validating beacons from AP
 
-        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008)'
+        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
+
+        logger().info("stopping the sniffer")
 
         self.wifi_sniffer.interfaces.capture.stop_capture()
+
+        logger().info("Validating beacons in sniffer with filter : {}".format(packet_filter1))
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'],"Beacons not found in sniffer capture"
 
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-
         for count in range(0,self.iteration):
 
+            logger().info("starting the sniffer again")
+
+            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+
             for i in range(0,3):
+
                 try:
                     #enables the scan in dut on channel
-                    scan_results = self.wifi_dut.interfaces.wifi.scan(channel=self.wifi_access_point.interfaces.wifi.channel,\
-                                                                      ssid=self.wifi_access_point.interfaces.wifi.ssid)
+                    scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
+
                     logger().info(f"scan results : {scan_results}")
-                    if len(scan_results):
+                    if self.wifi_access_point.interfaces.wifi.ssid in scan_results:
                         break
                 except:
-                    # enables the scan in dut on channel
-                    scan_results = self.wifi_dut.interfaces.wifi.scan(
-                        channel=self.wifi_access_point.interfaces.wifi.channel, \
-                        ssid=self.wifi_access_point.interfaces.wifi.ssid)
-                    logger().info(f"scan results : {scan_results}")
-                    if len(scan_results):
-                        break
-            assert (len(scan_results) >= 1)
+                    logger().info(f"scan failed ,Retrying for multiple times")
+
+            assert (len(scan_results) >= 1),"Scan failed"
+
             # Join Wi-Fi Access Point
             self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
             logger().info(f"Successfully connected to AP")
+
             # This API Enables the DHCP in DUT
             ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
+
             device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
             logger().info(f"Found device ip: {device_ip}")
 
@@ -135,6 +148,8 @@ class WifiJoinThread(ThreadBase):
             dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"Device mac address: {dut_mac_address}")
 
+
+            logger().info("Initiating power save")
             # This API Enables the wifi power save mode in DUT
             self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
@@ -143,23 +158,26 @@ class WifiJoinThread(ThreadBase):
             time.sleep(5)
 
             # Initiate ping from third party wifi-client to DUT
-            status = ping(device_ip, 10)
+            status = ping(device_ip, ping_count)
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
 
             if self.test_type == "iperf":
+                logger().info("Running data transfer")
                 self.run_traffic(device_ip)
 
             logger().info("disconnecting to ap.....")
             self.wifi_dut.interfaces.wifi.leave()
 
-        self.wifi_sniffer.interfaces.capture.stop_capture()
-        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-        packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b)'
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
-        logger().info("sniffer validation is successful")
+            logger().info("stopping the sniffer capture")
+            self.wifi_sniffer.interfaces.capture.stop_capture()
+            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+            packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
+                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                             f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+            logger().info("sniffer validation is successful")
 
 
 
@@ -198,12 +216,7 @@ class WifiThread(ThreadBase):
                 if len(scan_results):
                     break
             except:
-                # enables the scan in dut on channel
-                scan_results = self.wifi_dut.interfaces.wifi.scan(
-                    channel=self.wifi_access_point.interfaces.wifi.channel, ssid=None)
-                logger().info(f"scan results : {scan_results}")
-                if len(scan_results):
-                    break
+                logger().info(f"getting scan results ,Retrying for multiple times")
         assert (len(scan_results) >= 1)
 
         # Join Wi-Fi Access Point
@@ -215,6 +228,7 @@ class WifiThread(ThreadBase):
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         logger().info(f"Found device ip: {device_ip}")
 
+        logger().info("Initiating power save")
         #This API Enables the wifi power save mode in DUT
         self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
@@ -223,7 +237,7 @@ class WifiThread(ThreadBase):
         time.sleep(5)
 
         # Initiate ping from third party wifi-client to DUT
-        status = ping(device_ip, 50)
+        status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
 
@@ -238,6 +252,8 @@ class WifiThread(ThreadBase):
         # Validating the ps poll frames
         packet_filter2 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
 
+        logger().info("stopping the capture")
+
         self.wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info(f"Validating more data bit in QOS data frames")
@@ -247,6 +263,9 @@ class WifiThread(ThreadBase):
         logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find ps polls in sniffer capture'
+
+        logger().info("disconnecting to ap.....")
+        self.wifi_dut.interfaces.wifi.leave()
 
 # this thread used for sta+ble as a slave
 class BleThread_Connection(ThreadBase):
@@ -265,6 +284,8 @@ class BleThread_Connection(ThreadBase):
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
             assert bt_client_address is not None,f"Unable to fetch MAC address from Remote device"
             time.sleep(1)
+
+            logger().info("initiating BLE scan from DUT")
             # Start scanning and connect to ble client
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=20)
             # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
@@ -300,9 +321,18 @@ class BleThread_Connection(ThreadBase):
 
             logger().info(f"Remote BT device address : {bt_client_address}")
             # See that we found our device
-            found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices,"DUT not found in scan results"
-
+            found_devices = ""
+            for i in range(0, 5):
+                time.sleep(5)
+                # See that we found our device
+                found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+                logger().info("\n***scan results:{}**********\n".format(found_devices))
+                if self.wifi_dut.interfaces.wifi.ble_address in found_devices:
+                    logger().info("remote device is able to scan the DUT successfully ")
+                    break
+            logger().info(f"Stop Scanning for REMOTE devices")
+            self.ble_client.interfaces.bluetooth.stop_scanning()
+            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
             logger().info("Initiating connection from DUT")
 
             self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
@@ -340,10 +370,11 @@ def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client,  wi
     test_type = "iperf"
 
     logger().info("DUT set to Region -. World domain")
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
-                        net_perf_client, protocol,test_type,iteration=1):
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                        net_perf_client, protocol,test_type,iteration=1)
+    wifi_thread.start()
+    wifi_thread.wait_for_exit()
 
-        time.sleep(5)
 
 
 @pytest.mark.config(
@@ -370,10 +401,10 @@ def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_s
     testcase = "test_join_EU_2_4_C34786"
     test_type = "iperf"
     logger().info("Setting the DUT to Region Europe")
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                 net_perf_client, protocol, test_type, iteration=1)
+    wifi_thread.start()
+    wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -401,9 +432,10 @@ def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client,  wifi_
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region US")
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                 net_perf_client, protocol, test_type, iteration=1)
+    wifi_thread.start()
+    wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -431,10 +463,10 @@ def test_join_US_5Ghz_C34789(wifi_access_point, wifi_dut, net_perf_client,  wifi
     testcase = "test_join_US_5Ghz_C34789"
     test_type = "iperf"
     logger().info("Setting the DUT to Region US")
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                 net_perf_client, protocol, test_type, iteration=1)
+    wifi_thread.start()
+    wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -462,10 +494,10 @@ def test_join_EU_5Ghz_C34790(wifi_access_point, wifi_dut, net_perf_client,  wifi
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region Europe")
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                 net_perf_client, protocol, test_type, iteration=1)
+    wifi_thread.start()
+    wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -493,10 +525,10 @@ def test_join_WORLD_5Ghz_C34792(wifi_access_point, wifi_dut, net_perf_client,  w
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region World")
-    with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                        net_perf_client, protocol, test_type, iteration=1):
-        time.sleep(5)
-
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                 net_perf_client, protocol, test_type, iteration=1)
+    wifi_thread.start()
+    wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -533,9 +565,10 @@ def test_join_US_dual_band_C34793(wifi_access_point, wifi_dut, net_perf_client, 
 
         wifi_access_point.interfaces.wifi.start_ap()
         time.sleep(10)
-        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                            net_perf_client, protocol, test_type, iteration=1):
-            time.sleep(5)
+        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                     net_perf_client, protocol, test_type, iteration=1)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -572,10 +605,10 @@ def test_join_EU_dual_band_C34794(wifi_access_point, wifi_dut, net_perf_client, 
 
         wifi_access_point.interfaces.wifi.start_ap()
         time.sleep(10)
-        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                            net_perf_client, protocol, test_type, iteration=1):
-            time.sleep(5)
-
+        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                     net_perf_client, protocol, test_type, iteration=1)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -612,14 +645,11 @@ def test_join_WORLD_dual_band_C34796(wifi_access_point, wifi_dut, net_perf_clien
         # Set the region value in DUT side
 
         wifi_access_point.interfaces.wifi.start_ap()
-
-        #wifi_dut.interfaces.wifi.set_region(region=1,region_code=4,module_type=1)
-
         time.sleep(10)
-        with WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client, \
-                            net_perf_client, protocol, test_type, iteration=1):
-            time.sleep(5)
-
+        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+                                     net_perf_client, protocol, test_type, iteration=1)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
 
 
 @pytest.mark.config(
@@ -640,6 +670,8 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
     with TimeMeasurer() as t:
         validation = True
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -647,9 +679,7 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Connectivity_with_WPA2_security_AP')
 
         logger().info("scan for the ap's.....")
-        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None)
-        ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
-        logger().info(f'AP BSSID = {ap_bssid}')
+        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
 
         logger().info("connecting to access point.....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -672,19 +702,19 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
 
         logger().info(f"dut_mac_address : {dut_mac_address}")
 
-        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        ## Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b)'
+                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
+        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
 
-        # Validate dhcp
-        packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
+        # # Validate dhcp
+        # packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
 
         # Initiate ping from third party wifi-client to DUT
-        status = ping(device_ip, 20)
+        status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
 
@@ -700,9 +730,11 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
-        logger().info(" Validate dhcp")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-            'packet_count'], 'Unable to find dhcp in sniffer '
+        # logger().info(" Validate dhcp")
+        # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        #     'packet_count'], 'Unable to find dhcp in sniffer '
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
     logger().info(f"Associated and ping in {t.duration} seconds")
 
 
@@ -727,6 +759,8 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
 
     validation = True
     packet_filter2 = False
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
@@ -742,6 +776,9 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
+
+    logger().info("Initiating power save")
+
     # This API Enables the wifi power save mode in DUT
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
@@ -750,7 +787,7 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     time.sleep(5)
 
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 10)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
 
@@ -762,12 +799,15 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     packet_filter3 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                      f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                     f'(wlan.fc.type_subtype == 0x000b)'
+                     f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {mac_address})'
 
+
+    logger().info("Starting the capture")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
     time.sleep(2)
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(10)
+    logger().info("Stoping the capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
         'packet_count']
@@ -782,9 +822,13 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
         'packet_count']
 
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 10)
+    status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device after rejoin"
     logger().info(f"ping is successful after rejoin")
+
+    logger().info("disconnecting to ap.....")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 
@@ -809,9 +853,13 @@ def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_access_point, wi
        logger().info(f"testcase : {testcase}")
        mode = "ble_slave"
 
-       with WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase),\
-            BleThread_Connection(wifi_dut, ble_client, mode):
-           time.sleep(5)
+       wifi_thread = WifiThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase)
+       ble_thread = BleThread_Connection(wifi_dut, ble_client, mode)
+       wifi_thread.start()
+       time.sleep(5)
+       ble_thread.start()
+       wifi_thread.wait_for_exit()
+       ble_thread.wait_for_exit()
 
 
 
@@ -848,18 +896,18 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     assert bt_client_address is not None, "BT REMOTE devices not found"
     logger().info(f"BT Address of BT CLIENT DEVICE is {bt_client_address}")
     time.sleep(10)
-
-    # See that we found our device
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-
+    found_devices = ""
+    for i in range(0, 5):
+        time.sleep(5)
+        # See that we found our device
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        logger().info("\n***scan results:{}**********\n".format(found_devices))
+        if wifi_dut.interfaces.wifi.ble_address in found_devices:
+            logger().info("remote device is able to scan the DUT successfully ")
+            break
     logger().info(f"Stop Scanning for REMOTE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
-
-    assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
+    assert wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
     logger().info(f"Connecting DUT to REMOTE device")
     ble_client.interfaces.bluetooth.connect(wifi_dut.interfaces.wifi.ble_address)
     time.sleep(60)
@@ -902,19 +950,13 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     logger().info(f"BT Address of BT CLIENT DEVICE is {bt_client_address}")
     # Start scanning and connect to ble client
     logger().info(f"Start scanning on DUT and connect to ble client")
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
     logger().info(f"Start scanning on DUT and connect to ble client")
-    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+
+
     logger().info(f"Initiating connection.")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address,expected="RSI_BLE_CONN_EVENT", timeout=120)
-    # Get the state of the dut
-    logger().info("enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(2)
-
-    logger().info("enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(2)
-
-    time.sleep(60)
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address,\
+                                         timeout=120,expected="RSI_BLE_SECURITY_KEYS_EVENT")
 
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
 
@@ -924,7 +966,19 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
 
     logger().info(f"Dut is in connected state {state_int}")
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
+
+    # Get the state of the dut
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(2)
+
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(2)
+
+    time.sleep(60)
+
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+    logger().info("remote BLE device has been disconnected")
 
 
