@@ -1004,7 +1004,7 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
     	}
     }
 
-    if(status >=0)
+    if(status >= 0)
     {
     	print_status(0);
     }
@@ -1051,7 +1051,7 @@ void rsi_dns_enable(sl_cli_command_arg_t* arguments)
 	if(status == 0)
 	{
 		printf("\r\n No of addresses resolved %d\n", dns_query_resp.ip_count[0]);
-		for (count =0; count < (dns_query_resp.ip_count[0]); count++)
+		for (count = 0; count < (dns_query_resp.ip_count[0]); count++)
 		{
 			printf("ip address %d:",(count+1));
 			for(ii = 0 ; ii < 4; ii++)
@@ -1092,7 +1092,7 @@ void rsi_get_sntp_time(sl_cli_command_arg_t* arguments)
 	int32_t status = rsi_sntp_client_gettime((uint16_t)sizeof(sntp_time), (uint8_t *)sntp_time);
 	if(!status)
 	{
-		printf("\nsntp time->%d;%s\n",sntp_time[0],&sntp_time[1]);
+		printf("\nsntp time->%d;%s\n", sntp_time[0], &sntp_time[1]);
 	}
 	print_status(status);
 }
@@ -1104,7 +1104,7 @@ void rsi_get_sntp_timedate(sl_cli_command_arg_t* arguments)
 	int32_t status = rsi_sntp_client_gettime_date((uint16_t)sizeof(sntp_date_time), (uint8_t *)sntp_date_time);
 	if(!status)
 	{
-		printf("\nsntp date_time->%d;%s\n",sntp_date_time[0],&sntp_date_time[1]);
+		printf("\nsntp date_time->%d;%s\n", sntp_date_time[0], &sntp_date_time[1]);
 	}
 	print_status(status);
 }
@@ -1169,7 +1169,7 @@ void async_socket_select(rsi_fd_set *fd_read, rsi_fd_set *fd_write, rsi_fd_set *
 	memset(&read_fds, 0, sizeof(rsi_fd_set));
 	memcpy(&read_fds, fd_read, sizeof(rsi_fd_set));
 	socket_select_response = 1;
-	printf("\r\nSOCKET_SELECT_EVENT fd_size:%ld,fd_id:%ld\r\n", read_fds.fd_count,read_fds.fd_array[0]);
+	printf("\r\nSOCKET_SELECT_EVENT fd_size:%ld,fd_id:%ld\r\n", read_fds.fd_count, read_fds.fd_array[0]);
 	socket_select_response = 0;
 }
 
@@ -1212,7 +1212,7 @@ void rsi_socket_select(sl_cli_command_arg_t* arguments)
 		}
 		else
 		{
-			printf("\nstatus:%ld\n",status);
+			printf("\nstatus:%ld\n", status);
 			print_status(RSI_ERROR_NONE);
 		}
 	}
@@ -1259,11 +1259,11 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 	int32_t no_of_pkts = sl_cli_get_argument_int32(arguments,3);
 
 	int32_t tt_start = 0, tt_end = 0;
-	uint8_t sock_no=0;
-	uint32_t status =0;
+	uint8_t sock_no = 0;
+	uint32_t status = 0;
 	uint32_t tx_stats[10][5] = {0};
-	uint8_t max_sock=0;
-	uint8_t flag=0;
+	uint8_t max_sock = 0;
+	uint8_t flag = 0;
 
 	max_sock = (g_rsi_ltcp_sockets+g_rsi_client_sockets);
 
@@ -1297,30 +1297,30 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 				tx_stats[sock_no][3]++;
 				if(tx_stats[sock_no][3] == (UInt32)no_of_pkts)
 				{
-					tx_stats[sock_no][4]=1;
+					tx_stats[sock_no][4] = 1;
 					flag++;
 				}
 			}
 			else {
 				tx_stats[sock_no][1] = tt_end - tt_start;
 				tx_stats[sock_no][2] = status;
-				tx_stats[sock_no][4]=1;
+				tx_stats[sock_no][4] = 1;
 				flag++;
 			}
 		}
 		sock_no++;
-		if(sock_no==max_sock)
+		if(sock_no == max_sock)
 		{
-			sock_no=0;
+			sock_no = 0;
 		}
 		tt_end = rsi_hal_gettickcount();
 	}
 	free(buffer);
 	printf("\ntx_stats:");
 
-	for(sock_no=0;sock_no <max_sock; sock_no++)
+	for(sock_no = 0; sock_no <max_sock; sock_no++)
 	{
-		printf("%ld,%ld,%ld-",tx_stats[sock_no][0],tx_stats[sock_no][1],tx_stats[sock_no][2]);
+		printf("%ld,%ld,%ld-",tx_stats[sock_no][0], tx_stats[sock_no][1], tx_stats[sock_no][2]);
 	}
 	printf("\n");
 	print_status(RSI_ERROR_NONE);
