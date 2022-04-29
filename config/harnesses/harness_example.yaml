@@ -803,6 +803,8 @@ defaults:
         ssid: 'TESTTESTTEST'
         passphrase: 'thisisatestnetwork'
         channel: 1
+        capture_screenshot: false
+        screenshot_file_name: 'wiseconnect_screenshot'
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'

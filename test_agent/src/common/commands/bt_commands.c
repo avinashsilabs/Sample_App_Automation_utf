@@ -983,10 +983,10 @@ static void bt_task(void* arg)
                 break;
             case RSI_APP_EVENT_AVRCP_NOTIFY:
                 rsi_bt_app_clear_event(RSI_APP_EVENT_AVRCP_NOTIFY);
-                LOG_EVENT("\nRSI_APP_EVENT_AVRCP_NOTIFY\n");
+                LOG_PRINT("\nRSI_APP_EVENT_AVRCP_NOTIFY\n");
                 status = rsi_bt_avrcp_reg_notification(bt_remote_dev_addr, avrcp_notify.notify_val.eventid, &abs_vol);
                 if (status != RSI_SUCCESS) {
-                    LOG_EVENT("Avrcp reg notification cmd status: 0x%x\n", status);
+                    LOG_PRINT("Avrcp reg notification cmd status: 0x%x\n", status);
                     break;
                 }
                 //LOG_PRINT ("notify event id: %d \n", avrcp_notify.notify_val.eventid);
@@ -2501,7 +2501,7 @@ void rsi_bt_on_avrcp_notify_event(uint16_t resp_status, rsi_bt_event_avrcp_notif
   rsi_bt_app_set_event(RSI_APP_EVENT_AVRCP_NOTIFY);
   memcpy(&avrcp_notify, p_notify, sizeof(rsi_bt_event_avrcp_notify_t));
   memcpy(bt_remote_dev_addr, p_notify->dev_addr, RSI_DEV_ADDR_LEN);
-  LOG_EVENT("\nrsi_bt_on_avrcp_notify_event- bt_str_conn_bd_addr: %s, resp status: 0x%x\n",
+  LOG_PRINT("\nrsi_bt_on_avrcp_notify_event- bt_str_conn_bd_addr: %s, resp status: 0x%x\n",
             rsi_6byte_dev_address_to_ascii(bt_str_conn_bd_addr, p_notify->dev_addr),
             resp_status);
 }
