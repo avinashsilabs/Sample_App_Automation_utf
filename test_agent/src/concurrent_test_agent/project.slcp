@@ -56,6 +56,9 @@ source:
 - path: ../common/commands/ble_gatt/rsi_ble_gatt_subtasks.c
 - path: ../common/commands/ble_gatt/gatt_commands.c
 
+ #other
+- path: ./config/concurrent_test_agent.c
+
 configuration:
 - name: SL_BOARD_ENABLE_VCOM
   value: '1'
