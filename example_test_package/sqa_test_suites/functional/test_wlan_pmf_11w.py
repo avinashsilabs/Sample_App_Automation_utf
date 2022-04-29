@@ -5,7 +5,8 @@ import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116ExtCustomFeatureBitMap, IEEE802_11W
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
@@ -74,9 +75,10 @@ class IopTcpIpSockets:
         return connect_status
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -101,17 +103,17 @@ def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wif
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_pmf_capable_connection')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
+
     """ Verify the Connection between AP(PMF capable) and DUT(PMF capable)"""
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable)
-    
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=IEEE802_11W.Protection_capable)
+
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
     logger().info(f"DUT ip address : {dut_ip}")
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
-    
+
     logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -144,12 +146,13 @@ def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wif
     time.sleep(20)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count']
+        'packet_count'], 'Unable to find packets for Association req, with mgmt frame with protection capable'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -174,9 +177,9 @@ def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wi
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_pmf_required_connection')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
+
     """ Verify the Connection between AP(PMF required) and DUT(PMF required)"""
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_Required)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=IEEE802_11W.Protection_Required)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -215,12 +218,15 @@ def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wi
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     time.sleep(20)
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find packets ' \
+                         'filter for Association req, with mgmt frame with protection capable'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -246,8 +252,8 @@ def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_a
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_pmfrequiredAP_pmfcapableDUT_connection')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=IEEE802_11W.Protection_capable)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -286,12 +292,14 @@ def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_a
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     time.sleep(20)
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], 'Unable to' \
+                                                                                                           'find packets filter for Association req, with mgmt frame with protection capable'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -318,8 +326,9 @@ def test_mgmt_pmfrequiredAP_pmfreqireandcapableDUT_connection_C19670(wifi_sniffe
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_pmfrequiredAP_pmfreqireandcapable')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -359,10 +368,11 @@ def test_mgmt_pmfrequiredAP_pmfreqireandcapableDUT_connection_C19670(wifi_sniffe
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     time.sleep(20)
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], 'Unable ' \
+            'to find packet filter for Association req, with mgmt frame with protection capable+required'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -384,18 +394,19 @@ def test_mgmt_pmf_required_connection_fail_C19664(wifi_access_point, wifi_dut):
     time.sleep(2)
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
     wifi_access_point.interfaces.wifi.start_ap()
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    try:
-        wifi_dut.interfaces.wifi.join()
-    except pytest.raises(WlanError) as exc_info:
-        assert exc_info.value.error_code == 0x9
-    except pytest.raises(WlanError) as exc_info:
-        assert exc_info.value.error_code == 0x0019
+
+    with pytest.raises(WlanError) as exc_info:
+        logger().info("connecting to access point with different security")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert exc_info.value.error_code == 0x19
+    logger().info(f"Dut Tried to connect to ap between AP(PMF required) and DUT(PMF disable), observed error code 0x19 "
+                  f"which is expected")
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -422,10 +433,10 @@ def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_pmfreqireandcapable')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
 
     """ Enable the AP(PMF capable) and DUT(PMF capable+required)"""
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -467,12 +478,14 @@ def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer
     time.sleep(20)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count']
+        'packet_count'], 'Unable to find packet filter for Association req, with mgmt frame with protection ' \
+                         'capable+required'
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -499,8 +512,9 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_unicast_frame_protection_bit')
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -514,7 +528,7 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
+
     # Packet filter for Association req, with protection capable & required bit enable
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
                      f'== 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 ' \
@@ -543,7 +557,6 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
     time.sleep(60)
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)['packet_count']
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count']
     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
@@ -559,9 +572,10 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
         assert True
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -587,8 +601,9 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_action_frame_with_protection_bit_encyption')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -602,7 +617,6 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
 
     # Packet filter to verify Association req with pmf capable & required enable bit
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -631,7 +645,6 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
     time.sleep(10)
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)['packet_count']
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count']
     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
@@ -647,9 +660,10 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
         assert True
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -675,8 +689,9 @@ def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_disconnection_with_pmf')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -730,9 +745,10 @@ def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut
         assert True
 
 
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -756,8 +772,9 @@ def test_mgmt_pmf_enable_recieve_data_C19671(wifi_dut, wifi_access_point, wifi_s
     # Start Sniffer
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_pmf_enable_recieve_data')
     time.sleep(2)
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=IEEE802_11W.Protection_capable | IEEE802_11W.Protection_Required)
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
     logger().info(f"DUT ip address : {dut_ip}")
