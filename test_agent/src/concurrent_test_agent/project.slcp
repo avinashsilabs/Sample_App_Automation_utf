@@ -1977,8 +1977,3 @@ template_contribution:
     name: read_max_data_length
     handler: rsi_ble_read_max_data_len_command
     help: event reads the data length
-    argument:
-    - {type: uint16, help: maxtxoctets}
-    - {type: uint16, help: maxtxtime}
-    - {type: uint16, help: maxrxoctets}
-    - {type: uint16, help: maxrxtime }
