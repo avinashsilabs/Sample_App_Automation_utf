@@ -12,7 +12,10 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116AsyncEventType,
     RS9116PowerSaveModes,
     RS9116MqttQos,
-    MQTTHeaderLength
+    MQTTHeaderLength,
+    RS9116PowerSaveProcedureTypes,
+    RS9116CustomFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap
     )
 from utf.utils.stopwatch import Stopwatch
 import string
@@ -22,6 +25,7 @@ import random
 from threading import Thread
 from utf.utils import mac_address_to_string
 from utf.utils.iperf.iperf_utils import ping
+from datetime import datetime
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -42,16 +46,88 @@ Note: The test cases added in the file works only in AT mode
 """
 
 
+def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+    ping_count = 10
+    result = wifi_dut.interfaces.wifi.version()
+    logger.info(f"DUT firmware version: {result}")
+    logger.info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap"
+        )
+    for count in range(1, 3):
+        try:
+            join_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Joining to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
+            break
+        except:
+            wifi_dut.interfaces.wifi.initialized = False
+            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
+            time.sleep(1)
+    if join_fail:
+        logger.info(f"Joining to the AP has failed")
+        assert join_fail == 0, "Joining to the AP is failed"
+    for count in range(1, 3):
+        ip_fail = 1
+        try:
+            # DUT gets ipaddress through DHCP process after start_ip API is executed
+            logger.info("DUT gets ipaddress through DHCP ")
+            ip_address = wifi_dut.interfaces.wifi.start_ip(timeout=60)
+            ip_fail = 0
+            break
+        except:
+            logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            time.sleep(1)
+    if ip_fail:
+        logger.info(f"DUT unable to get IP address")
+        assert ip_fail == 0, "ip setting in DUT has failed"
+
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
+    logger.info(f"DUT ip : {device_ip}")
+    logger.info(f"Initiating ping to DUT ip {device_ip}")
+    status = ping(device_ip, 10)
+    if status == 1:
+        logger.info(f"ping to DUT is successful")
+    else:
+        logger.info(f"ping to DUT is failed")
+    # The below api puts DUT to power save
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+    ping(device_ip, ping_count)
+    return mac_address
+
+
+def ApWirelessOff(wifi_access_point, wait_time, logger):
+    time.sleep(1)
+    logger.info(f"Disabling Wireless in AP")
+    wifi_access_point.interfaces.wifi.stop_ap()
+    time.sleep(wait_time)
+    logger.info(f"Enabling Wireless in AP")
+    wifi_access_point.interfaces.wifi.start_ap()
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -59,9 +135,8 @@ Note: The test cases added in the file works only in AT mode
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
 def test_mqtt_authentication_ssl_TC19258(
@@ -75,33 +150,7 @@ def test_mqtt_authentication_ssl_TC19258(
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
     capture_filename = "test_mqtt_authentication_ssl_TC19258"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     client_devices = [wifi_dut, mqtt_client]
     # Both DUT and third-party mqtt client connects to MQTT server
@@ -154,15 +203,15 @@ def test_mqtt_authentication_ssl_TC19258(
     # The API returns asynchronous messages received by DUT
     events = wifi_dut.interfaces.wifi.get_async_events()
     assert len(events) == 0
-
-
-def ApWirelessOff(wifi_access_point, wait_time, logger):
-    time.sleep(wait_time)
-    logger.info(f"Disabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.stop_ap()
-    time.sleep(1)
-    logger.info(f"Enabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.start_ap()
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -171,10 +220,12 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -183,47 +234,25 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.skip()
 def test_mqtt_rx_after_rejoin_ssl_TC19271(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
     capture_filename = "test_mqtt_rx_after_rejoin_ssl_TC19271"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -243,7 +272,7 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
     ap_power_off = 0
     send_pkts = int((total_bytes / publish_len))
 
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -255,7 +284,7 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
                     time.sleep(pkt_delay)
                 if ap_power_off:
                     ap_power_off = 0
-                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 1, logger), )
+                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger), )
                     thread.start()
                 try:
                     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
@@ -271,22 +300,30 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -295,10 +332,12 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -307,47 +346,24 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_while_rejoin_ssl_TC19274(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
     capture_filename = "test_mqtt_publish_while_rejoin_ssl_TC19274"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -367,7 +383,7 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
     ap_power_off = 0
     send_pkts = int((total_bytes / publish_len))
 
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -379,7 +395,7 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
                     time.sleep(pkt_delay)
                 if ap_power_off:
                     ap_power_off = 0
-                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 1, logger), )
+                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger), )
                     thread.start()
                 try:
                     wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
@@ -395,22 +411,31 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
+
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -419,10 +444,12 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -431,47 +458,25 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.skip()
 def test_mqtt_rx_ssl_TC19285(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
     capture_filename = "test_mqtt_rx_ssl_TC19285"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -487,7 +492,7 @@ def test_mqtt_rx_ssl_TC19285(
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
         logger.info(f"'{wifi_dut.name}' is connected to MQTT server")
 
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -509,22 +514,31 @@ def test_mqtt_rx_ssl_TC19285(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
+
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -533,10 +547,12 @@ def test_mqtt_rx_ssl_TC19285(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -545,47 +561,24 @@ def test_mqtt_rx_ssl_TC19285(
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1200, 1024000, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_1mb_file_ssl_TC19286(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
     capture_filename = "test_mqtt_publish_1mb_file_ssl_TC19286"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -601,7 +594,7 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
         logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
 
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -623,22 +616,31 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
+
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -647,10 +649,12 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -659,47 +663,24 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1370, 102400, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_max_len_ssl_TC19287(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
     capture_filename = "test_mqtt_publish_max_len_ssl_TC19287"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -715,7 +696,7 @@ def test_mqtt_publish_max_len_ssl_TC19287(
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
         logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
     publish_len = (1370 - len(topic1) - MQTTHeaderLength.Length)
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -737,22 +718,30 @@ def test_mqtt_publish_max_len_ssl_TC19287(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
+
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -761,10 +750,12 @@ def test_mqtt_publish_max_len_ssl_TC19287(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -773,46 +764,23 @@ def test_mqtt_publish_max_len_ssl_TC19287(
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1370, 102400, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
-    capture_filename = "test_mqtt_publish_max_len_ssl_ecdsa_TC19290"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    capture_filename = "test_mqtt_publish_max_len_ssl_ecdsa_TC19290"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -828,7 +796,7 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
         logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
     publish_len = (1370 - len(topic1) - MQTTHeaderLength.Length)
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -850,22 +818,31 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
+
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
 
 
 # @pytest.mark.config(
@@ -972,10 +949,12 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -983,46 +962,24 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
         }
     )
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.skip()
 def test_mqtt_rx_ssl_ecdsa_TC19291(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
-    capture_filename = "test_mqtt_rx_ssl_ecdsa_TC19291"
-
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
-
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
+    current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    ip_address = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
-    logger.info(f"DUT ip : {device_ip}")
-    logger.info(f"Initiating ping to DUT ip {device_ip}")
-    status = ping(device_ip, 10)
-    if status == 1:
-        logger.info(f"ping to DUT is successful")
-    else:
-        logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    capture_filename = "test_mqtt_rx_ssl_ecdsa_TC19291"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
-    with open("temp.txt", "w") as temp:
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    tx_file = "./reports/" + capture_filename + "_tx_file" + file_time_stamp + ".txt"
+    with open(tx_file, "w") as temp:
         temp.write(temp_buffer)
 
     client_devices = [wifi_dut, mqtt_client]
@@ -1038,7 +995,7 @@ def test_mqtt_rx_ssl_ecdsa_TC19291(
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
         logger.info(f"'{wifi_dut.name}' is connected to MQTT server")
 
-    with open("temp.txt", "r") as temp:
+    with open(tx_file, "r") as temp:
         while 1:
             buffer_length = publish_len
             buffer = temp.read(buffer_length)
@@ -1060,19 +1017,28 @@ def test_mqtt_rx_ssl_ecdsa_TC19291(
     while sw.elapsed_sec < 10:
         time.sleep(0.1)
         msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
-
+    file_time_stamp = str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    rx_file = "./reports/" + capture_filename + "_rx_file" + file_time_stamp + ".txt"
     if len(msgs):
-        with open("mqtt_rx.txt", "w") as recv:
+        with open(rx_file, "w") as recv:
             for pkt in msgs:
                 if pkt.topic == topic1:
                     recv.write(pkt.payload.decode())
 
-    if not os.path.exists("mqtt_rx.txt"):
+    if not os.path.exists(rx_file):
         logger.info("No MQTT data received at receiver")
 
-    result = filecmp.cmp("temp.txt", "mqtt_rx.txt", shallow=False)
-    if os.path.exists("mqtt_rx.txt"):
-        os.remove("mqtt_rx.txt")
-    if os.path.exists("temp.txt"):
-        os.remove("temp.txt")
+    result = filecmp.cmp(tx_file, rx_file, shallow=False)
+
     assert result == True, "Data loss observed, Contents of tx file and rx file not matched"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
