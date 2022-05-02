@@ -1224,3 +1224,15 @@ void rsi_ble_read_max_data_len_command(sl_cli_command_arg_t* arguments)
     print_status(status);
 
 }
+
+void rsi_ble_set_phy_command(sl_cli_command_arg_t* arguments)
+{
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint8_t tx_phy = sl_cli_get_argument_uint8(arguments, 1);
+    uint8_t rx_phy = sl_cli_get_argument_uint8(arguments, 2);
+    uint8_t coded_phy = sl_cli_get_argument_uint8(arguments, 3);
+
+    uint8_t device_address[6];
+	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
+    print_status(rsi_ble_setphy(device_address,1,2,0));
+}
