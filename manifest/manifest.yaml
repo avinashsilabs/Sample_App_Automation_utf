@@ -26,3 +26,24 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: 'multi_gatt_generic_test_agent.hex'
+
+    test_wlan_powersave_mode:
+        device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'generic_test_agent_without_aws_powersave3.hex'
+
+    test_wlan_powersave_mode1:
+      device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'sqa_test_agent_gpio_lp.hex'
+
+    test_wlan_powersave_mode2:
+      device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'sqa_test_agent_msg_lp.hex'
+
+    test_wlan_powersave_mode3:
+      device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'sqa_test_agent_msg_ulp.hex'
+
