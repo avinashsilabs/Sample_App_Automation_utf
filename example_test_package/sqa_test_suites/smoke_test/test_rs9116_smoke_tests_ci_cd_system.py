@@ -2,17 +2,33 @@ import pytest
 
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
+from utf_wiseconnect.devices.rs911x import (
+    RS9116OperatingMode,
+    RS9116Band,
+    RS9116PowerSaveModes,
+    RS9116FeatureBitMap,
+    RS9116ConfigFeatureBitMap,
+    RS9116ExtTCPIPFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap,
+    RS9116CustomFeatureBitMap,
+    RS9116TCPIPFeatureBitMap,RS9116CoexMode)
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import ping, print_dict
 import time
 from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.interfaces.bluetooth import BTSocketRole
 from utf.utils.stopwatch import Stopwatch
 
 
 def logger():
     return get_logger(__name__)
+
+# Configuring static IP to DUT
+mode = 'static'
+ip_address = '192.168.100.76'
+subnet = '255.255.255.0'
+gateway = '192.168.100.76'
 
 
 @pytest.mark.dut("rs9116")
@@ -286,3 +302,73 @@ def test_throughput_udp_rx_2_4_channel1(net_perf_client, wifi_access_point, wifi
     tp = net_perf_client.interfaces.net_perf.process_output(result)
     assert tp is not None
     __print_throughput(tp)
+
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+        }
+    )
+# This test case verifies the spp connection in keyboardonly mode
+def test_bt_master_ssp_keyboardonly(wifi_dut, bt_client):
+    with TimeMeasurer() as t:
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_master_ssp_display(pair_mode="1", capability="2")
+        assert bt_dut_address is not None
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code, capability="KeyboardOnly")
+        assert bt_client_address is not None
+        with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Client
+        ) as bt_client_socket:
+            # SPP Connection
+            with wifi_dut.interfaces.wifi.run_bt_task():
+                bt_client_socket.create_client()
+                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
+                addr = bt_client_socket.accept(timeout=10)
+                assert addr == bt_dut_address
+            # Ping dut
+            time.sleep(5)
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address
+            )
+            # Close connection
+            bt_client_socket.close()
+            time.sleep(
+                0.2
+            )  # to overcome Unexpected response from 'at+rsibt_unbond=B8-27-EB-8E-A9-99': b'AT+RSIBT_SPPDISCONNECTED B8-27-EB-8E-A9-99\r\n\r\nOK'
+            wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+    logger().info(f"test completed in {t.duration} seconds")
+
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+        }
+    )
+def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):
+
+    with TimeMeasurer() as t:
+        # Configure Raspberry pi in slave mode
+        logger().info(f'******Configure Raspberry pi in slave mode******')
+        bt_client_address = bt_client.interfaces.bluetooth.start_slave()
+        assert bt_client_address is not None
+        logger().info(f"Raspberry pi BD address {bt_client_address}")
+
+        # BT initialization
+        logger().info(f'******BT initialization******')
+        wifi_dut.interfaces.wifi.bt_start()
+
+        device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                               inquiry_type=2,
+                                                               inquiry_duration_ms=20000,
+                                                               timeout=22,
+                                                               retry_counts=3)
+        if not device_found:
+            logger().error(f"Dut unable to find the bt client device. The test case may fail.")
+        logger().info(f'BT address found = {device_found} and BT address is {bt_client_address} ')
+    logger().info(f"Test case executed in {t.duration} seconds")
