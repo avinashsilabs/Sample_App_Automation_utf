@@ -260,9 +260,9 @@ void rsi_recvfrom_command(sl_cli_command_arg_t *arguments)
 	int32_t addr_size = sizeof(sockID);
 
 	uint32_t status = rsi_recvfrom(sockID, buffer, buffer_size, flags, (struct rsi_sockaddr*)&client_address, &addr_size);
-	if (status >= 0) {
+	if (status) {
 		buffer[status] = '\0';
-		printf("buffer_size:%d\nbuffer:%s\n",status,buffer);
+		printf("buffer_size:%ld\nbuffer:%s\n",status,buffer);
 		print_status(RSI_ERROR_NONE);
 	}
 	else {
@@ -285,9 +285,9 @@ void rsi_recv_command(sl_cli_command_arg_t *arguments)
 		return;
 
 	uint32_t status = rsi_recv(sockID, buffer, buffer_size, flags);
-	if (status >= 0) {
+	if (status) {
 		buffer[status] = '\0';
-		printf("buffer_size:%d\nbuffer:%s\n",status,buffer);
+		printf("buffer_size:%ld\nbuffer:%s\n", status, buffer);
 		print_status(RSI_ERROR_NONE);
 	}
 	else {
@@ -951,7 +951,7 @@ void rsi_send_data_command(sl_cli_command_arg_t* arguments)
 
 	int32_t status = rsi_send(sockID, data, data_len, 0);
 	if (status >= 0) {
-		printf("\r\n bytes_sent:%d \r\n", status);
+		printf("\r\n bytes_sent:%ld \r\n", status);
 		print_status(RSI_ERROR_NONE);
 	}
 	else {
