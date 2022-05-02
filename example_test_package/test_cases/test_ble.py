@@ -290,6 +290,12 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
 
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    time.sleep(1)
+
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
 
     # Connecting will automatically stop advertising
     with pytest.raises(WlanError) as exc_info:
@@ -297,15 +303,6 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
 
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-
-    # Now, we can restart advertising...
-    wifi_dut.interfaces.wifi.ble_start_advertising()
-    # ...and stop again
-    wifi_dut.interfaces.wifi.ble_stop_advertising()
-
-    # we can't connect if the device is not advertising
-    with pytest.raises(BLEConnectError):
-        ble_client.interfaces.bluetooth.connect(bt_dut_address)
 
 
 @pytest.mark.config(
@@ -466,7 +463,12 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
 
     # connecting to dut
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
-    time.sleep(2)
+    time.sleep(1)
+
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
 
     # resolving charecteristic
     bus = ble_client.interfaces.bluetooth.bus

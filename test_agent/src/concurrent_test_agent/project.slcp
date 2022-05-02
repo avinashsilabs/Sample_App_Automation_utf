@@ -1942,3 +1942,20 @@ template_contribution:
     - {type: uint8, help: 'enable ppp'}
     - {type: uint8, help: 'afe type'}
     - {type: uint32, help: 'feature enables'}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wireless_deinit
+    handler: wireless_deinit_command
+    help: deinit wireless
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wireless_device_init
+    handler: wireless_device_init_command
+    help: initilize device
+    argument:
+    - {type: uint16, help: opermode}
+    - {type: uint16, help: coex}

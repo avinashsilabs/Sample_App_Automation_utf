@@ -23,6 +23,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
 def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -64,16 +65,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
 
         # A2DP SBC Audio streaming to Raspi
         wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-        time.sleep(3)
-
-        #Power save
-        wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        wifi_dut.interfaces.wifi.power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
-        )
+        time.sleep(5)
 
         #disconnect
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
@@ -85,6 +77,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
 def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -140,15 +133,6 @@ def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
         bt_client.interfaces.bluetooth.bt_media_player.set_volume(bt_dut_address, volume=127)
         time.sleep(1)
         bt_client.interfaces.bluetooth.bt_media_player.pause(bt_dut_address)
-
-        #Power save
-        wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        wifi_dut.interfaces.wifi.power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
-        )
 
         #disconnect
         wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
