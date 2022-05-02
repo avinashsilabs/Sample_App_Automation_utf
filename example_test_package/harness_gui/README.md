@@ -96,6 +96,9 @@ sys.exit(App.exec())
 
 ```
 
+## Run
+
+After importing listed packages run the Application by executing the Config.py file.
 
 ## Contributing
 For major changes, please open an issue first to discuss what you would like to change.
