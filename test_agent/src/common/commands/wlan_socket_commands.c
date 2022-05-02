@@ -231,7 +231,7 @@ void rsi_accept_command(sl_cli_command_arg_t* arguments)
     struct rsi_sockaddr_in client_address = {0};
     int32_t address_length = sizeof(client_address);
     int32_t status = rsi_accept(sockID, (struct rsi_sockaddr*)&client_address, &address_length);
-    if (status >= 0) {
+    if (status) {
         printf("\r\n socket #: %ld\n", status);
         printf("\r\n Successfully accepted connection from 0x%x\n", (unsigned int)client_address.sin_addr.s_addr);
         print_status(RSI_ERROR_NONE);
@@ -327,7 +327,7 @@ void rsi_sendto_command(sl_cli_command_arg_t* arguments)
     struct rsi_sockaddr_in server_address = { .sin_family = AF_INET, .sin_port = remote_port, .sin_addr = {.s_addr = server_ip }, };
     int32_t status = rsi_sendto(sockID, buffer, data_len, 0, (struct rsi_sockaddr*)&server_address, sizeof(server_address));
 
-    if (status >= 0) {
+    if (status) {
         printf("\r\n Successfully sent data to : %s with status %ld \r\n", remote_ip_string, status);
         print_status(RSI_ERROR_NONE);
     }
@@ -353,7 +353,7 @@ void rsi_send_command(sl_cli_command_arg_t* arguments)
     // generate random buffer
     set_random_bytes(buffer, data_len);
     int32_t status = rsi_send(sockID, buffer, data_len, 0);
-    if (status >= 0) {
+    if (status) {
         printf("\r\n Successfully sent data with status %ld \r\n", status);
         print_status(RSI_ERROR_NONE);
     }
@@ -436,7 +436,7 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 		print_status(RSI_ERROR_INVALID_PARAM);
 		return;
 	}
-	int32_t status = rsi_config_ipaddress(RSI_IP_VERSION_4, mode, &ip_address, &subnet_mask, &gateway, (uint8_t*)&current_ip, sizeof(current_ip), vap_id);
+	int32_t status = rsi_config_ipaddress(RSI_IP_VERSION_4, mode, (uint8_t *)&ip_address, (uint8_t *)&subnet_mask, (uint8_t *)&gateway, (uint8_t *)&current_ip, sizeof(current_ip), vap_id);
 	if (status == RSI_ERROR_NONE) {
 		printf("IP:      %d.%d.%d.%d\n", current_ip.ipaddr[0], current_ip.ipaddr[1], current_ip.ipaddr[2], current_ip.ipaddr[3]);
 		printf("netmask: %d.%d.%d.%d\n", current_ip.netmask[0], current_ip.netmask[1], current_ip.netmask[2], current_ip.netmask[3]);
@@ -950,7 +950,7 @@ void rsi_send_data_command(sl_cli_command_arg_t* arguments)
 	char* data = sl_cli_get_argument_string(arguments, 2);
 
 	int32_t status = rsi_send(sockID, data, data_len, 0);
-	if (status >= 0) {
+	if (status) {
 		printf("\r\n bytes_sent:%ld \r\n", status);
 		print_status(RSI_ERROR_NONE);
 	}
@@ -994,7 +994,7 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
     // generate random buffer
     set_random_bytes(buffer, data_len);
 
-    for(count = 0; count < no_of_pkts ; count++)
+    for(count = 0; count < (uint32_t)no_of_pkts ; count++)
     {
     	status = rsi_send(socketID, buffer, data_len, 0);
     	if(status < 0)
@@ -1004,7 +1004,7 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
     	}
     }
 
-    if(status >= 0)
+    if(status)
     {
     	print_status(0);
     }
@@ -1020,32 +1020,32 @@ void rsi_dns_enable(sl_cli_command_arg_t* arguments)
 	uint32_t primary_dns_address_ptr;
 	uint32_t secondary_dns_address_ptr;
 	uint8_t ip_version = sl_cli_get_argument_uint8(arguments, 0);
-	char* domain_name = sl_cli_get_argument_string(arguments, 1);
+	uint8_t* domain_name = sl_cli_get_argument_string(arguments, 1);
 	char* primary_dns_address_str = sl_cli_get_argument_string(arguments, 2);
 	char* secondary_dns_address_str = sl_cli_get_argument_string(arguments, 3);
 	uint16_t length = 0;
 	length = sizeof(dns_query_resp);
 	uint32_t status = 0;
 	uint8_t count = 0, ii = 0;
-	if(!(strncmp(primary_dns_address_str,"NULL",4)))
+	if(!(strncmp(primary_dns_address_str, "NULL", 4)))
 	{
-		primary_dns_address_ptr = NULL;
+		primary_dns_address_ptr = (uint32_t)NULL;
 	}
 	else
 	{
 		primary_dns_address = str_to_ipv4(primary_dns_address_str);
 		primary_dns_address_ptr = &primary_dns_address;
 	}
-	if(!(strncmp(secondary_dns_address_str,"NULL",4)))
+	if(!(strncmp(secondary_dns_address_str, "NULL", 4)))
 	{
-		secondary_dns_address_ptr = NULL;
+		secondary_dns_address_ptr = (uint32_t)NULL;
 	}
 	else
 	{
 		secondary_dns_address = str_to_ipv4(secondary_dns_address_str);
-		secondary_dns_address_ptr = &secondary_dns_address;
+		secondary_dns_address_ptr = (uint32_t *)&secondary_dns_address;
 	}
-	status = rsi_dns_req((int8_t*)ip_version,domain_name,primary_dns_address_ptr,secondary_dns_address_ptr,&dns_query_resp, length);
+	status = rsi_dns_req((int8_t*)ip_version, domain_name, primary_dns_address_ptr, secondary_dns_address_ptr, &dns_query_resp, length);
 
 	print_status(status);
 	if(status == 0)
@@ -1053,10 +1053,10 @@ void rsi_dns_enable(sl_cli_command_arg_t* arguments)
 		printf("\r\n No of addresses resolved %d\n", dns_query_resp.ip_count[0]);
 		for (count = 0; count < (dns_query_resp.ip_count[0]); count++)
 		{
-			printf("ip address %d:",(count+1));
+			printf("ip address %d:", (count+1));
 			for(ii = 0 ; ii < 4; ii++)
 			{
-				printf("%d",dns_query_resp.ip_address[count].ipv4_address[ii]);
+				printf("%d", dns_query_resp.ip_address[count].ipv4_address[ii]);
 				if(ii < 3)
 				{
 					printf(".");
@@ -1078,7 +1078,7 @@ void rsi_sntp_create(sl_cli_command_arg_t* arguments)
 
 	server_ip = str_to_ipv4(server_ip_str);
 	int32_t status = rsi_sntp_client_create_async((uint8_t)flags,
-	                                        (uint8_t *)&server_ip,
+	                                        (uint8_t*)&server_ip,
 	                                        (uint8_t)sntp_method,
 	                                        (uint16_t)sntp_timeout,
 	                                        rsi_sntp_client_create_response_handler);
@@ -1122,17 +1122,17 @@ void rsi_get_sntp_server_info(sl_cli_command_arg_t* arguments)
 		{
 			for(ii = 0; ii < 4; ii++)
 			{
-				printf("%d.",sntp_server_info_rsp.server_ip_address.ipv4_address[ii]);
+				printf("%d.", sntp_server_info_rsp.server_ip_address.ipv4_address[ii]);
 			}
 		}
 		else
 		{
 			for(ii = 0; ii < 16; ii++)
 			{
-				printf("%d.",sntp_server_info_rsp.server_ip_address.ipv6_address[ii]);
+				printf("%d.", sntp_server_info_rsp.server_ip_address.ipv6_address[ii]);
 			}
 		}
-		printf(",%d\n",sntp_server_info_rsp.sntp_method);
+		printf(",%d\n", sntp_server_info_rsp.sntp_method);
 	}
 	print_status(status);
 }
@@ -1179,25 +1179,25 @@ void rsi_socket_select(sl_cli_command_arg_t* arguments)
 	int32_t timeout = sl_cli_get_argument_int32(arguments, 1);
 	uint8_t async = sl_cli_get_argument_int8(arguments, 2);
 	struct rsi_timeval timeout_sec_usec;
-	memset(&timeout_sec_usec,0,sizeof(timeout_sec_usec));
+	memset(&timeout_sec_usec, 0, sizeof(timeout_sec_usec));
 	uint32_t timeout_ptr = 0;
 	uint32_t async_socket_select_ptr = 0;
 	if(timeout)
 	{
 		timeout_sec_usec.tv_sec = timeout;
-		timeout_ptr = &timeout_sec_usec;
+		timeout_ptr = (uint32_t *)&timeout_sec_usec;
 	}
 	else
 	{
-		timeout_ptr = NULL;
+		timeout_ptr = (uint32_t)NULL;
 	}
 	if(async)
 	{
-		async_socket_select_ptr = async_socket_select;
+		async_socket_select_ptr = (uint32_t)async_socket_select;
 	}
 	else
 	{
-		async_socket_select_ptr = NULL;
+		async_socket_select_ptr = (uint32_t)NULL;
 	}
 	int32_t status = rsi_select((socket_id+1), &read_fds, NULL, NULL, (struct rsi_timeval*) timeout_ptr, async_socket_select_ptr);
 	if(async)
@@ -1254,9 +1254,9 @@ void rsi_sntp_client_create_response_handler(uint16_t status, const uint8_t cmd_
 void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 {
 	int32_t sock_list = sl_cli_get_argument_int32(arguments, 0);
-	int32_t data_len = sl_cli_get_argument_int32(arguments,1);
-	uint16_t ttl_sec = sl_cli_get_argument_uint16(arguments,2);
-	int32_t no_of_pkts = sl_cli_get_argument_int32(arguments,3);
+	int32_t data_len = sl_cli_get_argument_int32(arguments, 1);
+	uint16_t ttl_sec = sl_cli_get_argument_uint16(arguments, 2);
+	int32_t no_of_pkts = sl_cli_get_argument_int32(arguments, 3);
 
 	int32_t tt_start = 0, tt_end = 0;
 	uint8_t sock_no = 0;
@@ -1290,7 +1290,7 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 		if((sock_list & (1<<sock_no)) && (!(tx_stats[sock_no][4])))
 		{
 			status = rsi_send(sock_no, buffer, data_len, 0);
-			if(status > 0)
+			if(status)
 			{
 				tx_stats[sock_no][0] += status;
 				tx_stats[sock_no][1] = tt_end - tt_start;
@@ -1320,7 +1320,7 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 
 	for(sock_no = 0; sock_no <max_sock; sock_no++)
 	{
-		printf("%ld,%ld,%ld-",tx_stats[sock_no][0], tx_stats[sock_no][1], tx_stats[sock_no][2]);
+		printf("%ld,%ld,%ld-", tx_stats[sock_no][0], tx_stats[sock_no][1], tx_stats[sock_no][2]);
 	}
 	printf("\n");
 	print_status(RSI_ERROR_NONE);
