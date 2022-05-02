@@ -50,8 +50,8 @@ def logger():
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "security": RS9116SecurityMode.Open,
-        "tcp_ip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
-        "ext_custom_tcp_ip_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
         "band": 0
     }
@@ -133,8 +133,11 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 100
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes": RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -206,8 +209,11 @@ def test_TCP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wifi_sn
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 100
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -277,10 +283,13 @@ def test_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -345,10 +354,13 @@ def test_TCP_Tx_data_transfer_in_powersave_mode2_C19488(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -414,10 +426,13 @@ def test_UDP_Tx_data_transfer_in_powersave_mode2_C19488(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -484,10 +499,13 @@ def test_TCP_Rx_data_transfer_in_powersave_mode2_C19489(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -552,10 +570,13 @@ def test_UDP_Rx_data_transfer_in_powersave_mode2_C19489(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -620,10 +641,13 @@ def test_TCP_Tx_data_transfer_in_powersave_mode3_C19491(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -687,10 +711,13 @@ def test_UDP_Tx_data_transfer_in_powersave_mode3_C19491(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -758,10 +785,13 @@ def test_TCP_Rx_data_transfer_in_power_save_mode3_C19496(net_perf_client, wifi_s
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -829,10 +859,13 @@ def test_UDP_Rx_data_transfer_in_power_save_mode3_C19496(net_perf_client, wifi_s
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes": RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -896,10 +929,13 @@ def test_TCP_Tx_data_transfer_in_powersave_mode3_C19495(net_perf_client, wifi_sn
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -965,8 +1001,11 @@ def test_UDP_Tx_data_transfer_in_powersave_mode3_C19495(net_perf_client, wifi_sn
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1035,8 +1074,11 @@ def test_TCP_Rx_data_transfer_in_powersave_mode3_C19496(net_perf_client, wifi_sn
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "band": 0,
-        "beacon_interval": 1000
+        "security": RS9116SecurityMode.Open,
+        "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+        "band": 0
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1106,8 +1148,11 @@ def test_UDP_Rx_data_transfer_in_powersave_mode3_C19496(net_perf_client, wifi_sn
              "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
              "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
              "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-             "band": 0,
-             "beacon_interval": 1000
+             "security": RS9116SecurityMode.Open,
+             "tcpip_features":RS9116TCPIPFeatureBitMap.DHCPv4Server,
+             "ext_custom_features":RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+             "lp_ulp_modes":RS9116ULPModes.ULPModeWithRAMRetention,
+             "band": 0
          }
      )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1155,8 +1200,10 @@ def test_powersave_disable_functionality_case1_C19501(wifi_access_point, wifi_du
              "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
              "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
              "security": RS9116SecurityMode.Open,
-             "band": 0,
-             "beacon_interval": 1000
+             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
+             "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+             "lp_ulp_modes": RS9116ULPModes.ULPModeWithRAMRetention,
+             "band": 0
          }
      )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
