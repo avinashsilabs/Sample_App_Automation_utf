@@ -40,7 +40,7 @@ import random
 """
 
 
-def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger):
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
@@ -143,14 +143,14 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_cert_no_index_TC19638(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1
         ):
     capture_filename = "test_dynamic_load_cert_no_index_TC19638"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -205,11 +205,13 @@ def test_dynamic_load_cert_no_index_TC19638(
     logger.info("Successfully closed opened socket in the DUT")
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1",
@@ -222,12 +224,12 @@ def test_dynamic_load_cert_no_index_TC19638(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_cert_socket_connected_state_TC19639(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1
+        wifi_sniffer,wifi_access_point, wifi_dut, ssl_server, logger, cert1
         ):
     capture_filename = "test_dynamic_load_cert_no_index_TC19638"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -265,11 +267,13 @@ def test_dynamic_load_cert_socket_connected_state_TC19639(
                                                                                          "expected is 0x5d or 0x5e "
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1",
@@ -282,14 +286,14 @@ def test_dynamic_load_cert_socket_connected_state_TC19639(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_new_cert_TC19640(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1
+        wifi_sniffer, wifi_access_point,wifi_dut, ssl_server, logger, cert1
         ):
     capture_filename = "test_dynamic_load_cert_no_index_TC19638"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -354,11 +358,13 @@ def test_dynamic_load_new_cert_TC19640(
                                                  )
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -377,7 +383,7 @@ def test_dynamic_load_new_cert_TC19640(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_three_ssl_sockets_TC19641(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_dynamic_load_three_ssl_sockets_TC19641"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
@@ -387,7 +393,7 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
     port3 = ssl_server.interfaces.ssl.config['device_port3']
     bytes_sent = (pkt_count * buffer_length)
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
@@ -477,11 +483,14 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
         logger.info(f"Successfully closed socket_id->{sock_count}")
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -500,7 +509,7 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_dynamic_load_three_ssl_sockets_TC19641"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
@@ -510,7 +519,7 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
     port3 = ssl_server.interfaces.ssl.config['device_port3']
     bytes_sent = (pkt_count * buffer_length)
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
@@ -608,11 +617,13 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
                                                  )
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -631,7 +642,7 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_load_certs_without_erasing_multiple_times_TC19644(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_load_certs_without_erasing_multiple_times_TC19644"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
@@ -641,7 +652,7 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
     port3 = ssl_server.interfaces.ssl.config['device_port3']
     bytes_sent = (pkt_count * buffer_length)
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
 
     for iteration in range(1, 3):
         # The below api parses DUTs IP address
@@ -742,11 +753,14 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
         time.sleep(1)
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -765,7 +779,7 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_powersave_not_enabled_TC19646(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
@@ -865,6 +879,8 @@ def test_dynamic_load_powersave_not_enabled_TC19646(
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
         logger.info(f"Successfully closed socket_id->{sock_count}")
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -884,7 +900,7 @@ def test_dynamic_load_powersave_not_enabled_TC19646(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip()
 def test_dynamic_load_powersave_enabled_testcase14(
-        wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+         wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
@@ -989,6 +1005,7 @@ def test_dynamic_load_powersave_enabled_testcase14(
     wifi_dut.interfaces.wifi.close_socket(sock1)
     # Close socket 3
     wifi_dut.interfaces.wifi.close_socket(sock2)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -1008,7 +1025,7 @@ def test_dynamic_load_powersave_enabled_testcase14(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_store_config"])
 def test_dynamic_load_auto_join_TC19645(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     ping_count = 10
     capture_filename = "test_dynamic_load_auto_join_TC19645"
@@ -1183,8 +1200,10 @@ def test_dynamic_load_auto_join_TC19645(
         logger.info(f"Successfully closed socket_id->{sock_count}")
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()

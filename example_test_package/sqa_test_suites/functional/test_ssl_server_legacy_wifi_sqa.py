@@ -40,7 +40,7 @@ import time
 """
 
 
-def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger):
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
@@ -139,11 +139,11 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_testcase_TC19110(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger
         ):
     capture_filename = "test_ssl_server_testcase_TC19110"
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -175,11 +175,15 @@ def test_ssl_server_testcase_TC19110(
     assert b"success" in result, "unable to close opened tcp socket"
     logger.info(f"Successfully closed socket_id:{sock}  in the DUT")
     assert data_sent == data_receive.decode(), "data length sent and received is not matching"
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.parametrize("cipher_list", [
@@ -189,11 +193,11 @@ def test_ssl_server_testcase_TC19110(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_diff_cipher_suite_testcase_TC19132(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger, cipher_list
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger, cipher_list
         ):
     capture_filename = "test_ssl_server_diff_cipher_suite_testcase_TC19132"
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -232,22 +236,27 @@ def test_ssl_server_diff_cipher_suite_testcase_TC19132(
         ssl_client.interfaces.ssl.stop_client()
         assert b"success" in result, "unable to close opened tcp socket"
         assert data_sent == data_receive.decode(), "data length sent and received is not matching"
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_1_0version_client_1_2_testcase_TC19115(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger
         ):
     capture_filename = "test_ssl_server_1_0version_client_1_2_testcase_TC19115"
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -279,22 +288,26 @@ def test_ssl_server_1_0version_client_1_2_testcase_TC19115(
     logger.info(f"DUT sent error code->{exc_info.value.error_code} when third-party ssl client operating at version "
                 f"1.2 trying to connect to ssl server opened in DUT with version 1.0 which is expected")
 
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_no_server_cert_testcase_TC19111(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_client, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger
         ):
     capture_filename = "test_ssl_server_no_server_cert_testcase_TC19111"
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
 
     wifi_dut.interfaces.wifi.clear_certificate(RS9116CertificateType.SSLServerCertificate,
                                                cert_index=0
@@ -320,22 +333,25 @@ def test_ssl_server_no_server_cert_testcase_TC19111(
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
 
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_tcp_client, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, remote_tcp_client, logger
         ):
     capture_filename = "test_ssl_server_connect_non_ssl_client_testcase_TC19112"
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -354,8 +370,11 @@ def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
 
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()

@@ -39,7 +39,7 @@ import time
 """
 
 
-def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger):
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
@@ -132,7 +132,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_socket_limit_https_testcase_TC19124(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_socket_limit_select_testcase_TC19124"
 
@@ -158,8 +158,11 @@ def test_ssl_socket_limit_https_testcase_TC19124(
     assert exc_info.value.error_code == 0xD3, "Observed wrong error code, expected is 0xD3"
     logger.info(f"DUT sent error code->{exc_info.value.error_code} when trying to open third ssl socket which is "
                 f"expected")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.leave()
