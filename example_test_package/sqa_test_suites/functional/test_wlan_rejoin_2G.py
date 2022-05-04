@@ -1576,7 +1576,7 @@ def test_rejoin_in_US_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut):
         logger().info('DUT failed to reconnect after AP power turn on ')
 
 
-def test_rejoin_in_UK_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_rejoin_in_EU_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     # Verify Rejoin Functionality with EU region enabled in 2.4GHZ band
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
