@@ -138,7 +138,7 @@ def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
 
         logger().info("disconnecting from bt device")
         bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
-        time.slee(10)
+        time.sleep(10)
 
     logger().info(f"test completed in {t.duration} seconds")
 
@@ -391,8 +391,10 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client)
         assert connected, "unable to connect bt device"
         logger().info(f'device connection state is {connected}')
 
-    logger().info("set dut in power save.....")
+    logger().info("set dut in "
+                  " save.....")
     bt_dut.interfaces.bluetooth.bt_power_save(3,2)
+    logger().info("bt power save configuration success")
 
     with HidRecorder() as hid_recorder:
         for item in test_data:
@@ -447,6 +449,8 @@ def test_hid_conn_disconn_by_Interrupt_ps_3_ulp_mode_C20035(bt_dut, bt_client):
 
     logger().info("set dut in power save.....")
     bt_dut.interfaces.bluetooth.bt_power_save(3,2)
+    logger().info("bt power save configuration success")
+
 
     with HidRecorder() as hid_recorder:
         for item in test_data:
@@ -468,7 +472,7 @@ def test_hid_conn_disconn_by_Interrupt_ps_3_ulp_mode_C20035(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 def test_hid_conn_and_disconn_C20019(bt_dut, bt_client):
-    for i in range(0, 8):
+    for i in range(0, 3):
 
         logger().info("configuring dut for hid slave role with sdp config data....")
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
@@ -610,4 +614,114 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
 
     logger().info("disconnecting from bt device")
     bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(10)
+
+def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
+
+    logger().info("configuring dut for hid slave role with sdp config data with capability....")
+    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
+    assert bt_dut_address is not None
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    # Begin Scanning for BLE devices
+    logger().info("initiating scan form remote bt device...")
+    bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                      pin_code=pin_code)
+    assert bt_client_address is not None
+    logger().info(f'bt client address {bt_client_address}')
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
+            device_found = True
+            break
+
+    logger().info("stopping scan.....")
+    bt_client.interfaces.bluetooth.stop_scanning()
+    assert device_found, "unable to scan device"
+
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        assert connected, "unable to connect bt device"
+        logger().info(f'device connection state is {connected}')
+
+    logger().info("set dut in power save.....")
+    bt_dut.interfaces.bluetooth.bt_power_save(3,1)
+    logger().info("bt power save configuration success")
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            logger().info("sending interrupt data at remote window....")
+            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data)
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data[i]
+
+    time.sleep(60)
+
+    logger().info("fetching the connection status after")
+    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+    assert connected == 1, "dut is disconnected"
+    logger().info(f"connection status :{connected}")
+
+    logger().info("disconnecting from bt device")
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
+
+    logger().info("configuring dut for hid slave role with sdp config data with capability....")
+    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
+    assert bt_dut_address is not None
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    for i in range(0, 3):
+        # Begin Scanning for BLE devices
+        logger().info("initiating scan form remote bt device...")
+        bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                      pin_code=pin_code)
+        assert bt_client_address is not None
+        logger().info(f'bt client address {bt_client_address}')
+
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
+                device_found = True
+                break
+
+        logger().info("stopping scan.....")
+        bt_client.interfaces.bluetooth.stop_scanning()
+        assert device_found, "unable to scan device"
+
+        with bt_dut.interfaces.bluetooth.run_bt_task():
+            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            assert connected, "unable to connect bt device"
+            logger().info(f'device connection state is {connected}')
+
+        logger().info("set dut in power save.....")
+        bt_dut.interfaces.bluetooth.bt_power_save(3,1)
+        logger().info("bt power save configuration success")
+
+        with HidRecorder() as hid_recorder:
+            for item in test_data:
+                logger().info("sending interrupt data at remote window....")
+                bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+            hid_logs = hid_recorder.logs()
+
+        assert len(hid_logs) == len(test_data)
+        for i in range(len(test_data)):
+            assert hid_logs[i] == test_data[i]
+
+        time.sleep(60)
+
+        logger().info("fetching the connection status after")
+        connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+        assert connected == 1, "dut is disconnected"
+        logger().info(f"connection status :{connected}")
+
+        logger().info("disconnecting from bt device")
+        bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
     time.sleep(10)
