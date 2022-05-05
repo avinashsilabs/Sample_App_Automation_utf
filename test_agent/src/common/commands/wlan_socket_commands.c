@@ -22,6 +22,7 @@ rsi_fd_set except_fds;
 uint8_t socket_select_response = 0;
 
 extern int read_variable(uint32_t nvm_key, uint8_t* buffer, size_t* length);
+extern uint8_t remote_terminate;
 
 void rsi_socket_command(sl_cli_command_arg_t* arguments);
 void rsi_bind_command(sl_cli_command_arg_t* arguments);
@@ -798,6 +799,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         tt_start = rsi_hal_gettickcount();
 
         while (1) {
+
             // Send data on socket
             status = rsi_sendto(socketID, buffer, data_len, 0, (struct rsi_sockaddr*)&remote_address, sizeof(remote_address));
             if (checkStatus(status, "rsi_sendto", socketID, 1, debug_output) == -1) {
@@ -814,6 +816,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         if (compute_throughput == 1) {
             measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
         }
+
         //close socket
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
 
@@ -844,6 +847,10 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         // take the current time
         tt_start = rsi_hal_gettickcount();
         while (1) {
+         if(remote_terminate)
+        {
+        break;
+        }
             // Send data on socket
             status = rsi_send(socketID, buffer, data_len, 0);
             if (checkStatus(status, "rsi_send", socketID, 1, debug_output) == -1) {
@@ -856,15 +863,18 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
                 break;
 
         }
+        if(!remote_terminate)
+        {
         //close socket
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
+        }
         if (compute_throughput == 1) {
             measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
         }
         break;
     }
     }
-
+remote_terminate=0;
     free(buffer);
 }
 
