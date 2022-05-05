@@ -419,9 +419,23 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Verify rejoin functionality in DFS channels '''
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(10)
+    time.sleep(70)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    # Added verification if AP will not beaconing in DFS channel, program will terminate
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='verify_beacon')
+    time.sleep(5)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
+                     f'and wlan.fc.type_subtype == 0x0008'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find Beacon packets'
+
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -437,10 +451,10 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    file_name = f'5g_uni_broad_prob_req'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -460,24 +474,20 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
 
-    time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_uni_broad_prob_req')
-
     logger().info('***** Disable the AP radio *****')
     wifi_access_point.interfaces.wifi.stop_ap()
 
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
+    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
     time.sleep(30)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
     logger().info('***** Enable the AP radio *****')
     wifi_access_point.interfaces.wifi.start_ap()
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_rejoin')
-    time.sleep(10)
+    file_name_rejoin = f'5G_Rejoin_dfs'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+
     if connect_status is False:
         logger().info("Unable to connect with Server")
         assert connect_status
