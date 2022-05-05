@@ -527,6 +527,7 @@ devices:
                 shell: 'linux_shell'
                 port: 443
                 interface: 'eth0'
+                tls_enabled: true
                 tls_key: 'server-key.pem'
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
@@ -832,6 +833,9 @@ defaults:
         att_channel: 1
         db_value: 2
         att_enable: true
+
+    sntp_server:
+        server_ip: '10.8.4.11'
 
     aws_iot:
         hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
