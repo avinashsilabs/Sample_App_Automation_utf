@@ -21,7 +21,7 @@ include:
 
 - path: './config'
   file_list:
-  - path: rsi_concurrent_wlan_config.h
+  - path: rsi_wlan_concurrent_config.h
 
 - path: '../common/data'
   file_list:
@@ -55,9 +55,6 @@ source:
 - path: ../common/commands/ble_gatt/rsi_ble_gatt_main_task.c
 - path: ../common/commands/ble_gatt/rsi_ble_gatt_subtasks.c
 - path: ../common/commands/ble_gatt/gatt_commands.c
-
- #other
-- path: ./config/concurrent_test_agent.c
 
 configuration:
 - name: SL_BOARD_ENABLE_VCOM

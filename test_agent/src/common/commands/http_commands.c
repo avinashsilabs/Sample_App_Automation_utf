@@ -20,6 +20,7 @@
 #include "sl_cli_arguments.h"
 #include <string.h>
 #include "rsi_wlan_config.h"
+#include "rsi_wlan_concurrent_config.h"
 #include "rsi_data_types.h"
 #include "rsi_http_client.h"
 #include "rsi_nwk.h"

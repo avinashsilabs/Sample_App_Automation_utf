@@ -18,6 +18,7 @@ include:
   - path: rsi_common_config.h
   - path: rsi_ble_config.h
   - path: rsi_wlan_config.h
+  - path: rsi_wlan_concurrent_config.h
 
 - path: './config'
   file_list:
