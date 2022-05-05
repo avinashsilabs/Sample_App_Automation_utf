@@ -122,37 +122,3 @@ def test_parse_verion_from_web_server(http_server, http_client):
     assert status == 200
     version = extract_version(content)
     assert version == '1610.2.5.0.0.4'
-
-@pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
-@pytest.mark.wifi_access_point("raspi_wifi")
-def test_wifi_join_special_char_32bit(wifi_dut, wifi_access_point):
-    logger().info("Setting DUT in wlan power save...")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    # Enables the bt power save in DUT
-    logger().info("Setting DUT in bt power save...")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    #
-    ssid_list = ["*@test1*#test1*@test1*$st1*$st1*", "是不了是不了$*TEST##@12345", "джф-这是书-ئضڪڪ-ඤౠ"]
-
-    for ssid in ssid_list:
-        # initiates the access point with channel given in list
-        logger().info(f"Setting access point with ssid {ssid}...")
-        wifi_access_point.interfaces.wifi.start_ap(ssid=ssid)
-        time.sleep(1)
-        logger().info(f"Initiating the scan from DUT with ssid {ssid}..")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=ssid)
-        logger().info(scan_results)
-        assert len(scan_results)>=1,f"32 bytes ssid not found in scan results"
-        assert wifi_dut.interfaces.wifi.join(ssid=ssid)
-        time.sleep(1)
-        wifi_dut.interfaces.wifi.leave()
-        time.sleep(1)
