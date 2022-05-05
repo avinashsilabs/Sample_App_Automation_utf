@@ -41,13 +41,18 @@ def __print_throughput(iperf_throughput: dict):
 def logger():
     return get_logger(__name__)
 
+
+pytestmark = [
+    pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA3'})
+]
+
+
 ping_count = 10
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'TESTTEST-ASUS',"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -55,7 +60,7 @@ ping_count = 10
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
@@ -108,7 +113,7 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid='TESTTEST-ASUS', channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid, channel=wifi_access_point.interfaces.wifi.channel)
             scan_fail = 0
             break
         except:
@@ -124,17 +129,12 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
                                                          | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
     time.sleep(1)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
 
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                      f'and wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
@@ -158,11 +158,13 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
     time.sleep(5)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
+
     logger().info("Sniffer Validation for Probe request packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
     logger().info("Sniffer Validation for Authentication packets of COMMIT & CONFIRM")
@@ -173,7 +175,6 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -183,7 +184,7 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
@@ -250,11 +251,11 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
@@ -263,7 +264,6 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -273,7 +273,7 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
@@ -340,11 +340,11 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
@@ -353,7 +353,6 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -363,7 +362,7 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
@@ -450,7 +449,6 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -460,7 +458,7 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
@@ -548,7 +546,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3',"channel": 36})
+@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -556,7 +554,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
@@ -639,7 +637,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3',"channel": 36})
+@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -647,7 +645,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
@@ -729,7 +727,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3',"channel": 36})
+@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -737,7 +735,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
@@ -826,7 +824,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3',"channel": 36})
+@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -834,7 +832,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
@@ -907,11 +905,11 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
@@ -920,7 +918,6 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -928,7 +925,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
@@ -1023,7 +1020,6 @@ def test_rejoin_with_wpa3_C34509(wifi_sniffer, net_perf_client, wifi_access_poin
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -1031,7 +1027,7 @@ def test_rejoin_with_wpa3_C34509(wifi_sniffer, net_perf_client, wifi_access_poin
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
@@ -1109,7 +1105,6 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -1117,7 +1112,7 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "custom_features": RS9116CustomFeatureBitMap.Default | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
@@ -1187,7 +1182,6 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'Azeez123',"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -1195,7 +1189,7 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "custom_features": RS9116CustomFeatureBitMap.Default | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
