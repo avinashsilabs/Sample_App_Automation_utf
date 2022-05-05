@@ -19,7 +19,6 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116MqttQos,
     RS9116BTFeatureBitMap
     )
-)
 
 def logger():
     return get_logger(__name__)
