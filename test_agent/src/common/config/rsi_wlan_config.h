@@ -31,6 +31,7 @@
 #define RSI_CONFIG_H
 
 #include "rsi_wlan_defines.h"
+#include "rsi_wlan_concurrent_config.h"
 
 // global variables for various feature settings, referenced
 // in #defines below and set via rsi_device_init_command
