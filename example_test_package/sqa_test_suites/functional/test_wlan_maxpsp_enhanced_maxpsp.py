@@ -17,7 +17,8 @@ from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116AsyncEventType, \
-    RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116DataRate, RS9116RejoinParams, RS9116JoinFeatureBitMap
+    RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116DataRate, RS9116RejoinParams, RS9116JoinFeatureBitMap, \
+    RS9116ULPModes, RS9116PowerSaveProcedureTypes
 
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
@@ -25,9 +26,11 @@ from utf_wiseconnect.devices.rs911x import (
 
 )
 
+
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
+
 
 def logger():
     return get_logger(__name__)
@@ -618,7 +621,7 @@ class FilterPacket:
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_listen_interval_12ms_C19673(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1.23
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
@@ -631,9 +634,9 @@ def test_maxpsp_listen_interval_12ms_C19673(wifi_sniffer, wifi_access_point, wif
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19673')
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                     listen_interval=1200)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     wifi_dut.interfaces.wifi.start_ip()
@@ -698,7 +701,7 @@ def test_maxpsp_listen_interval_12ms_C19673(wifi_sniffer, wifi_access_point, wif
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_DTIM3_C19674(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ps_packet_exchange_obj = FilterPacket()
@@ -712,11 +715,10 @@ def test_maxpsp_DTIM3_C19674(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.start_ap()
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
@@ -733,8 +735,6 @@ def test_maxpsp_DTIM3_C19674(wifi_sniffer, wifi_access_point, wifi_dut):
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-    packet_filter1 = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid}'
-
     # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter3 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a) || ' \
                      f'(wlan.addr == {ap_bssid} && ' \
@@ -745,7 +745,6 @@ def test_maxpsp_DTIM3_C19674(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == 0x01)'
 
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
     # Validate beacon DTIM count=0
@@ -778,7 +777,7 @@ def test_maxpsp_DTIM3_C19674(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_DTIM4_C19675(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_dtim_4_c19675(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -788,17 +787,15 @@ def test_maxpsp_DTIM4_C19675(wifi_sniffer, wifi_access_point, wifi_dut):
     if More data bit is set to 1'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19675')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
                                                   number_of_dtim_skip=4)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -873,7 +870,7 @@ def test_maxpsp_DTIM4_C19675(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_gpio_listen_interval_12ms_C19677(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1.23
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
@@ -884,15 +881,15 @@ def test_maxpsp_gpio_listen_interval_12ms_C19677(wifi_sniffer, wifi_access_point
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19677')
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                     listen_interval=1200)
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -975,23 +972,27 @@ def test_maxpsp_gpio_listen_interval_12ms_C19677(wifi_sniffer, wifi_access_point
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_ulp_C19678(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
+    time_delta_for_listen_interval = 1.23
+    ps_poll_time_delta_obj = FilterPacket()
     validation = True
-    packet_filter2 = False
+    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    list_status = []
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19678')
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                     listen_interval=1200)
+
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1014,9 +1015,35 @@ def test_maxpsp_ulp_C19678(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter3 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {ap_bssid}))'
 
+    # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
+    packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
+
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+        'packet_count'], 'Unable to find PS-Poll packet'
+
+    # time.sleep(5)
+    # Validate the time delta between PS-poll packet
+    ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
+    logger().info(ps_poll_packets_time_delta_list)
+    ps_poll_packets_time_delta_list.pop(0)
+    del ps_poll_packets_time_delta_list[-1]
+    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
+    for time_diff in ps_poll_packets_time_delta_list:
+        time_diff = round(time_diff, 2)
+        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
+        if is_between is True:
+            logger().info(f'DUT sends PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
+            list_status.append(is_between)
+        else:
+            logger().info(
+                f'DUT unable to send PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
+            list_status.append(is_between)
+
+    logger().info(list_status)
+    assert False if False in list_status else True
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1034,16 +1061,17 @@ def test_maxpsp_ulp_C19678(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_listen_interval_11ms_C19679(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1.13
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     list_status = []
-
+    '''Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power save 
+       2 & MAX PSP mode and set listen_interval_dtim is 0'''
     '''Validate listen interval from DUT side, DUT should wake up and send data after 11 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
-    wifi_access_point.interfaces.wifi.config['dtim'] = '2'
+    wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
@@ -1052,9 +1080,9 @@ def test_maxpsp_listen_interval_11ms_C19679(wifi_sniffer, wifi_access_point, wif
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19679')
 
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
-                                  listen_interval=1100)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                     listen_interval=1100)
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -1120,7 +1148,7 @@ def test_maxpsp_listen_interval_11ms_C19679(wifi_sniffer, wifi_access_point, wif
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_DTIM3_C19680(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ps_packet_exchange_obj = FilterPacket()
@@ -1136,11 +1164,10 @@ def test_maxpsp_DTIM3_C19680(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.start_ap()
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     wifi_dut.interfaces.wifi.start_ip()
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -1204,7 +1231,7 @@ def test_maxpsp_DTIM3_C19680(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_DTIM4_C19681(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -1217,14 +1244,13 @@ def test_maxpsp_DTIM4_C19681(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19675')
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
                                                   number_of_dtim_skip=4)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1299,23 +1325,22 @@ def test_maxpsp_DTIM4_C19681(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_enable_disable_C19682(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
 
     '''Verify the power save mode2 functionality enable and disable while doing data transfer for overnight'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
 
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1332,7 +1357,7 @@ def test_maxpsp_enable_disable_C19682(wifi_sniffer, wifi_access_point, wifi_dut)
                      f'and (wlan.da == {ap_bssid}))'
 
     wifi_sniffer.interfaces.capture.start_capture(capture_file='enable_maxpsp_C19682')
-    end_time = datetime.datetime.now() + timedelta(minutes=3)
+    end_time = datetime.datetime.now() + timedelta(hours=12)
     start_time = datetime.datetime.now()
     try:
         while datetime.datetime.now() < end_time:
@@ -1384,7 +1409,7 @@ def test_maxpsp_enable_disable_C19682(wifi_sniffer, wifi_access_point, wifi_dut)
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_C19693(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
     send_bytes = 1000
     tcp_socket_obj = IopTcpIpSockets()
     time_delta_for_listen_interval = 1.23
@@ -1396,18 +1421,19 @@ def test_enhanced_max_psp_C19693(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='powersave3_C19693')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                     listen_interval=1200)
 
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
-                                  listen_interval=1200)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1509,7 +1535,7 @@ def test_enhanced_max_psp_C19693(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_C19694(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ps_packet_exchange_obj = FilterPacket()
@@ -1519,17 +1545,16 @@ def test_enhanced_max_psp_C19694(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='powersave2_C19694')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1561,7 +1586,6 @@ def test_enhanced_max_psp_C19694(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter5 = f'(wlan.fc.type_subtype == 0x001a || wlan.fc.type_subtype == 0x0028) || (wlan.tim.dtim_count == 0 ' \
                      f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == 0x01)'
 
-
     # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
     packet_filter6 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
                      f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
@@ -1582,10 +1606,12 @@ def test_enhanced_max_psp_C19694(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count']
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
-    logger().info('-----------2. Validation for PS-Poll & Qos Data packet time difference should be within 20ms ---------------- ')
+    logger().info(
+        '-----------2. Validation for PS-Poll & Qos Data packet time difference should be within 20ms ---------------- ')
     sniffer_dict = ps_packet_exchange_obj.parse_sniffer_packet_for_max_psp_95()
     assert ps_packet_exchange_obj.validate_packet_for_max_psp(sniffer_dict), 'No sequence found for sniffer packets ' \
-                                                                           'Beacon(DTIM count 0)->PS-POLL->Qos data packet'
+                                                                             'Beacon(DTIM count 0)->PS-POLL->Qos data ' \
+                                                                             'packet '
 
     '''Second validation is check Qos data will send again after Ps-Poll if More data bit is set to 1'''
     logger().info('-----------Validation for More data bit sequence---------------- ')
@@ -1609,7 +1635,7 @@ def test_enhanced_max_psp_C19694(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_C19695(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -1621,18 +1647,16 @@ def test_enhanced_max_psp_C19695(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='enhanced_max_psp_C19695')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=70,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
+                                     listen_interval=1200)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1685,7 +1709,8 @@ def test_enhanced_max_psp_C19695(wifi_sniffer, wifi_access_point, wifi_dut):
 
     if result is False:
         logger().info(
-            '---------1. Validation for PS-POLL-> Null frame + pm bit 0 -> Qos data -> Null frame + pm bit 1 data packet sequence-------------- ')
+            '---------1. Validation for PS-POLL-> Null frame + pm bit 0 -> Qos data -> Null frame + pm bit 1 data '
+            'packet sequence-------------- ')
         logger().info(
             '---------2. Validation for Qos Data & NULL frame with PM bit 1 packet time difference---------------- ')
         sniffer_dict = frame_exchange_obj.parse_sniffer_packet_max_psp_95_null_frame()
@@ -1713,7 +1738,7 @@ def test_enhanced_max_psp_C19695(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_C19696(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -1721,22 +1746,21 @@ def test_enhanced_max_psp_C19696(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify the DUT functionality when ULP POWER SAVE MODE 2, FAST PSP with monitor interval 100 and LISTEN INTERVAL
-       based power save features are enabled. (TC_4)'''
+       based power save features are enabled'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='enhanced_max_psp_C19695')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=100,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
+                                     listen_interval=1200)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1816,7 +1840,7 @@ def test_enhanced_max_psp_C19696(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_C19697(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -1824,22 +1848,21 @@ def test_enhanced_max_psp_C19697(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify the functionality of DUT when ULP POWER SAVE MODE 2, FAST PSP and listen interval is changed in power
-       save command to 600 msec(TC_3) '''
+       save command to 600 msec'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='enhanced_max_psp_C19697')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
-                                  listen_interval=600)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
+                                     listen_interval=600)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1922,23 +1945,22 @@ def test_enhanced_max_psp_C19697(wifi_sniffer, wifi_access_point, wifi_dut):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_maxpsp_enable_disable_C19698(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
 
     '''Verify the power save mode2 functionality enable and disable while doing data transfer for overnight'''
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -1955,7 +1977,7 @@ def test_maxpsp_enable_disable_C19698(wifi_sniffer, wifi_access_point, wifi_dut)
                      f'and (wlan.da == {ap_bssid}))'
 
     wifi_sniffer.interfaces.capture.start_capture(capture_file='enhance_maxpsp_C19698')
-    end_time = datetime.datetime.now() + timedelta(minutes=4)
+    end_time = datetime.datetime.now() + timedelta(hours=12)
     start_time = datetime.datetime.now()
     try:
         while datetime.datetime.now() < end_time:
@@ -2006,7 +2028,7 @@ def test_maxpsp_enable_disable_C19698(wifi_sniffer, wifi_access_point, wifi_dut)
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_with_diff_ap_C19699(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -2021,15 +2043,14 @@ def test_enhanced_max_psp_with_diff_ap_C19699(wifi_sniffer, wifi_access_point, w
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='enhanced_max_psp_C19699')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
-
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
 
     wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
                                   listen_interval=1200)
@@ -2112,7 +2133,8 @@ def test_enhanced_max_psp_with_diff_ap_C19699(wifi_sniffer, wifi_access_point, w
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_with_diff_traffic_C196700(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
+def test_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client,
+                                                    protocol):
     frame_exchange_obj = FilterPacket()
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -2126,18 +2148,17 @@ def test_enhanced_max_psp_with_diff_traffic_C196700(wifi_sniffer, wifi_access_po
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='diff_traffic_C196700')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
+                                     listen_interval=1200)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2160,7 +2181,7 @@ def test_enhanced_max_psp_with_diff_traffic_C196700(wifi_sniffer, wifi_access_po
 
     for qos in qos_value:
         net_perf_client.interfaces.net_perf.init_client(
-            device_ip=device_ip, protocol=protocol, tos_value=qos
+            device_ip=device_ip, protocol=protocol, tos_value=qos, time_out=10
         )
 
         # verifying host_ip
@@ -2194,8 +2215,6 @@ def test_enhanced_max_psp_with_diff_traffic_C196700(wifi_sniffer, wifi_access_po
         __print_throughput(tp)
         time.sleep(5)
 
-
-    time.sleep(60)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
         'packet_count']
@@ -2204,11 +2223,13 @@ def test_enhanced_max_psp_with_diff_traffic_C196700(wifi_sniffer, wifi_access_po
     logger().info('-----------2. Validation for PS-Poll & Qos Data packet time difference---------------- ')
     sniffer_dict = frame_exchange_obj.parse_sniffer_packet_for_max_psp_95()
     result = frame_exchange_obj.validate_packet_for_max_psp(sniffer_dict), 'No sequence found for sniffer packets ' \
-                                                                           'Beacon(DTIM count 0)->PS-POLL->Qos data packet'
+                                                                           'Beacon(DTIM count 0)->PS-POLL->Qos data ' \
+                                                                           'packet '
 
     if result is False:
         logger().info(
-            '---------1. Validation for PS-POLL-> Null frame + pm bit 0 -> Qos data -> Null frame + pm bit 1 data packet sequence-------------- ')
+            '---------1. Validation for PS-POLL-> Null frame + pm bit 0 -> Qos data -> Null frame + pm bit 1 data '
+            'packet sequence-------------- ')
         logger().info(
             '---------2. Validation for Qos Data & NULL frame with PM bit 1 packet time difference---------------- ')
         sniffer_dict = frame_exchange_obj.parse_sniffer_packet_max_psp_95_null_frame()
@@ -2237,7 +2258,7 @@ def test_enhanced_max_psp_with_diff_traffic_C196700(wifi_sniffer, wifi_access_po
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_with_high_data_rate_C196703(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 100
@@ -2252,18 +2273,18 @@ def test_enhanced_max_psp_with_high_data_rate_C196703(wifi_sniffer, wifi_access_
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='high_datarates_C196703')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(data_rate=RS9116DataRate.MCS7, join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.MCS7,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
+                                     listen_interval=1200)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2345,7 +2366,7 @@ def test_enhanced_max_psp_with_high_data_rate_C196703(wifi_sniffer, wifi_access_
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_with_high_data_rate_DTIM_C196704(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 100
@@ -2353,24 +2374,23 @@ def test_enhanced_max_psp_with_high_data_rate_DTIM_C196704(wifi_sniffer, wifi_ac
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify whether DUT is able to wake up and receive Data based on DTIM beacon with power save mode2 and ULP mode &
-       DTIM Based and Enhanced MAX PSP with high data rate'''
+       DTIM Based and Enhanced MAX PSP'''
 
     '''Verify whether DUT is waked up before the nearest Beacon that does not exceed the specified listen interval
        time, Retrieving the buffered data by sending PS-POLL for every packet'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='high_datarates_C196703')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='high_datarates_C196704')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2455,7 +2475,7 @@ def test_enhanced_max_psp_with_high_data_rate_DTIM_C196704(wifi_sniffer, wifi_ac
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_listen_interval_C196705(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
+def test_enhanced_max_psp_listen_interval_c196705(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
     validation = True
     wait_time = [60, 300]
 
@@ -2472,12 +2492,12 @@ def test_enhanced_max_psp_listen_interval_C196705(wifi_sniffer, wifi_access_poin
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
-                                  listen_interval=1200)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default,
+                                     listen_interval=1200)
+
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2500,7 +2520,7 @@ def test_enhanced_max_psp_listen_interval_C196705(wifi_sniffer, wifi_access_poin
     '''Send traffic RX for 1/5 min'''
     for iperf_run_time in wait_time:
         net_perf_client.interfaces.net_perf.init_client(
-            device_ip=device_ip, protocol=protocol, time=iperf_run_time
+            device_ip=device_ip, protocol=protocol, time_out=iperf_run_time
         )
 
         # verifying host_ip
@@ -2537,6 +2557,7 @@ def test_enhanced_max_psp_listen_interval_C196705(wifi_sniffer, wifi_access_poin
         else:
             time.sleep(120)
 
+
 @pytest.mark.net_perf_client("static_iperf")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2555,7 +2576,7 @@ def test_enhanced_max_psp_listen_interval_C196705(wifi_sniffer, wifi_access_poin
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
-def test_enhanced_max_psp_DTIM_C196706(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
+def test_enhanced_max_psp_dtim_c196706(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
     validation = True
     wait_time = [60, 300]
 
@@ -2571,11 +2592,10 @@ def test_enhanced_max_psp_DTIM_C196706(wifi_sniffer, wifi_access_point, wifi_dut
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
 
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2598,7 +2618,7 @@ def test_enhanced_max_psp_DTIM_C196706(wifi_sniffer, wifi_access_point, wifi_dut
     '''Send traffic RX for 1 min'''
     for iperf_run_time in wait_time:
         net_perf_client.interfaces.net_perf.init_client(
-            device_ip=device_ip, protocol=protocol
+            device_ip=device_ip, protocol=protocol, time_out=iperf_run_time
         )
 
         # verifying host_ip
@@ -2635,6 +2655,7 @@ def test_enhanced_max_psp_DTIM_C196706(wifi_sniffer, wifi_access_point, wifi_dut
         else:
             time.sleep(120)
 
+
 '''*********************************POWER SAVE 3 TEST CASES************************************************'''
 
 # @pytest.mark.skip
@@ -2654,23 +2675,22 @@ def test_enhanced_max_psp_DTIM_C196706(wifi_sniffer, wifi_access_point, wifi_dut
     },
 
 )
-def test_power_save3_C19685(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_c19685(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
 
     '''Verify RSI_STA is going to power save or not when enable power save mode3 with LP mode and MAX PSP'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='powersave3_C19685')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2719,24 +2739,22 @@ def test_power_save3_C19685(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_C19686(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_c19686(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
 
     '''Verify RSI_STA is going to power save or not when enable power save mode 3 with ULP mode with RAM retention and 
        MAX PSP'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='powersave3_C19686')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2767,7 +2785,6 @@ def test_power_save3_C19686(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found for pwmt bit enable'
 
-
 # @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -2785,7 +2802,7 @@ def test_power_save3_C19686(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_listen_interval_C19687(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_listen_interval_c19687(wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1.13
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
@@ -2796,18 +2813,17 @@ def test_power_save3_listen_interval_C19687(wifi_sniffer, wifi_access_point, wif
        & MAX PSP mode and set listen_interval_dtim is 0 WLAN'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='powersave3_C19687')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
-                                  listen_interval=1100)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.
+                                     ListenIntervalFromJoin,
+                                     listen_interval=1100)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2881,7 +2897,7 @@ def test_power_save3_listen_interval_C19687(wifi_sniffer, wifi_access_point, wif
     },
 
 )
-def test_power_save3_DTIM_C19688(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_dtim_c19688(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ps_packet_exchange_obj = FilterPacket()
@@ -2890,17 +2906,15 @@ def test_power_save3_DTIM_C19688(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='dtim_powersave3_C19688')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -2975,7 +2989,7 @@ def test_power_save3_DTIM_C19688(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_C19689(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_c19689(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -2985,17 +2999,16 @@ def test_power_save3_C19689(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='dtim_powersave3_C19689')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
                                                   number_of_dtim_skip=4)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -3072,23 +3085,22 @@ def test_power_save3_C19689(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_enable_disable_C19690(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_enable_disable_c19690(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
 
     '''Verify the power save mode3 functionality enable and disable while doing data transfer for overnight'''
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(5)
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
                                                   number_of_dtim_skip=0)
 
-    result = wifi_dut.interfaces.wifi.scan(ssid=None)
-    ap_bssid = str(result[0]).split(' ')[11].strip(')')
-    logger().info(f'AP BSSID = {ap_bssid}')
-
-    wifi_dut.interfaces.wifi.join(join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
@@ -3138,7 +3150,3 @@ def test_power_save3_enable_disable_C19690(wifi_sniffer, wifi_access_point, wifi
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
             'packet_count'], 'No packet found for pwmt bit disable'
         logger().info(f"********* Total execution time of test case = {exact_execution_time}**********")
-
-
-
-
