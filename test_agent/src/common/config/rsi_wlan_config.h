@@ -31,7 +31,6 @@
 #define RSI_CONFIG_H
 
 #include "rsi_wlan_defines.h"
-#include "rsi_wlan_concurrent_config.h"
 
 // global variables for various feature settings, referenced
 // in #defines below and set via rsi_device_init_command
@@ -140,6 +139,9 @@ extern uint32_t g_features_enable;
 #define RSI_ENABLE 1
 // Disable feature
 #define RSI_DISABLE 0
+
+// To enable concurrent mode
+#define CONCURRENT_MODE RSI_DISABLE
 
 // opermode command parameters
 /*=======================================================================*/

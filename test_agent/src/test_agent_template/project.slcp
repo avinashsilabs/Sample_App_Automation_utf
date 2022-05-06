@@ -22,7 +22,6 @@ include:
   file_list:
   - path: rsi_common_config.h
   - path: rsi_wlan_config.h
-  - path: rsi_wlan_concurrent_config.h
 
 source:
 - path: ../common/main.c
