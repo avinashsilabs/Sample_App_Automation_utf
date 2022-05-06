@@ -20,7 +20,7 @@ firmware_applications:
     test_concurrent_mode:
     - device_type: 'efx32'
       device_subtype: 'efr32'
-      filename: 'sqa_test_agent_concur_mode.hex'
+      filename: 'concurrent_test_agent.hex'
 
     test_multi_gatt_conn:
       - device_type: 'efx32'
