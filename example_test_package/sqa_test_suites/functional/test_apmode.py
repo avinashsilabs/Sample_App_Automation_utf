@@ -137,6 +137,8 @@ def test_DUT_APMode_Trnms_rules_USregion_C19454(wifi_sniffer, wifi_dut, wifi_cli
         "security": "WPA2",
         "ssid": "SILABS_AP",
         "passphrase": "12345678",
+        "country": "EU ",
+        "channel":"13"
     },
 )
 @pytest.mark.parametrize("channel", [13])
@@ -914,12 +916,18 @@ def test_DUTAP_TCPRx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
     "wifi_dut",
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
-        "features": RS9116FeatureBitMap.Aggregation,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
         "security": "WPA2",
         "ssid": "RS9116_AP",
         "passphrase": "12345678", "region_config": 0, "beacon": 100,
         "region_code_ap": "US ", "channel": 14,
+
     },
 )
 @pytest.mark.config(
@@ -937,8 +945,9 @@ def test_DUTAP_USregion_unsupportedchannel_C19458(wifi_dut, wifi_client):
     with pytest.raises(WlanError) as exc_info:
         logger().info(" ********** Starting DUT as an AP with region as US and channel as 14 ********* ")
         wifi_dut.interfaces.wifi.start_ap()
-    assert exc_info.value.error_code == 0x0A,"Desired error code is not received, failing the test"
-    logger().info("Found the desired error code 0x0A, marking the test case passed")
+        logger().info(f"error code received:{exc_info.value.error_code}")
+    assert exc_info.value.error_code == 0xA,"Did not receive the desired error code from DUT, failing the test"
+    logger().info("Found the desired error code 0xA, marking the test case passed")
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -946,7 +955,12 @@ def test_DUTAP_USregion_unsupportedchannel_C19458(wifi_dut, wifi_client):
     "wifi_dut",
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
-        "features": RS9116FeatureBitMap.Aggregation,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.FiveGHz,
         "security": "WPA2",
         "ssid": "RS9116_AP",
@@ -971,6 +985,5 @@ def test_DUTAP_JPregion_unsupportedchannel_C19457(wifi_dut, wifi_client):
         wifi_dut.interfaces.wifi.start_ap()
     assert exc_info.value.error_code == 0xA,"Desired error code is not received, failing the test"
     logger().info("Found the desired error code 0xA, marking the test case passed")
-
 
 
