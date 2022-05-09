@@ -127,6 +127,8 @@ extern uint8_t g_num_of_dtim_skip ;
 
 extern uint32_t g_tx_wait_time;
 
+extern uint16_t g_rsi_ht_caps_bitmap;
+
 //globals for rsi_send_feature_frame parameters, referenced in #defines below
 extern uint8_t g_pll_mode;
 extern uint8_t g_rf_type;
@@ -294,20 +296,17 @@ extern uint32_t g_features_enable;
 
 // High Throughput capabilities related information
 /*=======================================================================*/
+//// HT caps supported
+//#define RSI_HT_CAPS_NUM_RX_STBC      (1 << 8)
+//#define RSI_HT_CAPS_SHORT_GI_20MHZ   BIT(5)
+//#define RSI_HT_CAPS_GREENFIELD_EN    BIT(4)
+//#define RSI_HT_CAPS_SUPPORT_CH_WIDTH BIT(1)
+//
+//// HT caps bit map.
+//#define RSI_HT_CAPS_BIT_MAP \
+//  (RSI_HT_CAPS_NUM_RX_STBC | RSI_HT_CAPS_SHORT_GI_20MHZ | RSI_HT_CAPS_GREENFIELD_EN | RSI_HT_CAPS_SUPPORT_CH_WIDTH)
 
-// RSI_ENABLE or RSI_DISABLE 11n mode in AP mode
-#define RSI_MODE_11N_ENABLE RSI_DISABLE
-
-// HT caps supported
-#define RSI_HT_CAPS_NUM_RX_STBC      (1 << 8)
-#define RSI_HT_CAPS_SHORT_GI_20MHZ   BIT(5)
-#define RSI_HT_CAPS_GREENFIELD_EN    BIT(4)
-#define RSI_HT_CAPS_SUPPORT_CH_WIDTH BIT(1)
-
-// HT caps bit map.
-#define RSI_HT_CAPS_BIT_MAP \
-  (RSI_HT_CAPS_NUM_RX_STBC | RSI_HT_CAPS_SHORT_GI_20MHZ | RSI_HT_CAPS_GREENFIELD_EN | RSI_HT_CAPS_SUPPORT_CH_WIDTH)
-
+#define RSI_HT_CAPS_BIT_MAP g_rsi_ht_caps_bitmap
 /*=======================================================================*/
 
 // Scan command parameters
@@ -420,7 +419,7 @@ extern uint32_t g_features_enable;
 // Power save command parameters
 /*=======================================================================*/
 // set handshake type of power mode
-#define RSI_HAND_SHAKE_TYPE GPIO_BASED
+//#define RSI_HAND_SHAKE_TYPE GPIO_BASED
 
 /*
 // 0 - LP, 1- ULP mode with RAM retention and 2 - ULP with Non RAM retention
@@ -732,7 +731,7 @@ extern uint32_t g_features_enable;
 
 
 //! 0 - LP, 1- ULP mode with RAM retention and 2 - ULP with Non RAM retention
-#define RSI_SELECT_LP_OR_ULP_MODE RSI_ULP_WITH_RAM_RET
+//#define RSI_SELECT_LP_OR_ULP_MODE RSI_ULP_WITH_RAM_RET
 
 //! set DTIM aligment required
 //! 0 - module wakes up at beacon which is just before or equal to listen_interval
