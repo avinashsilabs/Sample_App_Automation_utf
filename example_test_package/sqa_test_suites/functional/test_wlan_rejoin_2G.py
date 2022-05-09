@@ -1147,18 +1147,23 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find any unicast Probe request packets'
 
+    logger().info("\n\n Note automation can't verify exact time duation and 100 beacon miss count\n")
+    logger().info("Please open test_rejoin_miss_counter_1 sniffer capture file manually and verify beacon miss count")
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_miss_counter_3')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_miss_counter_2')
 
     logger().info("\n\n****** AP radio is going in enable mode ******")
     # '''After successful beacon receives, power off the AP'''
     wifi_access_point.interfaces.wifi.start_ap()
 
-    logger().info("\n\n****** Wait... for 120 seconds for AP radio turn on and broadcast probe request from DUT ******")
+    logger().info("\n\n****** Wait... for 120 seconds, AP radio turn on and broadcast probe request from DUT ******")
     time.sleep(120)
+
     # '''After receiving beacons from AP. Module should not try for rejoin process after 20sec'''
     # '''Verify whether module is sending unicast probe request after 100 beacons miss if module again sends unicast probe
-    #  request after 100 beacon miss count and broad cast probe request after 200 beacons miss count then PASS else FAIL'''
+    #  request after 100 beacon miss count and broadcast probe request after 200 beacons miss count then PASS else FAIL'''
+
     logger().info("\n\n****** Again AP radio is turned off ******")
     wifi_access_point.interfaces.wifi.stop_ap()
 
@@ -1171,6 +1176,11 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
         'Unable to find any broadcast Probe request packets'
 
+    logger().info("\n\n After receiving beacons from AP. Module should not try for rejoin process after 20sec Verify whether "
+                  "module is sending unicast probe request after 100 beacons miss if module again sends unicast probe "
+                  "request after 100 beacon miss count and broadcast probe request after 200 beacons miss count then "
+                  "PASS else FAIL\n")
+    logger().info("Please open test_rejoin_miss_counter_2 sniffer capture file manually and verify beacon miss count")
     wifi_dut.interfaces.wifi.leave()
     wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(5)
