@@ -1909,6 +1909,27 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
+    name: ble_set_phy
+    handler: rsi_ble_set_phy_command
+    help: set ble phy
+    argument:
+    - {type: string, help: device_addr}
+    - {type: uint8, help: tx_phy}
+    - {type: uint8, help: rx_phy}
+    - {type: uint16, help: coded_phy}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_read_phy
+    handler: rsi_ble_read_phy_command
+    help: read ble phy
+    argument:
+    - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
     name: web_socket
     handler: rsi_web_socket_create_command
     help: Create a web socket
