@@ -297,10 +297,10 @@ extern uint32_t g_features_enable;
 // High Throughput capabilities related information
 /*=======================================================================*/
 //// HT caps supported
-//#define RSI_HT_CAPS_NUM_RX_STBC      (1 << 8)
-//#define RSI_HT_CAPS_SHORT_GI_20MHZ   BIT(5)
-//#define RSI_HT_CAPS_GREENFIELD_EN    BIT(4)
-//#define RSI_HT_CAPS_SUPPORT_CH_WIDTH BIT(1)
+#define RSI_HT_CAPS_NUM_RX_STBC      (1 << 8)
+#define RSI_HT_CAPS_SHORT_GI_20MHZ   BIT(5)
+#define RSI_HT_CAPS_GREENFIELD_EN    BIT(4)
+#define RSI_HT_CAPS_SUPPORT_CH_WIDTH BIT(1)
 //
 //// HT caps bit map.
 //#define RSI_HT_CAPS_BIT_MAP \
