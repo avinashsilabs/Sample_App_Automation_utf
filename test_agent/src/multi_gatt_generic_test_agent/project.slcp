@@ -72,7 +72,10 @@ define:
 - name: RSI_ANT_ENABLE
 - name: CONCURRENT_MODE
   value: 0
-
+- name: RSI_HAND_SHAKE_TYPE
+  value: 2
+- name: RSI_SELECT_LP_OR_ULP_MODE
+  value: 1
 
 component:
 - {id: sl_system}
@@ -1998,3 +2001,37 @@ template_contribution:
     help: read ble phy
     argument:
     - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: web_socket
+    handler: rsi_web_socket_create_command
+    help: Create a web socket
+    argument:
+    - {type: uint8, help: flags}
+    - {type: string, help: server_ip}
+    - {type: uint16, help: server_port}
+    - {type: uint16, help: device_port}
+    - {type: string, help: web_resource_name}
+    - {type: string, help: web_host_name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: web_socket_send
+    handler: rsi_web_socket_send_command
+    help: Send data over web socket
+    argument:
+    - {type: uint32, help: socket_id}
+    - {type: uint8, help: opcode}
+    - {type: string, help: message }
+
+- name: cli_command
+  priority: 0
+  value:
+    name: web_socket_close
+    handler: rsi_web_socket_close_command
+    help: Closes web socket
+    argument:
+    - {type: uint32, help: socket_id}
