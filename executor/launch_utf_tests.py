@@ -91,11 +91,6 @@ def get_git_branch(path=None):
     default=False,
     help="publishing test results to back-end",
 )
-@click.option(
-    "--test_versions_fiel_path",
-    default=os.path.join(WORKSPACE_ROOT, "config", "env_defaults.yaml"),
-    help="publishing test results to back-end",
-)
 def main(
     target: str,
     harness: str,
@@ -108,24 +103,14 @@ def main(
     hwmux_group_id: Optional[str],
     hwmux_token: Optional[str],
     hwmux_group_json: Optional[str],
-    publish_test_results: Optional[bool],
-    test_versions_fiel_path: Optional[str],
+    publish_test_results: Optional[bool]
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
     branch = get_git_branch()
 
-    docker_test_flags: str = ""
-    if publish_test_results:
-        abs_test_versions_path = os.path.join(WORKSPACE_ROOT, test_versions_fiel_path)
-        if os.path.exists(abs_test_versions_path):
-            with open(abs_test_versions_path) as f:
-                test_data = yaml.safe_load(f)
-                for key in test_data:
-                    docker_test_flags += f" -e {key}=" + str(test_data[key]) + ","
-
     docker_flags = " -e MILESTONE=" + branch + ", -e PUBLISH_TEST_RESULTS=" + str(publish_test_results) \
-                   + "," + docker_test_flags + docker_flags
+                   + "," + docker_flags
 
     docker_manager = WiFiDockerManager(
         target,
