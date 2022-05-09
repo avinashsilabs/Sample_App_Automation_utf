@@ -279,7 +279,7 @@ def test_test_DUT_APMode_Trms_rules_JPregion_C19456(wifi_sniffer, wifi_dut, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize("channel", [36]) #, 40, 48, 149, 165])
+@pytest.mark.parametrize("channel", [36, 40, 48, 149, 165])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 def test_DUTAP_in_5GHz_variouschannels_C19434(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, channel, protocol):
     validation = True
@@ -321,7 +321,7 @@ def test_DUTAP_in_5GHz_variouschannels_C19434(wifi_sniffer, net_perf_client, wif
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
     logger().info('********** get and print throughput **********')
     tp = net_perf_client.interfaces.net_perf.process_output(result)
-    assert tp is not None
+    assert tp is not None, 'unable to retrieve throughput information'
     __print_throughput(tp)
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -483,8 +483,8 @@ def test_DUTAP_diff_beacon_intvls_C19443(wifi_sniffer, wifi_dut, wifi_client, be
                      f'(wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {mac_address})'
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"]
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)["packet_count"]
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"], 'Beacon frame packets not found in sniffer'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)["packet_count"], 'Probe request packets not found in sniffer'
 
 
 
@@ -895,7 +895,7 @@ def test_DUTAP_TCPRx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
     # get and print throughput
     logger().info("***** get and print throughput *****")
     tp = net_perf_client.interfaces.net_perf.process_output(result)
-    assert tp is not None
+    assert tp is not None, 'Unable to print throughput information'
     __print_throughput(tp)
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
