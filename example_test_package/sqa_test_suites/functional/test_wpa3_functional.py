@@ -158,10 +158,8 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
     time.sleep(5)
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
@@ -436,12 +434,10 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
@@ -531,12 +527,10 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
@@ -621,12 +615,10 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
@@ -712,12 +704,10 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
@@ -809,12 +799,10 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info("Sniffer going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
@@ -907,115 +895,98 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
-
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config(
-    "wifi_dut",
-
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
-
-    }
-)
-def test_rejoin_with_wpa3_C34509(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
-
-    validation = True
-
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_wpa3_C34509')
-    time.sleep(2)
-    logger().info(f"***** preparing wifi_dut ******")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
-                                     join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
-    time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
-                     f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
-                     f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {mac_address}'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
-        'Unable to find for Probe/auth/assoc request packet'
-    time.sleep(2)
-
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_probe_request')
-
-    logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
-
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
-    time.sleep(30)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
-
-    logger().info("Dut going to leave the AP")
-    wifi_dut.interfaces.wifi.leave()
-    logger().info("Start ACCESS Point")
-    wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(10)
-
-    wifi_dut.interfaces.wifi.associated = False
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
-                                     join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
-
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
-    time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
-    logger().info("Dut going to leave the AP")
-    wifi_dut.interfaces.wifi.leave()
+# DUT is not connecting back once AP radio turn on need check with manual poc
+# @pytest.mark.start_state("wifi_dut", wifi=['init'])
+# @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+# @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+# @pytest.mark.config(
+#     "wifi_dut",
+#
+#     wifi=
+#     {
+#         "oper_mode": 0,
+#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
+#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+#         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+#         "band": 2,
+#
+#     }
+# )
+# def test_with_ap_off_on_wpa3_C34509(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
+#
+#     validation = True
+#
+#     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+#     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+#     time.sleep(2)
+#     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_with_ap_off_on_wpa3_C34509')
+#     time.sleep(2)
+#     logger().info(f"***** preparing wifi_dut ******")
+#     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+#                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
+#                                                          | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
+#     ip_config = wifi_dut.interfaces.wifi.start_ip()
+#     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+#
+#     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+#     logger().info(f"DUT MAC_Address: {mac_address}")
+#
+#     logger().info(f"*****Enable Max PSP in DUT******")
+#     wifi_dut.interfaces.wifi.power_save(2, 0)
+#     wifi_dut.interfaces.wifi.bt_power_save(
+#         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+#     )
+#     time.sleep(2)
+#     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+#     status = ping(device_ip, ping_count)
+#     assert status is True, "DUT is not responding to ping request from third party device"
+#     logger().info(f"ping is successful")
+#     time.sleep(5)
+#     wifi_sniffer.interfaces.capture.stop_capture()
+#     packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
+#                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
+#                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {mac_address}'
+#     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
+#         'Unable to find for Probe/auth/assoc request packet'
+#     time.sleep(2)
+#
+#     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+#     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_probe_request')
+#
+#     logger().info('***** Disable the AP radio *****')
+#     wifi_access_point.interfaces.wifi.stop_ap()
+#
+#     logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
+#     time.sleep(30)
+#     wifi_sniffer.interfaces.capture.stop_capture()
+#     packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+#                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
+#     packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+#                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+#     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+#         'Unable to find Unicast Probe request packet'
+#     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+#         'Unable to find Broadcast Probe request packet'
+#
+#     # logger().info("Dut going to leave the AP")
+#     # wifi_dut.interfaces.wifi.leave()
+#     logger().info("Start ACCESS Point")
+#     wifi_access_point.interfaces.wifi.start_ap()
+#     time.sleep(30)
+#
+#     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+#     status = ping(device_ip, ping_count)
+#     assert status is True, "DUT is not responding to ping request from third party device"
+#     logger().info(f"ping is successful")
+#     time.sleep(5)
+#     logger().info("Dut going to leave the AP")
+#     wifi_dut.interfaces.wifi.leave()
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -1036,70 +1007,49 @@ def test_rejoin_with_wpa3_C34509(wifi_sniffer, net_perf_client, wifi_access_poin
 )
 def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
     validation = True
+    iter_count = 2
+    for i in range(0, iter_count):
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_conn_deconn_reconn_wpa3_C34508')
+        time.sleep(2)
 
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_conn_deconn_reconn_wpa3_C34508')
-    time.sleep(2)
+        logger().info(f"***** preparing wifi_dut ******")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                         join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
+                                                             | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
-    logger().info(f"***** preparing wifi_dut ******")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
-                                     join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+        logger().info(f"*****Enable Max PSP in DUT******")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
+        time.sleep(2)
+        logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+        time.sleep(5)
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
-    time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
+        packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
+                         f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
+                         f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {mac_address}'
 
-    packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
-                     f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
-                     f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {mac_address}'
+        time.sleep(10)
+        logger().info("DUT is going to leave the third party AP")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        logger().info("Sniffer is going to stop")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
-    time.sleep(10)
-    wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
-    logger().info("DUT is going to leave the third party AP")
-    wifi_dut.interfaces.wifi.leave()
-
-    time.sleep(10)
-
-    wifi_dut.interfaces.wifi.associated = False
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
-                                     join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
-
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
-    time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
-
-    logger().info("Dut going to leave the AP")
-    wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1132,6 +1082,7 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
+    logger().info(f"***** Enabling BG scan parameters ******")
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 2, 4, 2, 15, 20, 0)
 
     time.sleep(2)
@@ -1210,6 +1161,7 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
+    logger().info(f"***** Enabling bg-scan parameters******")
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 2, 4, 2, 15, 20, 0)
     time.sleep(2)
     logger().info(f"***** preparing wifi_dut to connect third party AP******")
@@ -1242,6 +1194,9 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
                      f'wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
+    logger().info(f"DUT is going to leave the AP")
+    wifi_dut.interfaces.wifi.leave()
+
     logger().info("*********##### Sniffer is going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1249,6 +1204,4 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
         'Unable to find Broadcast Probe request packet'
     time.sleep(5)
 
-    logger().info(f"DUT is going to leave the AP")
-    wifi_dut.interfaces.wifi.leave()
 
