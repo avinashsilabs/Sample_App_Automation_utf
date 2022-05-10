@@ -26,6 +26,8 @@ import string
 import random
 from utf.utils.iperf.iperf_utils import ping
 from random import randint
+from datetime import datetime
+import uuid
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -50,14 +52,30 @@ from random import randint
 packet """
 
 
-def get_cipher_list(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list, mode=0) -> Dict[str, int]:
+def get_cipher_list(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
+                    capture_filename,
+                    mode=0) -> Dict[str, int]:
     cipher_suite = []
     count = 0
     loop_count = 0
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'(wlan.addr == {mac_address})'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
     for packet in wifi_sniffer.interfaces.capture.iter_packets(
             decrypt_packets=True,
             encryption_type="WPA-PWD",
             decryption_key=decryption_key,
+            capture_file_filter=local_capture_file
             ):
         for layer in packet.layers:
             layer_name = layer.layer_name.lower()
@@ -69,9 +87,11 @@ def get_cipher_list(wifi_sniffer, logger, decryption_key: str, mac_address, prin
                     if mode == 0:
                         return cipher_suite
                 else:
-                    if (mac_address in mac_layer):
-                        logger.info(f"Decrypted info in Client Hello MAC layer '{mac_layer}'")
-                        logger.info(f"Decrypted info in Client Hello TLS layer '{tls_layer}'")
+                    for count in mac_layer.split("\n"):
+                        if "Transmitter address" in count:
+                            ta_address = count.split(": ")[1].strip()
+                    if ta_address == mac_address:
+                        logger.info(f"Cleint hello pkt sent by DUT {mac_address}-> {tls_layer}")
                         cipher_suite_temp = []
                         tls_layer = tls_layer.split("\n")
                         for line in tls_layer:
@@ -245,8 +265,9 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-        #cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
-        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], mode=1)
+        # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
+        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename,
+                                       mode=1)
         if not (len(cipher_suite) > 0):
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                         "is "
@@ -261,7 +282,8 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
                 logger.info(f"******cipher suite mismatched on iteration {cipher[0]}******\nexpected "
                             f"is {expected_cipher}\nBut "
                             f"observed {cipher_suite_tmp} ")
-        logger.info(f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
+        logger.info(
+            f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
 
     else:
         # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -329,13 +351,13 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
 
-
         # decrypt with proper decryption key & verify that we can see the ICMP/DHCP packets
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-        #cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=0)
-        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], mode=1)
+        # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=0)
+        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename,
+                                       mode=1)
 
         if not (len(cipher_suite) > 0):
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
@@ -344,14 +366,12 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
         assert (len(cipher_suite) > 0), f"tls client hello packet is not captured or one of the wifi 4-way handshake " \
                                         f"pkt is not captured "
         cipher_suite = cipher_suite[0][1]
-        logger.info(f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite}*******")
+        logger.info(
+            f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite}*******")
         if not (cipher_suite == expected_cipher):
             logger.info(f"******cipher suite mismatched ******\nexpected "
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
-
-
-
 
 
 def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
@@ -520,8 +540,8 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
     # decrypt with proper decryption key & verify that we can see the ICMP/DHCP packets
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-    #cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
-    cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], mode=1)
+    # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
+    cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename, mode=1)
     if not (len(cipher_suite) > 0):
         logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                     "is "
@@ -536,7 +556,8 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
             logger.info(f"******cipher suite mismatched on iteration {cipher[0]}******\nexpected "
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite_tmp} ")
-    logger.info(f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite_tmp}*******")
+    logger.info(
+        f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite_tmp}*******")
     wifi_dut.interfaces.wifi.leave()
 
 

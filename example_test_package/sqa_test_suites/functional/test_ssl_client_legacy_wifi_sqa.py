@@ -203,7 +203,6 @@ def test_ssl_client_testcase_TC19109(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
 @pytest.mark.parametrize("repeat", [100])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -278,7 +277,6 @@ def test_ssl_client_connect_close_sequence_testcase133(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -362,7 +360,6 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-
 
 
 # BIT_TLS_RSA_WITH_AES_256_CBC_SHA256 -> Supported with current python version
@@ -463,7 +460,6 @@ def test_ssl_client_cipher_list_testcase_TC19133(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
@@ -507,7 +503,6 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -581,8 +576,7 @@ def test_ssl_socket_limit_testcase_TC19121(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_version_1_2_testcase_TC19119(
@@ -625,4 +619,3 @@ def test_ssl_client_version_1_2_testcase_TC19119(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-
