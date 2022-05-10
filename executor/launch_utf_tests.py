@@ -89,7 +89,7 @@ def get_git_branch(path=None):
 @click.option(
     "--publish_test_results",
     default=False,
-    help="publishing test results to back-end",
+    help="publishing test results to database",
 )
 def main(
     target: str,
