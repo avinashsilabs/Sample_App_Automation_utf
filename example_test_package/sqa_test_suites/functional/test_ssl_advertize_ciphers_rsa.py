@@ -57,7 +57,6 @@ def get_cipher_list(wifi_sniffer, logger, decryption_key: str, mac_address, prin
                     mode=0) -> Dict[str, int]:
     cipher_suite = []
     count = 0
-    loop_count = 0
     current_time = time.time()
     updated_capture_file = 'filter_' + capture_filename + '_' + str(
         datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
@@ -87,9 +86,9 @@ def get_cipher_list(wifi_sniffer, logger, decryption_key: str, mac_address, prin
                     if mode == 0:
                         return cipher_suite
                 else:
-                    for count in mac_layer.split("\n"):
-                        if "Transmitter address" in count:
-                            ta_address = count.split(": ")[1].strip()
+                    for mac_addr in mac_layer.split("\n"):
+                        if "Transmitter address" in mac_addr:
+                            ta_address = mac_addr.split(": ")[1].strip()
                     if ta_address == mac_address:
                         logger.info(f"Cleint hello pkt sent by DUT {mac_address}-> {tls_layer}")
                         cipher_suite_temp = []
@@ -286,7 +285,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
 
     else:
-        pkt_count = 20000
+        pkt_count = 10000
         bytes_sent = (pkt_count * buffer_length)
         # Open ssl server socket in remote device(Raspberry pi or static device)
         if server_cert is None:
@@ -337,8 +336,10 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             logger.info(
                 f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
         elif mode == 1:  # if mode is set to 1, socket open, rx over the socket test will be initiated
+            pkt_count = 1000
             ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length)
-            time.sleep(240)
+            logger.info("Wait for 120 seconds to receive data")
+            time.sleep(120)
             result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
             bytes_received = int(result.split(b":")[1])
             logger.info(f"bytes received on socket {sock} -> {bytes_received}")
@@ -359,7 +360,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
 
         # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=0)
         cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename,
-                                       mode=1)
+                                       mode=0)
 
         if not (len(cipher_suite) > 0):
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
