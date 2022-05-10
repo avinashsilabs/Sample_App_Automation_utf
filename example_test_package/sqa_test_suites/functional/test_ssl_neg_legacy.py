@@ -158,6 +158,7 @@ def test_ssl_socket_limit_https_testcase_TC19124(
     assert exc_info.value.error_code == 0xD3, "Observed wrong error code, expected is 0xD3"
     logger.info(f"DUT sent error code->{exc_info.value.error_code} when trying to open third ssl socket which is "
                 f"expected")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -165,4 +166,4 @@ def test_ssl_socket_limit_https_testcase_TC19124(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+

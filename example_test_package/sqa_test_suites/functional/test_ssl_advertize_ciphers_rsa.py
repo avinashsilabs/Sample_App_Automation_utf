@@ -237,6 +237,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             ssl_server.interfaces.ssl.stop_server()
             time.sleep(2)
 
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
 
@@ -260,7 +261,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
                 logger.info(f"******cipher suite mismatched on iteration {cipher[0]}******\nexpected "
                             f"is {expected_cipher}\nBut "
                             f"observed {cipher_suite_tmp} ")
-        logger.info(f"******cipher suite advertised-> {cipher_suite_tmp}*******")
+        logger.info(f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
 
     else:
         # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -324,6 +325,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
         assert b"success" in result, "unable to close opened ssl socket in the dut"
         logger.info("Successfully closed opened socket in the DUT")
 
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
 
@@ -342,12 +344,12 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
         assert (len(cipher_suite) > 0), f"tls client hello packet is not captured or one of the wifi 4-way handshake " \
                                         f"pkt is not captured "
         cipher_suite = cipher_suite[0][1]
-        logger.info(f"******cipher suite advertised-> {cipher_suite}*******")
+        logger.info(f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite}*******")
         if not (cipher_suite == expected_cipher):
             logger.info(f"******cipher suite mismatched ******\nexpected "
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
-    wifi_dut.interfaces.wifi.leave()
+
 
 
 
@@ -534,7 +536,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
             logger.info(f"******cipher suite mismatched on iteration {cipher[0]}******\nexpected "
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite_tmp} ")
-    logger.info(f"******cipher suite advertised-> {cipher_suite_tmp}*******")
+    logger.info(f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite_tmp}*******")
     wifi_dut.interfaces.wifi.leave()
 
 

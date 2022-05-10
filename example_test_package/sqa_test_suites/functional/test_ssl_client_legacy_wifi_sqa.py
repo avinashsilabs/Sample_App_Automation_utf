@@ -193,6 +193,7 @@ def test_ssl_client_testcase_TC19109(
     result = wifi_dut.interfaces.wifi.close_socket(sock)
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info("Successfully closed opened socket in the DUT")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -200,7 +201,7 @@ def test_ssl_client_testcase_TC19109(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.parametrize("repeat", [100])
@@ -268,14 +269,16 @@ def test_ssl_client_connect_close_sequence_testcase133(
         assert fail_count == 0, f"{fail_count} times failed to connect to the server out of {repeat} iterations"
         time.sleep(1)
         ssl_server.interfaces.ssl.stop_server()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger.info("Stop Sniffer finally")
-        validation = True
-        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-        logger.info(f"PS-POLL packets are captured in the sniffer")
-        wifi_dut.interfaces.wifi.leave()
+
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -351,6 +354,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     wifi_dut.interfaces.wifi.close_socket(sock1)
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info(f"Successfully closed opened socket {sock1} in the DUT")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -358,7 +362,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+
 
 
 # BIT_TLS_RSA_WITH_AES_256_CBC_SHA256 -> Supported with current python version
@@ -448,14 +452,16 @@ def test_ssl_client_cipher_list_testcase_TC19133(
         logger.info("Successfully closed opened socket in the DUT when cipher suite selected is {cipher_str}")
 
         ssl_server.interfaces.ssl.stop_server()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger.info("Stop Sniffer finally")
-        validation = True
-        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-        logger.info(f"PS-POLL packets are captured in the sniffer")
-        wifi_dut.interfaces.wifi.leave()
+
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -493,6 +499,7 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
     logger.info(f"DUT returned {exc_info.value.error_code} when cipher suite is mismatched")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -500,7 +507,7 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -564,6 +571,7 @@ def test_ssl_socket_limit_testcase_TC19121(
     assert exc_info.value.error_code == 0xD3, "Observed wrong error code, expected is 0xD3"
     logger.info(f"DUT sent error code->{exc_info.value.error_code} when trying to open third ssl socket which is "
                 f"expected")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -571,7 +579,7 @@ def test_ssl_socket_limit_testcase_TC19121(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -609,6 +617,7 @@ def test_ssl_client_version_1_2_testcase_TC19119(
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
     logger.info(f"DUT returned {exc_info.value.error_code} error when trying to connect to SSL server operating at "
                 f"version 1.2 and version selected in DUT is 1.0")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -616,4 +625,4 @@ def test_ssl_client_version_1_2_testcase_TC19119(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+
