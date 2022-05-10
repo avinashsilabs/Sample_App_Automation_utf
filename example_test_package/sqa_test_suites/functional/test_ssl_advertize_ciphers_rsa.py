@@ -286,6 +286,8 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
 
     else:
+        pkt_count = 20000
+        bytes_sent = (pkt_count * buffer_length)
         # Open ssl server socket in remote device(Raspberry pi or static device)
         if server_cert is None:
             ssl_server.interfaces.ssl.start_server()

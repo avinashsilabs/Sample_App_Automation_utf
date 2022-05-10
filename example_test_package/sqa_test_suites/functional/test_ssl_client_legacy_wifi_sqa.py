@@ -142,7 +142,7 @@ def test_ssl_client_testcase_TC19109(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_testcase_TC19109"
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
@@ -286,7 +286,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_tx_rx_bidirectional_testcase_TC19129"
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -380,7 +380,7 @@ def test_ssl_client_cipher_list_testcase_TC19133(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cipher_list
         ):
     capture_filename = "test_ssl_client_cipher_list_testcase_TC19133"
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
