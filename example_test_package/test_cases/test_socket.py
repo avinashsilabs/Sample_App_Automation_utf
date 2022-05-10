@@ -20,8 +20,7 @@ def test_socket(wifi_networked_dut, remote_socket, logger):
     remote_socket.interfaces.socket.socket_close_indication(1)
     wifi_networked_dut.interfaces.wifi.leave()
 
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+
 def test_wifi_tcp_recv_data(wifi_dut, wifi_access_point, remote_socket, logger):
     # DUT connects to AP after join_ap API is executed
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -41,14 +40,16 @@ def test_wifi_tcp_recv_data(wifi_dut, wifi_access_point, remote_socket, logger):
     # tcp socket opened in DUT connects to the tcp server
 
     wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
-    # DUT sends 50 bytes of data over tcp socket
-    wifi_dut.interfaces.wifi.send(sock, 50)
+    # DUT sends 20 bytes of data over tcp socket
+    data_len = 20
+    wifi_dut.interfaces.wifi.send(sock, data_len)
 
     logger.info("Start receiving the packets...")
-    data = remote_socket.interfaces.socket.recv_data_tcp(50)
+    data = remote_socket.interfaces.socket.recv_data_tcp(data_len)
 
     logger.info(f"{data}")
     assert data is not None
+    assert len(data) == data_len
 
     # DUT closes the tcp socket
     result = wifi_dut.interfaces.wifi.close_socket(sock)
