@@ -125,7 +125,7 @@ pytestmark = [
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
             }
@@ -204,6 +204,7 @@ def test_dynamic_load_cert_no_index_TC19638(
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info("Successfully closed opened socket in the DUT")
 
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -211,7 +212,6 @@ def test_dynamic_load_cert_no_index_TC19638(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
-    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1",
@@ -224,7 +224,7 @@ def test_dynamic_load_cert_no_index_TC19638(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_cert_socket_connected_state_TC19639(
-        wifi_sniffer,wifi_access_point, wifi_dut, ssl_server, logger, cert1
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1
         ):
     capture_filename = "test_dynamic_load_cert_no_index_TC19638"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -265,7 +265,7 @@ def test_dynamic_load_cert_socket_connected_state_TC19639(
                                                      )
     assert ((exc_info.value.error_code == 0x5d) or (exc_info.value.error_code == 0x5e)), "observed wrong error code, " \
                                                                                          "expected is 0x5d or 0x5e "
-
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -273,7 +273,6 @@ def test_dynamic_load_cert_socket_connected_state_TC19639(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
-    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1",
@@ -286,7 +285,7 @@ def test_dynamic_load_cert_socket_connected_state_TC19639(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dynamic_load_new_cert_TC19640(
-        wifi_sniffer, wifi_access_point,wifi_dut, ssl_server, logger, cert1
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1
         ):
     capture_filename = "test_dynamic_load_cert_no_index_TC19638"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
@@ -357,6 +356,7 @@ def test_dynamic_load_new_cert_TC19640(
                                                  cert_index=0,
                                                  )
 
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -364,7 +364,6 @@ def test_dynamic_load_new_cert_TC19640(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
-    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -373,8 +372,8 @@ def test_dynamic_load_new_cert_TC19640(
                                "mosquitto-utf.silabs.com.key.pem"],
                               ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
                                "mosquitto-utf.silabs.com.key.pem"],
-                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-                               "mosquitto-utf.silabs.com.key.pem"]
+                              ["start_field.pem", "client-certificate.crt",
+                               "private-key.key"]
 
                               )
                              ]
@@ -390,7 +389,7 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    port3 = 8883
     bytes_sent = (pkt_count * buffer_length)
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -410,13 +409,19 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
                                                  str(get_tls_certificate_dir().joinpath(cert3[0])),
                                                  cert_index=2,
                                                  )
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientCertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[1])),
+                                                 cert_index=2,
+                                                 )
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientPrivateKey,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[2])),
+                                                 cert_index=2,
+                                                 )
 
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
 
     for sock_count in range(0, 3):
         # Open ssl client socket in the DUT
@@ -453,15 +458,31 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
 
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-        # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
-
-    socket_no = [1, 2, 3]
+        if sock_count < 2:
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        else:
+            result = wifi_dut.interfaces.wifi.dns_get(4)
+            logger.info(f"dns response is {result}")
+            server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+            for retry_count in range(1, 4):
+                try:
+                    aws_connection = 1
+                    logger.info("Connecting to AWS server")
+                    wifi_dut.interfaces.wifi.connect(sock, server_ip, socket_port)
+                    aws_connection = 0
+                    break
+                except:
+                    logger.info(f"Connecting to the AWS server is failed on retry count -> {retry_count}")
+                    time.sleep(1)
+            if aws_connection:
+                logger.info("Connecting to AWS server is failed")
+                assert aws_connection == 0, "Connecting to AWS server is failed"
+    socket_no = [1, 2]
     for socket in socket_no:
         ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
 
     if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-        socket_no = [1, 2, 3]
+        socket_no = [1, 2]
         for socket in socket_no:
             if ssl_server.interfaces.ssl.socket_connection_status(socket):
                 # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
@@ -482,6 +503,7 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
         logger.info(f"Successfully closed socket_id->{sock_count}")
 
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -489,8 +511,6 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
-
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -499,8 +519,8 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
                                "mosquitto-utf.silabs.com.key.pem"],
                               ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
                                "mosquitto-utf.silabs.com.key.pem"],
-                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-                               "mosquitto-utf.silabs.com.key.pem"]
+                              ["start_field.pem", "client-certificate.crt",
+                               "private-key.key"]
 
                               )
                              ]
@@ -511,13 +531,12 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
 def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
-    capture_filename = "test_dynamic_load_three_ssl_sockets_TC19641"
+    capture_filename = "test_dynamic_load_three_ssl_sockets_TC19643"
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = ssl_server.interfaces.ssl.config['device_port3']
-    bytes_sent = (pkt_count * buffer_length)
+    port3 = 8883
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -536,13 +555,19 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
                                                  str(get_tls_certificate_dir().joinpath(cert3[0])),
                                                  cert_index=2,
                                                  )
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientCertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[1])),
+                                                 cert_index=2,
+                                                 )
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientPrivateKey,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[2])),
+                                                 cert_index=2,
+                                                 )
 
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
 
     for sock_count in range(0, 3):
         # Open ssl client socket in the DUT
@@ -579,8 +604,25 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
 
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-        # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        if sock_count < 2:
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        else:
+            result = wifi_dut.interfaces.wifi.dns_get(4)
+            logger.info(f"dns response is {result}")
+            server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+            for retry_count in range(1, 4):
+                try:
+                    aws_connection = 1
+                    logger.info("Connecting to AWS server")
+                    wifi_dut.interfaces.wifi.connect(sock, server_ip, socket_port)
+                    aws_connection = 0
+                    break
+                except:
+                    logger.info(f"Connecting to the AWS server is failed on retry count -> {retry_count}")
+                    time.sleep(1)
+            if aws_connection:
+                logger.info("Connecting to AWS server is failed")
+                assert aws_connection == 0, "Connecting to AWS server is failed"
 
     for sock_count in range(0, 3):
         logger.info(f"Closing socket_id->{sock_count}")
@@ -600,6 +642,14 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
     wifi_dut.interfaces.wifi.clear_certificate(RS9116CertificateType.SSLCACertificate,
                                                cert_index=2
                                                )
+    logger.info(f"Clearing certificate type -> {RS9116CertificateType.SSLClientCertificate} at index 2")
+    wifi_dut.interfaces.wifi.clear_certificate(RS9116CertificateType.SSLClientCertificate,
+                                               cert_index=2
+                                               )
+    logger.info(f"Clearing certificate type -> {RS9116CertificateType.SSLClientPrivateKey} at index 2")
+    wifi_dut.interfaces.wifi.clear_certificate(RS9116CertificateType.SSLClientPrivateKey,
+                                               cert_index=2
+                                               )
     # The below API loads ca-cert into DUT at cert index 0
     wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
                                                  str(get_tls_certificate_dir().joinpath(cert1[0])),
@@ -616,6 +666,16 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
                                                  cert_index=2,
                                                  )
 
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientCertificate,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[1])),
+                                                 cert_index=2,
+                                                 )
+    wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientPrivateKey,
+                                                 str(get_tls_certificate_dir().joinpath(cert3[2])),
+                                                 cert_index=2,
+                                                 )
+
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -623,7 +683,6 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -632,8 +691,8 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
                                "mosquitto-utf.silabs.com.key.pem"],
                               ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
                                "mosquitto-utf.silabs.com.key.pem"],
-                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-                               "mosquitto-utf.silabs.com.key.pem"]
+                              ["start_field.pem", "client-certificate.crt",
+                               "private-key.key"]
 
                               )
                              ]
@@ -649,7 +708,7 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    port3 = 8883
     bytes_sent = (pkt_count * buffer_length)
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -671,13 +730,18 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
                                                      str(get_tls_certificate_dir().joinpath(cert3[0])),
                                                      cert_index=2,
                                                      )
-
+        wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientCertificate,
+                                                     str(get_tls_certificate_dir().joinpath(cert3[1])),
+                                                     cert_index=2,
+                                                     )
+        wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLClientPrivateKey,
+                                                     str(get_tls_certificate_dir().joinpath(cert3[2])),
+                                                     cert_index=2,
+                                                     )
         # Open ssl server socket in remote device(Raspberry pi or static device)
         ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
         # Open ssl server socket in remote device(Raspberry pi or static device)
         ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-        # Open ssl server socket in remote device(Raspberry pi or static device)
-        ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
 
         for sock_count in range(0, 3):
             # Open ssl client socket in the DUT
@@ -717,16 +781,33 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
 
             # Socket binds at (device_ip, 5001) in DUT
             wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-            # ssl socket opened in DUT connects to the server
-            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+            if sock_count < 2:
+                wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+            else:
+                result = wifi_dut.interfaces.wifi.dns_get(4)
+                logger.info(f"dns response is {result}")
+                server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+                for retry_count in range(1, 4):
+                    try:
+                        aws_connection = 1
+                        logger.info("Connecting to AWS server")
+                        wifi_dut.interfaces.wifi.connect(sock, server_ip, socket_port)
+                        aws_connection = 0
+                        break
+                    except:
+                        logger.info(f"Connecting to the AWS server is failed on retry count -> {retry_count}")
+                        time.sleep(1)
+                if aws_connection:
+                    logger.info("Connecting to AWS server is failed")
+                    assert aws_connection == 0, "Connecting to AWS server is failed"
 
         if iteration != 1:
-            socket_no = [1, 2, 3]
+            socket_no = [1, 2]
             for socket in socket_no:
                 ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
 
             if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-                socket_no = [1, 2, 3]
+                socket_no = [1, 2]
                 for socket in socket_no:
                     if ssl_server.interfaces.ssl.socket_connection_status(socket):
                         wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
@@ -736,9 +817,7 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
                                                              f"peer " \
                                                              f"not matched on socket {socket} in iteration {iteration} "
                         logger.info(
-                            "Number of bytes sent by DUT and received on the remote peer are matched on socket {"
-                            "socket} "
-                            "in iteration {iteration}")
+                            f"Number of bytes sent by DUT and received on the remote peer are matched on socket {socket} in iteration {iteration}")
 
                     else:
                         assert f"failed to connect on socket no {socket} in iteration {iteration}"
@@ -752,6 +831,7 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
         ssl_server.interfaces.ssl.stop_server()
         time.sleep(1)
 
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -759,7 +839,6 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
 
 
 
@@ -878,9 +957,10 @@ def test_dynamic_load_powersave_not_enabled_TC19646(
         result = wifi_dut.interfaces.wifi.close_socket(sock_count)
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
         logger.info(f"Successfully closed socket_id->{sock_count}")
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
-    wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -900,7 +980,7 @@ def test_dynamic_load_powersave_not_enabled_TC19646(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip()
 def test_dynamic_load_powersave_enabled_testcase14(
-         wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
+        wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3
         ):
     pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
@@ -1103,6 +1183,8 @@ def test_dynamic_load_auto_join_TC19645(
     wifi_dut.interfaces.wifi.wireless_init()
     time.sleep(30)
 
+    logger.info(f"Initiating ping to DUT ip {device_ip} after auto join is successful")
+    ping(device_ip, ping_count)
     # The below API loads ca-cert into DUT at cert index 0
     wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
                                                  str(get_tls_certificate_dir().joinpath(cert1[0])),
@@ -1199,6 +1281,7 @@ def test_dynamic_load_auto_join_TC19645(
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
         logger.info(f"Successfully closed socket_id->{sock_count}")
 
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
     validation = True
@@ -1206,4 +1289,3 @@ def test_dynamic_load_auto_join_TC19645(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
