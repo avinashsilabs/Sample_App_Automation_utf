@@ -277,6 +277,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket'
+                server_ip: 192.168.1.143
                 ip_version: 0
                 dut_local_socket: 5001
                 destination_socket: 5001
