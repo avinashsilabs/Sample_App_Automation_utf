@@ -1,6 +1,7 @@
 from utf.utils.logger import get_logger
 import paramiko
 import os
+import pytest
 
 def logger():
     return get_logger(__name__)
@@ -24,3 +25,7 @@ def test_capture_power_meter_data_points_to_file(power_meter):
     file_size = os.path.getsize(captured_file_name)
     assert file_size > 0
 
+# TODO: This test is just to make sure WinRM Communication is workig. we will modify this 
+@pytest.mark.power_meter("keysight_power_analyzer_winRM")
+def test_keysight_BenchVue_power_meter(power_meter):
+    power_meter.interfaces.power_meter.test_winrm_communication()
