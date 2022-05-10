@@ -26,6 +26,8 @@ import string
 import random
 from utf.utils.iperf.iperf_utils import ping
 from random import randint
+from datetime import datetime
+import uuid
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -50,32 +52,54 @@ from random import randint
 packet """
 
 
-def get_cipher_list(wifi_sniffer, logger, decryption_key: str, print_layers: list, mode=0) -> Dict[str, int]:
+def get_cipher_list(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
+                    capture_filename,
+                    mode=0) -> Dict[str, int]:
     cipher_suite = []
     count = 0
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'(wlan.addr == {mac_address})'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
     for packet in wifi_sniffer.interfaces.capture.iter_packets(
             decrypt_packets=True,
             encryption_type="WPA-PWD",
             decryption_key=decryption_key,
+            capture_file_filter=local_capture_file
             ):
         for layer in packet.layers:
             layer_name = layer.layer_name.lower()
-
+            if layer_name == "wlan":
+                mac_layer = str(layer)
             if layer_name in print_layers:
                 tls_layer = str(layer)
                 if not "Client Hello" in tls_layer:
                     if mode == 0:
                         return cipher_suite
                 else:
-                    cipher_suite_temp = []
-                    tls_layer = tls_layer.split("\n")
-                    for line in tls_layer:
-                        if "Cipher Suite:" in line:
-                            cipher_suite_temp.append(line.split("Cipher Suite:")[1].strip().split("(")[0].strip())
-                    count = count + 1
-                    cipher_suite.append(tuple([count, cipher_suite_temp]))
-                    if mode == 0:
-                        return cipher_suite
+                    for mac_addr in mac_layer.split("\n"):
+                        if "Transmitter address" in mac_addr:
+                            ta_address = mac_addr.split(": ")[1].strip()
+                    if ta_address == mac_address:
+                        logger.info(f"Cleint hello pkt sent by DUT {mac_address}-> {tls_layer}")
+                        cipher_suite_temp = []
+                        tls_layer = tls_layer.split("\n")
+                        for line in tls_layer:
+                            if "Cipher Suite:" in line:
+                                cipher_suite_temp.append(line.split("Cipher Suite:")[1].strip().split("(")[0].strip())
+                        count = count + 1
+                        cipher_suite.append(tuple([count, cipher_suite_temp]))
+                        if mode == 0:
+                            return cipher_suite
     return cipher_suite
 
 
@@ -88,7 +112,7 @@ def select_cipher_list(cipher_list):
     return cipher
 
 
-def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename,
+def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
                          cipher_list, logger, mode, server_cert=None, server_key=None, test_run_time=120):
     ping_count = 10
     if not len(cipher_list):
@@ -232,13 +256,17 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
             ssl_server.interfaces.ssl.stop_server()
             time.sleep(2)
 
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop Sniffer finally")
 
         # decrypt with proper decryption key & verify that we can see the ICMP/DHCP packets
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
+        # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
+        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename,
+                                       mode=1)
         if not (len(cipher_suite) > 0):
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                         "is "
@@ -253,9 +281,12 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
                 logger.info(f"******cipher suite mismatched on iteration {cipher[0]}******\nexpected "
                             f"is {expected_cipher}\nBut "
                             f"observed {cipher_suite_tmp} ")
-        logger.info(f"******cipher suite advertised-> {cipher_suite_tmp}*******")
+        logger.info(
+            f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
 
     else:
+        pkt_count = 10000
+        bytes_sent = (pkt_count * buffer_length)
         # Open ssl server socket in remote device(Raspberry pi or static device)
         if server_cert is None:
             ssl_server.interfaces.ssl.start_server()
@@ -305,8 +336,10 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
             logger.info(
                 f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
         elif mode == 1:  # if mode is set to 1, socket open, rx over the socket test will be initiated
+            pkt_count = 1000
             ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length)
-            time.sleep(240)
+            logger.info("Wait for 120 seconds to receive data")
+            time.sleep(120)
             result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
             bytes_received = int(result.split(b":")[1])
             logger.info(f"bytes received on socket {sock} -> {bytes_received}")
@@ -317,13 +350,17 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
         assert b"success" in result, "unable to close opened ssl socket in the dut"
         logger.info("Successfully closed opened socket in the DUT")
 
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop Sniffer finally")
 
         # decrypt with proper decryption key & verify that we can see the ICMP/DHCP packets
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=0)
+        # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=0)
+        cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename,
+                                       mode=0)
 
         if not (len(cipher_suite) > 0):
             logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
@@ -332,14 +369,15 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, 
         assert (len(cipher_suite) > 0), f"tls client hello packet is not captured or one of the wifi 4-way handshake " \
                                         f"pkt is not captured "
         cipher_suite = cipher_suite[0][1]
-        logger.info(f"******cipher suite advertised-> {cipher_suite}*******")
+        logger.info(
+            f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite}*******")
         if not (cipher_suite == expected_cipher):
             logger.info(f"******cipher suite mismatched ******\nexpected "
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
 
 
-def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename,
+def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
                                 cipher_list, logger, server_cert=None, server_key=None, test_run_time=120):
     ping_count = 10
     logger.info(f"********Running the test for {test_run_time} seconds*******")
@@ -500,11 +538,13 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
         wifi_dut.interfaces.wifi.leave()
 
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
 
     # decrypt with proper decryption key & verify that we can see the ICMP/DHCP packets
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-    cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
+    # cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, ["tls"], mode=1)
+    cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename, mode=1)
     if not (len(cipher_suite) > 0):
         logger.info(f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt "
                     "is "
@@ -519,7 +559,9 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_dut, wifi_access_point, ssl_s
             logger.info(f"******cipher suite mismatched on iteration {cipher[0]}******\nexpected "
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite_tmp} ")
-    logger.info(f"******cipher suite advertised-> {cipher_suite_tmp}*******")
+    logger.info(
+        f"******As per sniffer capture, cipher suite advertised by DUT {mac_address}-> {cipher_suite_tmp}*******")
+    wifi_dut.interfaces.wifi.leave()
 
 
 pytestmark = [
@@ -548,10 +590,10 @@ pytestmark = [
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 def test_advertise_all_ciphers_ssl_tx_TC19604(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_all_ciphers_ssl_tx_TC19604"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0)
 
 
@@ -561,10 +603,10 @@ def test_advertise_all_ciphers_ssl_tx_TC19604(
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 def test_advertise_all_ciphers_ssl_rx_TC19605(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_all_ciphers_ssl_rx_TC19605"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1)
 
 
@@ -581,10 +623,10 @@ def test_advertise_all_ciphers_ssl_rx_TC19605(
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_tx_TC19606(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19606"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0)
 
 
@@ -601,10 +643,10 @@ def test_advertise_ciphers_ssl_tx_TC19606(
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_rx_TC19607(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_rx_TC19607"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1)
 
 
@@ -615,10 +657,10 @@ def test_advertise_ciphers_ssl_rx_TC19607(
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
 def test_advertise_ciphers_ssl_tx_TC19608(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19608"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0)
 
 
@@ -629,10 +671,10 @@ def test_advertise_ciphers_ssl_tx_TC19608(
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
 def test_advertise_ciphers_ssl_rx_TC19609(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_rx_TC19609"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1)
 
 
@@ -643,10 +685,10 @@ def test_advertise_ciphers_ssl_rx_TC19609(
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_tx_TC19610(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19610"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0)
 
 
@@ -657,10 +699,10 @@ def test_advertise_ciphers_ssl_tx_TC19610(
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_rx_TC19611(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19611"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1)
 
 
@@ -674,10 +716,10 @@ def test_advertise_ciphers_ssl_rx_TC19611(
 # 3.9. Need to change the implementation for these test cases
 @pytest.mark.skip()
 def test_advertise_ciphers_ssl_tx_TC19612(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19612"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0)
 
 
@@ -691,10 +733,10 @@ def test_advertise_ciphers_ssl_tx_TC19612(
 # 3.9. Need to change the implementation for these test cases
 @pytest.mark.skip()
 def test_advertise_ciphers_ssl_rx_TC19613(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_rx_TC19613"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1)
 
 
@@ -708,10 +750,10 @@ def test_advertise_ciphers_ssl_rx_TC19613(
 # 3.9. Need to change the implementation for these test cases
 @pytest.mark.skip()
 def test_advertise_ciphers_ssl_tx_TC19614(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19614"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0)
 
 
@@ -725,8 +767,8 @@ def test_advertise_ciphers_ssl_tx_TC19614(
 # 3.9. Need to change the implementation for these test cases
 @pytest.mark.skip()
 def test_advertise_ciphers_ssl_rx_TC19615(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger
         ):
     capture_filename = "test_advertise_ciphers_ssl_rx_TC19615"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1)

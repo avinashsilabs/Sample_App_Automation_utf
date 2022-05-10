@@ -69,10 +69,10 @@ pytestmark = [
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_tx_TC19616(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, cert
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, cert
         ):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19616"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0, server_cert=cert[0], server_key=cert[1])
 
 
@@ -88,8 +88,8 @@ def test_advertise_ciphers_ssl_tx_TC19616(
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_rx_TC19617(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cipher_list, logger, cert
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, cert
         ):
     capture_filename = "test_advertise_ciphers_ssl_rx_TC19617"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, capture_filename, cipher_list,
+    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1, server_cert=cert[0], server_key=cert[1])
