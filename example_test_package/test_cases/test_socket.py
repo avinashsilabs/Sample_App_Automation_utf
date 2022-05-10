@@ -40,12 +40,12 @@ def test_wifi_tcp_recv_data(wifi_dut, wifi_access_point, remote_socket, logger):
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 5000)
     # tcp socket opened in DUT connects to the tcp server
 
-    logger.info("Start receiving the packets...")
-    data = remote_socket.interfaces.socket.recvfrom(50)
-
     wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
     # DUT sends 50 bytes of data over tcp socket
     wifi_dut.interfaces.wifi.send(sock, 50)
+
+    logger.info("Start receiving the packets...")
+    data = remote_socket.interfaces.socket.recv_data_tcp(50)
 
     logger.info(f"{data}")
     assert data is not None
