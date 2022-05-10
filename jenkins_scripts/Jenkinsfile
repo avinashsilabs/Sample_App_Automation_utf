@@ -9,6 +9,8 @@ pipeline {
                 JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
                 JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
                 JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
+                RELEASE_NAME = "release/milestone22"
+                STACK_NAME="utf_wifi_latest"
             }
             stages{
                 stage('Toolchain Setup'){
@@ -169,6 +171,7 @@ pipeline {
                                     -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
                                     -e TEST_SUITE=OT_Smoke_brd4161a, \
                                     -e BRANCH_NAME=${RS9116_FIRMWARE}, \
+                                    -e STACK_NAME=utf_wifi, \
                                     -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
                         '''
