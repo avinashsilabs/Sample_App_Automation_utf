@@ -185,8 +185,6 @@ def test_ssl_server_testcase_TC19110(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
-
 @pytest.mark.parametrize("cipher_list", [
     [Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
@@ -247,8 +245,6 @@ def test_ssl_server_diff_cipher_suite_testcase_TC19132(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -298,8 +294,6 @@ def test_ssl_server_1_0version_client_1_2_testcase_TC19115(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -344,10 +338,10 @@ def test_ssl_server_no_server_cert_testcase_TC19111(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.skip()
 def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
         wifi_sniffer, wifi_access_point, wifi_dut, remote_tcp_client, logger
         ):

@@ -286,7 +286,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_tx_rx_bidirectional_testcase_TC19129"
-    pkt_count = 20000
+    pkt_count = 10000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -340,8 +340,8 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
                                          f"not matched on socket {2} "
     logger.info("Number of bytes sent by DUT and received on the remote peer are matched")
-    logger.info("Wait for 120 seconds to receive data on the socket_id->0")
-    time.sleep(120)
+    logger.info("Wait for 300 seconds to receive data on the socket_id->0")
+    time.sleep(300)
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
