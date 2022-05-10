@@ -572,7 +572,7 @@ devices:
                 username: 'test'
                 password: 'Silabs@20202'
             power_meter:
-                type: 'power_meter.keysight_benchVue'
+                type: 'power_meter.keysight_benchvue'
                 shell: 'windows_shell'
                 instrument_lan_ip_address: '10.207.19.83'
                 interface: 'wlan0'
