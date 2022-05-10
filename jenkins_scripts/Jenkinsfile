@@ -161,7 +161,7 @@ pipeline {
                                 --target ${SSH_TARGET} \
                                 --pytest_command "${UTF_PYTEST_COMMAND}" \
                                 --harness ${HARNESS_NAME} \
-                                --publish_test_results True
+                                --publish_test_results ${PUBLISH_TEST_RESULTS}
                                 --docker_flags "-e BUILD_URL=${BUILD_URL}, \
                                     -e BUILD_NUMBER=${BUILD_NUMBER}, \
                                     -e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL}, \
