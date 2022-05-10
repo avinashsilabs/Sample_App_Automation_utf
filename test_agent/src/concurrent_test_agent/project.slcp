@@ -68,7 +68,12 @@ define:
 - name: RSI_ANT_ENABLE
 - name: CONCURRENT_MODE
   value: 1
-
+- name: RSI_MODE_11N_ENABLE
+  value: 0
+- name: RSI_HAND_SHAKE_TYPE
+  value: 2
+- name: RSI_SELECT_LP_OR_ULP_MODE
+  value: 1
 
 component:
 - {id: sl_system}
