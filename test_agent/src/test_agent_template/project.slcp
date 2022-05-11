@@ -37,6 +37,8 @@ configuration:
   value: '(256)'
 define:
 - name: RSI_WLAN_ENABLE
+- name: CONCURRENT_MODE
+  value: 0
 
 
 component:

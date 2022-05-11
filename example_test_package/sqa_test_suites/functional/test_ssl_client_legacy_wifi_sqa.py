@@ -41,7 +41,7 @@ from random import randint
 """
 
 
-def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger):
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
@@ -139,15 +139,15 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_testcase_TC19109(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_testcase_TC19109"
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -193,6 +193,9 @@ def test_ssl_client_testcase_TC19109(
     result = wifi_dut.interfaces.wifi.close_socket(sock)
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info("Successfully closed opened socket in the DUT")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -205,11 +208,11 @@ def test_ssl_client_testcase_TC19109(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_connect_close_sequence_testcase133(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, repeat
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, repeat
         ):
     capture_filename = "test_ssl_client_connect_close_sequence_testcase133"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     fail_count = 0
@@ -265,26 +268,30 @@ def test_ssl_client_connect_close_sequence_testcase133(
         assert fail_count == 0, f"{fail_count} times failed to connect to the server out of {repeat} iterations"
         time.sleep(1)
         ssl_server.interfaces.ssl.stop_server()
-        validation = True
-        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-        logger.info(f"PS-POLL packets are captured in the sniffer")
+
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_tx_rx_bidirectional_testcase_TC19129"
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    pkt_count = 10000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
     bytes_sent = (pkt_count * buffer_length)
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -333,8 +340,8 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
                                          f"not matched on socket {2} "
     logger.info("Number of bytes sent by DUT and received on the remote peer are matched")
-    logger.info("Wait for 120 seconds to receive data on the socket_id->0")
-    time.sleep(120)
+    logger.info("Wait for 300 seconds to receive data on the socket_id->0")
+    time.sleep(300)
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
@@ -345,6 +352,9 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     wifi_dut.interfaces.wifi.close_socket(sock1)
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info(f"Successfully closed opened socket {sock1} in the DUT")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -367,14 +377,14 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     [Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
 def test_ssl_client_cipher_list_testcase_TC19133(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cipher_list
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cipher_list
         ):
     capture_filename = "test_ssl_client_cipher_list_testcase_TC19133"
-    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -439,11 +449,15 @@ def test_ssl_client_cipher_list_testcase_TC19133(
         logger.info("Successfully closed opened socket in the DUT when cipher suite selected is {cipher_str}")
 
         ssl_server.interfaces.ssl.stop_server()
-        validation = True
-        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-        logger.info(f"PS-POLL packets are captured in the sniffer")
+
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -451,11 +465,11 @@ def test_ssl_client_cipher_list_testcase_TC19133(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_ciphersuite_mismatch_testcase_TC19133"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -481,6 +495,9 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
     logger.info(f"DUT returned {exc_info.value.error_code} when cipher suite is mismatched")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -492,11 +509,11 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_socket_limit_testcase_TC19121(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_socket_limit_testcase_TC19121"
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -549,6 +566,9 @@ def test_ssl_socket_limit_testcase_TC19121(
     assert exc_info.value.error_code == 0xD3, "Observed wrong error code, expected is 0xD3"
     logger.info(f"DUT sent error code->{exc_info.value.error_code} when trying to open third ssl socket which is "
                 f"expected")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -556,15 +576,15 @@ def test_ssl_socket_limit_testcase_TC19121(
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_version_1_2_testcase_TC19119(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
         ):
     capture_filename = "test_ssl_client_version_1_2_testcase_TC19119"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
@@ -591,6 +611,9 @@ def test_ssl_client_version_1_2_testcase_TC19119(
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
     logger.info(f"DUT returned {exc_info.value.error_code} error when trying to connect to SSL server operating at "
                 f"version 1.2 and version selected in DUT is 1.0")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)

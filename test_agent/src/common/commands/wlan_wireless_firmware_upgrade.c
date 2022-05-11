@@ -70,14 +70,28 @@ static void rsi_wireless_fw_upgrade_handler(uint8_t type, uint32_t status)
 	}
 	switch (type) {
 		case RSI_WLAN_RSP_WIRELESS_FWUP_OK:
-			LOG_EVENT("\nRSI_FWUP_RSP_OK\n");
-			if (auto_accept == 1){
-				rsi_accept_wireless_fwup_request_internal();
+			if(status == 0)
+			{
+				LOG_EVENT("\nRSI_FWUP_RSP_OK\n");
+				if (auto_accept == 1){
+					rsi_accept_wireless_fwup_request_internal();
+				}
+			}
+			else
+			{
+				LOG_EVENT("\nFirmware Upgrade Failed, status:%x\n", status);
 			}
 			break;
 		case RSI_WLAN_RSP_WIRELESS_FWUP_DONE:
 			LOG_EVENT("\nRSI_FWUP_RSP_DONE\n");
-			LOG_PRINT("\nFirmware Upgrade Success\n");
-		break;
+			if(status == 0)
+			{
+				LOG_EVENT("\nFirmware Upgrade Success\n");
+			}
+			else
+			{
+				LOG_EVENT("\nFirmware Upgrade Failed, status:%x\n", status);
+			}
+			break;
 	}
 }

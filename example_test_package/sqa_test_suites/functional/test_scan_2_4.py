@@ -146,8 +146,8 @@ def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     # Enables the bt power save in DUT
     logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    ssid_list = ['test123test123test123test123test', "test1*@test1*#test1*@test1*$test", 'test12.test12.test12.test12.test',\
-                 "人人生而自在尊严和权利上人人生而在尊严和权利上人人生而自在尊严权"]
+    ssid_list = ['test123test123test123test123test', 'test1*@test1*#test1*@test1*$test', 'test12.test12.test12.test12.test',\
+                 '了是不了是不了是不了']
 
     for ssid in ssid_list:
 

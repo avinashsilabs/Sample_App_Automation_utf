@@ -52,7 +52,6 @@ def logger():
 
 def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer,net_perf_client,wifi_access_point,wifi_dut,remote_socket, wifi_client,
                                                protocol):
-
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -83,8 +82,7 @@ def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer,net_perf_client,wifi
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    print('\n\n ********** Calling IPERF TX, UDP traffic DUT configured as Client ********************\n\n')
-
+    logger().info(f"********** Calling IPERF TX, UDP traffic DUT configured as Client **************")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
     logger().info(f"Host IP: {host_ip}")
@@ -102,6 +100,12 @@ def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer,net_perf_client,wifi
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
     )
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp is not None, "Throughput not found"
+    __print_throughput(tp)
+    logger().info("data transfer is successful")
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -190,8 +194,7 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer,net_perf_client,wifi
     logger().info(f"ping is successful")
     time.sleep(2)
 
-    print('\n\n ********** Calling IPERF TX, UDP traffic DUT configured as Server ********************\n\n')
-
+    logger().info(f"********** Calling IPERF RX, UDP traffic DUT configured as Server **************")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
     logger().info(f"Host IP: {host_ip}")
@@ -200,7 +203,7 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer,net_perf_client,wifi
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
-    logger().info(f"***** open socket and start listening  ******")
+    logger().info(f"***** open socket and start listening ******")
     with wifi_dut.interfaces.wifi.start_socket_reader(
             log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
             result=result,
@@ -211,14 +214,21 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer,net_perf_client,wifi
             time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
         logger().info(f"***** start iperf  ******")
         net_perf_client.interfaces.net_perf.start()
-        logger().info(f"***** capture device output   ******")
+
+        logger().info(f"***** capture device output  ******")
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+    # logger().info(f"***** get and print throughput   ******")
+    # tp = net_perf_client.interfaces.net_perf.process_output(result)
+    # assert tp, "failed to get throughtput..."
+    # __print_throughput(tp)
+    # time.sleep(5)
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    logger().info("Dut going to leave the AP")
-    wifi_dut.interfaces.wifi.leave()
+    # logger().info("Dut going to leave the AP")
+    # wifi_dut.interfaces.wifi.leave()
 
     packet_filter1 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x00) && (wlan.sa == {ap_bssid}) && (wlan.da == {dut_mac_address})'
     packet_filter2 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.da == {ap_bssid}) && (wlan.sa == {dut_mac_address})'
@@ -269,7 +279,7 @@ def test_udp_tx_aggregation_open_mode_with_power_save_c19033(wifi_sniffer,net_pe
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_udp_tx_by_enabling_aggregation_c19031')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_udp_tx_by_enabling_aggregation_c19033')
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     time.sleep(2)
 
@@ -315,6 +325,12 @@ def test_udp_tx_aggregation_open_mode_with_power_save_c19033(wifi_sniffer,net_pe
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
     )
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp is not None, "Throughput not found"
+    __print_throughput(tp)
+    logger().info("data transfer is successful")
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -369,7 +385,7 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer,net_pe
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_udp_rx_by_enabling_aggregation_c19032')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_udp_rx_aggregation_open_mode_with_power_save_c19034')
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     time.sleep(2)
 
@@ -396,8 +412,13 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer,net_pe
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    print('\n\n ********** Calling IPERF TX, UDP traffic DUT configured as Server ********************\n\n')
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, 5)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+    time.sleep(2)
 
+    logger().info(f"********** Calling IPERF RX, UDP traffic DUT configured as Server **************")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
     logger().info(f"Host IP: {host_ip}")
@@ -406,7 +427,7 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer,net_pe
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
-    logger().info(f"***** open socket and start listening  ******")
+    logger().info(f"***** open socket and start listening ******")
     with wifi_dut.interfaces.wifi.start_socket_reader(
             log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
             result=result,
@@ -417,14 +438,21 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer,net_pe
             time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
         logger().info(f"***** start iperf  ******")
         net_perf_client.interfaces.net_perf.start()
-        logger().info(f"***** capture device output   ******")
+
+        logger().info(f"***** capture device output  ******")
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+        # # get and print throughput
+        # tp = net_perf_client.interfaces.net_perf.process_output()
+        # assert tp is not None, "Throughput not found"
+        # __print_throughput(tp)
+        # logger().info("data transfer is successful")
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    logger().info("Dut going to leave the AP")
-    wifi_dut.interfaces.wifi.leave()
+    # logger().info("Dut going to leave the AP")
+    # wifi_dut.interfaces.wifi.leave()
 
     packet_filter1 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x00) && (wlan.sa == {ap_bssid}) && (wlan.da == {dut_mac_address})'
     packet_filter2 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.da == {ap_bssid}) && (wlan.sa == {dut_mac_address})'
@@ -448,6 +476,6 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer,net_pe
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
         'Unable to find Add-ba response from AP side'
 
-    logger().info(f"***** Validating Date packets sent by the DUT  ******")
+    logger().info(f"***** Validating Block ACK packets  ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)['packet_count'], \
-        'Unable to find Data Packets from DUT side'
+        'Unable to find Block ACK packets'

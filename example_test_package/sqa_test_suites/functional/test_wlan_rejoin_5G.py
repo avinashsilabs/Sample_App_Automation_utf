@@ -6,8 +6,9 @@ import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError, SecurityMode
 from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
-    RS9116CustomFeatureBitMap, RS9116PowerSaveModes
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116AsyncEventType, \
+    RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116ExtCustomFeatureBitMap
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
@@ -53,13 +54,15 @@ class FilterPacket:
         for x in line:
             count = count + 1
             if packet_filter in x:
-                time_delta_from_previous_packet = line[count].strip().split(':')[1].replace(']', '').strip().replace('seconds', '')
+                time_delta_from_previous_packet = line[count].strip().split(':')[1].replace(']', '').strip().replace(
+                    'seconds', '')
                 logger().info(f'time_delta_from_previous_packet={time_delta_from_previous_packet}')
                 time_diff.append(float(time_delta_from_previous_packet))
 
         logger().info(time_diff)
         filter_file.close()
         return time_diff
+
 
 class IopTcpIpSockets:
     def open_socket(self, wifi_dut, dut_ip) -> int:
@@ -105,10 +108,11 @@ pytestmark = [
     pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 ]
 
+
 @pytest.mark.parametrize("channel_list",
                          [
                              [36, 48, 165],
-                             ]
+                         ]
                          )
 @pytest.mark.config(
     "wifi_dut",
@@ -126,7 +130,7 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
     validation = True
 
     '''Check rejoin is happening in selected channels or not'''
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
     for channel in channel_list:
         wifi_access_point.interfaces.wifi.config['channel'] = channel
@@ -179,9 +183,9 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
         logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
         time.sleep(30)
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find Unicast Probe request packet'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'],\
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
         logger().info('***** Enable the AP radio *****')
@@ -230,7 +234,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
     time.sleep(20)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=4, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=4, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -287,7 +291,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
 
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.associated = False
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find Broadcast Probe request packet'
     time.sleep(10)
 
@@ -312,7 +316,7 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
     validation = True
 
     '''Rejoin functionality when dual band selected'''
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_access_point.interfaces.wifi.config['channel'] = channel_list
     wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(10)
@@ -399,11 +403,11 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
         "band": 1,
     },
 )
@@ -413,11 +417,25 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
 
     '''Verify rejoin functionality in DFS channels '''
-    wifi_access_point.interfaces.wifi.config['channel'] = 149
+    wifi_access_point.interfaces.wifi.config['channel'] = 52
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(10)
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    time.sleep(70)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    # Added verification if AP will not beaconing in DFS channel, program will terminate
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='verify_beacon')
+    time.sleep(5)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
+                     f'and wlan.fc.type_subtype == 0x0008'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find Beacon packets'
+
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -433,10 +451,10 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    file_name = f'5g_uni_broad_prob_req'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -456,24 +474,20 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
             logger().info(f"Data transfer failed")
             assert send_response
 
-    time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_uni_broad_prob_req')
-
     logger().info('***** Disable the AP radio *****')
     wifi_access_point.interfaces.wifi.stop_ap()
 
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
+    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
     time.sleep(30)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
     logger().info('***** Enable the AP radio *****')
     wifi_access_point.interfaces.wifi.start_ap()
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_rejoin')
-    time.sleep(10)
+    file_name_rejoin = f'5G_Rejoin_dfs'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+
     if connect_status is False:
         logger().info("Unable to connect with Server")
         assert connect_status
@@ -507,7 +521,8 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
         "band": 1,
     },
 )
-def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap, set_region_dut):
+def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
+                                                set_region_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -523,7 +538,7 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(60)
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -609,11 +624,13 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
         "band": 1,
     },
 )
-def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap, set_region_dut):
+def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
+                                               set_region_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -622,16 +639,29 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
     mode'''
     '''Please note - ASUS AP does not support Japan region so I removed the japan region entry '''
     wifi_access_point.interfaces.wifi.config['channel'] = 52
-    time.sleep(20)
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
     # Set the region value in DUT side
     wifi_dut.interfaces.wifi.set_region(region=1, region_code=set_region_dut, module_type=1)
     logger().info(f'Setting the country region in AP ={set_region_ap} & DUT ={set_region_dut}')
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(20)
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    time.sleep(70)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    # Added verification if AP will not beaconing in DFS channel, program will terminate
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='verify_beacon')
+    time.sleep(5)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
+                     f'and wlan.fc.type_subtype == 0x0008'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find Beacon packets'
+
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     ip_config = wifi_dut.interfaces.wifi.start_ip()
@@ -647,10 +677,10 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -670,19 +700,14 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
             logger().info(f"Data transfer failed")
             assert send_response
 
-    file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
-
     logger().info('***** Disable the AP radio *****')
     wifi_access_point.interfaces.wifi.stop_ap()
 
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
+    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
     time.sleep(30)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
     logger().info('***** Enable the AP radio *****')
     wifi_access_point.interfaces.wifi.start_ap()
@@ -722,7 +747,8 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
         "band": 2,
     },
 )
-def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap, set_region_dut):
+def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
+                                                          set_region_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -737,7 +763,7 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     logger().info(f'Setting the country region in AP ={set_region_ap} & DUT ={set_region_dut}')
     wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(10)
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -823,16 +849,20 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
         "band": 2,
     },
 )
-def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap, set_region_dut):
+def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
+                                                         set_region_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
 
-    '''Verify Rejoin Functionality with different regions enabled in Dual bandUS, EU, JP & world mode'''
+    '''	Verify Rejoin Functionality with different regions enabled in Dual band with DFS channels US, EU, JP & world 
+    mode'''
+    '''Please note - ASUS AP does not support Japan region so I removed the japan region entry '''
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -840,18 +870,29 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
     wifi_dut.interfaces.wifi.set_region(region=1, region_code=set_region_dut, module_type=1)
     logger().info(f'Setting the country region in AP ={set_region_ap} & DUT ={set_region_dut}')
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(10)
+    time.sleep(70)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    # Added verification if AP will not beaconing in DFS channel, program will terminate
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='verify_beacon')
+    time.sleep(5)
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
+                     f'and wlan.fc.type_subtype == 0x0008'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find Beacon packets'
+
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    time.sleep(2)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"DUT ip address : {dut_ip}")
 
-    time.sleep(2)
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
@@ -861,10 +902,10 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -884,19 +925,14 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
             logger().info(f"Data transfer failed")
             assert send_response
 
-    file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
-
     logger().info('***** Disable the AP radio *****')
     wifi_access_point.interfaces.wifi.stop_ap()
 
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
+    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
     time.sleep(30)
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
     logger().info('***** Enable the AP radio *****')
     wifi_access_point.interfaces.wifi.start_ap()
@@ -922,7 +958,3 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
     logger().info("Stop Sniffer finally")
     time.sleep(5)
     wifi_dut.interfaces.wifi.leave()
-
-
-
-

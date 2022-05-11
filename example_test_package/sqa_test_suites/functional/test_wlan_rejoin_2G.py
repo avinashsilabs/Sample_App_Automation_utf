@@ -400,7 +400,7 @@ def test_rejoin_scan_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, 
     "channel_list",
     [1, 6, 11],
 )
-def test_rejoin_scan_other_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
+def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -921,7 +921,6 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.associated = False
     wifi_sniffer.interfaces.capture.start_capture()
 
-
     logger().info("****** AP radio is going in disable mode ******")
     wifi_access_point.interfaces.wifi.stop_ap()
     time.sleep(170)
@@ -1092,8 +1091,8 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
     logger().info(f'AP BSSID = {ap_bssid}')
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC Address: {mac_address}")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC Address: {dut_mac_address}")
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -1106,8 +1105,12 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.addr=={mac_address} ' \
-                     f'and wlan.addr=={ap_bssid}'
+    # Validation for Unicast probe request
+    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {dut_mac_address})'
+    # Validation for Broadcast probe request
+    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {dut_mac_address})'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -1127,26 +1130,57 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
             logger().info(f"Data transfer failed")
             assert send_response
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_miss_counter')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_miss_counter_1')
     time.sleep(1)
     '''Post power off AP DUT will try for the rejoin process that we can check in sniffer(i.e: post power off AP need 
     to check in sniffer whether the DUT is sending broadcast probe requests or not'''
-    logger().info("****** AP radio is going in disable mode ******")
+
+    logger().info("\n\n****** AP radio is going in disable mode ******")
     wifi_access_point.interfaces.wifi.stop_ap()
+
+    time.sleep(20)
+    wifi_sniffer.interfaces.capture.stop_capture()
     '''Verify Broadcast Probe req'''
-    time.sleep(10)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find any broadcast Probe request packets'
     '''Verify whether module is sending unicast probe request after 100 beacon miss count(i.e 10sec)'''
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find any unicast Probe request packets'
+
+    logger().info("\n\n Note automation can't verify exact time duation and 100 beacon miss count\n")
+    logger().info("Please open test_rejoin_miss_counter_1 sniffer capture file manually and verify beacon miss count")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_miss_counter_2')
+
+    logger().info("\n\n****** AP radio is going in enable mode ******")
+    # '''After successful beacon receives, power off the AP'''
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(20)
-    '''After receiving beacons from AP. Module should not try for rejoin process after 20sec'''
+
+    logger().info("\n\n****** Wait... for 120 seconds, AP radio turn on and broadcast probe request from DUT ******")
+    time.sleep(120)
+
+    # '''After receiving beacons from AP. Module should not try for rejoin process after 20sec'''
+    # '''Verify whether module is sending unicast probe request after 100 beacons miss if module again sends unicast probe
+    #  request after 100 beacon miss count and broadcast probe request after 200 beacons miss count then PASS else FAIL'''
+
+    logger().info("\n\n****** Again AP radio is turned off ******")
     wifi_access_point.interfaces.wifi.stop_ap()
-    time.sleep(20)
-    '''After successful beacon receives, power off the AP'''
-    '''Verify whether module is sending unicast probe request after 100 beacons miss if module again sends unicast probe
-     request after 100 beacon miss count and broad cast probe request after 200 beacons miss count then PASS else FAIL'''
+
+    logger().info("\n\n****** Wait... for 60 seconds ******")
+    time.sleep(60)
+
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find any packet'
+        'Unable to find any unicast Probe request packets'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find any broadcast Probe request packets'
+
+    logger().info("\n\n After receiving beacons from AP. Module should not try for rejoin process after 20sec Verify whether "
+                  "module is sending unicast probe request after 100 beacons miss if module again sends unicast probe "
+                  "request after 100 beacon miss count and broadcast probe request after 200 beacons miss count then "
+                  "PASS else FAIL\n")
+    logger().info("Please open test_rejoin_miss_counter_2 sniffer capture file manually and verify beacon miss count")
     wifi_dut.interfaces.wifi.leave()
     wifi_access_point.interfaces.wifi.start_ap()
     time.sleep(5)
@@ -1226,7 +1260,7 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.associated = False
     result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-                 'packet_count']
+        'packet_count']
     probe_packets_time_delta_list = probe_time_delta_obj.delta_between_probe_packet()
     logger().info(f'Probe packet time delta list= {probe_packets_time_delta_list}')
 
@@ -1576,7 +1610,7 @@ def test_rejoin_in_US_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut):
         logger().info('DUT failed to reconnect after AP power turn on ')
 
 
-def test_rejoin_in_UK_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_rejoin_in_EU_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     # Verify Rejoin Functionality with EU region enabled in 2.4GHZ band
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)

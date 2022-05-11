@@ -1199,3 +1199,57 @@ static void rsi_ble_on_gatt_write_event(uint16_t event_id, rsi_ble_event_write_t
     memcpy(&app_ble_write_event, rsi_ble_write, sizeof(rsi_ble_event_write_t));
     rsi_ble_app_set_event(RSI_BLE_GATT_WRITE_EVENT);
 }
+
+void rsi_ble_set_data_len_command(sl_cli_command_arg_t* arguments)
+{
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint16_t tx_len = sl_cli_get_argument_uint16(arguments, 1);
+    uint16_t tx_time = sl_cli_get_argument_uint16(arguments, 2);
+
+    uint8_t device_address[6];
+	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
+    print_status(rsi_ble_set_data_len(device_address,tx_len,tx_time));
+}
+
+void rsi_ble_read_max_data_len_command(sl_cli_command_arg_t* arguments)
+{
+    uint32_t status = 0;
+    rsi_ble_read_max_data_length_t blereadmaxdatalen;
+
+    status = rsi_ble_read_max_data_len(&blereadmaxdatalen);
+    if(status == 0)
+    {
+    printf("maxtx_octets:%d, maxtx_time:%d, maxrx_octets:%d, maxrx_time:%d\n",blereadmaxdatalen.maxtxoctets,blereadmaxdatalen.maxtxtime,blereadmaxdatalen.maxrxoctets, blereadmaxdatalen.maxrxtime);
+    }
+    print_status(status);
+
+}
+
+void rsi_ble_set_phy_command(sl_cli_command_arg_t* arguments)
+{
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint8_t tx_phy = sl_cli_get_argument_uint8(arguments, 1);
+    uint8_t rx_phy = sl_cli_get_argument_uint8(arguments, 2);
+    uint16_t coded_phy = sl_cli_get_argument_uint16(arguments, 3);
+
+    uint8_t device_address[6];
+	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
+    print_status(rsi_ble_setphy(device_address,tx_phy,rx_phy,coded_phy));
+}
+
+void rsi_ble_read_phy_command(sl_cli_command_arg_t* arguments)
+{
+    uint32_t status = 0;
+    rsi_ble_resp_read_phy_t read_phy_resp;
+
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint8_t dev_addr[6];
+	rsi_ascii_dev_address_to_6bytes_rev(dev_addr, (int8_t*)remote_dev_addr);
+    status = rsi_ble_readphy(dev_addr, &read_phy_resp);
+    if(status == 0)
+    {
+    printf("dev_addr:%02x:%02x:%02x:%02x:%02x:%02x, tx_phy:%d, maxrx_time:%d\n",read_phy_resp.dev_addr[0],read_phy_resp.dev_addr[1],read_phy_resp.dev_addr[2], read_phy_resp.dev_addr[3], read_phy_resp.dev_addr[4], read_phy_resp.dev_addr[5], read_phy_resp.tx_phy, read_phy_resp.rx_phy);
+    }
+    print_status(status);
+
+}

@@ -518,10 +518,25 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    raspi_lighttpd_tls_dut:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 443
+                interface: 'eth0'
+                tls_enabled: true
+                tls_key: 'server-key.pem'
+                tls_certificate: 'server-cert.pem'
+                tls_ca_chain: 'ca-cert.pem'
+
     raspi_http_client:
         interfaces:
             http:
                 type: 'http.client.requests_client'
+                disable_certificate_verification: True
 
     static_http:
         interfaces:
@@ -665,6 +680,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_iperf:
         interfaces:
@@ -832,6 +848,9 @@ defaults:
         db_value: 2
         att_enable: true
 
+    sntp_server:
+        server_ip: '10.8.4.11'
+
     aws_iot:
         hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
         port: 8883
@@ -840,6 +859,9 @@ defaults:
         certfile: "python-thing-certificate.pem.crt"
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
+
+    aws_server:
+        domain_name: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
 
     ftp_server: 'raspi_ftp_server'
 
