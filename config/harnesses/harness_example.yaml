@@ -847,6 +847,9 @@ defaults:
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
 
+    aws_server:
+        domain_name: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
+
     ftp_server: 'raspi_ftp_server'
 
     ftp_client: 'raspi_ftp_client'
