@@ -576,8 +576,21 @@ devices:
     keysight_power_analyzer:
         interfaces:
             power_meter:
-                type: 'power_meter.keysight_N6705_power_analyzer'
+                type: 'power_meter.keysight_N6705'
                 instrument_lan_ip_address: '10.207.19.83'
+
+    keysight_power_analyzer_winRM:
+        interfaces:
+            windows_shell: 
+                type: 'rem_mgmt.win_rm'
+                host_ip: '10.207.19.185'
+                username: 'test'
+                password: 'Silabs@20202'
+            power_meter:
+                type: 'power_meter.keysight_benchvue'
+                shell: 'windows_shell'
+                instrument_lan_ip_address: '10.207.19.83'
+                interface: 'wlan0'
 
     python_aws_iot_thing:
         interfaces:
