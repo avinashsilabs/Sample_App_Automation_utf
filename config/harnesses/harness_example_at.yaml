@@ -775,6 +775,13 @@ defaults:
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
 
+        pll_mode: 0
+        rf_type: 1
+        wireless_mode: 0
+        enable_ppp: 0
+        afe_type: 1
+        features_enable: 0
+
     wiseconnect_web: 'wiseconnect_web'
 
     net_perf_client: 'raspi_iperf'

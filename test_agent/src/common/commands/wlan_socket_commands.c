@@ -22,6 +22,7 @@ rsi_fd_set except_fds;
 uint8_t socket_select_response = 0;
 
 extern int read_variable(uint32_t nvm_key, uint8_t* buffer, size_t* length);
+extern uint8_t remote_terminate;
 
 void rsi_socket_command(sl_cli_command_arg_t* arguments);
 void rsi_bind_command(sl_cli_command_arg_t* arguments);
@@ -54,6 +55,7 @@ void rsi_fd_clr_command(sl_cli_command_arg_t* arguments);
 void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments);
 void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments);
 void socket_async_data_recive(uint32_t sock_no, uint8_t* buffer, uint32_t length);
+void rsi_websocket_data_receive_handler(uint32_t sock_no, uint8_t *buffer, uint32_t length);
 
 //! SNTP response handler
 void rsi_sntp_client_create_response_handler(uint16_t status, const uint8_t cmd_type, const uint8_t *buffer);
@@ -798,6 +800,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         tt_start = rsi_hal_gettickcount();
 
         while (1) {
+
             // Send data on socket
             status = rsi_sendto(socketID, buffer, data_len, 0, (struct rsi_sockaddr*)&remote_address, sizeof(remote_address));
             if (checkStatus(status, "rsi_sendto", socketID, 1, debug_output) == -1) {
@@ -814,6 +817,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         if (compute_throughput == 1) {
             measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
         }
+
         //close socket
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
 
@@ -844,6 +848,10 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         // take the current time
         tt_start = rsi_hal_gettickcount();
         while (1) {
+         if(remote_terminate)
+        {
+        break;
+        }
             // Send data on socket
             status = rsi_send(socketID, buffer, data_len, 0);
             if (checkStatus(status, "rsi_send", socketID, 1, debug_output) == -1) {
@@ -856,15 +864,18 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
                 break;
 
         }
+        if(!remote_terminate)
+        {
         //close socket
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
+        }
         if (compute_throughput == 1) {
             measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
         }
         break;
     }
     }
-
+remote_terminate=0;
     free(buffer);
 }
 
@@ -1325,4 +1336,68 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 	}
 	printf("\n");
 	print_status(RSI_ERROR_NONE);
+}
+
+void rsi_websocket_data_receive_handler(uint32_t sock_no, uint8_t *buffer, uint32_t length)
+{
+	printf("\r\nWEBSOCKET_DATA_RECEIVE sock_no:%d, buffer:%s, length:%d\r\n",sock_no,buffer,length);
+}
+
+void rsi_web_socket_create_command(sl_cli_command_arg_t* arguments)
+{
+	int32_t status = 0;
+	uint32_t socket_id;
+	uint8_t flags = sl_cli_get_argument_uint8(arguments, 0);
+	char* server_ip_address = sl_cli_get_argument_string(arguments, 1);
+	uint16_t server_port = sl_cli_get_argument_uint16(arguments, 2);
+	uint16_t device_port = sl_cli_get_argument_uint16(arguments, 3);
+	char* web_resource_name = sl_cli_get_argument_string(arguments, 4);
+	char* web_host_name = sl_cli_get_argument_string(arguments, 5);
+
+	uint32_t remote_ip = str_to_ipv4(server_ip_address);
+	if (remote_ip == 0)
+	{
+		print_status(RSI_ERROR_INVALID_PARAM);
+        return;
+	}
+
+	status = rsi_web_socket_create(flags,
+                                 (uint8_t *)&remote_ip,
+                                 (uint16_t)server_port,
+                                 (uint16_t)device_port,
+                                 web_resource_name,
+                                 web_host_name,
+                                 &socket_id,
+                                 rsi_websocket_data_receive_handler);
+
+	if(status == 0)
+	{
+		printf("socket_id:%d\n", socket_id);
+	}
+	print_status(status);
+}
+
+void rsi_web_socket_send_command(sl_cli_command_arg_t* arguments)
+{
+	int32_t status = 0;
+	uint32_t socket_id = sl_cli_get_argument_uint32(arguments, 0);
+	uint8_t opcode = sl_cli_get_argument_uint8(arguments, 1);
+	char* message = sl_cli_get_argument_string(arguments, 2);
+
+	status = rsi_web_socket_send_async(socket_id, opcode, (int8_t *)message, strlen(message));
+	if(status >=0)
+	{
+		printf("message_length:%d\n", status);
+		print_status(RSI_ERROR_NONE);
+	}
+	else
+	{
+		print_status(status);
+	}
+}
+
+void rsi_web_socket_close_command(sl_cli_command_arg_t* arguments)
+{
+	uint32_t socket_id = sl_cli_get_argument_uint32(arguments, 0);
+	print_status(rsi_web_socket_close(socket_id));
 }

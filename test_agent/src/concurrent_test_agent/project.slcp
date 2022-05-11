@@ -67,8 +67,13 @@ define:
 - name: RSI_BT_ENABLE
 - name: RSI_ANT_ENABLE
 - name: CONCURRENT_MODE
-  value: '1'
-
+  value: 1
+- name: RSI_MODE_11N_ENABLE
+  value: 0
+- name: RSI_HAND_SHAKE_TYPE
+  value: 2
+- name: RSI_SELECT_LP_OR_ULP_MODE
+  value: 1
 
 component:
 - {id: sl_system}
@@ -1959,3 +1964,42 @@ template_contribution:
     argument:
     - {type: uint16, help: opermode}
     - {type: uint16, help: coex}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_data_length
+    handler: rsi_ble_set_data_len_command
+    help: set ble data length
+    argument:
+    - {type: string, help: device_addr}
+    - {type: uint16, help: tx_len}
+    - {type: uint16, help: tx_time}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: read_max_data_length
+    handler: rsi_ble_read_max_data_len_command
+    help: event reads the data length
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_set_phy
+    handler: rsi_ble_set_phy_command
+    help: set ble phy
+    argument:
+    - {type: string, help: device_addr}
+    - {type: uint8, help: tx_phy}
+    - {type: uint8, help: rx_phy}
+    - {type: uint16, help: coded_phy}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_read_phy
+    handler: rsi_ble_read_phy_command
+    help: read ble phy
+    argument:
+    - {type: string, help: device_addr}

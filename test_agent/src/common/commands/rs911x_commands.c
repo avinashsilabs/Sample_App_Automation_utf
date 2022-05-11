@@ -52,6 +52,7 @@ uint32_t g_rsi_ble_feature_bit_map = 0;
 uint32_t g_rsi_ble_custom_ext_feature_bit_map = 0;
 uint32_t g_rsi_config_feature_bit_map = 0;
 uint8_t g_rsi_band = RSI_BAND_2P4GHZ;
+uint8_t remote_terminate=0;
 
 //global which indicates how many times DUT is connected during run
 uint32_t g_wifi_connections = 0;
@@ -430,6 +431,7 @@ static void join_fail_handler(uint16_t status, const uint8_t* buffer, const uint
 
 void remote_terminate_handler(uint16_t status, const uint8_t* buffer, const uint32_t length)
 {
+     remote_terminate=1;
 	uint32_t bytes_sent = rsi_bytes4R_to_uint32(&buffer[2]);
 	uint16_t socket_id = rsi_bytes2R_to_uint16(&buffer[0]);
 	printf("\r\nSAPI+REMOTE_TERMINATE status:%d,socket_id:%d,bytes_sent:%d\r\n", status, socket_id, bytes_sent);

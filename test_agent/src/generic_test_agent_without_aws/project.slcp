@@ -64,6 +64,14 @@ define:
 - name: RSI_BLE_ENABLE
 - name: RSI_BT_ENABLE
 - name: RSI_ANT_ENABLE
+- name: CONCURRENT_MODE
+  value: 0
+- name: RSI_MODE_11N_ENABLE
+  value: 0
+- name: RSI_HAND_SHAKE_TYPE
+  value: 2
+- name: RSI_SELECT_LP_OR_ULP_MODE
+  value: 1
 
 
 component:
@@ -1876,3 +1884,76 @@ template_contribution:
     argument:
     - {type: uint16, help: opermode}
     - {type: uint16, help: coex}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_data_length
+    handler: rsi_ble_set_data_len_command
+    help: set ble data length
+    argument:
+    - {type: string, help: device_addr}
+    - {type: uint16, help: tx_len}
+    - {type: uint16, help: tx_time}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: read_max_data_length
+    handler: rsi_ble_read_max_data_len_command
+    help: event reads the data length
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_set_phy
+    handler: rsi_ble_set_phy_command
+    help: set ble phy
+    argument:
+    - {type: string, help: device_addr}
+    - {type: uint8, help: tx_phy}
+    - {type: uint8, help: rx_phy}
+    - {type: uint16, help: coded_phy}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_read_phy
+    handler: rsi_ble_read_phy_command
+    help: read ble phy
+    argument:
+    - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: web_socket
+    handler: rsi_web_socket_create_command
+    help: Create a web socket
+    argument:
+    - {type: uint8, help: flags}
+    - {type: string, help: server_ip}
+    - {type: uint16, help: server_port}
+    - {type: uint16, help: device_port}
+    - {type: string, help: web_resource_name}
+    - {type: string, help: web_host_name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: web_socket_send
+    handler: rsi_web_socket_send_command
+    help: Send data over web socket
+    argument:
+    - {type: uint32, help: socket_id}
+    - {type: uint8, help: opcode}
+    - {type: string, help: message }
+
+- name: cli_command
+  priority: 0
+  value:
+    name: web_socket_close
+    handler: rsi_web_socket_close_command
+    help: Closes web socket
+    argument:
+    - {type: uint32, help: socket_id}

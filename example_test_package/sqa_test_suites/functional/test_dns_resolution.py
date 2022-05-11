@@ -48,6 +48,9 @@ def logger():
     }
 )
 def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point):
+    '''when only primary DNS server ip address is received by dhcp server
+       when both primary and secondary DNS server ip addresses are received by dhcp server
+       DNS client functionality when 2 DNS server IPs are got through DHCP'''
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -101,11 +104,12 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
     logger().info("=======Initiating DNS Get command========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
     logger().info(result.decode())
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
 
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     logger().info(f"*******#### Sniffer validation for DHCP packets *******####")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
@@ -135,11 +139,11 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
 
     }
 )
-def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_both_pri_sec_ips_are_statically_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19302')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_both_pri_sec_ips_are_statically_c19302')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -187,11 +191,12 @@ def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("=======DNS get command with primary & Secondary Static IPs for DNS server========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
 
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     if result is False:
@@ -218,11 +223,11 @@ def test_dns_resolution_c19302(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_only_primary_ip_statically_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19303')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_only_primary_ip_statically_c19303')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -270,11 +275,12 @@ def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("=======DNS get command with Primary DNS server IP only========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "NULL")
     logger().info(result.decode())
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
 
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     if result is False:
@@ -301,11 +307,11 @@ def test_dns_resolution_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_only_secondary_ip_statically_c19303(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19304')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_only_secondary_ip_statically_c19303')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -353,11 +359,12 @@ def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("=======DNS get command with Secondary DNS server IP ========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "10.8.4.10")
     logger().info(result.decode())
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
 
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     if result is False:
@@ -384,11 +391,11 @@ def test_dns_resolution_c19304(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_both_pri_sec_set_to_0_statically_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19305')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_both_pri_sec_set_to_0_statically_c19305')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -437,10 +444,11 @@ def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
         logger().info(result.decode())
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
-    time.sleep(1)
-    assert exc_info.value.error_code == 0xbba1
+
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
+    time.sleep(1)
+    assert exc_info.value.error_code == 0xbba1
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -459,11 +467,11 @@ def test_dns_resolution_c19305(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -514,11 +522,11 @@ def test_dns_resolution_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
         logger().info(result.decode())
     assert exc_info.value.error_code == 0xbba3
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     if result is False:
@@ -545,11 +553,11 @@ def test_dns_resolution_c19306(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -602,11 +610,11 @@ def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
         logger().info(result.decode())
     assert exc_info.value.error_code == 0xbba3
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     if result is False:
@@ -633,11 +641,11 @@ def test_dns_resolution_c19307(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_pri_sec_with_same_dns_server_ips_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_pri_sec_with_same_dns_server_ips_c19308')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -679,11 +687,11 @@ def test_dns_resolution_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
         logger().info(result.decode())
     assert exc_info.value.error_code == 0xaf
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -702,11 +710,11 @@ def test_dns_resolution_c19308(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_pri_sec_set_twice_with_same_dns_server_ips_c19309')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -756,11 +764,11 @@ def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
         logger().info(result.decode())
     assert exc_info.value.error_code == 0xaf
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -779,11 +787,11 @@ def test_dns_resolution_c19309(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_resolution_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_resolution_c19310')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_when_both_pri_sec_twice_diff_dns_server_ips_c19310')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -834,11 +842,12 @@ def test_dns_resolution_c19310(wifi_sniffer, wifi_dut, wifi_access_point):
     time.sleep(5)
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
 
     logger().info("DUT going leave the AP")
     wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
 
     result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     if result is False:

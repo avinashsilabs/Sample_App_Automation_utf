@@ -847,7 +847,7 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
  )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","disassociated", "ble_disconnect"])
 def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_access_point, wifi_dut,  ble_client,wifi_sniffer):
        testcase = "test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778"
        logger().info(f"testcase : {testcase}")
@@ -878,7 +878,7 @@ def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_access_point, wi
  )
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect"])
 def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     # Set up DUT for BLE advertising
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -937,7 +937,7 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     }
  )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated","ble_disconnect"])
 def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -945,7 +945,22 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     logger().info(f"BT Address of DUT is {bt_dut_address}")
     # Start ble client
     logger().info(f"Starting Advertisement on BT CLIENT DEVICE")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    #bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+        , scan_resp_name_params="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+    )
     assert bt_client_address is not None,"BT REMOTE DEVICE not found"
     logger().info(f"BT Address of BT CLIENT DEVICE is {bt_client_address}")
     # Start scanning and connect to ble client
@@ -955,17 +970,8 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
 
 
     logger().info(f"Initiating connection.")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address,\
-                                         timeout=120,expected="RSI_BLE_SECURITY_KEYS_EVENT")
-
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-
-    logger().info(f"Getting device state : {state} ")
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
-
-    logger().info(f"Dut is in connected state {state_int}")
-    logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, expected="RSI_BLE_CONN_EVENT",\
+                                         timeout=120)
 
     # Get the state of the dut
     logger().info("enabling wifi power save mode in DUT......")
@@ -975,6 +981,15 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     wifi_dut.interfaces.wifi.bt_power_save(2)
 
     time.sleep(60)
+
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+
+    logger().info(f"Getting device state : {state} ")
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
+
+    logger().info(f"Dut is in connected state {state_int}")
+    logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
