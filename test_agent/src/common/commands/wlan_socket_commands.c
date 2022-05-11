@@ -231,7 +231,7 @@ void rsi_accept_command(sl_cli_command_arg_t* arguments)
     struct rsi_sockaddr_in client_address = {0};
     int32_t address_length = sizeof(client_address);
     int32_t status = rsi_accept(sockID, (struct rsi_sockaddr*)&client_address, &address_length);
-    if (status) {
+    if (status >=0 ) {
         printf("\r\n socket #: %ld\n", status);
         printf("\r\n Successfully accepted connection from 0x%x\n", (unsigned int)client_address.sin_addr.s_addr);
         print_status(RSI_ERROR_NONE);
