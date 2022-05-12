@@ -454,4 +454,4 @@ def test_threading_httpgetfunctionality_ble_C20339(wifi_dut, wifi_access_point, 
     cleanup_obj.start()
     ble_client_obj.wait_for_exit()
     httpget_obj.wait_for_exit()
-    cleanup_obj.wait_for_exit()S
+    cleanup_obj.wait_for_exit()
