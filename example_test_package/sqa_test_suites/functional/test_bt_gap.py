@@ -324,12 +324,15 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
     bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
 
     logger().info("configuring dut in non-connectable mode...")
-    bt_dut.interfaces.bluetooth.bt_set_non_connectable()
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
     time.sleep(2)
 
     logger().info("initialising dut in spp....")
     bt_dut.interfaces.bluetooth.bt_spp_init()
     time.sleep(2)
+
+    logger().info("pinging dut...")
+    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
@@ -345,8 +348,16 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_server_socket.create_server()
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-            assert not connected, "expected connection failure in non connectable mode but dut is able to connect"
-            logger().info("Expected connection failure in non connectable mode")
+            assert connected, "failed to connect to bt dut"
+            time.sleep(60)
+            logger().info("pinging dut...")
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address
+            )
+
+            logger().info("disconnecting bt host....")
+            bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
             logger().info("closing bt socket...")
             bt_server_socket.close()
 
@@ -374,7 +385,7 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
     bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
 
     logger().info("configuring dut in connectable mode...")
-    bt_dut.interfaces.bluetooth.bt_set_connectable()
+    bt_dut.interfaces.bluetooth.bt_set_non_connectable()
     time.sleep(2)
 
     logger().info("initialising dut in spp....")
@@ -387,10 +398,6 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
     # Added set class to 400100 to avoid [Errno 112] Host is down issue
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
-    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-    logger().info(f"l2ping response {ping_response}")
-    assert ping_response, "dut is in inactive state..."
-
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
@@ -398,7 +405,10 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_server_socket.create_server()
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-            assert connected, "failed to connect to bt dut"
+            assert not connected, "expected connection failure in non connectable mode but dut is able to connect"
+            logger().info("Expected connection failure in non connectable mode")
+            logger().info("closing bt socket...")
+            bt_server_socket.close()
 
         logger().info("enabling power save after bt connection...")
         if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
@@ -410,17 +420,12 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
 
-        time.sleep(30)
-        logger().info("pinging dut...")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-            dest_addr=bt_dut_address
-        )
-
         time.sleep(10)
         bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
 
-        logger().info("disconnecting bt host....")
-        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+        status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
+        logger().info(f"connectable state is:{status}")
+        assert status is not None
 
         logger().info("closing bt socket...")
         bt_server_socket.close()
