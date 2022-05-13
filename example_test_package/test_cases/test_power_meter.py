@@ -28,4 +28,4 @@ def test_capture_power_meter_data_points_to_file(power_meter):
 # TODO: This test is just to make sure WinRM Communication is workig. we will modify this 
 @pytest.mark.power_meter("keysight_power_analyzer_winRM")
 def test_keysight_BenchVue_power_meter(power_meter):
-    power_meter.interfaces.power_meter.test_winrm_communication()
+    power_meter.interfaces.power_meter.start_keysight_benchvue_application()
