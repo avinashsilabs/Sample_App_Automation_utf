@@ -104,6 +104,11 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
         assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
             dest_addr=bt_dut_address
         )
+
+        status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
+        logger().info(f"connectable state is:{status}")
+        assert status is not None,"failed to fetch connectable status"
+
         logger().info("disconnecting bt host....")
         bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
 
@@ -161,6 +166,11 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
                 assert not connected,"expected connection failure in non connectable mode but dut is able to connect"
                 logger().info("Expected connection failure in non connectable mode")
                 logger().info("closing bt socket...")
+
+                status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
+                logger().info(f"connectable state is:{status}")
+                assert status is not None, "failed to fetch connectable status"
+
                 bt_server_socket.close()
 
 def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
@@ -245,33 +255,8 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
 
         logger().info("==== configuring dut in non-connectable mode ====")
 
-        logger().info("starting bt module in dut.....")
-        bt_dut.interfaces.bluetooth.bt_start()
-        time.sleep(2)
-
-        logger().info("fetching dut bd address....")
-        bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-
-        logger().info("configuring bt name....")
-        bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
-
-        logger().info("configuring eir data....")
-        bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
-
-        logger().info("configuring dut in slave role...")
-        bt_dut.interfaces.bluetooth.bt_set_slave_role()
-
-        logger().info("setting ssp mode...")
-        bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
-
-        logger().info("configuring pin code..")
-        bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
-
         logger().info("configuring dut in non-connectable mode...")
         bt_dut.interfaces.bluetooth.bt_set_non_connectable()
-
-        logger().info("initialising dut in spp....")
-        bt_dut.interfaces.bluetooth.bt_spp_init()
 
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address, "failed to fetch client bt address"
@@ -294,7 +279,7 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
         time.sleep(10)
         bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
 
-def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
+def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     inq_type = 1
     duration = 10000
     max_no_dev = 10
@@ -323,16 +308,13 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
     logger().info("configuring pin code..")
     bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
 
-    logger().info("configuring dut in non-connectable mode...")
+    logger().info("configuring dut in connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_connectable()
     time.sleep(2)
 
     logger().info("initialising dut in spp....")
     bt_dut.interfaces.bluetooth.bt_spp_init()
     time.sleep(2)
-
-    logger().info("pinging dut...")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
@@ -361,35 +343,8 @@ def test_bt_non_connec_and_connectable_C19977(bt_dut, bt_client):
             logger().info("closing bt socket...")
             bt_server_socket.close()
 
-    logger().info("==== configuring dut in connectable mode ====")
-
-    logger().info("starting bt module in dut.....")
-    bt_dut.interfaces.bluetooth.bt_start()
-
-    logger().info("fetching dut bd address....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-
-    logger().info("configuring bt name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
-
-    logger().info("configuring eir data....")
-    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
-
-    logger().info("configuring dut in slave role...")
-    bt_dut.interfaces.bluetooth.bt_set_slave_role()
-
-    logger().info("setting ssp mode...")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
-
-    logger().info("configuring pin code..")
-    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
-
-    logger().info("configuring dut in connectable mode...")
+    logger().info("configuring dut in non-connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_non_connectable()
-    time.sleep(2)
-
-    logger().info("initialising dut in spp....")
-    bt_dut.interfaces.bluetooth.bt_spp_init()
     time.sleep(2)
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)

@@ -1,4 +1,3 @@
-
 import pytest
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap
 from utf.utils.logger import get_logger
@@ -8,7 +7,6 @@ from utf.utils.thread_base import ThreadBase
 import datetime
 from utf.interfaces.wifi import WlanError
 from utf_wiseconnect.devices.rs911x import RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116CertificateType,RS9116CoexMode,RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap
-
 
 
 def logger():
