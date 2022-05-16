@@ -1,3 +1,5 @@
+import time
+
 from utf.utils.logger import get_logger
 import pytest
 from utf_wiseconnect.devices.rs911x import (
@@ -13,6 +15,9 @@ from utf.interfaces.wifi import WlanError
 
 def logger():
     return get_logger(__name__)
+
+#configure this for looping the case
+iter_count = 5
 
 """setup requirement:
         1. DUT(RS9116)
@@ -115,6 +120,7 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
     logger().info("fetching the data from  http server using get method")
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_ip= '192.168.9.99')
+
     assert exc_info.value.error_code == 0xBB38, "observed wrong error code expected is 0xBB38"
 
 
@@ -180,6 +186,7 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_cli
     logger().info("Joining access point")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
+    time.sleep(10)
     logger().info("starts the dhcp in dut")
     wifi_dut.interfaces.wifi.start_ip()
 
@@ -194,8 +201,8 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_cli
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
 
-    logger.info(status)
-    logger.info(content)
+    logger().info(status)
+    logger().info(content)
     assert content == content1
 
 #================== HTTP Post test cases ====================
@@ -237,7 +244,7 @@ def test_http_post_functionality_C19219(http_server, wifi_dut,http_client, wifi_
 
     logger().info("API used to post the http data")
     status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
-                                                         post_data="helloravi")
+                                                         post_data="hellothisiaatestcaseforget")
     assert status,"failed to get http data"
     assert content,"failed to get http data"
     logger().info(status)
@@ -323,11 +330,11 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut,htt
 
     logger().info("http functionality using post method")
     status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http,index_path ,
-                                                         post_data="helloravifordifferenturlsusedtopostthed"
+                                                         post_data="hellothisisfordifferenturlsusedtopostthed"
                                                                    "atoverthehttppostprotocol")
     assert status,"failed to post data to http server"
-    logger.info(status)
-    logger.info(content)
+    logger().info(status)
+    logger().info(content)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -344,7 +351,8 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut,htt
 @pytest.mark.http_server("raspi_lighttpd")
 def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut,http_client, wifi_access_point):
 
-    for i in range(0,5):
+    for count in range(0,iter_count):
+        logger().info(f"******************* iteration {count}  ********************* ")
         logger().info("Initiates scan in dut")
         scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
         assert scan_result,"scan failure,no ap found"
@@ -366,10 +374,11 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut,h
 
         logger().info("sends data to http server using post method")
         status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
-                                                         post_data="helloravi")
+                                                         post_data="hellotestingfrohttppostcontent")
         assert status,"failed to post data"
         logger().info(status)
     logger().info(content)
+    logger().info(f"******************* iteration {count} completed ********************* ")
 
 @pytest.mark.config(
     "wifi_dut",
@@ -408,6 +417,6 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut,http_cl
     logger().info("API used to post the http data")
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
-                                                             ip_addr='192.168.9.99',
-                                                             post_data="helloravi")
+                                                             server_ip='192.168.9.99',
+                                                             post_data="hellothisisatestcase")
     assert exc_info.value.error_code == 0xBB38, "observed wrong error code expected is 0xBB38"
