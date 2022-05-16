@@ -1,18 +1,5 @@
-from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import pytest
-from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict
 from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS9116FeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116ExtCustomFeatureBitMap
-import time
-from utf.utils.thread_base import ThreadBase
-from utf.utils.logger import get_logger
-
-def logger():
-    return get_logger(__name__)
-
-def __print_throughput(iperf_throughput: dict):
-    if iperf_throughput is not None:
-        print_dict("##     ", iperf_throughput)
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
