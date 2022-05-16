@@ -170,8 +170,8 @@ pipeline {
                                     -e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
                                     -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
                                     -e TEST_SUITE=OT_Smoke_brd4161a, \
-                                    -e BRANCH_NAME=${GIT_BRANCH}, \
-                                    -e STACK_NAME=utf_wifi, \
+                                    -e TEST_BRANCH_NAME=${GIT_BRANCH}, \
+                                    -e STACK_NAME=WIFI, \
                                     -e RELEASE_NAME=${RS9116_FIRMWARE}, \
                                     -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \

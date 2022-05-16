@@ -1,0 +1,25 @@
+root_path: 'example_test_package'
+label_filter: []
+test_sequence:
+
+- test_case_id: 'test_ping' # test case id needs to be unique with the test method and parameter combination
+  labels: [ 'wifi' ]
+  test_id: 'test_ping::1'
+  test_module: 'test_cases/test_wifi.py'
+  test_function: 'test_ping'
+  module_name: 'rs9116, raspi, BRD4180b' # Devices used with module name
+  test_suite_name: 'wifi_tests' # Defines that suite that the test case belongs to a grouping for reporting purposes
+  test_result_type: 'FEATURE' # Defines the type of test type (https://stash.silabs.com/projects/UTF/repos/utf_queue_models/browse/models/python/generated_models.py#107)
+  test_description: 'checking firmware version' # Describes what the test case does
+  feature_name: 'wifi' # Feature Name ie like Wi-Fi Scan
+  executor_name: # Name of the local machine that the testing is being executed on
+  test_creation_date: '2022-12-05' # Date of when the test case was created
+  phy_name: 'NA' # This is the radio configuration of the module_name
+  engineer_name: 'hidayath' # The engineer's name that created the test
+  iot_req_id: 'UTF-1112' # Provide the Jira ticket ex: IOTREQ-4735
+  tool_chain: 'IAR-8.20.1' # compiler that has been used to compile the user application
+  vendor_name: 'NA' # Name of the 3rd party testHarness that is producing the data
+  vendor_build: 'NA' # Build number of the 3rd party testHarness that is producing the data
+  vendor_result: 'NA' # Result of the 3rd party testHarness that is producing the data
+  notes: 'NA' # Notes associated with the test case
+  portal_watch: 'False' # This a FLAG 'True' or 'False'
