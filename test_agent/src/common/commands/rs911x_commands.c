@@ -21,7 +21,6 @@
 #include "rsi_hal.h"
 #include "utilities.h"
 #include <string.h>
-#include <inttypes.h>
 #include "rsi_driver.h"
 
 /*******************************************************************************
