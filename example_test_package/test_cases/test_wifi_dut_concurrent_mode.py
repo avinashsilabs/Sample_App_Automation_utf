@@ -25,12 +25,12 @@ def __print_throughput(iperf_throughput: dict):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1
     }
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1}
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
