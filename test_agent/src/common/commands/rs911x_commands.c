@@ -21,6 +21,7 @@
 #include "rsi_hal.h"
 #include "utilities.h"
 #include <string.h>
+#include <inttypes.h>
 #include "rsi_driver.h"
 
 /*******************************************************************************
@@ -114,7 +115,7 @@ static void ip_change_handler(uint16_t status, const uint8_t* buffer, const uint
 static void certificate_response_handler(uint16_t status, const uint8_t* buffer, const uint32_t length);
 static void rsi_wlan_async_module_state(uint16_t status, uint8_t* payload, const uint32_t payload_length);
 static void rsi_app_task_verify_certificate(void);
-static void remote_terminate_handler(uint16_t status, const uint8_t* buffer, const uint32_t length);
+static void remote_terminate_handler(uint16_t status, uint8_t* buffer, const uint32_t length);
 
 /*******************************************************************************
 *
@@ -272,8 +273,8 @@ void ram_dump_command(sl_cli_command_arg_t* arguments)
     uint32_t iteration = 0;
 
     while (bytes_left) {
-        uint32_t chunk_len = (bytes_left >= max_chunk_size) ? max_chunk_size : bytes_left;
-        int32_t status = rsi_get_ram_dump(offset, chunk_len, ram_buffer);
+        chunk_len = (bytes_left >= max_chunk_size) ? max_chunk_size : bytes_left;
+        status = rsi_get_ram_dump(offset, chunk_len, ram_buffer);
         if (status != RSI_SUCCESS) {
             break;
         }
@@ -429,12 +430,12 @@ static void join_fail_handler(uint16_t status, const uint8_t* buffer, const uint
     printf("\r\nSAPI+REJOIN_ERROR %d\r\n", status);
 }
 
-void remote_terminate_handler(uint16_t status, const uint8_t* buffer, const uint32_t length)
+void remote_terminate_handler(uint16_t status, uint8_t* buffer, const uint32_t length)
 {
      remote_terminate=1;
 	uint32_t bytes_sent = rsi_bytes4R_to_uint32(&buffer[2]);
 	uint16_t socket_id = rsi_bytes2R_to_uint16(&buffer[0]);
-	printf("\r\nSAPI+REMOTE_TERMINATE status:%d,socket_id:%d,bytes_sent:%d\r\n", status, socket_id, bytes_sent);
+	printf("\r\nSAPI+REMOTE_TERMINATE status:%ld, socket_id:%ld, bytes_sent:%ld\r\n", (long)status, (long)socket_id, bytes_sent);
 }
 
 
@@ -517,6 +518,7 @@ void rsi_set_power_save_params(sl_cli_command_arg_t* arguments)
 	uint8_t g_dtim_aligned_type = sl_cli_get_argument_uint8(arguments, 0);
 	uint16_t g_monitor_interval = sl_cli_get_argument_uint16(arguments, 1);
 	uint8_t g_num_of_dtim_skip = sl_cli_get_argument_uint8(arguments, 2);
+    printf("\r\ng_dtim_aligned_type:%d, g_monitor_interval:%d, g_num_of_dtim_skip:%d\r\n", g_dtim_aligned_type, g_monitor_interval, g_num_of_dtim_skip);
 	print_status(RSI_ERROR_NONE);
 }
 
@@ -550,7 +552,7 @@ void wireless_deinit_command()
 
 	if(status != 0)
 	{
-		printf("driver deinit failed status:%d\n",status);
+		printf("driver deinit failed status:%ld\n", (long)status);
 		return;
 	}
 	print_status(rsi_wireless_deinit());
