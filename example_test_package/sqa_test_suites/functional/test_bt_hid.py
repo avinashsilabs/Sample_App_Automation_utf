@@ -658,7 +658,7 @@ def test_hid_disconn_in_device_role_C20018(bt_dut, bt_client):
         time.sleep(5)
 
 def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_client):
-
+    pin_code = "123456"
     logger().info("Initializing dut with hid...")
     bt_dut.interfaces.bluetooth.bt_hid_init()
 
@@ -670,7 +670,7 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
     bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=2)
 
     logger().info("configuring dut pin code....")
-    pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
+    bt_dut.interfaces.bluetooth.bt_set_pin_code(pin_code)
 
     logger().info("fetching dut local address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
@@ -679,7 +679,7 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
     # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
-                                                                      pin_code=pin_code)
+                                                                      pin_code=pin_code, capability="KeyboardOnly")
     assert bt_client_address is not None
     logger().info(f'bt client address {bt_client_address}')
 
