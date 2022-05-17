@@ -54,6 +54,7 @@ ping_count = 10
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_with_different_lengths_C19213(http_server,http_client, wifi_dut, wifi_access_point, index_path):
 
     logger().info("scan for the devices")
@@ -111,6 +112,7 @@ def test_http_get_with_different_lengths_C19213(http_server,http_client, wifi_du
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_point,index_path):
 
     logger().info("Initiating scan in dut")
@@ -162,6 +164,7 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_point,index_path):
 
     logger().info("Initiates scan in dut")
@@ -210,6 +213,7 @@ def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_poi
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_client, wifi_access_point, index_path):
 
     logger().info("Initiates scan in dut")
@@ -247,6 +251,7 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_cli
     logger().info(status)
     logger().info(content)
     assert content == content1,"received data is not same as expected data"
+    time.sleep(30)
 
 #================== HTTP Post test cases ====================
 
@@ -263,6 +268,7 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_cli
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_C19219(http_server, wifi_dut,http_client, wifi_access_point):
 
     logger().info("Initiates scan in dut")
@@ -316,6 +322,7 @@ def test_http_post_functionality_C19219(http_server, wifi_dut,http_client, wifi_
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut,http_client, wifi_access_point):
 
     logger().info("Initiates scan in dut")
@@ -370,6 +377,7 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut,http
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py","index_long_crlf.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut,http_client, wifi_access_point, index_path):
 
     logger().info("Initiates scan in dut")
@@ -460,6 +468,9 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut,h
                                                          post_data="hellotestingfrohttppostcontent")
         assert status,"failed to post data"
         logger().info(status)
+
+        logger().info("disconnecting ap")
+        wifi_dut.interfaces.wifi.leave()
     logger().info(content)
     logger().info(f"******************* iteration {count} completed ********************* ")
 
@@ -476,6 +487,7 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut,h
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut,http_client, wifi_access_point):
 
     logger().info("initiates scan in dut")
