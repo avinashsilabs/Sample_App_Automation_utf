@@ -1,135 +1,172 @@
-name: 'UTF Wi-Fi Integration Test Suite'
-
-
-
+name: UTF Wiseconnect test library
 test_cases:
-
-- test_case_id: 'get_ram_dump_full'
-  labels: [ 'ram_dump' ]
-  test_id: 'get_ram_dump_full::1'
-  test_module: 'test_cases/test_ram_dump.py'
-  test_function: 'test_ram_dump'
-  test_params:
-  -   name: start_address
-      value: 0
-  -   name: end_address
-      value: 65
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-
-- test_case_id: 'get_ram_dump_partial_1'
-  labels: [ 'ram_dump' ]
-  test_id: 'get_ram_dump_partial_1::1'
-  test_module: 'test_cases/test_ram_dump.py'
-  test_function: 'test_ram_dump'
-  test_params:
-  -   name: start_address
-      value: 0
-  -   name: end_address
-      value: 127
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-
-- test_case_id: 'get_ram_dump_partial_2'
-  labels: [ 'ram_dump' ]
-  test_id: 'get_ram_dump_partial_2::1'
-  test_module: 'test_cases/test_ram_dump.py'
-  test_function: 'test_ram_dump'
-  test_params:
-  -   name: start_address
-      value: 37
-  -   name: end_address
-      value: 3457
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-
-- test_case_id: 'get_ram_dump_partial_3'
-  labels: [ 'ram_dump' ]
-  test_id: 'get_ram_dump_partial_3::1'
-  test_module: 'test_cases/test_ram_dump.py'
-  test_function: 'test_ram_dump'
-  test_params:
-  -   name: start_address
-      value: 60000
-  -   name: end_address
-      value: 65535
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-
-- test_case_id: 'test_http_server_and_linux_client_post'
-  labels: ['http']
-  test_id: 'test_http_server_and_linux_client_post::1'
-  test_module: 'test_cases/test_http.py'
-  test_function: 'test_http_server_and_linux_client_post'
-  test_markers:
-    - pytest.mark.wifi_access_point("raspi_wifi")
-    - pytest.mark.http_server("raspi_lighttpd")
-    - pytest.mark.http_client("raspi_http_client")
-
-
-- test_case_id: 'test_http_server_and_linux_client_put'
-  labels: ['http']
-  test_id: 'test_http_server_and_linux_client_put::1'
-  test_module: 'test_cases/test_http.py'
-  test_function: 'test_http_server_and_linux_client_put'
-  test_markers:
-  - pytest.mark.wifi_access_point("raspi_wifi")
-  - pytest.mark.http_server("raspi_lighttpd")
-  - pytest.mark.http_client("raspi_http_client")
-
-- test_case_id: 'test_wifi_dhcp-sapi'
-  labels: ['wifi']
-  test_id: 'test_wifi_dhcp-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_dhcp'
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-  - pytest.mark.wifi_access_point("raspi_wifi")
-
-- test_case_id: 'test_wifi_dhcp-at'
-  labels: ['wifi']
-  test_id: 'test_wifi_dhcp-at::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_dhcp'
-  test_markers:
-  - pytest.mark.dut("rs9116_at")
-  - pytest.mark.wifi_access_point("raspi_wifi")
-
-- test_case_id: 'test_wifi_ping-sapi'
-  labels: ['wifi']
-  test_id: 'test_wifi_ping-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_ping'
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-  - pytest.mark.wifi_access_point("raspi_wifi")
-
-- test_case_id: 'test_wifi_ping-at'
-  labels: ['wifi']
-  test_id: 'test_wifi_ping-at::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_ping'
-  test_markers:
-  - pytest.mark.dut("rs9116_at")
-  - pytest.mark.wifi_access_point("raspi_wifi")
-
-- test_case_id: 'test_wifi_leave-sapi'
-  labels: ['wifi']
-  test_id: 'test_wifi_leave-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_leave'
-  test_markers:
-  - pytest.mark.dut("rs9116_sapi")
-  - pytest.mark.wifi_access_point("raspi_wifi")
-
-- test_case_id: 'test_wifi_leave-at'
-  labels: ['wifi']
-  test_id: 'test_wifi_leave-at::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_leave'
-  test_markers:
-  - pytest.mark.dut("rs9116_at")
-  - pytest.mark.wifi_access_point("raspi_wifi")
-
-
-
+  - test_case_id: get_ram_dump_full
+    labels:
+      - ram_dump
+    test_id: get_ram_dump_full::1
+    test_module: test_cases/test_ram_dump.py
+    test_function: test_ram_dump
+    test_params:
+      - name: start_address
+        value: 0
+      - name: end_address
+        value: 65
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+    id: c2ddb8d9-5ed9-46af-b9d1-d28cc21b717c
+    library_name: UTF Wiseconnect test library
+    enabled: true
+  - test_case_id: get_ram_dump_partial_1
+    labels:
+      - ram_dump
+    test_id: get_ram_dump_partial_1::1
+    test_module: test_cases/test_ram_dump.py
+    test_function: test_ram_dump
+    test_params:
+      - name: start_address
+        value: 0
+      - name: end_address
+        value: 127
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+    id: 04380096-87bb-4cd5-95fe-159644b1dc87
+    library_name: UTF Wiseconnect test library
+    enabled: true
+  - test_case_id: get_ram_dump_partial_2
+    labels:
+      - ram_dump
+    test_id: get_ram_dump_partial_2::1
+    test_module: test_cases/test_ram_dump.py
+    test_function: test_ram_dump
+    test_params:
+      - name: start_address
+        value: 37
+      - name: end_address
+        value: 3457
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+    id: 0da5a038-2bd6-42d2-994e-c479c13d77a0
+    library_name: UTF Wiseconnect test library
+    enabled: true
+  - test_case_id: get_ram_dump_partial_3
+    labels:
+      - ram_dump
+    test_id: get_ram_dump_partial_3::1
+    test_module: test_cases/test_ram_dump.py
+    test_function: test_ram_dump
+    test_params:
+      - name: start_address
+        value: 60000
+      - name: end_address
+        value: 65535
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+    id: 94ba0817-0454-46f3-9e23-856e59184de6
+    library_name: UTF Wiseconnect test library
+    enabled: true
+  - test_case_id: test_http_server_and_linux_client_post
+    labels:
+      - http
+    test_id: test_http_server_and_linux_client_post::1
+    test_module: test_cases/test_http.py
+    test_function: test_http_server_and_linux_client_post
+    test_markers:
+      - pytest.mark.wifi_access_point("raspi_wifi")
+      - pytest.mark.http_server("raspi_lighttpd")
+      - pytest.mark.http_client("raspi_http_client")
+    id: 486310af-3292-433b-be10-5590e1b7992b
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_http_server_and_linux_client_put
+    labels:
+      - http
+    test_id: test_http_server_and_linux_client_put::1
+    test_module: test_cases/test_http.py
+    test_function: test_http_server_and_linux_client_put
+    test_markers:
+      - pytest.mark.wifi_access_point("raspi_wifi")
+      - pytest.mark.http_server("raspi_lighttpd")
+      - pytest.mark.http_client("raspi_http_client")
+    id: 1728c8fa-0f7f-4e8c-862c-5514b9d3a5cf
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_wifi_dhcp-sapi
+    labels:
+      - wifi
+    test_id: test_wifi_dhcp-sapi::1
+    test_module: test_cases/test_wifi.py
+    test_function: test_wifi_dhcp
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+    id: 67b7bf2a-97a2-4e60-b5a1-7b311f09ef75
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_wifi_dhcp-at
+    labels:
+      - wifi
+    test_id: test_wifi_dhcp-at::1
+    test_module: test_cases/test_wifi.py
+    test_function: test_wifi_dhcp
+    test_markers:
+      - pytest.mark.dut("rs9116_at")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+    id: d95e1ebd-523f-440f-95f3-871a630cf4eb
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_wifi_ping-sapi
+    labels:
+      - wifi
+    test_id: test_wifi_ping-sapi::1
+    test_module: test_cases/test_wifi.py
+    test_function: test_wifi_ping
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+    id: 5566cb41-cb0d-4ef5-8ec2-9a1510590002
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_wifi_ping-at
+    labels:
+      - wifi
+    test_id: test_wifi_ping-at::1
+    test_module: test_cases/test_wifi.py
+    test_function: test_wifi_ping
+    test_markers:
+      - pytest.mark.dut("rs9116_at")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+    id: 7ceb323c-0fc4-4341-973a-c45395388fe4
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_wifi_leave-sapi
+    labels:
+      - wifi
+    test_id: test_wifi_leave-sapi::1
+    test_module: test_cases/test_wifi.py
+    test_function: test_wifi_leave
+    test_markers:
+      - pytest.mark.dut("rs9116_sapi")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+    id: 08ad297e-72cd-4cad-af3b-6ae054c816bb
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []
+  - test_case_id: test_wifi_leave-at
+    labels:
+      - wifi
+    test_id: test_wifi_leave-at::1
+    test_module: test_cases/test_wifi.py
+    test_function: test_wifi_leave
+    test_markers:
+      - pytest.mark.dut("rs9116_at")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+    id: eee8287c-2b48-4894-b71b-253515dba708
+    library_name: UTF Wiseconnect test library
+    enabled: true
+    test_params: []

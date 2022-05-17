@@ -32,6 +32,12 @@ def get_git_branch(path=None):
 
 @click.command()
 @click.option(
+    "--executor_type",
+    type=click.Choice(["local", "docker"]),
+    default="docker",
+    help="Type of executor (docker or local)",
+)
+@click.option(
     "--target",
     default=None,
     help="Hostname or address of test executor",
@@ -92,6 +98,7 @@ def get_git_branch(path=None):
     help="publishing test results to database",
 )
 def main(
+    executor_type: str,
     target: str,
     harness: str,
     debug: bool,
