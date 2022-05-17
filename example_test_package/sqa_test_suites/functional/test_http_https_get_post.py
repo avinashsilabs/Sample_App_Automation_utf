@@ -1,6 +1,6 @@
 import time
-
 from utf.utils.logger import get_logger
+from utf.utils.iperf.iperf_utils import ping
 import pytest
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
@@ -18,6 +18,8 @@ def logger():
 
 #configure this for looping the case
 iter_count = 5
+# configure ping_count to ping dut
+ping_count = 10
 
 """setup requirement:
         1. DUT(RS9116)
@@ -63,6 +65,17 @@ def test_http_get_with_different_lengths_C19213(http_server,http_client, wifi_du
 
     logger().info("start dhcp in dut")
     wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     # Enables the wifi power save in dut
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -108,7 +121,17 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("starting dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -149,7 +172,17 @@ def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_poi
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("starts the dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -188,7 +221,17 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_cli
 
     time.sleep(10)
     logger().info("starts the dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -203,7 +246,7 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut,http_cli
 
     logger().info(status)
     logger().info(content)
-    assert content == content1
+    assert content == content1,"received data is not same as expected data"
 
 #================== HTTP Post test cases ====================
 
@@ -230,7 +273,17 @@ def test_http_post_functionality_C19219(http_server, wifi_dut,http_client, wifi_
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("starts the dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -273,7 +326,17 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut,http
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("starts the dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -317,7 +380,17 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut,htt
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("starts the dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -361,7 +434,17 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut,h
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
         logger().info("starts the dhcp in dut")
-        wifi_dut.interfaces.wifi.start_ip()
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+        logger().info(f'DUT ip {device_ip}')
+        logger().info("pinging to dut.....")
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
 
         logger().info("Enables the wifi power save in dut")
         enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -403,7 +486,17 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut,http_cl
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("starts the dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
