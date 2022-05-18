@@ -399,7 +399,7 @@ def test_rejoin_scan_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, 
         wifi_dut.interfaces.wifi.associated = False
         time.sleep(5)
     del result_list
-
+    wifi_dut.interfaces.wifi.leave()
 
 @pytest.mark.parametrize(
     "channel_list",
