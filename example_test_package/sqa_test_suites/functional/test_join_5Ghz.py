@@ -25,9 +25,9 @@ def logger():
     Author: RaviNemali
 """
 
-logger().info(" ********* READ DESCRIPTION AT LINE-29,FOR HARNESS CHANGES AND CONFIG'S **********")
-""""
-++++++++ Harness Changes & test limites ++++++++
+""" ********* READ DESCRIPTION AT LINE-29,FOR HARNESS CHANGES AND CONFIG'S ********** """
+"""
+    ++++++++ Harness Changes & test limites ++++++++
 
     Harness configs:
                  CONFIG1: configure DUT type  -- rs9116_sapi in default section of harness.

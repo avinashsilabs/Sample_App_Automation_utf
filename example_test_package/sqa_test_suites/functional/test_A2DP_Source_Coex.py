@@ -319,22 +319,22 @@ def  test_AVRCP_DUT_when_WLAN_is_connected_and_data_transfer_is_happening_C34708
     with wifiJoinThread(wifi_dut, wifi_access_point), A2DP_DUT_stream(wifi_dut, bt_client, mode, codec, Test_case):
         time.sleep(20)
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "bt_features":RS9116BTFeatureBitMap.Default
-            | RS9116BTFeatureBitMap.A2DPProfileEnable
-            | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-                          | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ca_cert": "ca-chain.cert.pem"
-    }
-)
+# @pytest.mark.config(
+#     "wifi_dut",
+#     wifi={
+#         "oper_mode": 0,
+#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#         "bt_features":RS9116BTFeatureBitMap.Default
+#             | RS9116BTFeatureBitMap.A2DPProfileEnable
+#             | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+#         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+#         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+#                           | RS9116TCPIPFeatureBitMap.SSL,
+#         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+#         "ca_cert": "ca-chain.cert.pem"
+#     }
+# )
 
 # @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 # @pytest.mark.start_state("wifi_dut", wifi=['init'])
