@@ -1,13 +1,13 @@
 import time
 import pytest
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
-from interfaces.bluetooth import BTSocketRole
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from interfaces.bluetooth import BLEDeviceState
-from utils.logger import get_logger
-from interfaces.wifi import WlanError
-from interfaces.bluetooth import BLEConnectError
-from utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
+from utf.interfaces.bluetooth import BTSocketRole
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.interfaces.bluetooth import BLEDeviceState
+from utf.utils.logger import get_logger
+from utf.interfaces.wifi import WlanError
+from utf.interfaces.bluetooth import BLEConnectError
+from utf.utils.time_measurer import TimeMeasurer
 
 
 def logger():
