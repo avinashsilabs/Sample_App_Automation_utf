@@ -807,13 +807,13 @@ void rsi_get_rtc()
     memset(&timer, '\0', sizeof(timer));
 
     int32_t status = rsi_get_rtc_timer(&timer);
-    printf("seconds:%u\n", rsi_bytes4R_to_uint32(timer.tm_sec));
-    printf("minutes:%u\n", rsi_bytes4R_to_uint32(timer.tm_min));
-    printf("hours:%u\n", rsi_bytes4R_to_uint32(timer.tm_hour));
-    printf("month_day:%u\n", rsi_bytes4R_to_uint32(timer.tm_mday));
-    printf("month:%u\n", rsi_bytes4R_to_uint32(timer.tm_mon));
-    printf("year:%u\n", rsi_bytes4R_to_uint32(timer.tm_year));
-    printf("day:%u\n", rsi_bytes4R_to_uint32(timer.tm_wday));
+    printf("seconds:%lu\n", rsi_bytes4R_to_uint32(timer.tm_sec));
+    printf("minutes:%lu\n", rsi_bytes4R_to_uint32(timer.tm_min));
+    printf("hours:%lu\n", rsi_bytes4R_to_uint32(timer.tm_hour));
+    printf("month_day:%lu\n", rsi_bytes4R_to_uint32(timer.tm_mday));
+    printf("month:%lu\n", rsi_bytes4R_to_uint32(timer.tm_mon));
+    printf("year:%lu\n", rsi_bytes4R_to_uint32(timer.tm_year));
+    printf("day:%lu\n", rsi_bytes4R_to_uint32(timer.tm_wday));
 
     print_status(status);
 }
@@ -924,7 +924,7 @@ void rsi_set_default_wlan_timeout()
 void rsi_set_config_save(sl_cli_command_arg_t* arguments)
 {
     (void)arguments;
-	int32_t status = rsi_wlan_set(RSI_CFG_SAVE, NULL, NULL);
+	int32_t status = rsi_wlan_set(RSI_CFG_SAVE, NULL , NULL);
 	print_status(status);
 }
 
