@@ -1,4 +1,4 @@
-def load_raspi_wifi_ssh(self,yaml_dict):
+def load_raspi_wifi_ssh(self, yaml_dict):
     if 'remote' in yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['linux_shell'].keys():
         self.ui.remoteLineEdit_2.setText(
             yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['linux_shell']['remote'])
@@ -55,7 +55,8 @@ def load_raspi_wifi_ssh(self,yaml_dict):
     else:
         self.ui.standardLineEdit.setEnabled(False)
 
-def save_raspberry(self,yaml_dict):
+
+def save_raspberry(self, yaml_dict):
     if 'remote' in yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['linux_shell'].keys():
         yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['linux_shell']['remote'] = self.ui.remoteLineEdit_2.text()
     if 'username' in yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['linux_shell'].keys():
@@ -75,7 +76,7 @@ def save_raspberry(self,yaml_dict):
         yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['wifi']['shell'] = self.ui.shellLineEdit_2.text()
     if 'ip_address' in yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['wifi'].keys():
         yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['wifi'][
-            'ip_address'] = self.ui.iP_ADDRESSLineEdit_3.text()
+            'ip_address'] = self.ui.iP_ADDRESSLineEdit.text()
     if 'ssid' in yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['wifi'].keys():
         yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['wifi']['ssid'] = self.ui.sSIDLineEdit_2.text().strip()
     if 'passphrase' in yaml_dict['devices']['raspi_wifi_ssh']['interfaces']['wifi'].keys():

@@ -6,7 +6,6 @@
 
 ########################################################################################################################
 import sys
-import os
 import ruamel.yaml
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox

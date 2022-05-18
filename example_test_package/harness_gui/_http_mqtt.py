@@ -75,7 +75,7 @@ def save_http_mqtt(self,yaml_dict):
         yaml_dict['devices']['static_http']['interfaces']['http']['hostname'] = self.ui.hostnameLineEdit.text()
 
     if 'port' in yaml_dict['devices']['static_http']['interfaces']['http'].keys():
-        yaml_dict['devices']['static_http']['interfaces']['http']['port'] = self.ui.portLineEdit.text()
+        yaml_dict['devices']['static_http']['interfaces']['http']['port'] = int(self.ui.portLineEdit.text())
 
     if 'tls_enabled' in yaml_dict['devices']['static_http']['interfaces']['http'].keys():
 
@@ -94,7 +94,7 @@ def save_http_mqtt(self,yaml_dict):
     if 'hostname' in yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt'].keys():
         yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt']['hostname'] = self.ui.lineEdit.text().strip()
     if 'port' in yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt'].keys():
-        yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt']['port'] = self.ui.lineEdit_2.text()
+        yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt']['port'] = int(self.ui.lineEdit_2.text())
     if 'username' in yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt'].keys():
         yaml_dict['devices']['static_mqtt_broker']['interfaces']['mqtt'][
             'username'] = self.ui.lineEdit_3.text().strip()

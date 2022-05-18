@@ -108,51 +108,20 @@ def load_wifi(self,yaml_dict):
 def save_wifi(self,yaml_dict):
 
     access_point = self.ui.wiap_btn.currentText()
-    if access_point == 'dlink_ap':
-        if 'ip_address' in yaml_dict['devices']['dlink_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['dlink_ap']['interfaces']['wifi']['ip_address'] = self.ui.iP_ADDRESSLineEdit_3.text()
-        if 'security' in yaml_dict['devices']['dlink_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['dlink_ap']['interfaces']['wifi'][
+    if access_point != 'switched_ap':
+        if 'ip_address' in yaml_dict['devices'][access_point]['interfaces']['wifi'].keys():
+            yaml_dict['devices'][access_point]['interfaces']['wifi']['ip_address'] = self.ui.iP_ADDRESSLineEdit_3.text()
+        if 'security' in yaml_dict['devices'][access_point]['interfaces']['wifi'].keys():
+            yaml_dict['devices'][access_point]['interfaces']['wifi'][
                 'security'] = self.ui.securityComboBox_4.currentText()
-        if 'ssid' in yaml_dict['devices']['dlink_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['dlink_ap']['interfaces']['wifi']['ssid'] = self.ui.sSIDLineEdit_4.text().strip()
-        if 'passphrase' in yaml_dict['devices']['dlink_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['dlink_ap']['interfaces']['wifi']['passphrase'] = self.ui.passPhraseLineEdit_4.text()
-        if 'channel' in yaml_dict['devices']['dlink_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['dlink_ap']['interfaces']['wifi']['channel'] = int(self.ui.spinBox.text())
+        if 'ssid' in yaml_dict['devices'][access_point]['interfaces']['wifi'].keys():
+            yaml_dict['devices'][access_point]['interfaces']['wifi']['ssid'] = self.ui.sSIDLineEdit_4.text().strip()
+        if 'passphrase' in yaml_dict['devices'][access_point]['interfaces']['wifi'].keys():
+            yaml_dict['devices'][access_point]['interfaces']['wifi']['passphrase'] = self.ui.passPhraseLineEdit_4.text()
+        if 'channel' in yaml_dict['devices'][access_point]['interfaces']['wifi'].keys():
+            yaml_dict['devices'][access_point]['interfaces']['wifi']['channel'] = int(self.ui.spinBox.text())
 
-    elif access_point == 'asus_rt_ax3000_ap':
-
-        if 'ip_address' in yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'][
-                'ip_address'] = self.ui.iP_ADDRESSLineEdit_3.text()
-        if 'security' in yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'][
-                'security'] = self.ui.securityComboBox_4.currentText()
-        if 'ssid' in yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'][
-                'ssid'] = self.ui.sSIDLineEdit_4.text().strip()
-        if 'passphrase' in yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'][
-                'passphrase'] = self.ui.passPhraseLineEdit_4.text()
-        if 'channel' in yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['asus_rt_ax3000_ap']['interfaces']['wifi']['channel'] = int(self.ui.spinBox.text())
-
-    elif access_point == 'static_ap':
-
-        if 'ip_address' in yaml_dict['devices']['static_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['static_ap']['interfaces']['wifi']['ip_address'] = self.ui.iP_ADDRESSLineEdit_3.text()
-        if 'security' in yaml_dict['devices']['static_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['static_ap']['interfaces']['wifi'][
-                'security'] = self.ui.securityComboBox_4.currentText()
-        if 'ssid' in yaml_dict['devices']['static_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['static_ap']['interfaces']['wifi']['ssid'] = self.ui.sSIDLineEdit_4.text().strip()
-        if 'passphrase' in yaml_dict['devices']['static_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['static_ap']['interfaces']['wifi']['passphrase'] = self.ui.passPhraseLineEdit_4.text()
-        if 'channel' in yaml_dict['devices']['static_ap']['interfaces']['wifi'].keys():
-            yaml_dict['devices']['static_ap']['interfaces']['wifi']['channel'] = int(self.ui.spinBox.text())
-
-    elif access_point == 'switched_ap':
+    if access_point == 'switched_ap':
 
         if 'security' in yaml_dict['devices']['switched_ap']['interfaces']['wifi'].keys():
             yaml_dict['devices']['switched_ap']['interfaces']['wifi'][
