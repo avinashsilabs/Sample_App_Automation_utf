@@ -709,6 +709,10 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
         }
         measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
         //close socket
+        if(!receive_completed)
+        {
+        checkStatus(rsi_shutdown(new_socket, 0), "rsi_shutdown", socketID, 1, 1);
+        }
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
         free(recv_buffer);
         break;
@@ -792,7 +796,10 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         // Create socket
         socketID = checkStatus(rsi_socket(protocol_family, type, protocol), "rsi_socket", socketID, 0, debug_output);
         if (socketID == -1)
+        {
+            free(buffer);
             return;
+        }
 
         struct rsi_sockaddr_in remote_address = { .sin_family = AF_INET, .sin_port = remote_port, .sin_addr = {.s_addr = remote_ip }, };
 
@@ -832,18 +839,27 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         // Create socket
         socketID = checkStatus(rsi_socket(protocol_family, type, protocol), "rsi_socket", socketID, 0, debug_output);
         if (socketID == -1)
+        {
+            free(buffer);
             return;
+        }
 
         // Bind socket
         status = rsi_bind(socketID, (struct rsi_sockaddr*)&local_address, sizeof(local_address));
         if (checkStatus(status, "rsi_bind", socketID, 1, 1) == -1)
+        {
+            free(buffer);
             return;
+        }
 
         // connect
         struct rsi_sockaddr_in remote_address = { .sin_family = AF_INET, .sin_port = remote_port, .sin_addr = {.s_addr = remote_ip }, };
         status = rsi_connect(socketID, (struct rsi_sockaddr*)&remote_address, sizeof(remote_address));
         if (checkStatus(status, "rsi_connect", socketID, 1, 1) == -1)
+        {
+            free(buffer);
             return;
+        }
 
         // take the current time
         tt_start = rsi_hal_gettickcount();
