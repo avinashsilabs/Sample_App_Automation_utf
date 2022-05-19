@@ -116,7 +116,7 @@ extern int32_t rsi_wlan_pmk_generate(int8_t type, int8_t* psk, int8_t* ssid, uin
 *******************************************************************************/
 /* All following variables declared here must be declared 'static' */
 static volatile int32_t http_recv_status;
-static uint32_t otaf_status = 0;
+static uint32_t otaf_status = 0xAAAA;
 
 
 /*******************************************************************************
@@ -902,7 +902,7 @@ void rsi_upgrade_firmware_http(sl_cli_command_arg_t* arguments)
 void rsi_get_http_otaf_status()
 {
     print_status(otaf_status);
-    otaf_status = 0;
+    otaf_status = 0xAAAA;
 }
 
 void rsi_set_wlan_timeout(sl_cli_command_arg_t* arguments)
@@ -935,6 +935,9 @@ void rsi_set_auto_config(sl_cli_command_arg_t* arguments)
 	int32_t status =  rsi_wlan_enable_auto_config(config_enable, profile_type);
 	print_status(status);
 }
+
+
+
 
 /*******************************************************************************
 *
