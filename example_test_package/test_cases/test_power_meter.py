@@ -25,7 +25,13 @@ def test_capture_power_meter_data_points_to_file(power_meter):
     file_size = os.path.getsize(captured_file_name)
     assert file_size > 0
 
-# TODO: This test is just to make sure WinRM Communication is workig. we will modify this 
+# TODO: This test is just to make sure keysight power meter data logger is working with WinRM via cli. we will modify this wrt WCF Interface
 @pytest.mark.power_meter("keysight_power_analyzer_winRM")
-def test_keysight_BenchVue_power_meter(power_meter):
-    power_meter.interfaces.power_meter.start_keysight_benchvue_application()
+def test_keysight_BenchVue_power_meter(power_meter):  
+    # configure input parameters of keysightBenchVue DataLogger
+    power_meter.interfaces.power_meter.init_data_log_input_configuration()
+    # channel from which power numbers should read as output
+    power_meter.interfaces.power_meter.configure_output_chanels([1,2])
+    # start power meter bench vue data loggger.
+    # TODO This is printing throughput in console log, need to capture this in object while changing interface from WinRM to WCF Service 
+    power_meter.interfaces.power_meter.start_keysight_benchvue_data_logger('C:\\Siva\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe')

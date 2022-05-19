@@ -160,7 +160,7 @@ devices:
                 type: 'wifi.access_points.static'
                 security: WPA2
                 ssid: 'MACHANI'
-                passphrase: 'Ezesoft@2018'
+                passphrase: ''
                 channel: 11
 
 
@@ -570,7 +570,7 @@ devices:
         interfaces:
             windows_shell: 
                 type: 'rem_mgmt.win_rm'
-                host_ip: '192.168.0.102'
+                host_ip: '10.207.19.185'
                 username: 'test'
                 password: 'Silabs@20202'
             power_meter:
@@ -581,14 +581,14 @@ devices:
                 data_log_file_name: "UTF_DataLog_"
                 data_log_file_name_is_append_date:  true
                 data_log_file_name_is_append_time: true 
-                data_log_folder_location: true
+                data_log_folder_location: "C:\\Siva\\data_log"
                 data_log_start: "DatalogRunButton"
                 data_log_stop: "AfterElapsedTime"
-                data_log_stop_after_elapsed_time: 60000
+                data_log_stop_after_elapsed_time: 180
                 data_log_source: "Software"
                 data_log_sample_period: "Custom"
-                data_log_custom_sample_period: 1.00352
-                data_log_enable_min_max_logging: true
+                data_log_custom_sample_period: 1.00309
+                data_log_enable_min_max_logging: false
                 data_log_is_avg_enabled: true
                 data_log_is_min_enabled: true
                 data_log_is_max_enabled: true 
