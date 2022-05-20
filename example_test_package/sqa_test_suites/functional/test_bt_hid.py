@@ -10,9 +10,7 @@ import pytest
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
-    RS9116ExtTCPIPFeatureBitMap,
     RS9116FeatureBitMap,
-    RS9116ConfigFeatureBitMap,
     RS9116PowerSaveModes,
     RS9116BTFeatureBitMap
     )
@@ -59,11 +57,12 @@ pytestmark = [
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
             "features": RS9116FeatureBitMap.OpenMode,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+            "ext_tcpip_features": 0,
             "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
         }
     )
 ]
@@ -465,65 +464,7 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-@pytest.mark.skip(reason="skipping this test, power save mode 3,1 are not supported ")
 def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client):
-
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
-    assert bt_dut_address is not None
-    logger().info(f'bt dut address {bt_dut_address}')
-
-    # Begin Scanning for BLE devices
-    logger().info("initiating scan form remote bt device...")
-    bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
-                                                                      pin_code=pin_code)
-    assert bt_client_address is not None
-    logger().info(f'bt client address {bt_client_address}')
-
-    device_found = False
-    sw = Stopwatch()
-    while sw.elapsed_sec < 30:
-        if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
-            device_found = True
-            break
-
-    logger().info("stopping scan.....")
-    bt_client.interfaces.bluetooth.stop_scanning()
-    assert device_found, "unable to scan device"
-
-    with bt_dut.interfaces.bluetooth.run_bt_task():
-        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
-        assert connected, "unable to connect bt device"
-        logger().info(f'device connection state is {connected}')
-
-    logger().info("set dut in "
-                  " save.....")
-    bt_dut.interfaces.bluetooth.power_save(3,2)
-    logger().info("bt power save configuration success")
-
-    with HidRecorder() as hid_recorder:
-        for item in test_data:
-            logger().info("sending interrupt data at remote window....")
-            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
-        hid_logs = hid_recorder.logs()
-
-    assert len(hid_logs) == len(test_data)
-    for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
-
-    time.sleep(60)
-
-    logger().info("fetching the connection status after 60 secs of sleep")
-    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
-    assert connected == 1, "dut is disconnected"
-    logger().info(f"connection status :{connected}")
-
-    logger().info("disconnecting from bt device")
-    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
-    bt_client.interfaces.bluetooth.close()
-    time.sleep(5)
-
-def test_hid_conn_disconn_by_Interrupt_ps_3_ulp_mode_C20035(bt_dut, bt_client):
 
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
@@ -557,7 +498,6 @@ def test_hid_conn_disconn_by_Interrupt_ps_3_ulp_mode_C20035(bt_dut, bt_client):
     bt_dut.interfaces.bluetooth.power_save(3,2)
     logger().info("bt power save configuration success")
 
-
     with HidRecorder() as hid_recorder:
         for item in test_data:
             logger().info("sending interrupt data at remote window....")
@@ -567,6 +507,7 @@ def test_hid_conn_disconn_by_Interrupt_ps_3_ulp_mode_C20035(bt_dut, bt_client):
     assert len(hid_logs) == len(test_data)
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i]
+
     time.sleep(60)
 
     logger().info("fetching the connection status after 60 secs of sleep")
@@ -731,7 +672,6 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-@pytest.mark.skip(reason="skipping this test, power save mode 3,1 are not supported ")
 def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
 
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
@@ -792,7 +732,6 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-@pytest.mark.skip(reason="skipping this test, power save mode 3,1 are not supported ")
 def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
 
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
@@ -864,7 +803,6 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
         logger().info(f"******************* iteration {count} completed ********************* ")
     time.sleep(10)
 
-@pytest.mark.skip(reason="skipping this test, power save mode 3,1 are not supported ")
 def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client):
 
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
@@ -910,7 +848,7 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client)
             logger().info(f'device connection state is {connected}')
 
         logger().info("set dut in power save.....")
-        bt_dut.interfaces.bluetooth.power_save(3,1)
+        bt_dut.interfaces.bluetooth.power_save(3,2)
         logger().info("bt power save configuration success")
 
         with HidRecorder() as hid_recorder:
