@@ -34,4 +34,4 @@ def test_keysight_BenchVue_power_meter(power_meter):
     power_meter.interfaces.power_meter.configure_output_chanels([1,2])
     # start power meter bench vue data loggger.
     # TODO This is printing throughput in console log, need to capture this in object while changing interface from WinRM to WCF Service 
-    power_meter.interfaces.power_meter.start_keysight_benchvue_data_logger('C:\\Siva\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe')
+    power_meter.interfaces.power_meter.start_keysight_benchvue_data_logger()

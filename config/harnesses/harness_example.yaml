@@ -589,6 +589,7 @@ devices:
             power_meter:
                 type: 'power_meter.keysight_benchvue'
                 shell: 'windows_shell'
+                utf_power_meter_keysight_benchvue_cli_path: "C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe"
                 power_meter_visa_address: "USB0::0x2A8D::0x0F02::MY56005840::0::INSTR"
                 window_state: "Show"
                 data_log_file_name: "UTF_DataLog_"
