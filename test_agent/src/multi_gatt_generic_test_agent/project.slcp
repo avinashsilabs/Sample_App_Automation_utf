@@ -2035,3 +2035,21 @@ template_contribution:
     help: Closes web socket
     argument:
     - {type: uint32, help: socket_id}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_reject_ssp_confirm
+    handler: bt_reject_ssp_confirm_command
+    help: reject ssp confirm
+    argument:
+    - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_spp_disconnect
+    handler: bt_spp_disconnect_command
+    help: spp disconnect
+    argument:
+    - {type: string, help: device_addr}
