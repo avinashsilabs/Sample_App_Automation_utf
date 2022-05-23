@@ -6,13 +6,16 @@ from utf_wiseconnect.utils.rs911x_version import parse_version, extract_version
 from utf.utils.time_measurer import TimeMeasurer
 import pytest
 from utf.utils.logger import get_logger
+from utf import TestResultsModelAttrs
 
 
 def logger():
     return get_logger(__name__)
 
 
-def test_version(wifi_dut):
+def test_version(wifi_dut, update_property):
+    update_property({TestResultsModelAttrs.test_description: 'this test is for verifying the firmware version',
+                     TestResultsModelAttrs.notes: 'firmware section should be present in manifest'})
     expected_version = parse_version()
     if expected_version is None:
         pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
