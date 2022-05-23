@@ -553,3 +553,10 @@ template_contribution:
   priority: 0
   value: {name: wlan_disconnect, handler: rsi_wlan_disconnect_command, help: Disconnect
       from AP}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: cfg_get
+    handler: rsi_cfg_get_command
+    help: Get store configuration profile info

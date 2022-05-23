@@ -76,9 +76,8 @@ ENV PROJECT_LIST="generic_test_agent \
                     generic_test_agent_without_aws \
                     generic_test_agent_without_aws_powersave3 \
                     generic_test_agent_lp_gpio_based_pwr_save \
-                    generic_test_agent_lp_msg_based_pwr_save"
-
-
+                    generic_test_agent_lp_msg_based_pwr_save \
+                    aws_test_agent"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src

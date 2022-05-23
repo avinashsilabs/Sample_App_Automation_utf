@@ -936,9 +936,122 @@ void rsi_set_auto_config(sl_cli_command_arg_t* arguments)
 	print_status(status);
 }
 
-
-
-
+void rsi_cfg_get_command()
+{
+	int32_t status = 0;
+	uint32_t opermode = 0;
+	uint8_t opermode_type = 0;
+	rsi_cfgGetFrameRcv_t* cfg_get = malloc(sizeof(rsi_cfgGetFrameRcv_t));
+	if (cfg_get == NULL) {
+		printf("unable to allocate memory for cfg get results\n");
+		return;
+	}
+	memset(cfg_get, '\0', sizeof(rsi_cfgGetFrameRcv_t));
+	status = rsi_wlan_get(RSI_CFG_GET, (uint8_t *)cfg_get, sizeof(rsi_cfgGetFrameRcv_t));
+	if(status !=0)
+	{
+		print_status(status);
+	}
+	else
+	{
+		opermode = rsi_bytes4R_to_uint32(cfg_get->opermode);
+		opermode_type = (0x0000FFFF & opermode);
+		if((opermode_type == 0) || (opermode_type == 2))
+		{
+			printf("cfg_enable:%d-opermode:%d-feature_bit_map:%d-tcp_ip_feature_bit_map:%d-custom_feature_bit_map:%d-band:%d-join_ssid:%s-csec_mode:%d-psk:%s\-scan_ssid:%s-scan_cnum:%d-dhcp_enable:%d-ip:%d.%d.%d.%d-sn_mask:%d.%d.%d.%d-dgw:%d.%d.%d.%d\
+            -tcp_stack_used:%d-bgscan_magic_code:%d-bgscan_enable:%d-bgscan_threshold:%d-rssi_tolerance_threshold:%d\
+            -bgscan_periodicity:%d-active_scan_duration:%d-passive_scan_duration:%d-multi_probe:%d-chan_bitmap_magic_code:%d\
+            -scan_chan_bitmap_stored_2_4_GHz:%d-scan_chan_bitmap_stored_5_GHz:%d-roam_magic_code:%d-roam_enable:%d-roam_threshold:%d-roam_hysteresis:%d\
+            -rejoin_magic_code:%d-rsi_max_try:%d-rsi_scan_interval:%d-rsi_beacon_missed_count:%d-rsi_first_time_retry_enable:%d-module_mac:%x.%x.%x.%x.%x.%x\
+            -powermode_magic_code:%d-powermode:%d-ulp_mode:%d-listen_interval:%d-listen_interval_dtim:%d-fast_psp_enable:%d-monitor_interval:%d\
+            -timeout_value:%d-timeout_bitmap:%d\-region_request_from_host:%d\-rsi_region_code_from_host:%d\-region_code:%d-eap_method:%s-inner_method:%s\
+            -user_identity:%s-passwd:%s\
+            \n",cfg_get->cfg_enable,\
+			rsi_bytes4R_to_uint32(cfg_get->opermode),\
+            rsi_bytes4R_to_uint32(cfg_get->feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->tcp_ip_feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->custom_feature_bit_map),\
+            cfg_get->band,\
+            cfg_get->join_ssid,\
+            cfg_get->csec_mode,\
+            cfg_get->psk,\
+            cfg_get->scan_ssid,\
+            cfg_get->scan_cnum,\
+            cfg_get->dhcp_enable,\
+            cfg_get->ip[0],cfg_get->ip[1],cfg_get->ip[2],cfg_get->ip[3],\
+            cfg_get->sn_mask[0],cfg_get->sn_mask[1],cfg_get->sn_mask[2],cfg_get->sn_mask[3],\
+            cfg_get->dgw[0],cfg_get->dgw[1],cfg_get->dgw[2],cfg_get->dgw[3],\
+            cfg_get->tcp_stack_used,\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_magic_code),\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_enable),\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_threshold),\
+            rsi_bytes2R_to_uint16(cfg_get->rssi_tolerance_threshold),\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_periodicity),\
+            rsi_bytes2R_to_uint16(cfg_get->active_scan_duration),\
+            rsi_bytes2R_to_uint16(cfg_get->passive_scan_duration),\
+            cfg_get->multi_probe,\
+            rsi_bytes2R_to_uint16(cfg_get->chan_bitmap_magic_code),\
+            rsi_bytes4R_to_uint32(cfg_get->scan_chan_bitmap_stored_2_4_GHz),\
+            rsi_bytes4R_to_uint32(cfg_get->scan_chan_bitmap_stored_5_GHz),\
+            rsi_bytes2R_to_uint16(cfg_get->roam_magic_code),\
+            rsi_bytes4R_to_uint32(cfg_get->roam_params_stored.roamParamsFrameSnd.roam_enable),\
+            rsi_bytes4R_to_uint32(cfg_get->roam_params_stored.roamParamsFrameSnd.roam_threshold),\
+            rsi_bytes4R_to_uint32(cfg_get->roam_params_stored.roamParamsFrameSnd.roam_hysteresis),\
+			rsi_bytes2R_to_uint16(cfg_get->rejoin_magic_code),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_max_try),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_scan_interval),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_beacon_missed_count),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_first_time_retry_enable),\
+			cfg_get->module_mac[0],cfg_get->module_mac[1],cfg_get->module_mac[2],cfg_get->module_mac[3],cfg_get->module_mac[4],cfg_get->module_mac[5],\
+			rsi_bytes2R_to_uint16(cfg_get->powermode_magic_code),\
+            cfg_get->powermode,\
+            cfg_get->ulp_mode,\
+            rsi_bytes4R_to_uint32(cfg_get->listen_interval),\
+            cfg_get->listen_interval_dtim,\
+            cfg_get->fast_psp_enable,\
+            rsi_bytes2R_to_uint16(cfg_get->monitor_interval),\
+            rsi_bytes2R_to_uint16(cfg_get->timeout_value),\
+            rsi_bytes4R_to_uint32(cfg_get->timeout_bitmap),\
+            cfg_get->region_request_from_host,\
+            cfg_get->rsi_region_code_from_host,\
+            cfg_get->region_code,\
+            cfg_get->eap_method,\
+            cfg_get->inner_method,\
+            cfg_get->user_identity,\
+            cfg_get->passwd);
+		}
+		else if(opermode_type == 6)
+		{
+			printf("cfg_enable:%d-opermode:%d-feature_bit_map:%d-tcp_ip_feature_bit_map:%d-custom_feature_bit_map:%d-band:%d-operating_channel:%d\
+            -ssid_postfix:%s-psk_key:%s-pmk:%s-channel_no:%d-ssid:%s-security_type:%d-encryp_mode:%d-psk:%s-beacon_interval:%d-dtim_period:%d\
+            -ap_keepalive_type:%d-ap_keepalive_period:%d-max_sta_support:%d-module_mac:%x.%x.%x.%x.%x.%x-tcp_stack_used:%d\
+            \n",cfg_get->cfg_enable,\
+            rsi_bytes4R_to_uint32(cfg_get->opermode),\
+            rsi_bytes4R_to_uint32(cfg_get->feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->tcp_ip_feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->custom_feature_bit_map),\
+            cfg_get->band,\
+            rsi_bytes2R_to_uint16(cfg_get->operating_channel),\
+            cfg_get->ssid_postfix,\
+            cfg_get->psk_key,\
+            cfg_get->pmk,\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.channel_no),\
+            cfg_get->apconfig.ssid,\
+            cfg_get->apconfig.security_type,\
+            cfg_get->apconfig.encryp_mode,\
+            cfg_get->apconfig.psk,\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.beacon_interval),\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.dtim_period),\
+            cfg_get->apconfig.ap_keepalive_type,\
+            cfg_get->apconfig.ap_keepalive_period,\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.max_sta_support),\
+            cfg_get->module_mac[0],cfg_get->module_mac[1],cfg_get->module_mac[2],cfg_get->module_mac[3],cfg_get->module_mac[4],cfg_get->module_mac[5],\
+            cfg_get->tcp_stack_used);
+		}
+		print_status(status);
+	}
+	free(cfg_get);
+}
 /*******************************************************************************
 *
 *                       IMPLEMENTATION: Private functions
@@ -989,3 +1102,4 @@ static void http_otaf_response_handler(uint16_t status, const uint8_t* buffer)
     }
     otaf_status = status;
 }
+

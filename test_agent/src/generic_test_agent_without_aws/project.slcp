@@ -2091,3 +2091,11 @@ template_contribution:
     help: spp disconnect
     argument:
     - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: cfg_get
+    handler: rsi_cfg_get_command
+    help: Get store configuration profile info
+
