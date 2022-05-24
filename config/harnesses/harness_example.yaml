@@ -589,8 +589,26 @@ devices:
             power_meter:
                 type: 'power_meter.keysight_benchvue'
                 shell: 'windows_shell'
-                instrument_lan_ip_address: '10.207.19.83'
-                interface: 'wlan0'
+                utf_power_meter_keysight_benchvue_cli_path: "C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe"
+                power_meter_visa_address: "USB0::0x2A8D::0x0F02::MY56005840::0::INSTR"
+                window_state: "Show"
+                data_log_file_name: "UTF_DataLog_"
+                data_log_file_name_is_append_date:  true
+                data_log_file_name_is_append_time: true 
+                data_log_folder_location: "C:\\UTF\\data_log"
+                data_log_start: "DatalogRunButton"
+                data_log_stop: "AfterElapsedTime"
+                data_log_stop_after_elapsed_time: 180
+                data_log_source: "Software"
+                data_log_sample_period: "Custom"
+                data_log_custom_sample_period: 1.00309
+                data_log_enable_min_max_logging: false
+                data_log_is_avg_enabled: true
+                data_log_is_min_enabled: true
+                data_log_is_max_enabled: true 
+                data_log_is_peak_to_peak_enabled: true
+                data_log_is_charge_c_enabled: true
+                data_log_is_charge_ah_enabled: true
 
     python_aws_iot_thing:
         interfaces:
