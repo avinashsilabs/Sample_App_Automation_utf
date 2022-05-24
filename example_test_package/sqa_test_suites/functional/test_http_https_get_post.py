@@ -52,7 +52,7 @@ ping_count = 10
     )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
+@pytest.mark.parametrize("index_path", {"index_long_lf.html", "index_long_crlf.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_with_different_lengths_C19213(http_server,http_client, wifi_dut, wifi_access_point, index_path):
@@ -65,7 +65,6 @@ def test_http_get_with_different_lengths_C19213(http_server,http_client, wifi_du
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("start dhcp in dut")
-    wifi_dut.interfaces.wifi.start_ip()
     result = wifi_dut.interfaces.wifi.start_ip()
     assert isinstance(
         result, wifi_dut.interfaces.wifi.IPConfig
@@ -124,9 +123,7 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
 
     logger().info("starting dhcp in dut")
     result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
+    assert isinstance(result), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f'DUT ip {device_ip}')
@@ -167,6 +164,7 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_point,index_path):
 
+    logger().info(f"path{index_path}")
     logger().info("Initiates scan in dut")
     scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
     assert scan_result,"scan failure,no ap found"
