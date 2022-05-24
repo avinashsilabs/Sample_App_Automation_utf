@@ -517,7 +517,6 @@ void rsi_set_power_save_params(sl_cli_command_arg_t* arguments)
 	uint8_t g_dtim_aligned_type = sl_cli_get_argument_uint8(arguments, 0);
 	uint16_t g_monitor_interval = sl_cli_get_argument_uint16(arguments, 1);
 	uint8_t g_num_of_dtim_skip = sl_cli_get_argument_uint8(arguments, 2);
-    printf("\r\ng_dtim_aligned_type:%d, g_monitor_interval:%d, g_num_of_dtim_skip:%d\r\n", g_dtim_aligned_type, g_monitor_interval, g_num_of_dtim_skip);
 	print_status(RSI_ERROR_NONE);
 }
 
