@@ -31,6 +31,9 @@ import string
 import random
 from random import randint
 
+ble_client_address = None
+ble_dut_address = None
+
 
 def logger():
     return get_logger(__name__)
@@ -58,6 +61,26 @@ def logger():
 """
 
 
+class FilterPacket:
+    def find_time_stamp(self):
+        packet_filter1 = "Arrival Time:"
+        count = 0
+        time_diff_list = []
+
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+        for x in line:
+            count = count + 1
+            if packet_filter1 in x:
+                result = re.search('2022(.*)IST', x)
+                time_stamp = result.group(1).strip()
+                logger().info(f'time_stamp={time_stamp}')
+                time_diff_list.append(time_stamp)
+
+        filter_file.close()
+        return time_diff_list
+
+
 class BleThread_connection(ThreadBase):
     def __init__(self, wifi_dut, ble_client, mode):
         super().__init__()
@@ -66,30 +89,30 @@ class BleThread_connection(ThreadBase):
         self.mode = mode
 
     def run(self):
+        global ble_client_address
+        global ble_dut_address
         if self.mode == "ble_master":
             logger().info(f"Start DUT")
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address is not None
             logger().info(f"Start ble client")
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None
+            ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+            assert ble_client_address is not None
             time.sleep(10)
             logger().info(f"Start scanning and connect to ble client")
-            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=30)
             timeout = 120
             logger().info(f"connect")
-            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
-            logger().info(f"Disconnect")
-            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=timeout)
 
         if self.mode == "ble_slave":
             logger().info(f" this thread used for sta+ble as a slave")
             logger().info(f"Set up DUT for BLE advertising")
-            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None
+            ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address is not None
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
             logger().info(f"Begin Scanning for BLE devices")
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
             assert bt_client_address is not None
             time.sleep(5)
             self.ble_client.interfaces.bluetooth.stop_scanning()
@@ -100,12 +123,8 @@ class BleThread_connection(ThreadBase):
                     found_devices[self.wifi_dut.interfaces.wifi.ble_address]
                     == self.wifi_dut.interfaces.wifi.ble_advertising_data
             )
-            self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            logger().info(f"Connecting will automatically stop advertising")
-            # with pytest.raises(WlanError) as exc_info:
-            #     self.wifi_dut.interfaces.wifi.ble_stop_advertising()
-            # assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
-            # self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+            self.ble_client.interfaces.bluetooth.connect(ble_dut_address)
+            logger().info(f"Connection success")
 
 
 class WifiThread_PSKMODE(ThreadBase):
@@ -240,10 +259,6 @@ class WifiThread_PMKmode(ThreadBase):
             ap_mac = self.wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
             ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
             logger().info(f'AP BSSID = {ap_bssid}')
-            logger().info(f"Generate PMK")
-            self.wifi_dut.interfaces.wifi.generate_pmk(self.wifi_access_point.interfaces.wifi.ssid,
-                                                       self.wifi_access_point.interfaces.wifi.passphrase)
-            time.sleep(5)
             logger().info(f"Join Wi-Fi Access Point")
             logger().info(f"This API connects STA to the third party AP with the pmk generated")
             self.wifi_dut.interfaces.wifi.join_pmk(self.wifi_access_point.interfaces.wifi.ssid,
@@ -321,6 +336,32 @@ class WifiThread_PMKmode(ThreadBase):
             time_taken = time_taken.total_seconds()
             assert time_taken <= 60
             logger().info(f"time taken to connect is: {time_taken}")
+
+
+class Cleanup_Thread(ThreadBase):
+    def __init__(self, wifi_dut, ble_client, ble_mode):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.ble_mode = ble_mode
+
+    def run(self):
+        global ble_client_address
+        global ble_dut_address
+        logger().info("This thread is to disconnect wlan+ble on DUT")
+
+        # Ble disconnect
+        logger().info("Initiating BLE Disconnect")
+        if self.ble_mode == "ble_master":
+            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=30)
+        else:
+            self.ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+        time.sleep(3)
+        logger().info("Successfully disconnected from BLE")
+
+        # wlan disconnect
+        logger().info("Initiating WLAN Disconnect")
+        self.wifi_dut.interfaces.wifi.leave()
 
 
 def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False):
@@ -410,11 +451,6 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     assert result
     result = wifi_dut.interfaces.wifi.bt_power_save(0)
     assert result
-
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
 
 
 def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False):
@@ -508,31 +544,6 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     result = wifi_dut.interfaces.wifi.bt_power_save(0)
     assert result
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
-
-
-class FilterPacket:
-    def find_time_stamp(self):
-        packet_filter1 = "Arrival Time:"
-        count = 0
-        time_diff_list = []
-
-        filter_file = open(f'./reports/filter2_file.txt', 'r')
-        line = filter_file.readlines()
-        for x in line:
-            count = count + 1
-            if packet_filter1 in x:
-                result = re.search('2022(.*)IST', x)
-                time_stamp = result.group(1).strip()
-                logger().info(f'time_stamp={time_stamp}')
-                time_diff_list.append(time_stamp)
-
-        filter_file.close()
-        return time_diff_list
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -551,13 +562,16 @@ class FilterPacket:
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "123456789zx",
                                                "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-# "security": "WPA", "cipher": 'TKIP', "standard": '11g'})
 def test_threading_sta_ble_dut_tkip_psk_C20211(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "sta with tkip psk + ble connection as a slave_C20211"
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
-            wifi_dut, ble_client, mode):
+            wifi_dut, ble_client, ble_mode):
         time.sleep(15)
+
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
 
 @pytest.mark.config(
@@ -577,14 +591,16 @@ def test_threading_sta_ble_dut_tkip_psk_C20211(wifi_dut, ble_client, wifi_access
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "12123456789zx",
                                                "security": "WPA2", "cipher": 'AES', })
-# "security": "WPA2", "cipher": 'AES', "standard": '11g'})
 def test_threading_sta_ble_AES_psk_C20212(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "sta with AES pmk + ble connection as a slave_C20212"
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
-            wifi_dut, ble_client, mode):
+            wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -593,8 +609,6 @@ def test_threading_sta_ble_AES_psk_C20212(wifi_dut, wifi_access_point, wifi_snif
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
@@ -602,26 +616,30 @@ def test_threading_sta_ble_AES_psk_C20212(wifi_dut, wifi_access_point, wifi_snif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteetwobytesofsize", "passphrase": "123456789zx",
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
+                                               "passphrase": "12345676789zx",
                                                "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
 def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_C20213(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
-    mode = "ble_slave"
+    ble_mode = "ble_mode"
     testcase = "sta with tkip psk + ble connection as a slave_C20213"
 
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
-            wifi_dut, ble_client, mode):
+            wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
     logger().info("Repeating test for 10 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer)
         logger().info(f"Iteration {i} ended")
+
+        logger().info("Cleanup Thread Execution Starts...")
+        with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+            time.sleep(5)
 
 
 @pytest.mark.config(
@@ -642,22 +660,25 @@ def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_C20213(wifi_dut, ble_client, wifi
                                                "passphrase": "1234556789zx",
                                                "security": "WPA2", "cipher": 'AES'})
 def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "Join time with AES PMK + ble connection as a slave_C20214"
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
-            wifi_dut, ble_client, mode):
+            wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
     logger().info("Repeating test for 10 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer)
         logger().info(f"Iteration {i} ended")
+
+        logger().info("Cleanup Thread Execution Starts...")
+        with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+            time.sleep(5)
 
 
 @pytest.mark.config(
@@ -676,24 +697,25 @@ def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA", "cipher": 'TKIP', "standard": '11g'})
 def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "testcase for tkip with psk + ble_C20252"
 
-    with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase,
-                            tcp_bypass=True), BleThread_connection(
-        wifi_dut, ble_client, mode):
+    with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase, tcp_bypass=True), BleThread_connection(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
     logger().info("Repeating test for 10 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
         logger().info(f"Iteration {i} ended")
+
+        logger().info("Cleanup Thread Execution Starts...")
+        with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+            time.sleep(5)
 
 
 @pytest.mark.config(
@@ -713,24 +735,26 @@ def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wi
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": "WPA2", "cipher": 'AES'})
 def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "testcase for AES with psk + ble_C20253"
 
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase,
-                            tcp_bypass=True), BleThread_connection(
-        wifi_dut, ble_client, mode):
+                            tcp_bypass=True), BleThread_connection(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
     logger().info("Repeating test for 10 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
         logger().info(f"Iteration {i} ended")
+
+        logger().info("Cleanup Thread Execution Starts...")
+        with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+            time.sleep(5)
 
 
 @pytest.mark.config(
@@ -751,24 +775,26 @@ def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wif
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA", "cipher": 'TKIP',
                           "standard": '11bg'})
 def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "testcase for tkip with pmk + ble_C20254"
 
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase,
-                            tcp_bypass=True), BleThread_connection(
-        wifi_dut, ble_client, mode):
+                            tcp_bypass=True), BleThread_connection(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
     logger().info("Repeating test for 10 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
         logger().info(f"Iteration {i} ended")
+
+        logger().info("Cleanup Thread Execution Starts...")
+        with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+            time.sleep(5)
 
 
 @pytest.mark.config(
@@ -788,21 +814,23 @@ def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wi
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA2", "cipher": 'AES'})
 def test_threading_sta_ble_modes_AES_pmk_C20255(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_slave"
+    ble_mode = "ble_slave"
     testcase = "testcase for AES with pmk + ble_20255"
 
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase,
-                            tcp_bypass=True), BleThread_connection(
-        wifi_dut, ble_client, mode):
+                            tcp_bypass=True), BleThread_connection(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
-    logger().info("Disconnecting from wlan")
-    with TimeMeasurer() as t:
-        wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Leave completed in {t.duration} seconds")
+    logger().info("Cleanup Thread Execution Starts...")
+    with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+        time.sleep(5)
 
     logger().info("Repeating test for 10 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
         logger().info(f"Iteration {i} ended")
+
+        logger().info("Cleanup Thread Execution Starts...")
+        with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
+            time.sleep(5)
