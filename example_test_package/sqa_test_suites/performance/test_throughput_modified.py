@@ -304,7 +304,7 @@ class FilterPacket:
         logger().info(f"BT ADDRESS {bt_client_address} ")
         return bt_client_address
 
-    def start_iperf_dut_as_client(self, wifi_dut, wifi_client, net_perf_client, protocol, device_ip):
+    def start_iperf_dut_as_server(self, wifi_dut, wifi_client, net_perf_client, protocol, device_ip):
         # # preparing iperf
         # device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -337,7 +337,7 @@ class FilterPacket:
         # assert tp is not None
         # __print_throughput(tp)
 
-    def start_iperf_dut_as_server(self, wifi_dut, wifi_client, net_perf_client, protocol, device_ip):
+    def start_iperf_dut_as_client(self, wifi_dut, wifi_client, net_perf_client, protocol, device_ip):
         # device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         assert wifi_client.interfaces.wifi.ping(server_ip=device_ip)
@@ -467,9 +467,6 @@ class FilterPacket:
     },
 )
 def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -484,7 +481,7 @@ def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_cli
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -505,9 +502,6 @@ def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_cli
     },
 )
 def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -519,10 +513,10 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -543,9 +537,6 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
     },
 )
 def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -560,7 +551,7 @@ def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_cli
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -581,9 +572,6 @@ def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_cli
     },
 )
 def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -595,10 +583,10 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -619,9 +607,6 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
     },
 )
 def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -653,15 +638,11 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-            # assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-            #     dest_addr=bt_dut_address
-            # )
-
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
-
+        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+    logger().info(f"verifying BT connection after IPERF completion")
     assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
         dest_addr=bt_dut_address
     )
@@ -686,9 +667,6 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
     },
 )
 def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -716,11 +694,11 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
-
+        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+    logger().info(f"verifying BT connection after IPERF completion")
     assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
         dest_addr=bt_dut_address
     )
@@ -745,9 +723,6 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
     },
 )
 def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -779,15 +754,11 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-            # assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-            #     dest_addr=bt_dut_address
-            # )
-
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
-
+        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+    logger().info(f"verifying BT connection after IPERF completion")
     assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
         dest_addr=bt_dut_address
     )
@@ -812,9 +783,6 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
     },
 )
 def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -842,11 +810,11 @@ def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
-
+        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+    logger().info(f"verifying BT connection after IPERF completion")
     assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
         dest_addr=bt_dut_address
     )
@@ -871,9 +839,6 @@ def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_po
     },
 )
 def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -917,7 +882,7 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     state = bt_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
@@ -950,9 +915,6 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
     },
 )
 def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -993,10 +955,10 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(2)
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
     iter_count = 3
     for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     state = bt_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
@@ -1030,88 +992,6 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
     },
 )
 def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
-    filter_pack_obj = FilterPacket()
-
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_ble_connected_tcp_rx_c20747')
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
-
-    # Set up DUT for BLE advertising
-    logger().info("Initiate ble service in DUT")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch dut bd address...."
-
-    logger().info("Set DUT in advertise mode")
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
-
-    logger().info("Start smp scan from the remote device")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
-    time.sleep(5)
-    logger().info("stop scanning ....")
-    ble_client.interfaces.bluetooth.stop_scanning()
-
-    # See that we found our device
-    logger().info("Check the dut is listed...")
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
-
-    logger().info("Connect to the dut with mac address..")
-    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
-    logger().info(f"connect_time  {connect_time}")
-    assert bt_dut_address, "unable to connect to the given address"
-    time.sleep(2)
-
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
-    for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
-
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
-        logger().info("Disconnecting the bt host....")
-        disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
-        logger().info(f"disconnect_time  {disconnect_time}")
-        assert "unable to disconnect since the connection never existed"
-
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
-
-    wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture()
-
-
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
-    },
-)
-def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
-    """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
-    WLAN+DUAL mode """
-
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1156,6 +1036,82 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
     iter_count = 3
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
+
+    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
+
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
+
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "band": 2
+    },
+)
+def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+    filter_pack_obj = FilterPacket()
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    time.sleep(2)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_ble_connected_tcp_rx_c20747')
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info("Setting the dut IO capability to display only.....")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+
+    # Set up DUT for BLE advertising
+    logger().info("Initiate ble service in DUT")
+    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "unable to fetch dut bd address...."
+
+    logger().info("Set DUT in advertise mode")
+    bt_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("Start smp scan from the remote device")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
+    time.sleep(5)
+    logger().info("stop scanning ....")
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    # See that we found our device
+    logger().info("Check the dut is listed...")
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+
+    logger().info("Connect to the dut with mac address..")
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(2)
+
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
+    iter_count = 3
+    for i in range(0, iter_count):
+        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
     state = bt_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
