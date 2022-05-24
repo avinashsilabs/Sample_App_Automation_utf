@@ -123,7 +123,9 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
 
     logger().info("starting dhcp in dut")
     result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(result), f"Failed to get IP address. Result = {result}"
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f'DUT ip {device_ip}')
