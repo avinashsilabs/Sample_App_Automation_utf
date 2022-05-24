@@ -33,6 +33,23 @@ def logger():
 """
 
 
+def _check_for_devices_in_scanned_results(ble_interface, bt_dut_address, adv_data):
+    sw = Stopwatch()
+    previously_found_devices = {}
+    while sw.elapsed_sec < 30:
+        found_devices = ble_interface.get_devices()
+        if previously_found_devices != found_devices:
+            logger().info(f"BLE scan results :{found_devices}")
+            previously_found_devices = found_devices
+
+        if (
+                bt_dut_address in found_devices
+                and found_devices[bt_dut_address]
+                == adv_data
+        ):
+            return True
+    return False
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -81,19 +98,11 @@ def test_ble_undirected_connectable_adv_T3244(wifi_dut, ble_client):
         )
         assert bt_client_address is not None,"Unable to fetch remote bluetooth address"
 
-        device_found = False
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            found_devices = ble_client.interfaces.bluetooth.get_devices()
-            logger().info(f"BLE Scan results : {found_devices}")
-            if (
-                bt_dut_address in found_devices
-                and found_devices[bt_dut_address]
-                == wifi_dut.interfaces.wifi.ble_advertising_data
-            ):
-                device_found = True
-                logger().info("Dut found in scan results")
-                break
+        device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                             bt_dut_address=bt_dut_address,
+                                                             adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+        if device_found:
+            logger().info("Dut found in scan results")
         logger().info("Initiating stop scanning from remote device")
         ble_client.interfaces.bluetooth.stop_scanning()
         assert device_found, "Dut not found in scan results"
@@ -159,19 +168,12 @@ def test_ble_undirected_scannable_adv_T3246(wifi_dut, ble_client):
         )
         assert bt_client_address is not None,"Unable to fetch Bluetooth address from remote device"
 
-        device_found = False
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            found_devices = ble_client.interfaces.bluetooth.get_devices()
-            logger().info(f"BLE Scan results : {found_devices}")
-            if (
-                bt_dut_address in found_devices
-                and found_devices[bt_dut_address]
-                == wifi_dut.interfaces.wifi.ble_advertising_data
-            ):
-                device_found = True
-                logger().info("Dut found in scan results")
-                break
+        device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                             bt_dut_address=bt_dut_address,
+                                                             adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+        if device_found:
+            logger().info("Dut found in scan results")
+
         logger().info("Initiating stop scanning from remote Raspberry PI")
         ble_client.interfaces.bluetooth.stop_scanning()
         assert device_found,"Dut not found in scan results"
@@ -238,19 +240,12 @@ def test_ble_undirected_non_connectable_adv_T3247(wifi_dut, ble_client):
         )
         assert bt_client_address is not None,"Unable to fetch bluetooth address from remote device"
 
-        device_found = False
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            found_devices = ble_client.interfaces.bluetooth.get_devices()
-            logger().info(f"BLE Scan results : {found_devices}")
-            if (
-                bt_dut_address in found_devices
-                and found_devices[bt_dut_address]
-                == wifi_dut.interfaces.wifi.ble_advertising_data
-            ):
-                logger().info("Dut found in scan results")
-                device_found = True
-                break
+        device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                             bt_dut_address=bt_dut_address,
+                                                             adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+        if device_found:
+            logger().info("Dut found in scan results")
+
         logger().info("initiating stop scanning")
         ble_client.interfaces.bluetooth.stop_scanning()
         assert device_found, "dut not found in scan results"
@@ -314,22 +309,13 @@ def test_ble_connect_T3275(wifi_dut, ble_client):
     )
     assert bt_client_address is not None,"Unable to fetch BD address from remote BLE device"
 
-    device_found = False
-    sw = Stopwatch()
-    while sw.elapsed_sec < 30:
-        found_devices = ble_client.interfaces.bluetooth.get_devices()
+    device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                         bt_dut_address=bt_dut_address,
+                                                         adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+    if device_found:
+        logger().info("Dut found in scan results")
 
-        logger().info(f"BLE scan results :{found_devices}")
-        if (
-            bt_dut_address in found_devices
-            and found_devices[bt_dut_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-        ):
-            logger().info("Dut found in scan results")
-            device_found = True
-            break
-
-    logger().info("Initiating stop scanning")
+    logger().info("initiating stop scanning")
     ble_client.interfaces.bluetooth.stop_scanning()
     assert device_found,"DUT not found in scan results"
 
@@ -364,7 +350,6 @@ def test_ble_connect_T3275(wifi_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 def test_ble_advertisement_repeat_T3292(wifi_dut, ble_client):
-    bt_dut_address = None
     for count in range(0, 15):
         wifi_dut.interfaces.wifi.ble_initialized = False
         logger().info("Initializing BLE")
@@ -380,29 +365,16 @@ def test_ble_advertisement_repeat_T3292(wifi_dut, ble_client):
 
         logger().info("Initiating BLE scan from remote BLE")
 
-        if count == 0:
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
-                bt_dut_address=bt_dut_address
-            )
-            assert bt_client_address is not None,"Unable to fetch Bluetooth address from remote device"
-        else:
-            ble_client.interfaces.bluetooth.start_scanning()
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+            bt_dut_address=bt_dut_address
+        )
+        assert bt_client_address is not None,"Unable to fetch Bluetooth address from remote device"
 
-        device_found = False
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            found_devices = ble_client.interfaces.bluetooth.get_devices()
-
-            logger().info(f"BLE scan results :{found_devices}")
-
-            if (
-                bt_dut_address in found_devices
-                and found_devices[bt_dut_address]
-                == wifi_dut.interfaces.wifi.ble_advertising_data
-            ):
-                device_found = True
-                logger().info("Dut found in scan results")
-                break
+        device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                             bt_dut_address=bt_dut_address,
+                                                             adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+        if device_found:
+            logger().info("Dut found in scan results")
 
         logger().info("initiating stop scanning")
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -412,6 +384,8 @@ def test_ble_advertisement_repeat_T3292(wifi_dut, ble_client):
         wifi_dut.interfaces.wifi.ble_stop_advertising()
         logger().info("De initialising BT")
         wifi_dut.interfaces.wifi.bt_deinit()
+        wifi_dut.interfaces.wifi.ble_initialized = False
+        ble_client.interfaces.bluetooth.close()
         time.sleep(2)
 
 @pytest.mark.config(
@@ -457,20 +431,12 @@ def test_ble_advertisement_setname_T3293(wifi_dut, ble_client):
     )
     assert bt_client_address is not None,"Unable to fetch BD address from Remote BLE device"
 
-    device_found = False
-    sw = Stopwatch()
-    while sw.elapsed_sec < 30:
-        found_devices = ble_client.interfaces.bluetooth.get_devices()
+    device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                         bt_dut_address=bt_dut_address,
+                                                         adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+    if device_found:
+        logger().info("Dut found in scan results")
 
-        logger().info(f"Scan results : {found_devices}")
-        if (
-            bt_dut_address in found_devices
-            and found_devices[bt_dut_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-        ):
-            logger().info("DUT found in scan results")
-            device_found = True
-            break
     logger().info("initiating stop scanning")
     ble_client.interfaces.bluetooth.stop_scanning()
     assert device_found,"dut not found in scan results"

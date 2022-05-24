@@ -32,7 +32,6 @@ def logger():
     Author: RaviNemali
 """
 # Configure below time parameter to run the test case for specific time lapse # below is the 30 mins given as default
-logger().info("configure the time lapse to run the test case...")
 time_lapse = 30
 
 @pytest.mark.config(

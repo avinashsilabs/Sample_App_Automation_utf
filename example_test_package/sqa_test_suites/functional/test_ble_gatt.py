@@ -201,7 +201,7 @@ def test_fetch_characteristis_from_RD1_C19863(wifi_dut, ble_client):
 
       # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-   logger().info("issued BLE disconnect....")
+    logger().info("issued BLE disconnect....")
 
 
 
