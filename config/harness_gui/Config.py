@@ -163,7 +163,7 @@ class Base:
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    temp = "../../config/harnesses"
+    temp = "../harnesses"
     main_win = Base(temp)
     main_win.show()
     sys.exit(app.exec_())
