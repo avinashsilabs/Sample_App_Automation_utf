@@ -1974,3 +1974,21 @@ template_contribution:
     name: read_max_data_length
     handler: rsi_ble_read_max_data_len_command
     help: event reads the data length
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_reject_ssp_confirm
+    handler: bt_reject_ssp_confirm_command
+    help: reject ssp confirm
+    argument:
+    - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_spp_disconnect
+    handler: bt_spp_disconnect_command
+    help: spp disconnect
+    argument:
+    - {type: string, help: device_addr}

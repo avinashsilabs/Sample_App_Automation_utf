@@ -46,12 +46,12 @@ def logger():
 
     }
 )
-def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
-    logger().info(f"********this test_case to validate DNS_SERVER WITH DHCP********")
+def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
+    logger().info(f"********Query DNS server IP address when DNS IP address is obtained through dhcp hs********")
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_server_c19297')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_server_ip_with_dhcp_hs_c19297')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -102,6 +102,10 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("=======DNS SERVER WITH DHCP========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
     logger().info(result.decode())
+    time.sleep(2)
+    logger().info("Dut going to leave the AP")
+    wifi_dut.interfaces.wifi.leave()
+    time.sleep(1)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
@@ -131,12 +135,12 @@ def test_dns_server_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
-    logger().info(f"********this test_case to validate DNS_SERVER WITH DHCP********")
+def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
+    logger().info(f"****Query DNS server IP address when DNS server IP addresses are set statically****")
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_server_c19297')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dns_server_ip_when_set_statically_c19298')
     time.sleep(2)
 
     for count in range(1, 3):
@@ -185,6 +189,10 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("=======DNS SERVER WITH DHCP========")
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
     logger().info(result.decode())
+    time.sleep(2)
+    logger().info("Dut going to leave the AP")
+    wifi_dut.interfaces.wifi.leave()
+    time.sleep(1)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
@@ -212,8 +220,8 @@ def test_dns_server_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
 
     }
 )
-def test_dns_server_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
-    logger().info(f"***********this test_case to validate DNS_SERVER without enabling DNS feature*******")
+def test_dns_server_when_dns_feature_not_enabled_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
+    logger().info(f"****Query DNS Server IP address when DNS feature is not enabled in oper_mode****")
 
     for count in range(1, 3):
         try:

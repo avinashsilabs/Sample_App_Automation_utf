@@ -45,6 +45,7 @@ source:
 - path: ../common/commands/aws_iot_sdk_commands.c
 - path: ../common/commands/ant_commands.c
 - path: ../common/commands/wlan_wireless_firmware_upgrade.c
+- path: ../common/commands/ftp_commands.c
   
   # ble_gatt
 - path: ../common/commands/ble_gatt/rsi_ble_gatt_device_info.c
@@ -2032,3 +2033,143 @@ template_contribution:
     help: Closes web socket
     argument:
     - {type: uint32, help: socket_id}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_connect
+    handler: rsi_ftp_connect_command
+    help: Connect to ftp server
+    argument:
+    - {type: uint16, help: flags}
+    - {type: string, help: server_ip}
+    - {type: string, help: username}
+    - {type: string, help: password}
+    - {type: uint32, help: server_port}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_ftp_mode
+    handler: rsi_set_ftp_mode
+    help: set ftp mode
+    argument:
+    - {type: uint8, help: mode}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: query_directory_list
+    handler: rsi_query_directory_list
+    help: query directory list
+    argument:
+    - {type: string, help: directory_path}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_create_dir
+    handler: rsi_ftp_create_dir
+    help: create directory
+    argument:
+    - {type: string, help: directory name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_set_dir
+    handler: rsi_ftp_set_dir
+    help: set directory
+    argument:
+    - {type: string, help: directory path}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_file_write
+    handler: rsi_ftp_file_write_command
+    help: set file to write mode
+    argument:
+    - {type: string, help: file_name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_file_write_content
+    handler: rsi_ftp_file_write_content_command
+    help: write contents into file
+    argument:
+    - {type: uint16, help: flags}
+    - {type: string, help: file content}
+    - {type: uint16, help: content length}
+    - {type: uint8, help: end_of_file}
+
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_file_rename
+    handler: rsi_ftp_file_rename_command
+    help: Rename the file
+    argument:
+    - {type: string, help: old file name}
+    - {type: string, help: new file name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_file_read
+    handler: rsi_ftp_file_read
+    help: Read the contents of file
+    argument:
+    - {type: string, help: file name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_file_delete
+    handler: rsi_ftp_file_delete_command
+    help: Delete the file
+    argument:
+    - {type: string, help: file name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_directory_delete
+    handler: rsi_ftp_directory_delete_command
+    help: Delete the directory
+    argument:
+    - {type: string, help: directory name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ftp_disconnect
+    handler: rsi_ftp_disconnect_command
+    help: disconnect to ftp server
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_reject_ssp_confirm
+    handler: bt_reject_ssp_confirm_command
+    help: reject ssp confirm
+    argument:
+    - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_spp_disconnect
+    handler: bt_spp_disconnect_command
+    help: spp disconnect
+    argument:
+    - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: cfg_get
+    handler: rsi_cfg_get_command
+    help: Get store configuration profile info

@@ -2658,10 +2658,11 @@ def test_enhanced_max_psp_dtim_c196706(wifi_sniffer, wifi_access_point, wifi_dut
 
 '''*********************************POWER SAVE 3 TEST CASES************************************************'''
 
-# @pytest.mark.skip
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -2675,7 +2676,7 @@ def test_enhanced_max_psp_dtim_c196706(wifi_sniffer, wifi_access_point, wifi_dut
     },
 
 )
-def test_power_save3_c19685(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_c19685(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
 
     '''Verify RSI_STA is going to power save or not when enable power save mode3 with LP mode and MAX PSP'''
@@ -2722,10 +2723,10 @@ def test_power_save3_c19685(wifi_sniffer, wifi_access_point, wifi_dut):
         'packet_count'], 'No packet found for pwmt bit enable'
 
 
-# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -2739,7 +2740,7 @@ def test_power_save3_c19685(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_c19686(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_c19686(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
 
     '''Verify RSI_STA is going to power save or not when enable power save mode 3 with ULP mode with RAM retention and 
@@ -2785,10 +2786,11 @@ def test_power_save3_c19686(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found for pwmt bit enable'
 
-# @pytest.mark.skip
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -2802,7 +2804,7 @@ def test_power_save3_c19686(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_listen_interval_c19687(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_listen_interval_c19687(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1.13
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
@@ -2880,10 +2882,10 @@ def test_power_save3_listen_interval_c19687(wifi_sniffer, wifi_access_point, wif
     assert False if False in list_status else True
 
 
-# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -2897,7 +2899,7 @@ def test_power_save3_listen_interval_c19687(wifi_sniffer, wifi_access_point, wif
     },
 
 )
-def test_power_save3_dtim_c19688(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_dtim_c19688(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ps_packet_exchange_obj = FilterPacket()
@@ -2972,10 +2974,10 @@ def test_power_save3_dtim_c19688(wifi_sniffer, wifi_access_point, wifi_dut):
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
 
-# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -2989,7 +2991,7 @@ def test_power_save3_dtim_c19688(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_c19689(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_c19689(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -3068,10 +3070,10 @@ def test_power_save3_c19689(wifi_sniffer, wifi_access_point, wifi_dut):
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
 
-# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -3085,7 +3087,7 @@ def test_power_save3_c19689(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 
 )
-def test_power_save3_enable_disable_c19690(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_power_save3_enable_disable_c19690(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'

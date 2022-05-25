@@ -28,8 +28,8 @@ def logger():
 
     Author: RaviNemali
 """
-logger().info(" ********* READ DESCRIPTION AT LINE-31,FOR HARNESS CHANGES AND CONFIG'S **********")
-""""
+""" ********* READ DESCRIPTION AT LINE-31,FOR HARNESS CHANGES AND CONFIG'S ********** """
+"""" 
 ++++++++ Harness Changes & test limit's ++++++++
 
     Harness configs:

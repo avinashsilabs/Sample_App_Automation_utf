@@ -116,7 +116,7 @@ extern int32_t rsi_wlan_pmk_generate(int8_t type, int8_t* psk, int8_t* ssid, uin
 *******************************************************************************/
 /* All following variables declared here must be declared 'static' */
 static volatile int32_t http_recv_status;
-static uint32_t otaf_status = 0;
+static uint32_t otaf_status = 0xAAAA;
 
 
 /*******************************************************************************
@@ -140,7 +140,7 @@ void rsa_wlan_set_mac_address(sl_cli_command_arg_t* arguments)
 {
     uint8_t mac_address[6];
     char* mac_addr_str = sl_cli_get_argument_string(arguments, 0);
-    for (int i = 0; i < 6; i++) {
+    for (int i=0; i<6; i++) {
         int val;
         sscanf(mac_addr_str + 3 * i, "%02X", &val);
         mac_address[i] = (uint8_t)val;
@@ -183,10 +183,10 @@ void rsi_get_wlan_stats(sl_cli_command_arg_t* arguments)
 	(void)arguments;
 	int32_t status = 0;
 	rsi_rsp_wlan_stats_t wlan_stats;
-	status = rsi_wlan_get(RSI_GET_WLAN_STATS, &wlan_stats, (uint16_t)sizeof(rsi_rsp_wlan_stats_t));
+	status = rsi_wlan_get(RSI_GET_WLAN_STATS, (uint8_t *)&wlan_stats, (uint16_t)sizeof(rsi_rsp_wlan_stats_t));
 	if(!status)
 	{
-		printf("\nwlan stats:%d,%d,%d,%d,%d\n",wlan_stats.operating_mode,wlan_stats.dtim_period,rsi_bytes2R_to_uint16(&(wlan_stats.ideal_beacon_info[0])),rsi_bytes2R_to_uint16(&(wlan_stats.busy_beacon_info[0])),rsi_bytes2R_to_uint16(&(wlan_stats.beacon_interval[0])));
+		printf("\nwlan stats:%d,%d,%d,%d,%d\n", wlan_stats.operating_mode, wlan_stats.dtim_period, rsi_bytes2R_to_uint16(&(wlan_stats.ideal_beacon_info[0])), rsi_bytes2R_to_uint16(&(wlan_stats.busy_beacon_info[0])), rsi_bytes2R_to_uint16(&(wlan_stats.beacon_interval[0])));
 	}
 	print_status(status);
 }
@@ -199,15 +199,15 @@ void rsi_get_network_params(sl_cli_command_arg_t* arguments)
 	uint8_t iii = 0;
 	rsi_rsp_sockets_info_t socket_info;
 
-	status = rsi_wlan_get(RSI_SOCKETS_INFO, &socket_info, (uint16_t)sizeof(rsi_rsp_sockets_info_t));
+	status = rsi_wlan_get(RSI_SOCKETS_INFO, (uint8_t *)&socket_info, (uint16_t)sizeof(rsi_rsp_sockets_info_t));
 	if(!status)
 	{
 		socket_count = rsi_bytes2R_to_uint16(&(socket_info.num_open_socks[0]));
 		printf("\nSockets in open state:%d\n",socket_count);
-		for(ii = 0; ii < socket_count; ii++)
+		for(ii=0; ii<socket_count; ii++)
 		{
-			printf("\nsocket_no %d info:%d,%d,%d,%d,",(ii+1),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_id[0])),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_type[0])),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].source_port[0])),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].dest_port[0])));
-			for(iii = 0; iii < 4; iii++)
+			printf("\nsocket_no %d info:%d,%d,%d,%d,",(ii+1), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_id[0])), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_type[0])), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].source_port[0])), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].dest_port[0])));
+			for(iii=0; iii<4; iii++)
 			{
 				printf("%d-",socket_info.socket_info[ii].dest_ip_address.ipv4_address[iii]);
 			}
@@ -223,23 +223,23 @@ void rsi_get_wireless_info(sl_cli_command_arg_t* arguments)
 	int32_t status = 0;
 	uint8_t ii = 0;
 	rsi_rsp_wireless_info_t wlan_info;
-	status = rsi_wlan_get(RSI_WLAN_INFO, &wlan_info, (uint16_t)sizeof(rsi_rsp_wireless_info_t));
+	status = rsi_wlan_get(RSI_WLAN_INFO, (uint8_t *)&wlan_info, (uint16_t)sizeof(rsi_rsp_wireless_info_t));
 	if(!status)
 	{
-		printf("\nwlan stats:%d,%d,%s,",wlan_info.wlan_state,wlan_info.channel_number,(&wlan_info.ssid[0]));
-		for(ii = 0; ii < 6; ii++)
+		printf("\nwlan stats:%d,%d,%s,", wlan_info.wlan_state,wlan_info.channel_number, (&wlan_info.ssid[0]));
+		for(ii=0; ii<6; ii++)
 		{
-			printf("%02x-",wlan_info.mac_address[ii]);
+			printf("%02x-", wlan_info.mac_address[ii]);
 		}
-		printf(",%d,%s,",wlan_info.sec_type,(&wlan_info.psk[0]));
-		for(ii = 0; ii < 4; ii++)
+		printf(",%d,%s,", wlan_info.sec_type, (&wlan_info.psk[0]));
+		for(ii=0; ii<4; ii++)
 		{
-			printf("%d-",wlan_info.ipv4_address[ii]);
+			printf("%d-", wlan_info.ipv4_address[ii]);
 		}
 		printf(",");
-		for(ii = 0; ii < 16; ii++)
+		for(ii=0; ii<16; ii++)
 		{
-			printf("%d-",wlan_info.ipv6_address[ii]);
+			printf("%d-", wlan_info.ipv6_address[ii]);
 		}
 		printf("\n");
 	}
@@ -676,7 +676,7 @@ void rsi_wlan_set_multicast_filter(sl_cli_command_arg_t* arguments)
     filter_mac_address.cmd_type = sl_cli_get_argument_uint8(arguments, 0);
     char* mac_addr_str = sl_cli_get_argument_string(arguments, 1);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i=0; i<6; i++) {
         int val;
         sscanf(mac_addr_str + 3 * i, "%02X", &val);
         filter_mac_address.mac_address[i] = (uint8_t)val;
@@ -807,13 +807,13 @@ void rsi_get_rtc()
     memset(&timer, '\0', sizeof(timer));
 
     int32_t status = rsi_get_rtc_timer(&timer);
-    printf("seconds:%u\n", rsi_bytes4R_to_uint32(timer.tm_sec));
-    printf("minutes:%u\n", rsi_bytes4R_to_uint32(timer.tm_min));
-    printf("hours:%u\n", rsi_bytes4R_to_uint32(timer.tm_hour));
-    printf("month_day:%u\n", rsi_bytes4R_to_uint32(timer.tm_mday));
-    printf("month:%u\n", rsi_bytes4R_to_uint32(timer.tm_mon));
-    printf("year:%u\n", rsi_bytes4R_to_uint32(timer.tm_year));
-    printf("day:%u\n", rsi_bytes4R_to_uint32(timer.tm_wday));
+    printf("seconds:%lu\n", rsi_bytes4R_to_uint32(timer.tm_sec));
+    printf("minutes:%lu\n", rsi_bytes4R_to_uint32(timer.tm_min));
+    printf("hours:%lu\n", rsi_bytes4R_to_uint32(timer.tm_hour));
+    printf("month_day:%lu\n", rsi_bytes4R_to_uint32(timer.tm_mday));
+    printf("month:%lu\n", rsi_bytes4R_to_uint32(timer.tm_mon));
+    printf("year:%lu\n", rsi_bytes4R_to_uint32(timer.tm_year));
+    printf("day:%lu\n", rsi_bytes4R_to_uint32(timer.tm_wday));
 
     print_status(status);
 }
@@ -902,7 +902,7 @@ void rsi_upgrade_firmware_http(sl_cli_command_arg_t* arguments)
 void rsi_get_http_otaf_status()
 {
     print_status(otaf_status);
-    otaf_status = 0;
+    otaf_status = 0xAAAA;
 }
 
 void rsi_set_wlan_timeout(sl_cli_command_arg_t* arguments)
@@ -924,7 +924,7 @@ void rsi_set_default_wlan_timeout()
 void rsi_set_config_save(sl_cli_command_arg_t* arguments)
 {
     (void)arguments;
-	int32_t status = rsi_wlan_set(RSI_CFG_SAVE, NULL, NULL);
+	int32_t status = rsi_wlan_set(RSI_CFG_SAVE, (uint8_t *)NULL , NULL);
 	print_status(status);
 }
 
@@ -936,6 +936,122 @@ void rsi_set_auto_config(sl_cli_command_arg_t* arguments)
 	print_status(status);
 }
 
+void rsi_cfg_get_command()
+{
+	int32_t status = 0;
+	uint32_t opermode = 0;
+	uint8_t opermode_type = 0;
+	rsi_cfgGetFrameRcv_t* cfg_get = malloc(sizeof(rsi_cfgGetFrameRcv_t));
+	if (cfg_get == NULL) {
+		printf("unable to allocate memory for cfg get results\n");
+		return;
+	}
+	memset(cfg_get, '\0', sizeof(rsi_cfgGetFrameRcv_t));
+	status = rsi_wlan_get(RSI_CFG_GET, (uint8_t *)cfg_get, sizeof(rsi_cfgGetFrameRcv_t));
+	if(status !=0)
+	{
+		print_status(status);
+	}
+	else
+	{
+		opermode = rsi_bytes4R_to_uint32(cfg_get->opermode);
+		opermode_type = (0x0000FFFF & opermode);
+		if((opermode_type == 0) || (opermode_type == 2))
+		{
+			printf("cfg_enable:%d-opermode:%d-feature_bit_map:%d-tcp_ip_feature_bit_map:%d-custom_feature_bit_map:%d-band:%d-join_ssid:%s-csec_mode:%d-psk:%s\-scan_ssid:%s-scan_cnum:%d-dhcp_enable:%d-ip:%d.%d.%d.%d-sn_mask:%d.%d.%d.%d-dgw:%d.%d.%d.%d\
+            -tcp_stack_used:%d-bgscan_magic_code:%d-bgscan_enable:%d-bgscan_threshold:%d-rssi_tolerance_threshold:%d\
+            -bgscan_periodicity:%d-active_scan_duration:%d-passive_scan_duration:%d-multi_probe:%d-chan_bitmap_magic_code:%d\
+            -scan_chan_bitmap_stored_2_4_GHz:%d-scan_chan_bitmap_stored_5_GHz:%d-roam_magic_code:%d-roam_enable:%d-roam_threshold:%d-roam_hysteresis:%d\
+            -rejoin_magic_code:%d-rsi_max_try:%d-rsi_scan_interval:%d-rsi_beacon_missed_count:%d-rsi_first_time_retry_enable:%d-module_mac:%x.%x.%x.%x.%x.%x\
+            -powermode_magic_code:%d-powermode:%d-ulp_mode:%d-listen_interval:%d-listen_interval_dtim:%d-fast_psp_enable:%d-monitor_interval:%d\
+            -timeout_value:%d-timeout_bitmap:%d\-region_request_from_host:%d\-rsi_region_code_from_host:%d\-region_code:%d-eap_method:%s-inner_method:%s\
+            -user_identity:%s-passwd:%s\
+            \n",cfg_get->cfg_enable,\
+			rsi_bytes4R_to_uint32(cfg_get->opermode),\
+            rsi_bytes4R_to_uint32(cfg_get->feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->tcp_ip_feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->custom_feature_bit_map),\
+            cfg_get->band,\
+            cfg_get->join_ssid,\
+            cfg_get->csec_mode,\
+            cfg_get->psk,\
+            cfg_get->scan_ssid,\
+            cfg_get->scan_cnum,\
+            cfg_get->dhcp_enable,\
+            cfg_get->ip[0],cfg_get->ip[1],cfg_get->ip[2],cfg_get->ip[3],\
+            cfg_get->sn_mask[0],cfg_get->sn_mask[1],cfg_get->sn_mask[2],cfg_get->sn_mask[3],\
+            cfg_get->dgw[0],cfg_get->dgw[1],cfg_get->dgw[2],cfg_get->dgw[3],\
+            cfg_get->tcp_stack_used,\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_magic_code),\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_enable),\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_threshold),\
+            rsi_bytes2R_to_uint16(cfg_get->rssi_tolerance_threshold),\
+            rsi_bytes2R_to_uint16(cfg_get->bgscan_periodicity),\
+            rsi_bytes2R_to_uint16(cfg_get->active_scan_duration),\
+            rsi_bytes2R_to_uint16(cfg_get->passive_scan_duration),\
+            cfg_get->multi_probe,\
+            rsi_bytes2R_to_uint16(cfg_get->chan_bitmap_magic_code),\
+            rsi_bytes4R_to_uint32(cfg_get->scan_chan_bitmap_stored_2_4_GHz),\
+            rsi_bytes4R_to_uint32(cfg_get->scan_chan_bitmap_stored_5_GHz),\
+            rsi_bytes2R_to_uint16(cfg_get->roam_magic_code),\
+            rsi_bytes4R_to_uint32(cfg_get->roam_params_stored.roamParamsFrameSnd.roam_enable),\
+            rsi_bytes4R_to_uint32(cfg_get->roam_params_stored.roamParamsFrameSnd.roam_threshold),\
+            rsi_bytes4R_to_uint32(cfg_get->roam_params_stored.roamParamsFrameSnd.roam_hysteresis),\
+			rsi_bytes2R_to_uint16(cfg_get->rejoin_magic_code),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_max_try),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_scan_interval),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_beacon_missed_count),\
+			rsi_bytes4R_to_uint32(cfg_get->rejoin_param_stored.rsi_first_time_retry_enable),\
+			cfg_get->module_mac[0],cfg_get->module_mac[1],cfg_get->module_mac[2],cfg_get->module_mac[3],cfg_get->module_mac[4],cfg_get->module_mac[5],\
+			rsi_bytes2R_to_uint16(cfg_get->powermode_magic_code),\
+            cfg_get->powermode,\
+            cfg_get->ulp_mode,\
+            rsi_bytes4R_to_uint32(cfg_get->listen_interval),\
+            cfg_get->listen_interval_dtim,\
+            cfg_get->fast_psp_enable,\
+            rsi_bytes2R_to_uint16(cfg_get->monitor_interval),\
+            rsi_bytes2R_to_uint16(cfg_get->timeout_value),\
+            rsi_bytes4R_to_uint32(cfg_get->timeout_bitmap),\
+            cfg_get->region_request_from_host,\
+            cfg_get->rsi_region_code_from_host,\
+            cfg_get->region_code,\
+            cfg_get->eap_method,\
+            cfg_get->inner_method,\
+            cfg_get->user_identity,\
+            cfg_get->passwd);
+		}
+		else if(opermode_type == 6)
+		{
+			printf("cfg_enable:%d-opermode:%d-feature_bit_map:%d-tcp_ip_feature_bit_map:%d-custom_feature_bit_map:%d-band:%d-operating_channel:%d\
+            -ssid_postfix:%s-psk_key:%s-pmk:%s-channel_no:%d-ssid:%s-security_type:%d-encryp_mode:%d-psk:%s-beacon_interval:%d-dtim_period:%d\
+            -ap_keepalive_type:%d-ap_keepalive_period:%d-max_sta_support:%d-module_mac:%x.%x.%x.%x.%x.%x-tcp_stack_used:%d\
+            \n",cfg_get->cfg_enable,\
+            rsi_bytes4R_to_uint32(cfg_get->opermode),\
+            rsi_bytes4R_to_uint32(cfg_get->feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->tcp_ip_feature_bit_map),\
+            rsi_bytes4R_to_uint32(cfg_get->custom_feature_bit_map),\
+            cfg_get->band,\
+            rsi_bytes2R_to_uint16(cfg_get->operating_channel),\
+            cfg_get->ssid_postfix,\
+            cfg_get->psk_key,\
+            cfg_get->pmk,\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.channel_no),\
+            cfg_get->apconfig.ssid,\
+            cfg_get->apconfig.security_type,\
+            cfg_get->apconfig.encryp_mode,\
+            cfg_get->apconfig.psk,\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.beacon_interval),\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.dtim_period),\
+            cfg_get->apconfig.ap_keepalive_type,\
+            cfg_get->apconfig.ap_keepalive_period,\
+            rsi_bytes2R_to_uint16(cfg_get->apconfig.max_sta_support),\
+            cfg_get->module_mac[0],cfg_get->module_mac[1],cfg_get->module_mac[2],cfg_get->module_mac[3],cfg_get->module_mac[4],cfg_get->module_mac[5],\
+            cfg_get->tcp_stack_used);
+		}
+		print_status(status);
+	}
+	free(cfg_get);
+}
 /*******************************************************************************
 *
 *                       IMPLEMENTATION: Private functions
@@ -986,3 +1102,4 @@ static void http_otaf_response_handler(uint16_t status, const uint8_t* buffer)
     }
     otaf_status = status;
 }
+
