@@ -11,7 +11,7 @@ pytestmark = [
         wifi=
             {
                 "oper_mode": 0,
-                "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+                "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             }
     )
 ]
