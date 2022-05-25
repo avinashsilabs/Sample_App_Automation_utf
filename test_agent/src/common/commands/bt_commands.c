@@ -2661,4 +2661,25 @@ void rsi_bt_on_avrcp_set_abs_vol_event(rsi_bt_event_avrcp_set_abs_vol_t *p_abs_v
 
   return;
 }
+
+void rsi_bt_sniff_mode_command(sl_cli_command_arg_t *arguments){
+
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint16_t sniff_max_intv = sl_cli_get_argument_uint16(arguments, 1);
+    uint16_t sniff_min_intv = sl_cli_get_argument_uint16(arguments, 2);
+    uint16_t sniff_attempt = sl_cli_get_argument_uint16(arguments, 3);
+    uint16_t sniff_tout = sl_cli_get_argument_uint16(arguments, 4);
+
+    uint8_t dev_addr[6];
+	rsi_ascii_dev_address_to_6bytes_rev(dev_addr, (int8_t*)remote_dev_addr);
+    print_status(rsi_bt_sniff_mode(dev_addr, sniff_max_intv, sniff_min_intv, sniff_attempt, sniff_tout));
+}
+
+void rsi_bt_sniff_exit_mode_command(sl_cli_command_arg_t *arguments){
+
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint8_t dev_addr[6];
+	rsi_ascii_dev_address_to_6bytes_rev(dev_addr, (int8_t*)remote_dev_addr);
+    print_status(rsi_bt_sniff_exit_mode(dev_addr));
+}
 /******************* END OF CALLBACK IMPLEMENTATIONS *****************/
