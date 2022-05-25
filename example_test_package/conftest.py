@@ -9,6 +9,7 @@ from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
+from utf.utils import generate_test_library
 
 
 @pytest.fixture()
@@ -70,3 +71,9 @@ def store_environment_info(request, harness: Harness):
     access_point_type = UtfConfig.instance().data.get("devices", {}).get(access_point, {}).get("interfaces", {}).get("wifi", {}).get("type", "")
     access_point_type = access_point_type.split(".")[-1]
     request.config._metadata['Access point Type'] = access_point_type
+
+
+def pytest_collection_modifyitems(config, items):
+    print('Entered')
+    with open('./test_base_library.yaml', 'w+') as file:
+        generate_test_library.generate_test_library(file, items)
