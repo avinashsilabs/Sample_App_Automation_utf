@@ -9,7 +9,7 @@ from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
-from utf.utils import generate_test_library
+from utf.utils import test_mgmt_utils
 
 
 @pytest.fixture()
@@ -74,5 +74,5 @@ def store_environment_info(request, harness: Harness):
 
 
 def pytest_collection_modifyitems(config, items):
-    with open('./test_base_library.yaml', 'w+') as file:
-        generate_test_library.generate_test_library(file, items)
+    with open('./test_definitions_base.yaml', 'w+') as file:
+        test_mgmt_utils.generate_base_test_definitions_yaml(file, items)
