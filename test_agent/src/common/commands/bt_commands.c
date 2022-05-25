@@ -2661,6 +2661,7 @@ void rsi_bt_on_avrcp_set_abs_vol_event(rsi_bt_event_avrcp_set_abs_vol_t *p_abs_v
 
   return;
 }
+/******************* END OF CALLBACK IMPLEMENTATIONS *****************/
 
 void rsi_bt_sniff_mode_command(sl_cli_command_arg_t *arguments){
 
@@ -2682,4 +2683,19 @@ void rsi_bt_sniff_exit_mode_command(sl_cli_command_arg_t *arguments){
 	rsi_ascii_dev_address_to_6bytes_rev(dev_addr, (int8_t*)remote_dev_addr);
     print_status(rsi_bt_sniff_exit_mode(dev_addr));
 }
-/******************* END OF CALLBACK IMPLEMENTATIONS *****************/
+
+void bt_reject_ssp_confirm_command(sl_cli_command_arg_t* arguments)
+{
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint8_t device_address[6];
+	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
+    print_status(rsi_bt_reject_ssp_confirm(device_address));
+}
+
+void bt_spp_disconnect_command(sl_cli_command_arg_t* arguments)
+{
+    char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
+    uint8_t device_address[6];
+	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
+    print_status(rsi_bt_spp_disconnect(device_address));
+}
