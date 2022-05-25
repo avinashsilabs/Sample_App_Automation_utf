@@ -21,6 +21,12 @@ def logger():
 #configure this to run the case for no of times in loop
 iter_count = 3
 
+#sniff mode inputs
+SniffMaxIntr = 192
+SniffMinIntr = 160
+SniffAttempt = 4
+sniffTimeout = 2
+
 test_data = ["9,01,00,00,04,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",
                  "9,01,00,00,05,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",
                  "9,01,02,00,04,00,00,00,00,00", "9,01,02,00,00,00,00,00,00,00",
@@ -465,7 +471,6 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
     time.sleep(5)
 
 def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client):
-
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
     assert bt_dut_address is not None
@@ -494,6 +499,12 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client)
         assert connected, "unable to connect bt device"
         logger().info(f'device connection state is {connected}')
 
+    logger().info("enabling sniff mode")
+    bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                               SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                               sniffTimeout=sniffTimeout)
+
+    time.sleep(5)
     logger().info("set dut in power save.....")
     bt_dut.interfaces.bluetooth.power_save(3,2)
     logger().info("bt power save configuration success")
@@ -673,7 +684,6 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
     time.sleep(5)
 
 def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
-
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
     assert bt_dut_address is not None,"failed to initialize dut"
@@ -702,8 +712,10 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
         assert connected, "unable to connect bt device"
         logger().info(f'device connection state is {connected}')
 
-    # bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address,SniffMaxIntr=192,SniffMinIntr=160,SniffAttempt=4,sniffTimeout=10)
-    time.sleep(10)
+    bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                               SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                               sniffTimeout=sniffTimeout)
+    time.sleep(5)
     logger().info("set dut in power save.....")
     bt_dut.interfaces.bluetooth.power_save(3,1)
     time.sleep(15)
@@ -776,6 +788,10 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
             assert connected, "unable to connect bt device"
             logger().info(f'device connection state is {connected}')
 
+        bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                                   SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                                   sniffTimeout=sniffTimeout)
+        time.sleep(5)
         logger().info("set dut in power save.....")
         bt_dut.interfaces.bluetooth.power_save(3,1)
         logger().info("bt power save configuration success")
@@ -846,6 +862,12 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client)
             connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
             assert connected, "unable to connect bt device"
             logger().info(f'device connection state is {connected}')
+
+        logger().info("enabling sniff mode")
+        bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                                   SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                                   sniffTimeout=sniffTimeout)
+        time.sleep(5)
 
         logger().info("set dut in power save.....")
         bt_dut.interfaces.bluetooth.power_save(3,2)
