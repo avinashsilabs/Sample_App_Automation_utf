@@ -74,6 +74,5 @@ def store_environment_info(request, harness: Harness):
 
 
 def pytest_collection_modifyitems(config, items):
-    print('Entered')
     with open('./test_base_library.yaml', 'w+') as file:
         generate_test_library.generate_test_library(file, items)
