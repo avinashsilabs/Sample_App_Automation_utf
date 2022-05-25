@@ -140,7 +140,7 @@ void rsa_wlan_set_mac_address(sl_cli_command_arg_t* arguments)
 {
     uint8_t mac_address[6];
     char* mac_addr_str = sl_cli_get_argument_string(arguments, 0);
-    for (int i = 0; i < 6; i++) {
+    for (int i=0; i<6; i++) {
         int val;
         sscanf(mac_addr_str + 3 * i, "%02X", &val);
         mac_address[i] = (uint8_t)val;
@@ -183,10 +183,10 @@ void rsi_get_wlan_stats(sl_cli_command_arg_t* arguments)
 	(void)arguments;
 	int32_t status = 0;
 	rsi_rsp_wlan_stats_t wlan_stats;
-	status = rsi_wlan_get(RSI_GET_WLAN_STATS, &wlan_stats, (uint16_t)sizeof(rsi_rsp_wlan_stats_t));
+	status = rsi_wlan_get(RSI_GET_WLAN_STATS, (uint8_t *)&wlan_stats, (uint16_t)sizeof(rsi_rsp_wlan_stats_t));
 	if(!status)
 	{
-		printf("\nwlan stats:%d,%d,%d,%d,%d\n",wlan_stats.operating_mode,wlan_stats.dtim_period,rsi_bytes2R_to_uint16(&(wlan_stats.ideal_beacon_info[0])),rsi_bytes2R_to_uint16(&(wlan_stats.busy_beacon_info[0])),rsi_bytes2R_to_uint16(&(wlan_stats.beacon_interval[0])));
+		printf("\nwlan stats:%d,%d,%d,%d,%d\n", wlan_stats.operating_mode, wlan_stats.dtim_period, rsi_bytes2R_to_uint16(&(wlan_stats.ideal_beacon_info[0])), rsi_bytes2R_to_uint16(&(wlan_stats.busy_beacon_info[0])), rsi_bytes2R_to_uint16(&(wlan_stats.beacon_interval[0])));
 	}
 	print_status(status);
 }
@@ -199,15 +199,15 @@ void rsi_get_network_params(sl_cli_command_arg_t* arguments)
 	uint8_t iii = 0;
 	rsi_rsp_sockets_info_t socket_info;
 
-	status = rsi_wlan_get(RSI_SOCKETS_INFO, &socket_info, (uint16_t)sizeof(rsi_rsp_sockets_info_t));
+	status = rsi_wlan_get(RSI_SOCKETS_INFO, (uint8_t *)&socket_info, (uint16_t)sizeof(rsi_rsp_sockets_info_t));
 	if(!status)
 	{
 		socket_count = rsi_bytes2R_to_uint16(&(socket_info.num_open_socks[0]));
 		printf("\nSockets in open state:%d\n",socket_count);
-		for(ii = 0; ii < socket_count; ii++)
+		for(ii=0; ii<socket_count; ii++)
 		{
-			printf("\nsocket_no %d info:%d,%d,%d,%d,",(ii+1),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_id[0])),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_type[0])),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].source_port[0])),rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].dest_port[0])));
-			for(iii = 0; iii < 4; iii++)
+			printf("\nsocket_no %d info:%d,%d,%d,%d,",(ii+1), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_id[0])), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].sock_type[0])), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].source_port[0])), rsi_bytes2R_to_uint16(&(socket_info.socket_info[ii].dest_port[0])));
+			for(iii=0; iii<4; iii++)
 			{
 				printf("%d-",socket_info.socket_info[ii].dest_ip_address.ipv4_address[iii]);
 			}
@@ -223,23 +223,23 @@ void rsi_get_wireless_info(sl_cli_command_arg_t* arguments)
 	int32_t status = 0;
 	uint8_t ii = 0;
 	rsi_rsp_wireless_info_t wlan_info;
-	status = rsi_wlan_get(RSI_WLAN_INFO, &wlan_info, (uint16_t)sizeof(rsi_rsp_wireless_info_t));
+	status = rsi_wlan_get(RSI_WLAN_INFO, (uint8_t *)&wlan_info, (uint16_t)sizeof(rsi_rsp_wireless_info_t));
 	if(!status)
 	{
-		printf("\nwlan stats:%d,%d,%s,",wlan_info.wlan_state,wlan_info.channel_number,(&wlan_info.ssid[0]));
-		for(ii = 0; ii < 6; ii++)
+		printf("\nwlan stats:%d,%d,%s,", wlan_info.wlan_state,wlan_info.channel_number, (&wlan_info.ssid[0]));
+		for(ii=0; ii<6; ii++)
 		{
-			printf("%02x-",wlan_info.mac_address[ii]);
+			printf("%02x-", wlan_info.mac_address[ii]);
 		}
-		printf(",%d,%s,",wlan_info.sec_type,(&wlan_info.psk[0]));
-		for(ii = 0; ii < 4; ii++)
+		printf(",%d,%s,", wlan_info.sec_type, (&wlan_info.psk[0]));
+		for(ii=0; ii<4; ii++)
 		{
-			printf("%d-",wlan_info.ipv4_address[ii]);
+			printf("%d-", wlan_info.ipv4_address[ii]);
 		}
 		printf(",");
-		for(ii = 0; ii < 16; ii++)
+		for(ii=0; ii<16; ii++)
 		{
-			printf("%d-",wlan_info.ipv6_address[ii]);
+			printf("%d-", wlan_info.ipv6_address[ii]);
 		}
 		printf("\n");
 	}
@@ -676,7 +676,7 @@ void rsi_wlan_set_multicast_filter(sl_cli_command_arg_t* arguments)
     filter_mac_address.cmd_type = sl_cli_get_argument_uint8(arguments, 0);
     char* mac_addr_str = sl_cli_get_argument_string(arguments, 1);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i=0; i<6; i++) {
         int val;
         sscanf(mac_addr_str + 3 * i, "%02X", &val);
         filter_mac_address.mac_address[i] = (uint8_t)val;
@@ -807,13 +807,13 @@ void rsi_get_rtc()
     memset(&timer, '\0', sizeof(timer));
 
     int32_t status = rsi_get_rtc_timer(&timer);
-    printf("seconds:%u\n", rsi_bytes4R_to_uint32(timer.tm_sec));
-    printf("minutes:%u\n", rsi_bytes4R_to_uint32(timer.tm_min));
-    printf("hours:%u\n", rsi_bytes4R_to_uint32(timer.tm_hour));
-    printf("month_day:%u\n", rsi_bytes4R_to_uint32(timer.tm_mday));
-    printf("month:%u\n", rsi_bytes4R_to_uint32(timer.tm_mon));
-    printf("year:%u\n", rsi_bytes4R_to_uint32(timer.tm_year));
-    printf("day:%u\n", rsi_bytes4R_to_uint32(timer.tm_wday));
+    printf("seconds:%lu\n", rsi_bytes4R_to_uint32(timer.tm_sec));
+    printf("minutes:%lu\n", rsi_bytes4R_to_uint32(timer.tm_min));
+    printf("hours:%lu\n", rsi_bytes4R_to_uint32(timer.tm_hour));
+    printf("month_day:%lu\n", rsi_bytes4R_to_uint32(timer.tm_mday));
+    printf("month:%lu\n", rsi_bytes4R_to_uint32(timer.tm_mon));
+    printf("year:%lu\n", rsi_bytes4R_to_uint32(timer.tm_year));
+    printf("day:%lu\n", rsi_bytes4R_to_uint32(timer.tm_wday));
 
     print_status(status);
 }
@@ -924,7 +924,7 @@ void rsi_set_default_wlan_timeout()
 void rsi_set_config_save(sl_cli_command_arg_t* arguments)
 {
     (void)arguments;
-	int32_t status = rsi_wlan_set(RSI_CFG_SAVE, NULL, NULL);
+	int32_t status = rsi_wlan_set(RSI_CFG_SAVE, (uint8_t *)NULL , NULL);
 	print_status(status);
 }
 
