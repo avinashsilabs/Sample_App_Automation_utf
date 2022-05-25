@@ -188,7 +188,7 @@ devices:
             wifi:
                 type: 'wifi.access_points.asus_rt_ax3000'
                 ip_address: '10.207.18.107'
-                admin_password: 'www.ni.com'
+                admin_password: 'Jenkins@123'
                 ssh_port: 22
                 ssid: "TESTTEST-ASUS"
                 protected_management_frame: 'Disable'
