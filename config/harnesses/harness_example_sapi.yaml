@@ -192,6 +192,8 @@ defaults:
 
     wifi_sniffer: 'airpcap'
 
+    switch: 'switched_ap'
+
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
