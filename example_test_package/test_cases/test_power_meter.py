@@ -2,9 +2,14 @@ from utf.utils.logger import get_logger
 import paramiko
 import os
 import pytest
+from utf.utils.iperf.iperf_utils import print_dict
 
 def logger():
     return get_logger(__name__)
+
+def __print_throughput(throughput: dict):
+    if throughput is not None:
+        print_dict("##     ", throughput)
 
 
 def test_capture_power_meter_data_points_to_file(power_meter):
@@ -30,10 +35,18 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter("data_logger")
     # Init power meter module 
-    power_meter.interfaces.power_meter.power_meter_module.init_power_meter_module()
+    power_meter.interfaces.power_meter.power_meter_module.init_power_meter_module(data_log_file_name="UTF1_Data_Log")
     # set power meter out put channels
-    power_meter.interfaces.power_meter.set_output_channels([1,2])
+    power_meter.interfaces.power_meter.set_output_channels(["1","2"])
+    # start capture power meter datalog/scope
     power_meter.interfaces.power_meter.start_capture()
+    
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None 
+    
+
 
 @pytest.mark.power_meter("keysight_power_analyzer_software_winRM")
 def test_power_meter_keysight_benchvue_win_rm(power_meter):
@@ -42,5 +55,12 @@ def test_power_meter_keysight_benchvue_win_rm(power_meter):
     # Init power meter module 
     power_meter.interfaces.power_meter.power_meter_module.init_power_meter_module()
     # set power meter out put channels
-    power_meter.interfaces.power_meter.set_output_channels([1,2])
+    power_meter.interfaces.power_meter.set_output_channels(["1","2"])
+    # start capture power meter datalog/scope
     power_meter.interfaces.power_meter.start_capture()
+     
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None 
+   

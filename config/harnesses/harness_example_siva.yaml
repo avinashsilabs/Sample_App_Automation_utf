@@ -577,22 +577,23 @@ devices:
                 type: 'power_meter.software.keysight_benchvue_win_rm'
                 shell: 'windows_shell'
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\Siva\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
+                #power_meter_visa_address: 'TCPIP0::10.207.19.90::hislip0::INSTR'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-                component: 'data_logger'
 
     keysight_power_analyzer_software_winWCF:
         interfaces:
-            windows_shell: 
-                type: 'rem_mgmt.win_wcf_service'
+            windows_wcf_service: 
+                type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_power_meter_keysight_benchvue_wcf_service_library/PowerMeterService/?wsdl'
+                #wsdl: 'http://192.168.0.103:8733/Design_Time_Addresses/utf_power_meter_keysight_benchvue_wcf_service_library/PowerMeterService/?wsdl'
+                timeout: 1
             power_meter:
                 type: 'power_meter.software.keysight_benchvue_win_wcf'
-                shell: 'windows_shell'
+                wcf_service: 'windows_wcf_service'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
+                #power_meter_visa_address: 'TCPIP0::10.207.19.90::hislip0::INSTR'
                 window_state: 'Show'
-                component: 'data_logger'
-
 
     python_aws_iot_thing:
         interfaces:
@@ -884,14 +885,14 @@ defaults:
                 data_len: 1472
         tos_value: '0xC8'
 
-    power_analyzer_software_data_logger:
+    pow_mtr_data_logger:
         data_log_file_name: 'UTF_DataLog_'
         data_log_file_name_is_append_date:  true
         data_log_file_name_is_append_time: true 
         data_log_folder_location: 'C:\\Siva\\data_log'
         data_log_start: 'DatalogRunButton'
         data_log_stop: 'AfterElapsedTime'
-        data_log_stop_after_elapsed_time: 180
+        data_log_stop_after_elapsed_time: 60
         data_log_source: 'Software'
         data_log_sample_period: 'Custom'
         data_log_custom_sample_period: 1.00309
@@ -903,7 +904,7 @@ defaults:
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
 
-    power_analyzer_software_scope:
+    pow_mtr_scope:
         scope_scope_save_as: 'UTF_Scope_'
         scope_trigger_mode: 'Auto'
         scope_trigger_source: 'ScopeRunButton'
