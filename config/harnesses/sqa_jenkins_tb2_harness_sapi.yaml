@@ -551,7 +551,7 @@ devices:
         interfaces:
             local_shell:
                 type: 'shell.ssh_shell'
-                remote: 192.168.50.232  # configure sniffer NUC IP
+                remote: 10.207.18.110  # configure sniffer NUC IP
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
