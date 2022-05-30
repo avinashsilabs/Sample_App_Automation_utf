@@ -228,6 +228,9 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
+
+######Need to add cfg_get
+@pytest.mark.skip(reason="Need to add cfg_get")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -372,7 +375,8 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
 
 
 
-
+######Need to add cfg_get
+@pytest.mark.skip(reason="Need to add cfg_get")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -656,7 +660,8 @@ def test_store_config_rejoin_specific_channel_C19100(wifi_sniffer,wifi_dut,wifi_
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
 
-
+######Need to add cfg_get
+@pytest.mark.skip(reason="Need to add cfg_get")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
