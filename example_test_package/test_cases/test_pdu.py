@@ -6,7 +6,7 @@ def logger():
     return get_logger(__name__)
 
 def test_verify_pdu(wifi_access_point, wifi_dut, pdu_switch):
-    pdu_switch.interfaces.pdu_pdu_switch.turn_on()
+    pdu_switch.interfaces.pdu_switch.turn_on()
     time.sleep(5)
-    pdu_switch.interfaces.pdu_pdu_switch.turn_off()
+    pdu_switch.interfaces.pdu_switch.turn_off()
 
