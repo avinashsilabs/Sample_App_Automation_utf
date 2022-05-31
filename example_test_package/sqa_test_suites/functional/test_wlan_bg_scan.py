@@ -1091,7 +1091,7 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
 def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
     #Verify BG Scan response before Connection ,it should return 0x0021 error(This we can test in
     # AT mode only
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+    if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
             "This test case is only currently implemented for AT"
         )
@@ -1121,7 +1121,7 @@ def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
 )
 def test_bgscan_rejoin_failure_c19041(wifi_access_point, wifi_dut):
     #Verify BG Scan response During the rejoin process ,it should return 0x0025 error.(This we can test only in AT mode'''
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+    if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
             "This test case is only currently implemented for AT"
         )
