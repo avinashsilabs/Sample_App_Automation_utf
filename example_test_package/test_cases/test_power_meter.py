@@ -30,12 +30,12 @@ def test_capture_power_meter_data_points_to_file(power_meter):
     file_size = os.path.getsize(captured_file_name)
     assert file_size > 0
 
-@pytest.mark.power_meter("keysight_power_analyzer_software_winWCF")
+@pytest.mark.power_meter("keysight_power_analyzer_software_win_wcf")
 def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     # Init power meter by specifying module name as datalogger or scope
-    power_meter.interfaces.power_meter.init_power_meter("data_logger")
+    power_meter.interfaces.power_meter.init_power_meter(data_log_file_name="UTF1_Data_Log")
     # Init power meter module 
-    power_meter.interfaces.power_meter.power_meter_module.init_power_meter_module(data_log_file_name="UTF1_Data_Log")
+    power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
     # set power meter out put channels
     power_meter.interfaces.power_meter.set_output_channels(["1","2"])
     # start capture power meter datalog/scope
@@ -47,13 +47,12 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     assert parsed_result["Output"] is not None 
     
 
-
-@pytest.mark.power_meter("keysight_power_analyzer_software_winRM")
+@pytest.mark.power_meter("keysight_power_analyzer_software_win_rm")
 def test_power_meter_keysight_benchvue_win_rm(power_meter):
     # Init power meter as datalogger/scope
-    power_meter.interfaces.power_meter.init_power_meter("data_logger")
+    power_meter.interfaces.power_meter.init_power_meter()
     # Init power meter module 
-    power_meter.interfaces.power_meter.power_meter_module.init_power_meter_module()
+    power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
     # set power meter out put channels
     power_meter.interfaces.power_meter.set_output_channels(["1","2"])
     # start capture power meter datalog/scope
