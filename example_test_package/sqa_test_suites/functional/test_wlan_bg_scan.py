@@ -1074,3 +1074,69 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
             'Unable to find the HT capabilities packet in DUT side'
 
 
+@pytest.mark.dut("rs9116")
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
+    #Verify BG Scan response before Connection ,it should return 0x0021 error(This we can test in
+    # AT mode only
+    if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for AT"
+        )
+    with TimeMeasurer() as t:
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.scan(ssid=None, channel_list=None)
+            result = wifi_dut.interfaces.wifi.wlan_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+            logger().info(result.decode())
+            assert exc_info.value.error_code == 0x0021
+            logger().info(f"observed error code 0x0021 which is expected")
+    logger().info(f"test executed in {t.duration} seconds")
+
+
+@pytest.mark.dut("rs9116")
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_bgscan_rejoin_failure_c19041(wifi_access_point, wifi_dut):
+    #Verify BG Scan response During the rejoin process ,it should return 0x0025 error.(This we can test only in AT mode'''
+    if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for AT"
+        )
+
+    wifi_dut.interfaces.wifi.rejoin(rsi_max_try=0, rsi_scan_interval=4, rsi_beacon_missed_count=40, rsi_first_time_retry_enabled=0)
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel_list=None)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
+
+    logger().info('***** Disable the AP radio *****')
+    wifi_access_point.interfaces.wifi.stop_ap()
+    time.sleep(10)
+
+    with TimeMeasurer() as t:
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.wlan_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
+            assert exc_info.value.error_code == 0x0025
+            logger().info(f"\n\n observed error code 0x0025 which is expected\n")
+    logger().info(f"test executed in {t.duration} seconds")
