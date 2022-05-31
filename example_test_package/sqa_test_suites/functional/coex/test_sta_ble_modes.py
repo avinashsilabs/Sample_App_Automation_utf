@@ -193,6 +193,8 @@ class WifiThread_PSKMODE(ThreadBase):
             packet_filter5 = f'wlan_radio.channel == {self.wifi_access_point.interfaces.wifi.channel} or dhcp'
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
+            packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
+
             logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -207,10 +209,21 @@ class WifiThread_PSKMODE(ThreadBase):
                 assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
                     'packet_count'], 'Unable to find dhcp in sniffer '
 
+            logger().info("Validating eapol4 packet")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
+                'packet_count'], 'Unable to find eapol4 packet in sniffer '
+
             logger().info("Validating time between two packets")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+
             time_stamp_list = time_obj.find_time_stamp()
             logger().info(f'time stamp list ={time_stamp_list}')
+
+            length = len(time_stamp_list)
+            packet_found = False
+            if length == 2:
+                packet_found = True
+            assert packet_found is True, "4th eapol packet not found in capture file"
 
             # Calculating the unicast probe req time
             time_str1 = time_stamp_list[0]
@@ -300,6 +313,8 @@ class WifiThread_PMKmode(ThreadBase):
             packet_filter5 = f'wlan_radio.channel == {self.wifi_access_point.interfaces.wifi.channel} or dhcp'
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
+            packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
+
             logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -314,10 +329,21 @@ class WifiThread_PMKmode(ThreadBase):
                 assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
                     'packet_count'], 'Unable to find dhcp in sniffer '
 
+            logger().info("Validating eapol4 packet")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
+                    'packet_count'], 'Unable to find eapol4 packet in sniffer '
+
             logger().info("Validating time between two packets")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+
             time_stamp_list = time_obj.find_time_stamp()
             logger().info(f'time stamp list ={time_stamp_list}')
+
+            length = len(time_stamp_list)
+            packet_found = False
+            if length == 2:
+                packet_found = True
+            assert packet_found is True, "4th eapol packet not found in capture file"
 
             # Calculating the unicast probe req time
             time_str1 = time_stamp_list[0]
@@ -409,6 +435,8 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
     wifi_sniffer.interfaces.capture.stop_capture()
 
+    packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
+
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -423,10 +451,21 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
             'packet_count'], 'Unable to find dhcp in sniffer '
 
+    logger().info("Validating eapol4 packet")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
+        'packet_count'], 'Unable to find eapol4 packet in sniffer '
+
     logger().info("Validating time between two packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+
     time_stamp_list = time_obj.find_time_stamp()
     logger().info(f'time stamp list ={time_stamp_list}')
+
+    length = len(time_stamp_list)
+    packet_found = False
+    if length == 2:
+        packet_found = True
+    assert packet_found is True, "4th eapol packet not found in capture file"
 
     # Calculating the unicast probe req time
     time_str1 = time_stamp_list[0]
@@ -501,6 +540,8 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     packet_filter5 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
     wifi_sniffer.interfaces.capture.stop_capture()
 
+    packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
+
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
@@ -515,10 +556,21 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
             'packet_count'], 'Unable to find dhcp in sniffer '
 
+    logger().info("Validating eapol4 packet")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
+        'packet_count'], 'Unable to find eapol4 packet in sniffer '
+
     logger().info("Validating time between two packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
+
     time_stamp_list = time_obj.find_time_stamp()
     logger().info(f'time stamp list ={time_stamp_list}')
+
+    length = len(time_stamp_list)
+    packet_found = False
+    if length == 2:
+        packet_found = True
+    assert packet_found is True, "4th eapol packet not found in capture file"
 
     # Calculating the unicast probe req time
     time_str1 = time_stamp_list[0]
@@ -631,7 +683,7 @@ def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_C20213(wifi_dut, ble_client, wifi
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
-    logger().info("Repeating test for 10 iterations")
+    logger().info("Repeating test for 5 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer)
@@ -670,7 +722,7 @@ def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
-    logger().info("Repeating test for 10 iterations")
+    logger().info("Repeating test for 5 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer)
@@ -696,6 +748,7 @@ def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA", "cipher": 'TKIP', "standard": '11g'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     testcase = "testcase for tkip with psk + ble_C20252"
@@ -707,7 +760,7 @@ def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wi
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
-    logger().info("Repeating test for 10 iterations")
+    logger().info("Repeating test for 5 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
@@ -732,6 +785,7 @@ def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": "WPA2", "cipher": 'AES'})
 def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
@@ -746,7 +800,7 @@ def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wif
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
-    logger().info("Repeating test for 10 iterations")
+    logger().info("Repeating test for 5 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
@@ -771,6 +825,7 @@ def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA", "cipher": 'TKIP',
                           "standard": '11bg'})
@@ -786,7 +841,7 @@ def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wi
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
-    logger().info("Repeating test for 10 iterations")
+    logger().info("Repeating test for 5 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)
@@ -811,6 +866,7 @@ def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA2", "cipher": 'AES'})
 def test_threading_sta_ble_modes_AES_pmk_C20255(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
@@ -825,7 +881,7 @@ def test_threading_sta_ble_modes_AES_pmk_C20255(wifi_dut, wifi_access_point, wif
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
-    logger().info("Repeating test for 10 iterations")
+    logger().info("Repeating test for 5 iterations")
     for i in range(1, 5):
         logger().info(f"Iteration {i} started")
         connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=True)

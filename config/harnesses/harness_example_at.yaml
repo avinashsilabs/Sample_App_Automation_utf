@@ -760,6 +760,8 @@ defaults:
     remote_socket: 'raspi_ip_socket'
     multicast_client: 'raspi_multicast'
 
+    switch: 'switched_ap'
+
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
