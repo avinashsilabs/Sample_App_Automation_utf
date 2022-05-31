@@ -142,7 +142,7 @@ def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
                 bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
-        assert len(hid_logs) == len(test_data)
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
         for i in range(len(test_data)):
             assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -211,7 +211,7 @@ def test_set_local_cod_C20023_class_002560(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -278,7 +278,7 @@ def test_set_local_cod_C20023_class_002540(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -345,7 +345,7 @@ def test_set_local_cod_C20023_class_002580(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -409,7 +409,7 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_only_C20025(bt_dut, bt_client
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
@@ -471,7 +471,7 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_yes_no_C20026(bt_dut, bt_clie
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
@@ -533,7 +533,7 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
@@ -592,7 +592,7 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client)
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -743,7 +743,7 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
@@ -802,7 +802,7 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -876,7 +876,7 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
                 bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
-        assert len(hid_logs) == len(test_data)
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
         for i in range(len(test_data)):
             assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
@@ -952,7 +952,7 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client)
                 bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
-        assert len(hid_logs) == len(test_data)
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
         for i in range(len(test_data)):
             assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
