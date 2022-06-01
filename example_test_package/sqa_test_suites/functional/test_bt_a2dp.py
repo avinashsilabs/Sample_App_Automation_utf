@@ -36,6 +36,11 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
+# BT_inquiry inputs
+inquiry_type = 2
+inquiry_duration_ms = 20000
+timeout = 22
+
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
 def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
     current_time = time.time()
@@ -44,20 +49,20 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
     logger().info("========Configure DUT in a2dp Initiator_Role===============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address is not None, "Unable to find bt dut address"
+    assert bt_dut_address, "Failed to get bt dut address "
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("==========Configure Raspberry pi device as sink===========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
-    assert bt_client_address is not None, "Unable to find bt client address"
+    assert bt_client_address, "Failed to get bt client address"
     logger().info(f"BT Client address {bt_client_address}")
 
     logger().info("Searching for the bt client address")
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
         bt_client_address=bt_client_address,
-        inquiry_type=2,
-        inquiry_duration_ms=20000,
-        timeout=22,
+        inquiry_type=inquiry_type,
+        inquiry_duration_ms=inquiry_duration_ms,
+        timeout=timeout,
         retry_counts=3,
     )
     if not device_found:
@@ -71,28 +76,25 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
     time.sleep(10)
     # Ping dut
-    logger().info("=========Invoke the L2ping===========")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-        dest_addr=bt_dut_address
-    )
-    time.sleep(30)
+    logger().info("=========Pinging to dut from bt_client===========")
+    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info("Successfully pinged to DUT from bt_client")
 
     # Start capturing audio
     logger().info("==============Start Capturing audio================")
     capture = bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-    assert capture is not None, "capture is empty"
+    assert capture, "capture is empty"
 
     # # A2DP SBC Audio streaming to Raspi
     logger().info("==============Start A2DP SBC Audio streaming from DUT to Raspberry===========")
     audio_streaming = wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-    assert audio_streaming, "Unable to audio streaming from dut to raspberry"
-    time.sleep(3)
+    assert audio_streaming, "Failed audio streaming"
 
     # assert the captured audio size
     logger().info("============Capturing the size of audio file=============")
     captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
     logger().info(f"captured_audio_size : {captured_audio_size}")
-    assert captured_audio_size != 0
+    assert captured_audio_size != 0, "captured size is zero"
 
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
@@ -104,24 +106,23 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
 
     logger().info("========Configure DUT in a2dp Initiator_Role==========")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp(enable_avrcp=True)
-    assert bt_dut_address is not None, "Unable to find bt dut address"
+    assert bt_dut_address, "Failed to get bt dut address"
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("==========Configure Raspberry pi device as sink==========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
-    assert bt_client_address is not None, "Unable to find bt client address"
+    assert bt_client_address, "Failed to get bt client address"
     logger().info(f"BT Client address {bt_client_address}")
 
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
         bt_client_address=bt_client_address,
-        inquiry_type=2,
-        inquiry_duration_ms=20000,
-        timeout=22,
+        inquiry_type=inquiry_type,
+        inquiry_duration_ms=inquiry_duration_ms,
+        timeout=timeout,
         retry_counts=3,
     )
     if not device_found:
         logger().error(f"Dut unable to find the bt client device. The test case may fail.")
-
     logger().info(f"BT found device is {device_found}, found bt client address {bt_client_address}")
 
     logger().info("=============Initiating BT Connection and followed by A2DP Connection============")
@@ -135,11 +136,11 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
         dest_addr=bt_dut_address
     )
-    time.sleep(30)
+
     # Start capturing audio
     logger().info("=======Start Capturing audio==========")
     capture = bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-    assert capture is not None, "capture is empty"
+    assert capture, "capture is empty"
 
     # Playback and volume control from Raspi
     logger().info("===========AVRCP Play==========")
@@ -169,7 +170,7 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     logger().info("==========Capturing audio size=============")
     captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
     logger().info(f"captured_audio_size : {captured_audio_size}")
-    assert captured_audio_size != 0
+    assert captured_audio_size != 0, "captured size is zero"
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
 def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
@@ -179,20 +180,20 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
 
     logger().info("========Configure DUT in a2dp Initiator_Role===============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address is not None, "Unable to find bt dut address"
+    assert bt_dut_address, "Failed to get bt dut address"
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("===========Configure Raspberry pi device as sink===========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
                                                                            pin_code=pin_code)
-    assert bt_client_address is not None, "Unable to find bt client address"
+    assert bt_client_address, "Failed to get bt client address"
     logger().info(f"BT Client address {bt_client_address}")
 
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
         bt_client_address=bt_client_address,
-        inquiry_type=2,
-        inquiry_duration_ms=20000,
-        timeout=22,
+        inquiry_type=inquiry_type,
+        inquiry_duration_ms=inquiry_duration_ms,
+        timeout=timeout,
         retry_counts=3,
     )
     if not device_found:
@@ -205,15 +206,19 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
 
     time.sleep(10)
+    # Ping dut
+    logger().info("=========Pinging to dut from bt_client===========")
+    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info("Successfully pinged to DUT from bt_client")
 
     logger().info("==========Start Capturing audio=============")
     capture = bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-    assert capture is not None, "capture is empty"
+    assert capture, "capture is empty"
 
     # A2DP SBC Audio streaming to Raspi
     logger().info("==========Start A2DP SBC Audio streaming from DUT to Raspberry=============")
     audio_streaming = wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-    assert audio_streaming, "Unable to audio streaming from dut to raspberry"
+    assert audio_streaming, "Failed audio streaming"
 
     time.sleep(3)
 
@@ -224,21 +229,22 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     connected = wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
     assert connected, "unable to connect bt device"
     logger().info(f'device connection state is {connected}')
+
     time.sleep(10)
     logger().info("==========Start Capturing audio=============")
     capture = bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-    assert capture is not None, "capture is empty"
+    assert capture, "capture is empty"
 
     # A2DP SBC Audio streaming to Raspi
     logger().info("==========Start A2DP SBC Audio streaming from DUT to Raspberry=============")
     audio_streaming = wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-    assert audio_streaming, "Unable to audio streaming from dut to raspberry"
+    assert audio_streaming, "Failed audio streaming"
 
     time.sleep(3)
     # logger().info("==========Initiating BT disconnecting from DUT============")
     captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
     logger().info(f"captured_audio_size : {captured_audio_size}")
-    assert captured_audio_size != 0
+    assert captured_audio_size != 0, "Capture size is zero"
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
 def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
@@ -248,19 +254,19 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
 
     logger().info("============Configure DUT in a2dp Initiator_Role=============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address is not None, "Unable to find bt dut address"
+    assert bt_dut_address, "Failed to get bt dut address "
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("==========Configure Raspberry pi device as sink==============")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
-    assert bt_client_address is not None, "Unable to find bt client address"
+    assert bt_client_address, "Failed to get bt client address"
     logger().info(f"BT Client address {bt_client_address}")
 
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
         bt_client_address=bt_client_address,
-        inquiry_type=2,
-        inquiry_duration_ms=20000,
-        timeout=22,
+        inquiry_type=inquiry_type,
+        inquiry_duration_ms=inquiry_duration_ms,
+        timeout=timeout,
         retry_counts=3,
     )
     if not device_found:
@@ -272,20 +278,24 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     assert connected, "unable to connect bt device"
     logger().info(f'device connection state is {connected}')
     time.sleep(10)
+    # Ping dut
+    logger().info("=========Pinging to dut from bt_client===========")
+    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info("Successfully pinged to DUT from bt_client")
 
     # Start capturing audio
     logger().info("==========Start Capturing audio=============")
     capture = bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-    assert capture is not None, "capture is empty"
+    assert capture, "capture is empty"
 
     # A2DP SBC Audio streaming to Raspi
     logger().info("==========Start A2DP SBC Audio streaming from DUT to Raspberry=============")
     audio_streaming = wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-    assert audio_streaming, "Unable to audio streaming from dut to raspberry"
+    assert audio_streaming, "Failed audio streaming"
 
     time.sleep(4)
 
-    logger().info("===========efr reset soft==========")
+    logger().info("===========reset soft==========")
     wifi_dut.interfaces.wifi.reset_soft()
 
     logger().info("======init===============")
@@ -293,12 +303,12 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
 
     logger().info("============Configure DUT in a2dp Initiator_Role=============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address is not None, "Unable to find bt dut address"
+    assert bt_dut_address, "Failed to get bt dut address"
     logger().info(f"BT Dut address {bt_dut_address}")
 
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
                                                                        pin_code=pin_code)
-    assert bt_client_address is not None, "Unable to find bt client address"
+    assert bt_client_address, "Failed to get bt client address"
     logger().info(f"BT Client address {bt_client_address}")
 
     logger().info("==============Initiating BT Connection and followed by A2DP Connection===============")
@@ -309,11 +319,11 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     # A2DP SBC Audio streaming to Raspi
     logger().info("==============Start A2DP SBC Audio streaming from DUT to Raspberry===========")
     audio_streaming = wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-    assert audio_streaming, "Unable to audio streaming from dut to raspberry"
+    assert audio_streaming, "Failed audio streaming"
 
     time.sleep(10)
     # assert the captured audio size
     logger().info("============Capturing the size of audio file=============")
     captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
     logger().info(f"captured_audio_size : {captured_audio_size}")
-    assert captured_audio_size != 0
+    assert captured_audio_size != 0, "Captured size is zero"
