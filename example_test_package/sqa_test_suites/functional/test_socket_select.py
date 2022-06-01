@@ -61,20 +61,8 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
         )
-    for count in range(1, 3):
-        try:
-            scan_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger.info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
-            scan_fail = 0
-            break
-        except:
-            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
-            time.sleep(1)
-    if scan_fail:
-        logger.info(f"Scanning to the AP has failed")
-        assert scan_fail == 0, "Scanning to the AP is failed"
+
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger.info(f"DUT MAC_Address: {mac_address}")
