@@ -6,14 +6,10 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
-    RS9116CertificateType,
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
     RS9116PowerSaveModes,
-    SocketOptions,
-    SocketType,
-    Cipher,
     DeviceConstants,
     RS9116AsyncEventType,
     RS9116PowerSaveProcedureTypes
@@ -1211,7 +1207,7 @@ def test_socket_select_after_remote_terminate_TC19333(
         result = wifi_dut.interfaces.wifi.close_socket(sock_count)
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
         logger.info(f"Successfully closed socket_id->{sock_count}")
-        sock_count = sock_count + 1
+        sock_count = sock_count - 1
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger.info("Stop Sniffer finally")
