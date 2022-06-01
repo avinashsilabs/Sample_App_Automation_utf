@@ -41,7 +41,7 @@ inquiry_type = 2
 inquiry_duration_ms = 20000
 timeout = 22
 
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_dut_simple_play_C20054.wav" + '_' + str(
@@ -54,7 +54,7 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
     logger().info("==========Configure Raspberry pi device as sink===========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
-    assert bt_client_address, "Failed to get bt client address"
+    assert bt_client_address, "Failed to initiate sink in remote device "
     logger().info(f"BT Client address {bt_client_address}")
 
     logger().info("Searching for the bt client address")
@@ -98,7 +98,7 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_avrcp_functional_C20060.wav" + '_' + str(
@@ -111,7 +111,7 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
 
     logger().info("==========Configure Raspberry pi device as sink==========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
-    assert bt_client_address, "Failed to get bt client address"
+    assert bt_client_address, "Failed to initiate sink in remote device "
     logger().info(f"BT Client address {bt_client_address}")
 
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
@@ -172,7 +172,7 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     logger().info(f"captured_audio_size : {captured_audio_size}")
     assert captured_audio_size != 0, "captured size is zero"
 
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_repair_functionality_C20059.wav"+ '_' + str(
@@ -186,7 +186,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     logger().info("===========Configure Raspberry pi device as sink===========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
                                                                            pin_code=pin_code)
-    assert bt_client_address, "Failed to get bt client address"
+    assert bt_client_address, "Failed to initiate sink in remote device"
     logger().info(f"BT Client address {bt_client_address}")
 
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
@@ -246,7 +246,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     logger().info(f"captured_audio_size : {captured_audio_size}")
     assert captured_audio_size != 0, "Capture size is zero"
 
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_dut_power_play_C20057.wav" + '_' + str(
@@ -259,7 +259,7 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
 
     logger().info("==========Configure Raspberry pi device as sink==============")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
-    assert bt_client_address, "Failed to get bt client address"
+    assert bt_client_address, "Failed to initiate sink in remote device"
     logger().info(f"BT Client address {bt_client_address}")
 
     device_found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(
@@ -308,7 +308,7 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
 
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
                                                                        pin_code=pin_code)
-    assert bt_client_address, "Failed to get bt client address"
+    assert bt_client_address, "Failed to initiate sink in remote device"
     logger().info(f"BT Client address {bt_client_address}")
 
     logger().info("==============Initiating BT Connection and followed by A2DP Connection===============")
