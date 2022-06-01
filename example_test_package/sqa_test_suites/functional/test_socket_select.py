@@ -13,7 +13,7 @@ from utf_wiseconnect.devices.rs911x import (
     DeviceConstants,
     RS9116AsyncEventType,
     RS9116PowerSaveProcedureTypes
-    )
+)
 from utf.interfaces.wifi import WlanError
 from threading import Thread
 import string
@@ -56,7 +56,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
 
     wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
@@ -65,7 +65,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
 
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
@@ -130,15 +130,17 @@ def send_data(remote_socket, tx_buffer, wait_time, logger):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 def test_socket_select_tcp_TC19325(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count
-        ):
+):
     capture_filename = "test_socket_select_tcp_TC19325"
     remote_socket.interfaces.socket.time_limit = 3600
     since_time = 0
@@ -233,15 +235,16 @@ def test_socket_select_tcp_TC19325(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 def test_socket_select_tcp_server_TC19326(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
-        ):
+):
     capture_filename = "test_socket_select_tcp_server_TC19326"
     since_time = 0
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -262,10 +265,10 @@ def test_socket_select_tcp_server_TC19326(
                 client_socket.connect_client_tcp,
                 device_ip,
                 device_port,
-                ),
-            ],
+            ),
+        ],
         timeout=10,
-        )
+    )
     socket_id = result[0]
     for iteration in range(1, repeat_count):
         logger.info(f"#####################################################Iteration count -> {iteration}")
@@ -345,9 +348,11 @@ def test_socket_select_tcp_server_TC19326(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
@@ -444,14 +449,14 @@ def test_socket_select_udp_TC19328(wifi_sniffer, wifi_dut, wifi_access_point, re
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
         "client_socket_limit": 4,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 def test_socket_select_tcp_server_multiple_sockets_TC19327(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
-        ):
+):
     capture_filename = "test_socket_select_tcp_server_multiple_sockets_TC19327"
     since_time = 0
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -486,10 +491,10 @@ def test_socket_select_tcp_server_multiple_sockets_TC19327(
                     client_socket[count].connect_client_tcp,
                     device_ip,
                     server_port_base + count,
-                    ),
-                ],
+                ),
+            ],
             timeout=10,
-            )
+        )
 
         socket_id = result[0]
         if count == 0:
@@ -582,14 +587,15 @@ def test_socket_select_tcp_server_multiple_sockets_TC19327(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_neg_TCC19332(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+):
     capture_filename = "test_socket_select_neg_TCC19332"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -626,14 +632,15 @@ def test_socket_select_neg_TCC19332(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+):
     capture_filename = "test_socket_select_synchronous_timeout_NULL_tcp_TC19335"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -700,14 +707,15 @@ def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+):
     capture_filename = "test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -816,15 +824,16 @@ def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
             4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 def test_socket_select_multiple_sockets_tcp_udp_TC19329(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
-        ):
+):
     capture_filename = "test_socket_select_multiple_sockets_TC19329"
     since_time = 0
     remote_socket_factory.interfaces.socket.time_limit = 3600
@@ -862,7 +871,7 @@ def test_socket_select_multiple_sockets_tcp_udp_TC19329(
         if sock_count < 2:
             wifi_dut.interfaces.wifi.connect_to_server(
                 sock, server_socket
-                )
+            )
 
     for iteration in range(1, repeat_count):
         logger.info(f"#####################################################Iteration count -> {iteration}")
@@ -954,14 +963,14 @@ def test_socket_select_multiple_sockets_tcp_udp_TC19329(
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
         "client_socket_limit": 4,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 def test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
-        ):
+):
     capture_filename = "test_socket_select_tcp_server_multiple_sockets_TC19327"
     since_time = 0
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -996,10 +1005,10 @@ def test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330(
                     client_socket[count].connect_client_tcp,
                     device_ip,
                     server_port,
-                    ),
-                ],
+                ),
+            ],
             timeout=10,
-            )
+        )
 
         socket_id = result[0]
         if count == 0:
@@ -1099,14 +1108,15 @@ def test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_after_remote_terminate_TC19333(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger
-        ):
+):
     capture_filename = "test_socket_select_after_remote_terminate_TC19333"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -1130,10 +1140,10 @@ def test_socket_select_after_remote_terminate_TC19333(
                         client_socket.connect_client_tcp,
                         device_ip,
                         device_port,
-                        ),
-                    ],
+                    ),
+                ],
                 timeout=10,
-                )
+            )
         socket_id = result[0]
         wifi_dut.interfaces.wifi.set_fd(socket_count=2)
         wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
@@ -1231,15 +1241,16 @@ def test_socket_select_after_remote_terminate_TC19333(
             4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
 def test_socket_select_tcp_close_stress_TC19334(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time
-        ):
+):
     capture_filename = "test_socket_select_multiple_sockets_TC19329"
     since_time = 0
     remote_socket_factory.interfaces.socket.time_limit = 3600
@@ -1273,7 +1284,7 @@ def test_socket_select_tcp_close_stress_TC19334(
             wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
             wifi_dut.interfaces.wifi.connect_to_server(
                 sock, server_socket
-                )
+            )
         for socket_no in range(0, 4):
             wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=0)
             socket_id = 3
@@ -1356,14 +1367,14 @@ def test_socket_select_tcp_close_stress_TC19334(
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
         "client_socket_limit": 4,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
 def test_socket_select_tcp_server_bidirectional_TC19337(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time
-        ):
+):
     capture_filename = "test_socket_select_tcp_server_bidirectional_TC19337"
     since_time = 0
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -1397,10 +1408,10 @@ def test_socket_select_tcp_server_bidirectional_TC19337(
                     client_socket[count].connect_client_tcp,
                     device_ip,
                     server_port_base + count,
-                    ),
-                ],
+                ),
+            ],
             timeout=10,
-            )
+        )
 
         socket_id = result[0]
         if count == 0:
@@ -1504,15 +1515,16 @@ def test_socket_select_tcp_server_bidirectional_TC19337(
             4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
 def test_socket_select_udp_bidirectional_TC19338(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time
-        ):
+):
     capture_filename = "test_socket_select_udp_bidirectional_TC19338"
     since_time = 0
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
