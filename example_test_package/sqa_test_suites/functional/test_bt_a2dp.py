@@ -49,7 +49,7 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
     logger().info("========Configure DUT in a2dp Initiator_Role===============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address, "Failed to get bt dut address "
+    assert bt_dut_address, "failed to initialise bt in dut "
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("==========Configure Raspberry pi device as sink===========")
@@ -106,7 +106,7 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
 
     logger().info("========Configure DUT in a2dp Initiator_Role==========")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp(enable_avrcp=True)
-    assert bt_dut_address, "Failed to get bt dut address"
+    assert bt_dut_address, "failed to initialise bt in dut"
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("==========Configure Raspberry pi device as sink==========")
@@ -180,7 +180,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
 
     logger().info("========Configure DUT in a2dp Initiator_Role===============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address, "Failed to get bt dut address"
+    assert bt_dut_address, "failed to initialise bt in dut"
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("===========Configure Raspberry pi device as sink===========")
@@ -254,7 +254,7 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
 
     logger().info("============Configure DUT in a2dp Initiator_Role=============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address, "Failed to get bt dut address "
+    assert bt_dut_address, "failed to initialise bt in dut "
     logger().info(f"BT Dut address {bt_dut_address}")
 
     logger().info("==========Configure Raspberry pi device as sink==============")
@@ -303,7 +303,7 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
 
     logger().info("============Configure DUT in a2dp Initiator_Role=============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
-    assert bt_dut_address, "Failed to get bt dut address"
+    assert bt_dut_address, "failed to initialise bt in dut"
     logger().info(f"BT Dut address {bt_dut_address}")
 
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
