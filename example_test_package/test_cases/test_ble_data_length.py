@@ -50,7 +50,7 @@ def test_data_length_advertisement(wifi_dut, wifi_access_point, ble_client, logg
         wifi_dut.interfaces.wifi.ble_start_advertising()
     assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
 
-    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_data_length_advertisement.log") as ble_logs:
+    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_data_length_advertisement.log"):
         ble_client.interfaces.bluetooth.connect(bt_dut_address)
         time.sleep(1)
 
@@ -61,15 +61,19 @@ def test_data_length_advertisement(wifi_dut, wifi_access_point, ble_client, logg
 
         rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.read_suggested_default_data_length()
         assert rc == 0
-        logger.info(f"ble_client Suggested default data length command result : {result}")
-        ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, 0x00FB, 0x0828) #251, 2088
+        logger.info(f"read_suggested_default_data_length : {result}")
+
+        rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, "FB 00 28 08") #251 2088
+        assert rc == 0
+        logger.info(f"set_data_length : {result}")
+
+        time.sleep(3)
 
         [tx_len, tx_time, _, _] = wifi_dut.interfaces.wifi.ble_read_max_data_length()
         assert tx_len
         assert tx_time
         logger.info(f"wifi_dut Suggested default data length : {tx_len}, {tx_time}")
         wifi_dut.interfaces.wifi.ble_set_data_length(bt_client_address, 0x00F7, 0x0848) #247, 2120
-        ble_logs.__generate_dummy_logs()
 
     # Connecting will automatically stop advertising
     with pytest.raises(WlanError) as exc_info:
@@ -110,7 +114,7 @@ def test_data_length_scanning(wifi_dut, wifi_access_point, ble_client, logger):
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger.info(f"Initiating connection this can take upto {timeout} seconds....")
-    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_data_length_scanning.log") as ble_logs:
+    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_data_length_scanning.log"):
         wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
         # Get the state of the dut
@@ -120,15 +124,19 @@ def test_data_length_scanning(wifi_dut, wifi_access_point, ble_client, logger):
 
         rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.read_suggested_default_data_length()
         assert rc == 0
-        logger.info(f"ble_client Suggested default data length command result : {result}")
-        ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, 0x00FB, 0x0828) #251, 2088
+        logger.info(f"read_suggested_default_data_length : {result}")
+
+        rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, "FB 00 28 08") #251 2088
+        assert rc == 0
+        logger.info(f"set_data_length : {result}")
+
+        time.sleep(3)
 
         [tx_len, tx_time, _, _] = wifi_dut.interfaces.wifi.ble_read_max_data_length()
         assert tx_len
         assert tx_time
         logger.info(f"wifi_dut Suggested default data length : {tx_len}, {tx_time}")
         wifi_dut.interfaces.wifi.ble_set_data_length(bt_client_address, 0x00F7, 0x0848) #247, 2120
-        ble_logs.__generate_dummy_logs()
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
