@@ -2,7 +2,7 @@ import time
 import pytest
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116AsyncEventType
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.wifi import WlanError
@@ -50,30 +50,33 @@ def test_data_length_advertisement(wifi_dut, wifi_access_point, ble_client, logg
         wifi_dut.interfaces.wifi.ble_start_advertising()
     assert exc_info.value.error_code == 0x4E0C  # "command disallowed"
 
-    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_data_length_advertisement.log"):
-        ble_client.interfaces.bluetooth.connect(bt_dut_address)
-        time.sleep(1)
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    time.sleep(1)
 
-        # Get the state of the dut
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
 
-        rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.read_suggested_default_data_length()
-        assert rc == 0
-        logger.info(f"read_suggested_default_data_length : {result}")
+    # setting data length on ble_client
+    since_time = time.perf_counter_ns()
+    with BleLogs(start_collecting_logs=True, bt_log_path=f"/tmp/test_data_length_advertisement_{int(time.time())}.log") as ble_logs:
+        ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, "F7 00 28 08") #251 2088
+        time.sleep(2)
 
-        rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, "FB 00 28 08") #251 2088
-        assert rc == 0
-        logger.info(f"set_data_length : {result}")
+    # Checking data length change event on the ble_client side
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+    data_length_change_events = [e for e in events if e.event_type == RS9116AsyncEventType.Ble_data_length_change]
+    assert len(data_length_change_events) == 1
+    [event] = data_length_change_events
+    assert event is not None, "Did not receive the data length change event"
 
-        time.sleep(3)
-
-        [tx_len, tx_time, _, _] = wifi_dut.interfaces.wifi.ble_read_max_data_length()
-        assert tx_len
-        assert tx_time
-        logger.info(f"wifi_dut Suggested default data length : {tx_len}, {tx_time}")
-        wifi_dut.interfaces.wifi.ble_set_data_length(bt_client_address, 0x00F7, 0x0848) #247, 2120
+    # Checking data length change event on the dut side
+    [tx_len, tx_time, rx_len, rx_time] = ble_logs.data_length_change_values()
+    assert tx_len
+    assert tx_time
+    assert rx_len
+    assert rx_time
 
     # Connecting will automatically stop advertising
     with pytest.raises(WlanError) as exc_info:
@@ -114,29 +117,32 @@ def test_data_length_scanning(wifi_dut, wifi_access_point, ble_client, logger):
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger.info(f"Initiating connection this can take upto {timeout} seconds....")
-    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_data_length_scanning.log"):
-        wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
 
-        # Get the state of the dut
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
 
-        rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.read_suggested_default_data_length()
-        assert rc == 0
-        logger.info(f"read_suggested_default_data_length : {result}")
-
-        rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.set_data_length(bt_dut_address, "FB 00 28 08") #251 2088
-        assert rc == 0
-        logger.info(f"set_data_length : {result}")
-
-        time.sleep(3)
-
-        [tx_len, tx_time, _, _] = wifi_dut.interfaces.wifi.ble_read_max_data_length()
-        assert tx_len
-        assert tx_time
-        logger.info(f"wifi_dut Suggested default data length : {tx_len}, {tx_time}")
+    # setting data length on dut
+    since_time = time.perf_counter_ns()
+    with BleLogs(start_collecting_logs=True, bt_log_path=f"/tmp/test_data_length_scanning.log_{int(time.time())}") as ble_logs:
         wifi_dut.interfaces.wifi.ble_set_data_length(bt_client_address, 0x00F7, 0x0848) #247, 2120
+        time.sleep(2)
+
+    # Checking data length change event on the ble_client side
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+    data_length_change_events = [e for e in events if e.event_type == RS9116AsyncEventType.Ble_data_length_change]
+    assert len(data_length_change_events) == 1
+    [event] = data_length_change_events
+    assert event is not None, "Did not receive the data length change event"
+
+    # Checking data length change event on the dut side
+    [tx_len, tx_time, rx_len, rx_time] = ble_logs.data_length_change_values()
+    assert tx_len
+    assert tx_time
+    assert rx_len
+    assert rx_time
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
