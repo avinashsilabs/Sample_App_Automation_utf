@@ -66,7 +66,7 @@ def test_data_length_advertisement(wifi_dut, wifi_access_point, ble_client, logg
 
     # Checking data length change event on the ble_client side
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-    data_length_change_events = [e for e in events if e.event_type == RS9116AsyncEventType.Ble_data_length_change]
+    data_length_change_events = [e for e in events if e.event_type == RS9116AsyncEventType.BLE_DATA_LEN_CHANGE]
     assert len(data_length_change_events) == 1
     [event] = data_length_change_events
     assert event is not None, "Did not receive the data length change event"
@@ -132,7 +132,7 @@ def test_data_length_scanning(wifi_dut, wifi_access_point, ble_client, logger):
 
     # Checking data length change event on the ble_client side
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-    data_length_change_events = [e for e in events if e.event_type == RS9116AsyncEventType.Ble_data_length_change]
+    data_length_change_events = [e for e in events if e.event_type == RS9116AsyncEventType.BLE_DATA_LEN_CHANGE]
     assert len(data_length_change_events) == 1
     [event] = data_length_change_events
     assert event is not None, "Did not receive the data length change event"
