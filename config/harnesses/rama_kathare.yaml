@@ -180,7 +180,7 @@ devices:
             wifi:
                 type: 'wifi.access_points.static'
                 security: WPA2
-                ssid: 'TESTTEST-DLINK'
+                ssid: 'TESTTEST-DLINK-RK'
                 passphrase: 'thisisatestnetwork'
                 channel: 1
                 cipher: 'AES'
