@@ -75,10 +75,10 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
 
     time.sleep(10)
-    # Ping dut
-    logger().info("=========Pinging to dut from bt_client===========")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-    logger().info("Successfully pinged to DUT from bt_client")
+
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, "dut is in inactive state..."
 
     # Start capturing audio
     logger().info("==============Start Capturing audio================")
@@ -97,6 +97,7 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
     assert captured_audio_size != 0, "captured size is zero"
 
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+
 
 @pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
@@ -129,13 +130,12 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     connected = wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
     assert connected, "unable to connect bt device"
     logger().info(f'device connection state is {connected}')
+
     time.sleep(10)
 
-    # Ping dut
-    logger().info("=========Invoke the l2ping=========")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-        dest_addr=bt_dut_address
-    )
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, "dut is in inactive state..."
 
     # Start capturing audio
     logger().info("=======Start Capturing audio==========")
@@ -172,7 +172,6 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     logger().info(f"captured_audio_size : {captured_audio_size}")
     assert captured_audio_size != 0, "captured size is zero"
 
-@pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_repair_functionality_C20059.wav"+ '_' + str(
@@ -206,10 +205,9 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
 
     time.sleep(10)
-    # Ping dut
-    logger().info("=========Pinging to dut from bt_client===========")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-    logger().info("Successfully pinged to DUT from bt_client")
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, "dut is in inactive state..."
 
     logger().info("==========Start Capturing audio=============")
     capture = bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
@@ -246,6 +244,9 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     logger().info(f"captured_audio_size : {captured_audio_size}")
     assert captured_audio_size != 0, "Capture size is zero"
 
+    wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+
+
 @pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     current_time = time.time()
@@ -279,9 +280,9 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
     time.sleep(10)
     # Ping dut
-    logger().info("=========Pinging to dut from bt_client===========")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-    logger().info("Successfully pinged to DUT from bt_client")
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, "dut is in inactive state..."
 
     # Start capturing audio
     logger().info("==========Start Capturing audio=============")
@@ -327,3 +328,5 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     captured_audio_size = bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
     logger().info(f"captured_audio_size : {captured_audio_size}")
     assert captured_audio_size != 0, "Captured size is zero"
+
+    wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
