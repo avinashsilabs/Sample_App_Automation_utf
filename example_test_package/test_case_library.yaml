@@ -1,0 +1,22 @@
+name: UTF Wiseconnect test library
+test_cases:
+  - test_case_id: test_A2DP_2DH3_DUT_as_cinitiator_c34674
+    test_function: test_sta_bt_with_STA_A2DP_2DH3_DUT_as_cinitiator_c34674
+    test_id: test_sta_bt_with_STA_A2DP_2DH3_DUT_as_cinitiator_c34674::1
+    test_module: sqa_test_suites/functional/test_A2DP_Source_Coex.py
+    test_markers:
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated',
+        'bt_disconnect'])
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0, 'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE, 'bt_features':
+        RS9116BTFeatureBitMap.Default|RS9116BTFeatureBitMap.BLEFeatureBitmapValid|RS9116BTFeatureBitMap.RFTypeSelection|RS9116BTFeatureBitMap.A2DPSourceRoleEnable|RS9116BTFeatureBitMap.A2DPProfileEnable})
+    test_params: []
+    test_class: null
+    description: null
+    library_name: UTF Wiseconnect test library
+    id: fb94eff1-93d3-4aab-9940-f5b3d352bcb9
+    enabled: true

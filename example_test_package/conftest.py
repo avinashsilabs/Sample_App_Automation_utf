@@ -75,5 +75,5 @@ def store_environment_info(request, harness: Harness):
 
 def pytest_collection_modifyitems(config, items):
     if config.option.collectonly:
-        with open('./test_definitions_base.yaml', 'w+') as file:
+        with open('base_test_case_definitions.yaml', 'w+') as file:
             generate_base_test_definitions_yaml(file, items)
