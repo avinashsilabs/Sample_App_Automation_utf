@@ -111,6 +111,7 @@ def test_store_config_open_C19081(wifi_sniffer, wifi_access_point, wifi_dut):
         wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
         time.sleep(20)
 
+        logger().info("getting wireless info")
         result = wifi_dut.interfaces.wifi.get_wireless_info()
         assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
 
@@ -204,6 +205,7 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
         wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
         time.sleep(20)
 
+        logger().info("getting wireless info")
         result = wifi_dut.interfaces.wifi.get_wireless_info()
         assert wifi_access_point.interfaces.wifi.ssid in result,"AP ssid not found in the get wireless info"
 
@@ -229,8 +231,6 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
     wifi_sniffer.interfaces.capture.stop_capture()
 
 
-######Need to add cfg_get
-@pytest.mark.skip(reason="Need to add cfg_get")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -321,10 +321,20 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
         logger().info("Enable Auto Configuration")
         # Save the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_save()
+        logger().info("Getting cfg get response")
+        result = wifi_dut.interfaces.wifi.cfg_get()
+        logger().info(f"cfg get command response {result}")
+        if region == "US":
+            assert "region_code:1" in str(result), "Region US not found in cfg get response"
+        if region == "Europe":
+            assert "region_code:2" in str(result), "Region Europe not found in cfg get response"
+        if region == "Japan":
+            assert "region_code:3" in str(result), "Region Japan not found in cfg get response"
+
+        logger().info(f"Region {region} found in cfg_get response")
+
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
-
-        logger().info("cfg get response validation is peding")
 
         for i in range(0,iter_count):
 
@@ -337,8 +347,8 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
             wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
             time.sleep(10)
 
+            logger().info("getting wireless info")
             result = wifi_dut.interfaces.wifi.get_wireless_info()
-
             assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
 
             logger().info("Initiating power save")
@@ -375,8 +385,7 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
 
 
 
-######Need to add cfg_get
-@pytest.mark.skip(reason="Need to add cfg_get")
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -441,9 +450,18 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
             logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
             dut_connected_to_ap = 1
-            logger().info("Enabling auto configuration")
+
+            logger().info("saving the configuration")
             # Save the wireless configuration in the flash
             wifi_dut.interfaces.wifi.config_save()
+
+            logger().info("Getting cfg get response")
+            result = wifi_dut.interfaces.wifi.cfg_get()
+            logger().info(f"cfg get command response {result}")
+            assert "band:2" in str(result),"dual band not found in cfg get response"
+            logger().info("dual band found in cfg get response")
+
+            logger().info("Enabling auto configuration")
             # Enable the wireless configuration in the flash
             wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
 
@@ -457,6 +475,7 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
             logger().info("Initializing DUT")
             wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
             time.sleep(10)
+            logger().info("getting wireless info")
             result = wifi_dut.interfaces.wifi.get_wireless_info()
 
             assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
@@ -660,8 +679,8 @@ def test_store_config_rejoin_specific_channel_C19100(wifi_sniffer,wifi_dut,wifi_
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
 
-######Need to add cfg_get
-@pytest.mark.skip(reason="Need to add cfg_get")
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -708,6 +727,12 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info(f"Device ip : {device_ip}")
 
+    logger().info("Initiating power save")
+    # Enables the power Save in wifi mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1)
+    # Enables the power Save in BT mode
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode1)
+
     logger().info("Enabling auto configuration")
     # Save the wireless configuration in the flash
     wifi_dut.interfaces.wifi.config_save()
@@ -730,20 +755,18 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
         logger().info(f"{result}")
         assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
 
-        logger().info("Initiating power save")
-        # Enables the power Save in wifi mode
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1)
-        # Enables the power Save in BT mode
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode1)
-
-        logger().info("cfg get validation is pending")
-
         logger().info("Initiating ping")
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, ping_count)
         assert status == True, "DUT is not responding to ping request from third party device before store configuration"
         logger().info("ping is successful")
 
+        logger().info("Getting cfg get response")
+        result = wifi_dut.interfaces.wifi.cfg_get()
+        logger().info(f"cfg get command response {result}")
+        logger().info("validating power mode settings in cfg get response")
+        assert (("powermode:1" in str(result)) and ("ulp_mode:1" in str(result))),"Expected power mode not found in cfg get response"
+        logger().info("powermode:1  and ulp_mode:1 found in cfg get response")
         logger().info("Initiating disconnect from DUT")
         # Wlan Disconnect
         wifi_dut.interfaces.wifi.leave()
@@ -762,7 +785,8 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation |RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+        | RS9116FeatureBitMap.PSKSecurity,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "rejoin_max_retry": 0,
         "beacon_missed_count": 40,
@@ -903,8 +927,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
-@pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": "STORE_CONFIG_TEST", "passphrase": 'STORE_CONFIG_TEST', "security": 'WPA2'})
+
 def test_store_config_AWS_conn_listen_inter_C19105(wifi_sniffer, wifi_dut, wifi_access_point):
 
     validation = True
