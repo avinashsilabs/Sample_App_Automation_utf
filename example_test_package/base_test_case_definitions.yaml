@@ -3826,9 +3826,9 @@ test_cases:
   - PowerSave
   - Sqa_Test_Suites
   - Wifi
-- test_case_id: test_http_get_with_different_lengths_C19213[index_long_lf.html]
+- test_case_id: test_http_get_with_different_lengths_C19213[index_long_crlf.html]
   test_function: test_http_get_with_different_lengths_C19213
-  test_id: test_http_get_with_different_lengths_C19213[index_long_lf.html]::1
+  test_id: test_http_get_with_different_lengths_C19213[index_long_crlf.html]::1
   test_module: sqa_test_suites/functional/test_http_https_get_post.py
   test_markers:
   - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
@@ -3841,7 +3841,7 @@ test_cases:
     RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,''ca_cert'': ''ca-chain.cert.pem''})'
   test_params:
   - name: index_path
-    value: index_long_lf.html
+    value: index_long_crlf.html
   test_class: null
   description: null
   library_name: null
@@ -3853,9 +3853,9 @@ test_cases:
   - Sqa_Test_Suites
   - Ssl
   - Wifi
-- test_case_id: test_http_get_with_different_lengths_C19213[index_long_crlf.html]
+- test_case_id: test_http_get_with_different_lengths_C19213[index_long_lf.html]
   test_function: test_http_get_with_different_lengths_C19213
-  test_id: test_http_get_with_different_lengths_C19213[index_long_crlf.html]::1
+  test_id: test_http_get_with_different_lengths_C19213[index_long_lf.html]::1
   test_module: sqa_test_suites/functional/test_http_https_get_post.py
   test_markers:
   - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
@@ -3868,7 +3868,7 @@ test_cases:
     ''RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid'',''ca_cert'': ''ca-chain.cert.pem''})'
   test_params:
   - name: index_path
-    value: index_long_crlf.html
+    value: index_long_lf.html
   test_class: null
   description: null
   library_name: null
@@ -4844,9 +4844,9 @@ test_cases:
   - Sqa_Test_Suites
   - Ssl
   - Wifi
-- test_case_id: test_https_get_functionality_different_urls_C19205[index_long_crlf.html]
+- test_case_id: test_https_get_functionality_different_urls_C19205[index.html]
   test_function: test_https_get_functionality_different_urls_C19205
-  test_id: test_https_get_functionality_different_urls_C19205[index_long_crlf.html]::1
+  test_id: test_https_get_functionality_different_urls_C19205[index.html]::1
   test_module: sqa_test_suites/functional/test_https_get.py
   test_markers:
   - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
@@ -4858,7 +4858,7 @@ test_cases:
     RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,''ca_cert'': ''ca-chain.cert.pem''})'
   test_params:
   - name: index_path
-    value: index_long_crlf.html
+    value: index.html
   test_class: null
   description: null
   library_name: null
@@ -4870,9 +4870,9 @@ test_cases:
   - Sqa_Test_Suites
   - Ssl
   - Wifi
-- test_case_id: test_https_get_functionality_different_urls_C19205[index.html]
+- test_case_id: test_https_get_functionality_different_urls_C19205[index_long_crlf.html]
   test_function: test_https_get_functionality_different_urls_C19205
-  test_id: test_https_get_functionality_different_urls_C19205[index.html]::1
+  test_id: test_https_get_functionality_different_urls_C19205[index_long_crlf.html]::1
   test_module: sqa_test_suites/functional/test_https_get.py
   test_markers:
   - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
@@ -4884,7 +4884,7 @@ test_cases:
     ''RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid'',''ca_cert'': ''ca-chain.cert.pem''})'
   test_params:
   - name: index_path
-    value: index.html
+    value: index_long_crlf.html
   test_class: null
   description: null
   library_name: null
