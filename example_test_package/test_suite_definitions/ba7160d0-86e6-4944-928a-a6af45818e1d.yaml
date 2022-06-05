@@ -1,0 +1,22 @@
+id: ba7160d0-86e6-4944-928a-a6af45818e1d
+name: A2dp Avrcp
+description: ''
+test_cases:
+  - test_case_id: 706fe0e1-a863-4339-84af-937b04fb3c6e
+    iterations: 1
+  - test_case_id: 7327616b-1a9f-43fb-857e-d0307b868b30
+    iterations: 1
+  - test_case_id: 7c897632-523e-471c-a30a-5cd304d937ef
+    iterations: 1
+  - test_case_id: 5ca1aaca-8851-491d-93d3-e11721bc92c2
+    iterations: 1
+  - test_case_id: 996cc78c-da99-46fc-a63b-72ec2f4e33b3
+    iterations: 1
+  - test_case_id: 73b85aac-268a-4d99-b7af-6e139947627c
+    iterations: 1
+  - test_case_id: 2c46d6c8-9432-4f11-825c-751ed6ff2351
+    iterations: 1
+  - test_case_id: a529d191-6803-44f4-a7e3-13cc3f5e0e11
+    iterations: 1
+  - test_case_id: cf93e534-409c-4a5f-83a1-a58f8ee0beb3
+    iterations: 1
