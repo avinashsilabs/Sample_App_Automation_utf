@@ -12,10 +12,18 @@ from utf import TestResultsModelAttrs
 def logger():
     return get_logger(__name__)
 
+pytestmark = [
+    pytest.mark.user_properties("database_test_results",
+                                database_test_results={"feature_name": 'wifi_tests', "test_creation_date": '2022-06-06',
+                                                       "module_name": 'wifi', "test_description": 'module desc',
+                                                       "iot_req_id": 'UTF-1194', "tool_chain": 'IAR'})
+]
 
-def test_version(wifi_dut, update_property):
-    update_property({TestResultsModelAttrs.test_description: 'this test is for verifying the firmware version',
-                     TestResultsModelAttrs.notes: 'firmware section should be present in manifest'})
+
+@pytest.mark.user_properties("database_test_results",
+                             database_test_results={"test_result_type": 'FEATURE', "test_case_name": 'test_version2',
+                                                    "test_case_id": 'test_version2::1', "test_notes": 'notes'})
+def test_version(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
         pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
