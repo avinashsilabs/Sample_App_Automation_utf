@@ -766,6 +766,8 @@ template_contribution:
     name: init_ble
     handler: init_ble_command
     help: 'Initializes the BLE task'
+    argument:
+    - {type: uint8, help: 'capabilities type'}
 - name: cli_command
   priority: 0
   value:
