@@ -1,11 +1,10 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116CustomFeatureBitMap
-from utf.interfaces.bluetooth import BTSocketRole
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,\
+    RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116CustomFeatureBitMap,RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf.interfaces.wifi import WlanError
 import time
 import datetime
-from utf.interfaces.bluetooth import BLEDeviceState
 
 def logger():
     return get_logger(__name__)
@@ -52,9 +51,9 @@ def test_ble_io_cap_displayonly_C19851(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
@@ -110,9 +109,9 @@ def test_ble_io_cap_display_yesno_C19852(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
@@ -167,9 +166,9 @@ def test_ble_io_cap_keyboard_only_C19853(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
@@ -224,9 +223,9 @@ def test_ble_io_cap_No_input_output_C19854(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
@@ -469,9 +468,9 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps,"failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps,"failed to enable bt power save"
     time.sleep(5)
 
@@ -525,9 +524,9 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     logger().info("verifying client addr, is available in scan list...")
     assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
@@ -578,9 +577,9 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
@@ -632,9 +631,9 @@ def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
@@ -693,9 +692,9 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
     time.sleep(3)
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
@@ -734,9 +733,9 @@ def test_ble_dut_slave_connect_C19832(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("start ble scan from remote le device...")
@@ -795,9 +794,9 @@ def test_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs):
     logger().info("advertising Dut")
     ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129) #high duty cycle
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
@@ -862,9 +861,9 @@ def test_ble_scan_resp_8_bytes_C19821(ble_dut, ble_client):
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
@@ -920,9 +919,9 @@ def test_ble_scan_resp_20_bytes_C19822(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
@@ -979,9 +978,9 @@ def test_ble_scan_resp_30_bytes_C19823(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
@@ -1039,9 +1038,9 @@ def test_ble_scan_resp_39_bytes_C19824(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
@@ -1084,9 +1083,9 @@ def test_ble_adv_report_C19848(ble_dut, ble_client):
     assert result, "no bt device found"
 
     logger().info("enabling the power save modes ")
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveModes.PowerSaveMode1)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("verifying client addr, is available in scan list...")
