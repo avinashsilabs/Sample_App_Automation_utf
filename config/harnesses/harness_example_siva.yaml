@@ -566,7 +566,7 @@ devices:
                 type: 'power_meter.keysight_N6705'
                 instrument_lan_ip_address: '10.207.19.83'
 
-    keysight_power_analyzer_software_win_rm:
+    keysight_power_analyzer_benchvue_win_rm:
         interfaces:
             windows_shell: 
                 type: 'rem_mgmt.win_rm'
@@ -576,12 +576,12 @@ devices:
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_rm'
                 shell: 'windows_shell'
-                utf_power_meter_keysight_benchvue_cli_path: 'C:\\Siva\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
+                utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 #power_meter_visa_address: 'TCPIP0::10.207.19.90::hislip0::INSTR'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
 
-    keysight_power_analyzer_software_win_wcf:
+    keysight_power_analyzer_benchvue_win_wcf:
         interfaces:
             windows_wcf_service: 
                 type: 'rem_mgmt.win_wcf'
@@ -777,8 +777,6 @@ defaults:
 
     power_meter: 'keysight_power_analyzer'
 
-    #power_meter1: 'keysight_power_analyzer_winRM'
-
     ble_client: 'raspi_ble_client'
 
     ble_clients:
@@ -889,7 +887,7 @@ defaults:
         data_log_file_name: 'UTF_DataLog_'
         data_log_file_name_is_append_date:  true
         data_log_file_name_is_append_time: true 
-        data_log_folder_location: 'C:\\Siva\\data_log'
+        data_log_folder_location: 'C:\\UTF\\data_log'
         data_log_start: 'DatalogRunButton'
         data_log_stop: 'AfterElapsedTime'
         data_log_stop_after_elapsed_time: 60
