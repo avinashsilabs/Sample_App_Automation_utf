@@ -36,7 +36,7 @@ def logger():
 @pytest.mark.parametrize("channel", [36])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_device_as_server_ap_tcp_rx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
+def test_device_as_server_ap_tcp_rx_c20725(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -105,7 +105,7 @@ def test_device_as_server_ap_tcp_rx(wifi_sniffer, net_perf_client, wifi_dut, wif
 @pytest.mark.parametrize("channel", [36])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_device_as_server_ap_udp_rx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
+def test_device_as_server_ap_udp_rx_c20723(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -174,7 +174,7 @@ def test_device_as_server_ap_udp_rx(wifi_sniffer, net_perf_client, wifi_dut, wif
 @pytest.mark.parametrize("channel", [36])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_host_as_server_ap_tcp_tx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
+def test_host_as_server_ap_tcp_tx_c20724(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -236,7 +236,7 @@ def test_host_as_server_ap_tcp_tx(wifi_sniffer, net_perf_client, wifi_dut, wifi_
 @pytest.mark.parametrize("channel", [36])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_host_as_server_ap_udp_tx(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
+def test_host_as_server_ap_udp_tx_c20722(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
