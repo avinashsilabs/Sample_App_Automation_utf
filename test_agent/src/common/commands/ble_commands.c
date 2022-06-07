@@ -935,9 +935,9 @@ static int32_t rsi_ble_app_get_event(void)
  */
 void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_report)
 {
-    if (device_found == 1) {
-        return;
-    }
+//    if (device_found == 1) {
+//        return;
+//    }
 
     // memset(remote_name, 0, 31);
     // BT_LE_ADPacketExtract(remote_name, adv_report->adv_data, adv_report->adv_data_len);
