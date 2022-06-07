@@ -265,6 +265,9 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
         bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
         time.sleep(10)
+        bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
+
+        time.sleep(10)
         with bt_client.interfaces.bluetooth.bt_socket(
                 mode=BTSocketRole.Server
         ) as bt_server_socket:
@@ -277,7 +280,6 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
                 bt_server_socket.close()
 
         time.sleep(10)
-        bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
 
 def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     inq_type = 1
@@ -354,6 +356,9 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
     time.sleep(10)
+    bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
+
+    time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
     ) as bt_server_socket:
@@ -375,12 +380,9 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
 
-        time.sleep(10)
-        bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
-
         status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
         logger().info(f"connectable state is:{status}")
-        assert status is not None
+        assert status,"failed to fetch the status"
 
-        logger().info("closing bt socket...")
-        bt_server_socket.close()
+    logger().info("closing bt socket...")
+    bt_server_socket.close()
