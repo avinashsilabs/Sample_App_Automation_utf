@@ -2,6 +2,7 @@ import pytest
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116ConfigFeatureBitMap
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf_wiseconnect.interfaces.cli.rs_commands_base import RSCommandsBase
 from utf.utils.logger import get_logger
 import time
 
@@ -175,8 +176,9 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
 
 def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
     inq_type = 1
-    duration = 10000
-    max_no_dev = 10
+    inquiry_duration_ms = 10000
+    max_device_cnt = 10
+    retry_counts =3
 
     bt_local_name = "rs911x_bt_spp"
     bt_pin_code = "4321"
@@ -265,7 +267,7 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
         bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
         time.sleep(10)
-        bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
+        bt_dut.interfaces.bluetooth.bt_inquiry_for_device(bt_client_address,inq_type,inquiry_duration_ms,max_device_cnt,retry_counts,timeout=2)
 
         time.sleep(10)
         with bt_client.interfaces.bluetooth.bt_socket(
@@ -283,8 +285,9 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
 
 def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     inq_type = 1
-    duration = 10000
-    max_no_dev = 10
+    inquiry_duration_ms = 10000
+    max_device_cnt = 10
+    retry_counts =4
     bt_local_name = "rs911x_bt_spp"
     bt_pin_code = "4321"
     pin_code = bt_pin_code
@@ -356,7 +359,8 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
     time.sleep(10)
-    bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
+    bt_dut.interfaces.bluetooth.bt_inquiry_for_device(bt_client_address, inq_type, inquiry_duration_ms, max_device_cnt,
+                                                      retry_counts, timeout=2)
 
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
