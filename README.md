@@ -1,5 +1,6 @@
 # UTF WiSeConnect SQA Application
-
+This repo is a reference implementation of a top-level UTF application.  
+It should be forked by client teams and customized as needed.
 
 # Overview
 ![UTF-Components](docs/images/utf-components.png)
