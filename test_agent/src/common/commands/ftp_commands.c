@@ -78,12 +78,14 @@ void rsi_directory_list_cb(uint16_t status, uint8_t *data, uint16_t length, uint
 
 void rsi_ftp_connect_command(sl_cli_command_arg_t* arguments)
 {
+    uint32_t server_ip_ftp = 0;
 	uint16_t flags = sl_cli_get_argument_uint16(arguments, 0);
 	char* server_ip = sl_cli_get_argument_string(arguments, 1);
 	char* user_name = sl_cli_get_argument_string(arguments, 2);
 	char* password = sl_cli_get_argument_string(arguments, 3);
 	uint32_t server_port = sl_cli_get_argument_uint32(arguments, 4);
-	print_status(rsi_ftp_connect(flags,server_ip,user_name,password,server_port));
+	server_ip_ftp = ip_to_reverse_hex(server_ip);
+	print_status(rsi_ftp_connect(flags,&server_ip_ftp,user_name,password,server_port));
 }
 
 void rsi_set_ftp_mode(sl_cli_command_arg_t* arguments)
