@@ -1,4 +1,4 @@
-from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
+from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS9116FeatureBitMap
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 import pytest
 from utf.utils.logger import get_logger
@@ -23,7 +23,7 @@ def logger():
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "band": RS9116Band.FiveGHz,
-        # "band": RS9116Band.TwoPointFourGHz,
+        "features": RS9116FeatureBitMap.Aggregation,
         "security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36,
         "set_send_feature_frame": True,
         "rf_type": 0,
@@ -92,7 +92,7 @@ def test_device_as_server_ap_tcp_rx_c20725(wifi_sniffer, net_perf_client, wifi_d
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "band": RS9116Band.FiveGHz,
-        # "band": RS9116Band.TwoPointFourGHz,
+        "features": RS9116FeatureBitMap.Aggregation,
         "security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36,
         "set_send_feature_frame": True,
         "rf_type": 0,
@@ -161,7 +161,7 @@ def test_device_as_server_ap_udp_rx_c20723(wifi_sniffer, net_perf_client, wifi_d
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "band": RS9116Band.FiveGHz,
-        # "band": RS9116Band.TwoPointFourGHz,
+        "features": RS9116FeatureBitMap.Aggregation,
         "security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36,
         "set_send_feature_frame": True,
         "rf_type": 0,
@@ -223,7 +223,7 @@ def test_host_as_server_ap_tcp_tx_c20724(wifi_sniffer, net_perf_client, wifi_dut
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "band": RS9116Band.FiveGHz,
-        # "band": RS9116Band.TwoPointFourGHz,
+        "features": RS9116FeatureBitMap.Aggregation,
         "security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36,
         "set_send_feature_frame": True,
         "rf_type": 0,
