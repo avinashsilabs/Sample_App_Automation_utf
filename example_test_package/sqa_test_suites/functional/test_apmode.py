@@ -87,7 +87,6 @@ def test_DUT_APMode_Trnms_rules_USregion_C19454(wifi_sniffer, wifi_dut, wifi_cli
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
-    time.sleep(100)
     wifi_client.interfaces.wifi.join()
     logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
@@ -1022,7 +1021,7 @@ def test_DUTAP_JPregion_unsupportedchannel_C19457(wifi_dut, wifi_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_APMode_Trnms_rules_USregion_C19437(wifi_sniffer, wifi_dut, wifi_client, channel):
+def test_apmode_connectivity_with_wrong_psk_Cli19437(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1079,7 +1078,7 @@ pytest.mark.wifi_client("raspi_wifi")
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_APMode_Trnms_rules_USregion_C19448(wifi_sniffer, wifi_dut, wifi_client, channel):
+def test_DUT_APMode_11d_support_C19448(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1147,7 +1146,7 @@ pytest.mark.wifi_client("raspi_wifi")
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_APMode_Trnms_rules_USregion_C19452(wifi_sniffer, wifi_dut, wifi_client, channel):
+def test_DUT_APMode_store_config_wpa2_C19452(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1235,7 +1234,7 @@ pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.skip()
-def test_DUT_APMode_Trnms_rules_USregion_C19451(wifi_sniffer, wifi_dut, wifi_client, channel):
+def test_DUT_APMode_store_config__C19451(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1329,7 +1328,7 @@ pytest.mark.wifi_client("raspi_wifi")
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_APMode_Trnms_rules_USregion_C19450(wifi_sniffer, wifi_dut, wifi_client, channel, wifi_access_point):
+def test_DUT_APMode_softreset_aptosta_C19450(wifi_sniffer, wifi_dut, wifi_client, channel, wifi_access_point):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1431,7 +1430,7 @@ pytest.mark.wifi_client("raspi_wifi")
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_APMode_Trnms_rules_USregion_C19449(wifi_sniffer, wifi_dut, wifi_client, channel,  wifi_access_point):
+def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, channel,  wifi_access_point):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
 
@@ -1523,7 +1522,7 @@ def test_DUT_APMode_Trnms_rules_USregion_C19449(wifi_sniffer, wifi_dut, wifi_cli
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_APMode_Trnms_rules_USregion_C19439(wifi_sniffer, wifi_dut, wifi_client, channel):
+def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1592,7 +1591,7 @@ def test_DUT_APMode_Trnms_rules_USregion_C19439(wifi_sniffer, wifi_dut, wifi_cli
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_DUT_APMode_Trnms_rules_USregion_C19441(wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
+def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1675,7 +1674,7 @@ def test_DUT_APMode_Trnms_rules_USregion_C19441(wifi_sniffer, wifi_dut, wifi_cli
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.firmware_app("test_concurrent_mode")
-def test_DUT_APMode_Trnms_rules_USregion_C19446(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
+def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
