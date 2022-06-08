@@ -36,7 +36,8 @@ mode = 'static'
 ip_address = '192.168.100.76'
 subnet = '255.255.255.0'
 gateway = '192.168.100.76'
-ping_count=30
+ping_count = 30
+sleep_count=300
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -57,7 +58,7 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -124,7 +125,7 @@ def test_DUT_APMode_Trnms_rules_USregion_C19454(wifi_sniffer, wifi_dut, wifi_cli
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -195,7 +196,7 @@ def test_DUT_APMode_Trms_rules_EUregion_C19455(wifi_sniffer, wifi_dut, wifi_clie
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -264,7 +265,7 @@ def test_test_DUT_APMode_Trms_rules_JPregion_C19456(wifi_sniffer, wifi_dut, wifi
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.FiveGHz,
@@ -351,7 +352,7 @@ def test_DUTAP_in_5GHz_variouschannels_C19434(wifi_sniffer, net_perf_client, wif
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -424,7 +425,7 @@ def test_DUTAP_variousDTIM_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, cha
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -498,7 +499,7 @@ def test_DUTAP_diff_beacon_intvls_C19443(wifi_sniffer, wifi_dut, wifi_client, be
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.FiveGHz,
@@ -532,8 +533,8 @@ def test_DUTAP_errorneous_band_config_C19435(wifi_sniffer, wifi_dut, wifi_client
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -621,7 +622,7 @@ def test_DUPAP_multiclient_connect_disconnect_C19432(wifi_sniffer, wifi_dut, wif
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -704,7 +705,7 @@ def test_DUTAP_MaxSTAs_Connectandping_C19430_C19442(wifi_sniffer, wifi_dut, wifi
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -758,7 +759,7 @@ def test_DUTAP_verify_beacon_format_C19436(wifi_sniffer, wifi_dut, wifi_client, 
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -839,7 +840,7 @@ def test_DUTAP_TCPTx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -927,7 +928,7 @@ def test_DUTAP_TCPRx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -966,7 +967,7 @@ def test_DUTAP_USregion_unsupportedchannel_C19458(wifi_dut, wifi_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.FiveGHz,
@@ -1003,7 +1004,7 @@ def test_DUTAP_JPregion_unsupportedchannel_C19457(wifi_dut, wifi_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1029,7 +1030,7 @@ def test_apmode_connectivity_with_wrong_psk_Cli19437(wifi_sniffer, wifi_dut, wif
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19437')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_apmode_connectivity_with_wrong_psk_Cli19437')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -1040,15 +1041,12 @@ def test_apmode_connectivity_with_wrong_psk_Cli19437(wifi_sniffer, wifi_dut, wif
         logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
     except Exception as e:
         logger().info(f"connectivity fails as PSK is given wrong -->Expected")
-
-
-    logger().info(f"*********Validating the Sniffer Packet **********")
-
     packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 10 || wlan.fc.type_subtype == 12))'
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info(f"*********Validating the Sniffer Packet **********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find beacon frame with Region US in Sniffer"
-    logger().info(f"*********Identified the beacons from DUT AP with region set to US*********")
+        "Unable to find de-auth or disassoc packets in sniffer"
+    logger().info(f"*********found de-auth or disassoc packets in sniffer*********")
 
 ##########19448##################
 
@@ -1060,7 +1058,7 @@ pytest.mark.wifi_client("raspi_wifi")
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1086,7 +1084,7 @@ def test_DUT_APMode_11d_support_C19448(wifi_sniffer, wifi_dut, wifi_client, chan
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19448')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_11d_support_C19448')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
@@ -1102,21 +1100,14 @@ def test_DUT_APMode_11d_support_C19448(wifi_sniffer, wifi_dut, wifi_client, chan
     logger().info(" ********** Ping successful ********* ")
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
-
     logger().info(f"*********RASPI_STA connected to DUT AP**********")
-    logger().info(f"*********Validating the Sniffer Packet **********")
-
     logger().info(f"*********Initiating the disconnect from Raspi-STA **********")
     wifi_client.interfaces.wifi.leave()
-
-    packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8))'
-    packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.country_info.code== US))'
+    packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8) && (wlan.country_info.code == US))'
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info(f"*********Validating the Sniffer Packet **********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find beacon frame  in Sniffer"
-    logger().info(f"*********keep alive packets found in capture*********")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
-        "Unable to find beacon frame with Region US in Sniffer"
+        "Unable to find beacon frame with region code  in Sniffer"
 
 ##########store_configuration##################
 
@@ -1128,7 +1119,7 @@ pytest.mark.wifi_client("raspi_wifi")
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1154,7 +1145,7 @@ def test_DUT_APMode_store_config_wpa2_C19452(wifi_sniffer, wifi_dut, wifi_client
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19452')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_store_config_wpa2_C19452')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
@@ -1198,13 +1189,15 @@ def test_DUT_APMode_store_config_wpa2_C19452(wifi_sniffer, wifi_dut, wifi_client
     time.sleep(5)
 
     packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8))'
-    packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1  || eapol|| icmp))'
+    packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1  || ' \
+                     f'eapol|| icmp))'
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("validating sniffer capture")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find beacon frame with Region US in Sniffer"
+        "Unable to find beacon frame  in Sniffer"
     logger().info(f"*********keep alive packets found in capture*********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
-        "Unable to find beacon frame with Region US in Sniffer"
+        "Unable to find assoc req,assoc resp,eapol packets in Sniffer"
 
 ###################################OPEN MODE######################
 pytest.mark.wifi_client("raspi_wifi")
@@ -1215,7 +1208,7 @@ pytest.mark.wifi_client("raspi_wifi")
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1234,7 +1227,7 @@ pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.skip()
-def test_DUT_APMode_store_config__C19451(wifi_sniffer, wifi_dut, wifi_client, channel):
+def test_DUT_APMode_store_config_C19451(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
     wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
@@ -1242,7 +1235,7 @@ def test_DUT_APMode_store_config__C19451(wifi_sniffer, wifi_dut, wifi_client, ch
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19451')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_store_config_C19451')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
@@ -1295,7 +1288,7 @@ def test_DUT_APMode_store_config__C19451(wifi_sniffer, wifi_dut, wifi_client, ch
         "Unable to find beacon frame with Region US in Sniffer"
     logger().info(f"*********keep alive packets found in capture*********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
-        "Unable to find beacon frame with Region US in Sniffer"
+        "unable to find assoc request,assoc response or icmp packets in sniffer"
 
 
 
@@ -1310,7 +1303,7 @@ pytest.mark.wifi_client("raspi_wifi")
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.DHCPv4Client |
                           RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1336,7 +1329,7 @@ def test_DUT_APMode_softreset_aptosta_C19450(wifi_sniffer, wifi_dut, wifi_client
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19450')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_softreset_aptosta_C19450')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
@@ -1388,7 +1381,7 @@ def test_DUT_APMode_softreset_aptosta_C19450(wifi_sniffer, wifi_dut, wifi_client
     logger().info(f'DHCP packet from DUT found: {status}')
     assert status == True, "DUT mac not found in DHCP packet"
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2),\
-        "Unable to find beacon frame with Region US in Sniffer"
+        "Unable to find probe req from dut in sniffer"
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3), \
         "Unable to find assoc req or resp packet in Sniffer"
 
@@ -1404,7 +1397,7 @@ pytest.mark.wifi_client("raspi_wifi")
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1433,13 +1426,11 @@ pytest.mark.wifi_client("raspi_wifi")
 def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, channel,  wifi_access_point):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19449')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_softreset_statoap_C19449')
     logger().info(" ******* start capturing with Sniffer for sta mode ******* ")
-
     wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid, passphrase=wifi_access_point.interfaces.wifi.passphrase)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_as_client= wifi_dut.interfaces.wifi.get_device_ip(ip_config)
@@ -1458,9 +1449,9 @@ def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, chann
     logger().info(f'DHCP packet from DUT found: {status}')
     assert status == True, "DUT mac not found in DHCP packet"
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), \
-        "Unable to find beacon frame with Region US in Sniffer"
+        "Unable to find probe req from dut  in Sniffer"
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
-        "Unable to find assoc req or resp packet in Sniffer"
+        "Unable to find assoc req or resp packet or eapol in Sniffer"
     # deinit
     logger().info("Initiating wireless de init")
     logger().info("Instead of reset need to add  wireless de init")
@@ -1504,7 +1495,7 @@ def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, chann
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1530,7 +1521,7 @@ def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19439')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_raspista_inactive_C19439')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
@@ -1547,18 +1538,15 @@ def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     logger().info("no data transmission between dut ap and raspi sta for 5 min")
-    time.sleep(300)
-
-    logger().info(f"*********Validating the Sniffer Packet **********")
-
+    time.sleep(sleep_count)
     logger().info(f"*********Initiating the disconnect from Raspi-STA **********")
     wifi_client.interfaces.wifi.leave()
-
     packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 36 || wlan.fc.type_subtype == 12))'
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info(f"*********Validating the Sniffer Packet **********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "Unable to find deauth or keep alive packet in Sniffer"
-    logger().info(f"*********keep alive packets found in capture*********")
+    logger().info(f"*********keep alive packets or deauth packets found in capture*********")
 
 
 ################################19441########################
@@ -1571,13 +1559,13 @@ def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
         "security": "WPA2", "ssid": "SILABS_AP", "passphrase": "12345678", "region_config": 0, "beacon": 100,
         "region_code_ap": "US ",
-         "data_rates":RS9116DataRate.Mbps_54,
+        "data_rates": RS9116DataRate.Mbps_54,
     }
 )
 @pytest.mark.config(
@@ -1599,7 +1587,7 @@ def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, c
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19441')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_fixed_datarate_C19441')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(" ********** Starting DUT as an AP ********* ")
@@ -1631,15 +1619,11 @@ def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, c
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
     )
-
-    logger().info(f"*********Validating the Sniffer Packet **********")
-
     logger().info(f"*********Initiating the disconnect from Raspi-STA **********")
     wifi_client.interfaces.wifi.leave()
-
-
     packet_filter1 = f'(wlan.addr == {mac_address}) && wlan.fc.type_subtype==40 && radiotap.datarate ==54'
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info(f"*********Validating the Sniffer Packet **********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "not found data packets with 54 Mbps data rate"
     logger().info(f"*********data packets transmitted with 54 Mbps data rate*********")
@@ -1654,7 +1638,7 @@ def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, c
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.HTTPServerRootPathBypass,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
@@ -1682,7 +1666,7 @@ def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wif
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
     time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_Trnms_rules_USregion_C19446')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_11n_htcaps_support_C19446')
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
     wifi_dut.interfaces.wifi.set_htcaps()
     wifi_dut.interfaces.wifi.start_ap(channel=channel)
@@ -1719,13 +1703,11 @@ def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wif
     tp = net_perf_client.interfaces.net_perf.process_output()
     assert tp is not None
     __print_throughput(tp)
-
-    logger().info(f"*********Validating the Sniffer Packet **********")
-
     logger().info(f"*********Initiating the disconnect from Raspi-STA **********")
     wifi_client.interfaces.wifi.leave()
     packet_filter1 = f'(wlan.addr == {mac_address}) && wlan.fc.type_subtype==8'
     wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info(f"*********Validating the Sniffer Packet **********")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "not found beacon from DUT "
     logger().info(f"*********beacon not found from DUT********")
