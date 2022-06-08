@@ -269,7 +269,6 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
         time.sleep(10)
         bt_dut.interfaces.bluetooth.bt_inquiry_for_device(bt_client_address,inq_type,inquiry_duration_ms,max_device_cnt,retry_counts,timeout=2)
 
-        time.sleep(10)
         with bt_client.interfaces.bluetooth.bt_socket(
                 mode=BTSocketRole.Server
         ) as bt_server_socket:
@@ -362,7 +361,6 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     bt_dut.interfaces.bluetooth.bt_inquiry_for_device(bt_client_address, inq_type, inquiry_duration_ms, max_device_cnt,
                                                       retry_counts, timeout=2)
 
-    time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
     ) as bt_server_socket:
