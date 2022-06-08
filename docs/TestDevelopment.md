@@ -6,5 +6,5 @@ To setup PyCharm environment
 
 `Mark directory as` the following directories as `Sources Root`:<br>
 `../utf_core/src`<br>
-`../utf_wifi`
+`../utf_wiseconnect`
 
