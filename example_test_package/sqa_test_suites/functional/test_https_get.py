@@ -192,7 +192,7 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut,h
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
     assert scan_results,"scan failure, no ap found"
-    wifi_dut.interfaces.wifi.clear_certificate(cert_type=3,cert_index=0)
+    wifi_dut.interfaces.wifi.clear_certificate(cert_type=5,cert_index=0)
     logger().info("Joining access point")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
