@@ -180,7 +180,7 @@ devices:
             wifi:
                 type: 'wifi.access_points.static'
                 security: WPA2
-                ssid: 'TESTTEST-DLINK'
+                ssid: 'TESTTEST-DLINK-RK'
                 passphrase: 'thisisatestnetwork'
                 channel: 1
                 cipher: 'AES'
@@ -528,12 +528,16 @@ devices:
 
     airpcap:
         interfaces:
-            local_shell:
-                type: 'shell.shell'
+            ssh_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.14.3
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
-                shell: 'local_shell'
+                shell: 'ssh_shell'
                 interface: 'wlan1'
 
     python_aws_iot_thing:
