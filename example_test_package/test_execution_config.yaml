@@ -2,4 +2,4 @@ max_fail_count: 10
 monitor_failure_at_distinct_function_level: true
 exception_strings: ["dbus.exceptions.DBusException", "interfaces.cli.CLITransportException"]
 max_exception_raise_count: 3
-exit_on_database_results_error: true
+exit_on_database_results_error: false
