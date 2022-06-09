@@ -86,7 +86,7 @@ class wifiJoinThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.leave()
         logger().info("Dut disconnecting form wifi")
         packet_filter3 = (
-            f"!(wlan.fc.type_subtype == 0x0008) and ( wlan.addr == {dut_mac_address} and ((wlan.fc.type_subtype == 0x0000)  or "
+            f"!(wlan.fc.type_subtype == 0x0008) and ( (wlan.addr == {dut_mac_address}) and ((wlan.fc.type_subtype == 0x0000)  or "
             f" (wlan.ds.current_channel == {self.wifi_access_point.interfaces.wifi.channel}) or eapol or "
             f"(wlan.fc.type_subtype == 0x000b)))"
         )
