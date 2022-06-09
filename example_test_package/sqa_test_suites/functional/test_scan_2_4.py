@@ -71,7 +71,7 @@ def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
             assert (len(scan_results) >= 1),"Scan failed"
             logger().info(scan_results)
-        time.sleep(5)
+            time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info(f"Validate Probe req(Broadcast)")
@@ -374,7 +374,7 @@ def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point
                                                                                scan_bitmap_2_4=channel_bitmap_2_4,
                                                                                scan_bitmap_5=channel_bitmap_5,
                                                                                scan_feature=scan_feature_extend)
-                time.sleep(5)
+                time.sleep(10)
                 logger().info(scan_results)
                 assert len(scan_results) >= 1,"Scan results not found"
                 channel_selected = 0
@@ -429,7 +429,7 @@ def test_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point):
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(5)
+            time.sleep(10)
             assert (len(scan_results) >= 1),"scan failed"
             logger().info(scan_results)
 
@@ -523,7 +523,7 @@ def test_hidden_scan_all_channels_c19062(wifi_sniffer,wifi_dut,wifi_access_point
         logger().info("Initiating scan...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(scan_results)
-        time.sleep(5)
+        time.sleep(10)
         assert len(scan_results) >= 1,"scan failed"
         for count in scan_results:
                 assert count.ssid == wifi_access_point.interfaces.wifi.ssid
@@ -697,7 +697,7 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_clie
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(5)
+            time.sleep(10)
             assert (len(scan_results) >= 1),"scan failed"
             logger().info(scan_results)
 
@@ -753,7 +753,7 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_c
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(5)
+            time.sleep(15)
             assert (len(scan_results) >= 1),"Scan Failed"
             logger().info(scan_results)
 

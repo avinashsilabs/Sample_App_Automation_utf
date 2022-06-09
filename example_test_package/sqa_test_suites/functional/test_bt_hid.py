@@ -1,17 +1,14 @@
 import time
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116ExtCustomFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116ExtCustomFeatureBitMap
 from utf.interfaces.bluetooth.hid_recorder import HidRecorder
-from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.time_measurer import TimeMeasurer
-import pytest
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116FeatureBitMap,
-    RS9116PowerSaveModes,
     RS9116BTFeatureBitMap
     )
 
@@ -77,13 +74,13 @@ def test_hid_conn_in_device_role_C20017(bt_dut, bt_client):
 
         logger().info("configuring dut for hid slave role with sdp config data....")
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=False)
-        assert bt_dut_address is not None,"failed to initialise bt in dut"
+        assert bt_dut_address,"failed to initialise bt in dut"
         logger().info(f'bt dut address {bt_dut_address}')
 
         logger().info("initiating scan form remote bt device...")
         bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                           pin_code=pin_code)
-        assert bt_client_address is not None,"rpi failed to scan dut..."
+        assert bt_client_address,"rpi failed to scan dut..."
         logger().info(f'bt client address {bt_client_address}')
 
         device_found = False
@@ -117,13 +114,12 @@ def test_hid_conn_in_device_role_C20017(bt_dut, bt_client):
 def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=False)
-        assert bt_dut_address is not None,"bt initialization failed in dut"
+        assert bt_dut_address,"bt initialization failed in dut"
         logger().info(f'bt dut address {bt_dut_address}')
 
-        # Begin Scanning for BLE devices
         bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                           pin_code=pin_code)
-        assert bt_client_address is not None,"failed to scan..."
+        assert bt_client_address,"failed to scan..."
         logger().info(f'bt client address {bt_client_address}')
 
         device_found = False
@@ -146,9 +142,9 @@ def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
                 bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
-        assert len(hid_logs) == len(test_data)
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
         for i in range(len(test_data)):
-            assert hid_logs[i] == test_data[i]
+            assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
         time.sleep(60)
 
@@ -164,7 +160,7 @@ def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
         time.sleep(5)
     logger().info(f"test completed in {t.duration} seconds")
 
-def test_set_local_cod_C20023_cod_002560(bt_dut, bt_client):
+def test_set_local_cod_C20023_class_002560(bt_dut, bt_client):
     logger().info("set bt profile....")
     bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
 
@@ -182,6 +178,7 @@ def test_set_local_cod_C20023_cod_002560(bt_dut, bt_client):
 
     logger().info("initializing bt.....")
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
+    bt_dut.interfaces.bluetooth.bt_set_pin_code()
 
     logger().info("get dut bt address.....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
@@ -189,7 +186,7 @@ def test_set_local_cod_C20023_cod_002560(bt_dut, bt_client):
 
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to scan dut"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -199,11 +196,39 @@ def test_set_local_cod_C20023_cod_002560(bt_dut, bt_client):
             device_found = True
             break
 
-    logger().info("stop scanning.....")
-    bt_client.interfaces.bluetooth.stop_scanning()
     assert device_found, "unable to scan dut"
 
-def test_set_local_cod_C20023_cod_002540(bt_dut, bt_client):
+    logger().info("stop scanning.....")
+    bt_client.interfaces.bluetooth.stop_scanning()
+
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        assert connected, "unable to connect bt device"
+        logger().info(f'device connection state is {connected}')
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
+
+    time.sleep(60)
+
+    logger().info("fetching the connection status after 60 secs of sleep")
+    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+    assert connected == 1, "dut is disconnected"
+    logger().info(f"connection status :{connected}")
+
+    logger().info("disconnecting from bt device")
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(5)
+    bt_client.interfaces.bluetooth.close()
+    time.sleep(5)
+
+def test_set_local_cod_C20023_class_002540(bt_dut, bt_client):
     logger().info("set bt profile....")
     bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
 
@@ -221,6 +246,7 @@ def test_set_local_cod_C20023_cod_002540(bt_dut, bt_client):
 
     logger().info("initializing bt.....")
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
+    bt_dut.interfaces.bluetooth.bt_set_pin_code()
 
     logger().info("get dut bt address.....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
@@ -228,7 +254,7 @@ def test_set_local_cod_C20023_cod_002540(bt_dut, bt_client):
 
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -242,7 +268,34 @@ def test_set_local_cod_C20023_cod_002540(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.stop_scanning()
     assert device_found, "unable to scan dut"
 
-def test_set_local_cod_C20023_cod_002580(bt_dut, bt_client):
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        assert connected, "unable to connect bt device"
+        logger().info(f'device connection state is {connected}')
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
+
+    time.sleep(60)
+
+    logger().info("fetching the connection status after 60 secs of sleep")
+    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+    assert connected == 1, "dut is disconnected"
+    logger().info(f"connection status :{connected}")
+
+    logger().info("disconnecting from bt device")
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(5)
+    bt_client.interfaces.bluetooth.close()
+    time.sleep(5)
+
+def test_set_local_cod_C20023_class_002580(bt_dut, bt_client):
     logger().info("set bt profile....")
     bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
 
@@ -260,6 +313,7 @@ def test_set_local_cod_C20023_cod_002580(bt_dut, bt_client):
 
     logger().info("initializing bt.....")
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
+    bt_dut.interfaces.bluetooth.bt_set_pin_code()
 
     logger().info("get dut bt address.....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
@@ -267,7 +321,7 @@ def test_set_local_cod_C20023_cod_002580(bt_dut, bt_client):
 
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -280,6 +334,33 @@ def test_set_local_cod_C20023_cod_002580(bt_dut, bt_client):
     logger().info("stop scanning.....")
     bt_client.interfaces.bluetooth.stop_scanning()
     assert device_found, "unable to scan dut"
+
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        assert connected, "unable to connect bt device"
+        logger().info(f'device connection state is {connected}')
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
+
+    time.sleep(60)
+
+    logger().info("fetching the connection status after 60 secs of sleep")
+    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+    assert connected == 1, "dut is disconnected"
+    logger().info(f"connection status :{connected}")
+
+    logger().info("disconnecting from bt device")
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(5)
+    bt_client.interfaces.bluetooth.close()
+    time.sleep(5)
 
 def test_hid_connectivity_SSP_with_IO_capa_Display_only_C20025(bt_dut, bt_client):
 
@@ -300,11 +381,10 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_only_C20025(bt_dut, bt_client
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
     logger().info(f'bt dut address {bt_dut_address}')
 
-    # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -329,9 +409,9 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_only_C20025(bt_dut, bt_client
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
 
     logger().info("fetching the connection status after 60 secs of sleep")
@@ -363,11 +443,10 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_yes_no_C20026(bt_dut, bt_clie
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
     logger().info(f'bt dut address {bt_dut_address}')
 
-    # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -392,9 +471,9 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_yes_no_C20026(bt_dut, bt_clie
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
 
     logger().info("fetching the connection status after 60 secs of sleep")
@@ -426,11 +505,10 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
     logger().info(f'bt dut address {bt_dut_address}')
 
-    # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -455,9 +533,9 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
 
     logger().info("fetching the connection status after 60 secs of sleep")
@@ -473,14 +551,13 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
 def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client):
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
-    assert bt_dut_address is not None
+    assert bt_dut_address,"failed to initiate bt in dut"
     logger().info(f'bt dut address {bt_dut_address}')
 
-    # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -515,9 +592,9 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client)
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
     time.sleep(60)
 
@@ -580,13 +657,13 @@ def test_hid_conn_and_disconn_C20019(bt_dut, bt_client):
 def test_hid_disconn_in_device_role_C20018(bt_dut, bt_client):
         logger().info("configuring dut for hid slave role with sdp config data....")
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
-        assert bt_dut_address is not None
+        assert bt_dut_address,"failed to initialize bt in dut"
         logger().info(f'bt dut address {bt_dut_address}')
 
         logger().info("initiating scan form remote bt device...")
         bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                           pin_code=pin_code)
-        assert bt_client_address is not None
+        assert bt_client_address,"failed to initialize scan in remote device"
         logger().info(f'bt client address {bt_client_address}')
 
         device_found = False
@@ -638,11 +715,10 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
     logger().info(f'bt dut address {bt_dut_address}')
 
-    # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code, capability="KeyboardOnly")
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initialize scan in remote device"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -667,9 +743,9 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
     time.sleep(60)
 
     logger().info("fetching the connection status after 60 secs of sleep")
@@ -686,14 +762,13 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
 def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
-    assert bt_dut_address is not None,"failed to initialize dut"
+    assert bt_dut_address ,"failed to initialize bt dut"
     logger().info(f'bt dut address {bt_dut_address}')
 
-    # Begin Scanning for BLE devices
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-    assert bt_client_address is not None,"bt client setup failed"
+    assert bt_client_address ,"bt client setup failed"
     logger().info(f'bt client address {bt_client_address}')
 
     device_found = False
@@ -727,9 +802,9 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
             bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
         hid_logs = hid_recorder.logs()
 
-    assert len(hid_logs) == len(test_data)
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
     for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i]
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
     time.sleep(60)
 
@@ -765,11 +840,10 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
 
     for count in range(0, iter_count):
         logger().info(f"******************* iteration {count}  ********************* ")
-        # Begin Scanning for BLE devices
         logger().info("initiating scan form remote bt device...")
         bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-        assert bt_client_address is not None
+        assert bt_client_address,"bt client setup failed"
         logger().info(f'bt client address {bt_client_address}')
 
         device_found = False
@@ -802,9 +876,9 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
                 bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
-        assert len(hid_logs) == len(test_data)
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
         for i in range(len(test_data)):
-            assert hid_logs[i] == test_data[i]
+            assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
         time.sleep(60)
 
@@ -840,11 +914,10 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client)
 
     for count in range(0, iter_count):
         logger().info(f"******************* iteration {count}  ********************* ")
-        # Begin Scanning for BLE devices
         logger().info("initiating scan form remote bt device...")
         bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
-        assert bt_client_address is not None
+        assert bt_client_address,"bt client setup failed"
         logger().info(f'bt client address {bt_client_address}')
 
         device_found = False
@@ -879,9 +952,9 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client)
                 bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
             hid_logs = hid_recorder.logs()
 
-        assert len(hid_logs) == len(test_data)
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
         for i in range(len(test_data)):
-            assert hid_logs[i] == test_data[i]
+            assert hid_logs[i] == test_data[i],"hid data and test data is not same"
 
         time.sleep(60)
 

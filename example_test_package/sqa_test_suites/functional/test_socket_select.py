@@ -6,24 +6,24 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
-    RS9116CertificateType,
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
     RS9116PowerSaveModes,
-    SocketOptions,
-    SocketType,
-    Cipher,
     DeviceConstants,
     RS9116AsyncEventType,
-    )
+    RS9116PowerSaveProcedureTypes
+)
 from utf.interfaces.wifi import WlanError
 from threading import Thread
 import string
 import random
 from utf.utils.stopwatch import Stopwatch
+from utf.utils.iperf.iperf_utils import ping
 import math
 from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.thread_base import ThreadBase
+from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -50,29 +50,72 @@ def get_socket_id(sock_fd):
 
 
 def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
+    ping_count = 10
+    result = wifi_dut.interfaces.wifi.version()
+    logger.info(f"DUT firmware version: {result}")
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
-    wifi_dut.interfaces.wifi.scan(ssid=None)
+    )
+
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
+
     wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
+        capture_file=f"{capture_filename}.pcap"
+    )
+
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
                                     beacon_missedcount=40,
                                     first_time_retry=0)
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    # DUT gets ipaddress through DHCP process after start_ip API is executed
-    wifi_dut.interfaces.wifi.start_ip()
+    for count in range(1, 3):
+        try:
+            join_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Joining to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
+            break
+        except:
+            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
+            time.sleep(1)
+    if join_fail:
+        logger.info(f"Joining to the AP has failed")
+        assert join_fail == 0, "Joining to the AP is failed"
+    for count in range(1, 3):
+        ip_fail = 1
+        try:
+            # DUT gets ipaddress through DHCP process after start_ip API is executed
+            logger.info("DUT gets ipaddress through DHCP ")
+            ip_address = wifi_dut.interfaces.wifi.start_ip(timeout=60)
+            ip_fail = 0
+            break
+        except:
+            logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            time.sleep(1)
+    if ip_fail:
+        logger.info(f"DUT unable to get IP address")
+        assert ip_fail == 0, "ip setting in DUT has failed"
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+    ping(device_ip, ping_count)
+    return mac_address
+
+
+def send_data(remote_socket, tx_buffer, wait_time, logger):
+    logger.info(f"wait for {wait_time} seconds")
+    time.sleep(wait_time)
+    # send 50 bytes of data from tcp server opened remotely
+    remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
 
 
 @pytest.mark.config(
@@ -87,16 +130,21 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("repeat_count", [30])
 def test_socket_select_tcp_TC19325(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count
+):
     capture_filename = "test_socket_select_tcp_TC19325"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    remote_socket.interfaces.socket.time_limit = 3600
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -108,367 +156,16 @@ def test_socket_select_tcp_TC19325(
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
     # tcp socket opened in DUT connects to the tcp server
     wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
-    wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-    wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
-    # send 50 bytes of data from tcp server opened remotely
-    remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-    # DUT receives data over tcp socket after execution of below api
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 1, "Socket select asynchronous event is not received"
-    logger.info(f"Socket select event received")
-    sock_list = []
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-            socket_select_event_payload = event.event_data
-            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-            sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-            sock_id = get_socket_id(sock_fd)
-            if sock_id is not None:
-                sock_list.append(sock_id)
-    if not (len(sock_list)):
-        logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-    assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-    for sock in sock_list:
-        logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        if not (buffer_length == buffer_length_rx):
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"not matched ")
-        else:
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"matched ")
-        assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-        if not (tx_buffer.encode() == buffer_rx):
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is not matched ")
-        else:
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is matched ")
-        assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-    # DUT closes the tcp socket
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close opened tcp socket in the dut"
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# The test case checks data receive functionality over udp socket
-def test_socket_select_udp_TC19328(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
-    capture_filename = "test_socket_select_udp_TC19328"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    # Open UDP socket remotely
-    remote_socket.interfaces.socket.start_server(socket_type=1)
-    # Open UDP socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
-    assert sock == 0, "socket id received is not matched. Expected is 0"
-    # DUT binds to socket(device_ip, 5001)
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-    wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
-    # send 50 bytes of data from udp socket opened remotely
-    remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 1, "Socket select asynchronous event is not received"
-    logger.info(f"Socket select event received")
-    sock_list = []
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-            socket_select_event_payload = event.event_data
-            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-            sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-            sock_id = get_socket_id(sock_fd)
-            if sock_id is not None:
-                sock_list.append(sock_id)
-    if not (len(sock_list)):
-        logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-    assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-    for sock in sock_list:
-        logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        if not (buffer_length == buffer_length_rx):
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"not matched ")
-        else:
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"matched ")
-        assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-        if not (tx_buffer.encode() == buffer_rx):
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is not matched ")
-        else:
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is matched ")
-        assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close udp socket opened in the dut"
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_select_tcp_server_TC19326(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_tcp_client, logger
-        ):
-    capture_filename = "test_socket_select_tcp_server_TC19326"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    # The below api opens ssl server socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-    assert sock == 0, f"socket id received is wrong, expected is 0"
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-    # Connect from third party device to the socket opened in the DUT
-    remote_tcp_client.interfaces.socket.connect_to_server(device_ip, server_port=5001)
-    # DUT
-    socket_id = wifi_dut.interfaces.wifi.accept(sock)
-    wifi_dut.interfaces.wifi.set_fd(socket_count=2)
-    wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
-    # send 50 bytes of data from tcp server opened remotely
-    remote_tcp_client.interfaces.socket.send_data(tx_buffer)
-    # DUT receives data over tcp socket after execution of below api
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 1, "Socket select asynchronous event is not received"
-    logger.info(f"Socket select event received")
-    sock_list = []
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-            socket_select_event_payload = event.event_data
-            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-            sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-            sock_id = get_socket_id(sock_fd)
-            if sock_id is not None:
-                sock_list.append(sock_id)
-    if not (len(sock_list)):
-        logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-    assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-    for sock in sock_list:
-        logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        if not (buffer_length == buffer_length_rx):
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"not matched ")
-        else:
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"matched ")
-        assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-        if not (tx_buffer.encode() == buffer_rx):
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is not matched ")
-        else:
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is matched ")
-        assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            4),
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "server_socket_limit": 4,
-        "client_socket_limit": 4,
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_select_tcp_server_multiple_sockets_TC19327(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_tcp_client, logger
-        ):
-    capture_filename = "test_socket_select_tcp_server_multiple_sockets_TC19327"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    server_port_base = 5001
-    for count in range(0, 4):
-        server_port = server_port_base + count
-        # The below api opens ssl server socket in the DUT
-        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        if count == 0:
-            assert sock == 0, f"socket id received is wrong, expected is 0"
-        if count == 1:
-            assert sock == 1, f"socket id received is wrong, expected is 1"
-        if count == 2:
-            assert sock == 2, f"socket id received is wrong, expected is 2"
-        if count == 3:
-            assert sock == 3, f"socket id received is wrong, expected is 3"
-        # Socket binds at (device_ip, 5001) in DUT
-
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, server_port)
-        wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-
-    for count in range(0, 4):
-        server_port = server_port_base + count
-        # Connect from third party device to the socket opened in the DUT
-        remote_tcp_client.interfaces.socket.connect_to_server(device_ip, server_port=server_port)
-        # DUT
-        socket_id = wifi_dut.interfaces.wifi.accept(count)
-        if count == 0:
-            assert socket_id == 4, f"socket id received is wrong, expected is 4"
-        if count == 1:
-            assert socket_id == 5, f"socket id received is wrong, expected is 5"
-        if count == 2:
-            assert socket_id == 6, f"socket id received is wrong, expected is 6"
-        if count == 3:
-            assert socket_id == 7, f"socket id received is wrong, expected is 7"
-    wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=4)
-
-    for socket_id in range(4, 8):
-        wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
-
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
-
-    for socket_no in range(1, 5):
-        # send 50 bytes of data from tcp server opened remotely
-        remote_tcp_client.interfaces.socket.send_data(tx_buffer, socket_no=socket_no)
-
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 4, "Socket select asynchronous event is not received"
-    logger.info(f"Socket select event received")
-    sock_list = []
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-            socket_select_event_payload = event.event_data
-            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-            sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-            sock_id = get_socket_id(sock_fd)
-            if sock_id is not None:
-                sock_list.append(sock_id)
-    if not (len(sock_list)):
-        logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-    assert len(sock_list) == 4, "Data is not received on 4 sockets opened in the DUT"
-
-    expected_socket_id = 3
-    for sock in sock_list:
-        expected_socket_id = expected_socket_id + 1
-        if sock == expected_socket_id:
-            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-        else:
-            logger.info(f"Data is not received on the socket id {sock} opened in the DUT. Received socket_id in "
-                        f"socket select asynchronous response is wrong expected is {expected_socket_id}, But observed "
-                        f" {sock}")
-            assert False, f"Data is not received on the socket id {sock} opened in the DUT"
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        if not (buffer_length == buffer_length_rx):
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"not matched ")
-        else:
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"matched ")
-        assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-        if not (tx_buffer.encode() == buffer_rx):
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is not matched ")
-        else:
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is matched ")
-        assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_select_after_remote_terminate_TC19333(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_tcp_client, logger
-        ):
-    capture_filename = "test_socket_select_after_remote_terminate_TC19333"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    # The below api opens ssl server socket in the DUT
-    server_sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-    assert server_sock == 0, f"socket id received is wrong, expected is 0"
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(server_sock, device_ip, 5001)
-    wifi_dut.interfaces.wifi.listen(server_sock, backlog=1)
-    since_time = 0
-    for count in range(0, 2):
-        # Connect from third party device to the socket opened in the DUT
-        remote_tcp_client.interfaces.socket.connect_to_server(device_ip, server_port=5001)
-        # DUT
-        socket_id = wifi_dut.interfaces.wifi.accept(server_sock)
-        wifi_dut.interfaces.wifi.set_fd(socket_count=2)
-        wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
-        tx_buffer = "12345678901234567890123456789012345678901234567890"
+    for iteration in range(1, repeat_count):
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        wifi_dut.interfaces.wifi.set_fd(socket_count=1)
+        wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
         buffer_length = len(tx_buffer)
-        if count == 0:
-            sock_no = 1
-        else:
-            sock_no = 2
         # send 50 bytes of data from tcp server opened remotely
-        remote_tcp_client.interfaces.socket.send_data(tx_buffer, socket_no=sock_no)
-        time.sleep(10)
+        remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
+        # DUT receives data over tcp socket after execution of below api
+        time.sleep(5)
         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
         assert len(events) == 1, "Socket select asynchronous event is not received"
         logger.info(f"Socket select event received")
@@ -509,31 +206,233 @@ def test_socket_select_after_remote_terminate_TC19333(
             assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
                                                     f"id {sock} opened in the DUT is not matched "
 
-        if count == 0:
-            remote_tcp_client.interfaces.socket.close_socket(socket_no=1)
-            time.sleep(5)
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            for event in events:
+    for sock_count in range(0, 1):
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    time.sleep(1)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("repeat_count", [30])
+def test_socket_select_tcp_server_TC19326(
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
+):
+    capture_filename = "test_socket_select_tcp_server_TC19326"
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    device_port = 5001
+    client_socket = remote_socket_factory.interfaces.socket.create_socket()
+    # The below api opens ssl server socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+    assert sock == 0, f"socket id received is wrong, expected is 0"
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, device_port)
+    wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+    result = ThreadBase.call_functions_simultaneously(
+        [
+            (wifi_dut.interfaces.wifi.accept, sock),
+            (
+                client_socket.connect_client_tcp,
+                device_ip,
+                device_port,
+            ),
+        ],
+        timeout=10,
+    )
+    socket_id = result[0]
+    for iteration in range(1, repeat_count):
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        wifi_dut.interfaces.wifi.set_fd(socket_count=2)
+        wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        buffer_length = len(tx_buffer)
+        # send 50 bytes of data from tcp server opened remotely
+        client_socket.send_data_tcp(tx_buffer)
+        # DUT receives data over tcp socket after execution of below api
+        time.sleep(5)
+        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+        assert len(events) == 1, "Socket select asynchronous event is not received"
+        logger.info(f"Socket select event received")
+        sock_list = []
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                socket_select_event_payload = event.event_data
                 since_time = event.timestamp + 1
-                if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
-                    logger.info("Received TCP_REMOTE_TERMINATE event")
-                    remote_terminate = event.event_data
-                    socket_id = int(remote_terminate.split(b",")[1].split(b":")[1])
-                    bytes_sent = int(remote_terminate.split(b",")[2].split(b":")[1])
-                    logger.info(f"Number of bytes sent on socket {socket_id}->  {bytes_sent}")
-                    assert 0 == bytes_sent, f"Number of bytes triggered and actually sent by dut are not matched. " \
-                                            f"triggered {0} bytes, But actually sent {bytes_sent} bytes by DUT"
+                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                sock_id = get_socket_id(sock_fd)
+                if sock_id is not None:
+                    sock_list.append(sock_id)
+        if not (len(sock_list)):
+            logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+        assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
 
-                else:
-                    logger.info(f"Remote terminate event is not received by DUT even though tcp socket connected is "
-                                f"closed ")
-                    assert False, f"Remote terminate event is not received by DUT even though tcp socket connected is " \
-                                  f"closed "
+        for sock in sock_list:
+            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
+            if not (buffer_length == buffer_length_rx):
+                logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT is "
+                            f"not matched ")
+            else:
+                logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT is "
+                            f"matched ")
+            assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+            if not (tx_buffer.encode() == buffer_rx):
+                logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT "
+                            f"is not matched ")
+            else:
+                logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT "
+                            f"is matched ")
+            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
+                                                    f"id {sock} opened in the DUT is not matched "
+    sock_count = 1
+    while sock_count >= 0:
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+        sock_count = sock_count - 1
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
-        else:
-            remote_tcp_client.interfaces.socket.stop_client()
-        assert buffer_length == buffer_length_rx, "buffer length sent and received is not matched"
-        assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("repeat_count", [30])
+# The test case checks data receive functionality over udp socket
+def test_socket_select_udp_TC19328(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count):
+    capture_filename = "test_socket_select_udp_TC19328"
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    # Open UDP socket remotely
+    remote_socket.interfaces.socket.start_server(socket_type=1)
+    # Open UDP socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
+    assert sock == 0, "socket id received is not matched. Expected is 0"
+    # DUT binds to socket(device_ip, 5001)
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
+    for iteration in range(1, repeat_count):
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        wifi_dut.interfaces.wifi.set_fd(socket_count=1)
+        wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        buffer_length = len(tx_buffer)
+        # send 50 bytes of data from udp socket opened remotely
+        remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
+        time.sleep(5)
+        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+        assert len(events) == 1, "Socket select asynchronous event is not received"
+        logger.info(f"Socket select event received")
+        sock_list = []
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                socket_select_event_payload = event.event_data
+                since_time = event.timestamp + 1
+                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                sock_id = get_socket_id(sock_fd)
+                if sock_id is not None:
+                    sock_list.append(sock_id)
+        if not (len(sock_list)):
+            logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+        assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
+
+        for sock in sock_list:
+            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
+            if not (buffer_length == buffer_length_rx):
+                logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT is "
+                            f"not matched ")
+            else:
+                logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT is "
+                            f"matched ")
+            assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+            if not (tx_buffer.encode() == buffer_rx):
+                logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT "
+                            f"is not matched ")
+            else:
+                logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the "
+                            f"DUT "
+                            f"is matched ")
+            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
+                                                    f"id {sock} opened in the DUT is not matched "
+
+    for sock_count in range(0, 1):
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -549,108 +448,131 @@ def test_socket_select_after_remote_terminate_TC19333(
             4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "server_socket_limit": 4,
-
-        }
-    )
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_select_multiple_sockets_TC19329(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
-    capture_filename = "test_socket_select_multiple_sockets_TC19329"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+@pytest.mark.parametrize("repeat_count", [30])
+def test_socket_select_tcp_server_multiple_sockets_TC19327(
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
+):
+    capture_filename = "test_socket_select_tcp_server_multiple_sockets_TC19327"
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    remote_socket.interfaces.socket.start_server(port=5001)
-    remote_socket.interfaces.socket.start_server(port=5002)
-    remote_socket.interfaces.socket.start_server(port=5003, socket_type=1)
-    remote_socket.interfaces.socket.start_server(port=5004, socket_type=1)
 
+    server_port_base = 5001
     for count in range(0, 4):
-        if count < 2:
-            # DUT opens tcp client socket
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        else:
-            # DUT opens tcp client socket
-            sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
+        server_port = server_port_base + count
+        # The below api opens ssl server socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
         if count == 0:
-            local_port = 5001
             assert sock == 0, f"socket id received is wrong, expected is 0"
-        elif count == 1:
-            local_port = 5002
+        if count == 1:
             assert sock == 1, f"socket id received is wrong, expected is 1"
-        elif count == 2:
-            local_port = 5003
+        if count == 2:
             assert sock == 2, f"socket id received is wrong, expected is 2"
-        else:
-            local_port = 5004
+        if count == 3:
             assert sock == 3, f"socket id received is wrong, expected is 3"
         # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-        if count < 2:
-            if count == 0:
-                server_port = 5001
-            else:
-                server_port = 5002
-            # tcp socket opened in DUT connects to the tcp server
-            wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket, server_port=server_port)
 
-    wifi_dut.interfaces.wifi.set_fd(socket_count=4)
-    for sock in range(0, 4):
-        wifi_dut.interfaces.wifi.socket_select(sock, select_timeout=60)
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, server_port)
+        wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+    client_socket = []
+    for count in range(0, 4):
+        client_socket.append(remote_socket_factory.interfaces.socket.create_socket())
+        server_port = server_port_base + count
+        result = ThreadBase.call_functions_simultaneously(
+            [
+                (wifi_dut.interfaces.wifi.accept, count),
+                (
+                    client_socket[count].connect_client_tcp,
+                    device_ip,
+                    server_port_base + count,
+                ),
+            ],
+            timeout=10,
+        )
 
-    for socket_no in range(1, 5):
-        if socket_no < 3:
-            # send 50 bytes of data from tcp server opened remotely
-            remote_socket.interfaces.socket.send_data_tcp(tx_buffer, socket_no=socket_no)
+        socket_id = result[0]
+        if count == 0:
+            assert socket_id == 4, f"socket id received is wrong, expected is 4"
+        if count == 1:
+            assert socket_id == 5, f"socket id received is wrong, expected is 5"
+        if count == 2:
+            assert socket_id == 6, f"socket id received is wrong, expected is 6"
+        if count == 3:
+            assert socket_id == 7, f"socket id received is wrong, expected is 7"
 
-        else:
-            device_port = (5000 + socket_no)
-            remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=device_port, socket_no=socket_no)
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 4, "Socket select asynchronous event is not received"
-    logger.info(f"Socket select event received")
-    sock_list = []
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-            socket_select_event_payload = event.event_data
-            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-            sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-            sock_id = get_socket_id(sock_fd)
-            if sock_id is not None:
-                sock_list.append(sock_id)
-    if not (len(sock_list)):
-        logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-    assert len(sock_list) == 4, "Data is not received on 4 sockets opened in the DUT"
+    for iteration in range(1, repeat_count):
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        for socket_no in range(0, 4):
+            wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=4)
+            socket_id = 7
+            wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            buffer_length = len(tx_buffer)
+            client_socket[socket_no].send_data_tcp(tx_buffer)
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            assert len(events) == 1, "Socket select asynchronous event is not received"
+            logger.info(f"Socket select event received")
+            sock_list = []
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                    socket_select_event_payload = event.event_data
+                    since_time = event.timestamp + 1
+                    logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                    sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                    sock_id = get_socket_id(sock_fd)
+                    if sock_id is not None:
+                        sock_list.append(sock_id)
+            if not (len(sock_list)):
+                logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+            assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
 
-    expected_socket_id = 0
-    for sock in sock_list:
-        expected_socket_id = expected_socket_id + 1
-        if sock == expected_socket_id:
-            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-        else:
-            logger.info(f"Data is not received on the socket id {sock} opened in the DUT. Received socket_id in "
-                        f"socket select asynchronous response is wrong expected is {expected_socket_id}, But observed "
-                        f"{sock}")
-            assert False, f"Data is not received on the socket id {sock} opened in the DUT"
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        if not (buffer_length == buffer_length_rx):
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+            for sock in sock_list:
+                logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                    data_len=buffer_length)
+                if not (buffer_length == buffer_length_rx):
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
                         f"not matched ")
-        else:
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                else:
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
                         f"matched ")
-        assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-        if not (tx_buffer.encode() == buffer_rx):
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+                if not (tx_buffer.encode() == buffer_rx):
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
                         f"is not matched ")
-        else:
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                else:
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
                         f"is matched ")
-        assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
+                                                        f"socket " \
+                                                        f"id {sock} opened in the DUT is not matched "
+
+    sock_count = 7
+    while sock_count >= 0:
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+        sock_count = sock_count - 1
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -665,16 +587,17 @@ def test_socket_select_multiple_sockets_TC19329(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_neg_TCC19332(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+):
     capture_filename = "test_socket_select_neg_TCC19332"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info("Run socket select command before opening any socket")
@@ -687,13 +610,14 @@ def test_socket_select_neg_TCC19332(
     assert exc_info.value.error_code == 0x0009, "DUT sent wrong error code, expected is 0x0009"
     if exc_info.value.error_code == 0x0009:
         logger.info(f"DUT sent expected error code {exc_info.value.error_code}")
-
-
-def send_data(remote_socket, tx_buffer, wait_time, logger):
-    logger.info(f"wait for {wait_time} seconds")
-    time.sleep(wait_time)
-    # send 50 bytes of data from tcp server opened remotely
-    remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -708,16 +632,17 @@ def send_data(remote_socket, tx_buffer, wait_time, logger):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+):
     capture_filename = "test_socket_select_synchronous_timeout_NULL_tcp_TC19335"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -753,9 +678,21 @@ def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
         logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
                     f"is matched ")
     assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-    # DUT closes the tcp socket
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close opened tcp socket in the dut"
+    for sock_count in range(0, 1):
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    time.sleep(1)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -770,19 +707,20 @@ def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+):
     capture_filename = "test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
+    remote_socket.interfaces.socket.time_limit = 3600
     remote_socket.interfaces.socket.start_server()
     # DUT opens tcp client socket
     sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
@@ -856,9 +794,21 @@ def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
             assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
                                                     f"id {socket_no} opened in the DUT is not matched "
 
-    # DUT closes the tcp socket
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close opened tcp socket in the dut"
+    for sock_count in range(0, 1):
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    time.sleep(1)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -871,94 +821,279 @@ def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
+            4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_select_tcp_after_successful_rejoin_TC19330(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
-    capture_filename = "test_socket_select_tcp_after_successful_rejoin_TC19330"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+@pytest.mark.parametrize("repeat_count", [30])
+def test_socket_select_multiple_sockets_tcp_udp_TC19329(
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
+):
+    capture_filename = "test_socket_select_multiple_sockets_TC19329"
+    since_time = 0
+    remote_socket_factory.interfaces.socket.time_limit = 3600
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    start_port = 5001
+    for sock_count in range(0, 4):
+        port = start_port + sock_count
+        server_socket = remote_socket_factory.interfaces.socket.create_socket()
+        if sock_count < 2:
+            server_socket.start_server(port=port, socket_type=SOCKET_TYPE_TCP)
+        else:
+            server_socket.start_server(port=port, socket_type=SOCKET_TYPE_UDP)
+        if sock_count < 2:
+            # DUT opens tcp client socket
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+        else:
+            # DUT opens tcp client socket
+            sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
+        if sock_count == 0:
+            local_port = 5001
+            assert sock == 0, f"socket id received is wrong, expected is 0"
+        elif sock_count == 1:
+            local_port = 5002
+            assert sock == 1, f"socket id received is wrong, expected is 1"
+        elif sock_count == 2:
+            local_port = 5003
+            assert sock == 2, f"socket id received is wrong, expected is 2"
+        else:
+            local_port = 5004
+            assert sock == 3, f"socket id received is wrong, expected is 3"
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        if sock_count < 2:
+            wifi_dut.interfaces.wifi.connect_to_server(
+                sock, server_socket
+            )
+
+    for iteration in range(1, repeat_count):
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        for socket_no in range(0, 4):
+            wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=0)
+            socket_id = 3
+            wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            buffer_length = len(tx_buffer)
+            if socket_no < 2:
+                remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_tcp(tx_buffer, True)
+            else:
+                if socket_no == 2:
+                    server_port = 5003
+                else:
+                    server_port = 5004
+                remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_udp(tx_buffer, device_ip,
+                                                                                         port=server_port)
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            assert len(events) == 1, "Socket select asynchronous event is not received"
+            logger.info(f"Socket select event received")
+            sock_list = []
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                    socket_select_event_payload = event.event_data
+                    since_time = event.timestamp + 1
+                    logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                    sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                    sock_id = get_socket_id(sock_fd)
+                    if sock_id is not None:
+                        sock_list.append(sock_id)
+            if not (len(sock_list)):
+                logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+            assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
+
+            for sock in sock_list:
+                logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                    data_len=buffer_length)
+                if not (buffer_length == buffer_length_rx):
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"not matched ")
+                else:
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"matched ")
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the " \
+                                                          f"socket id {sock} opened in the DUT is not matched "
+                if not (tx_buffer.encode() == buffer_rx):
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is not matched ")
+                else:
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is matched ")
+                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
+                                                        f"socket " \
+                                                        f"id {sock} opened in the DUT is not matched "
+    for sock_count in range(0, 4):
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+    time.sleep(2)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            4),
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("repeat_count", [30])
+def test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330(
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count
+):
+    capture_filename = "test_socket_select_tcp_server_multiple_sockets_TC19327"
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
-    remote_socket.interfaces.socket.start_server()
-    # time.sleep(10)
-    # DUT opens tcp client socket
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-    assert sock == 0, f"socket id received is wrong, expected is 0"
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    # tcp socket opened in DUT connects to the tcp server
-    wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
-
-    for count in range(0, 2):
+    server_port_base = 5001
+    for count in range(0, 4):
+        server_port = server_port_base + count
+        # The below api opens ssl server socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+        if count == 0:
+            assert sock == 0, f"socket id received is wrong, expected is 0"
         if count == 1:
+            assert sock == 1, f"socket id received is wrong, expected is 1"
+        if count == 2:
+            assert sock == 2, f"socket id received is wrong, expected is 2"
+        if count == 3:
+            assert sock == 3, f"socket id received is wrong, expected is 3"
+        # Socket binds at (device_ip, 5001) in DUT
+
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, server_port)
+        wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+    client_socket = []
+    for count in range(0, 4):
+        client_socket.append(remote_socket_factory.interfaces.socket.create_socket())
+        server_port = server_port_base + count
+        result = ThreadBase.call_functions_simultaneously(
+            [
+                (wifi_dut.interfaces.wifi.accept, count),
+                (
+                    client_socket[count].connect_client_tcp,
+                    device_ip,
+                    server_port,
+                ),
+            ],
+            timeout=10,
+        )
+
+        socket_id = result[0]
+        if count == 0:
+            assert socket_id == 4, f"socket id received is wrong, expected is 4"
+        if count == 1:
+            assert socket_id == 5, f"socket id received is wrong, expected is 5"
+        if count == 2:
+            assert socket_id == 6, f"socket id received is wrong, expected is 6"
+        if count == 3:
+            assert socket_id == 7, f"socket id received is wrong, expected is 7"
+
+    for iteration in range(1, repeat_count):
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        if iteration == 10:
             logger.info(f"Disabling Wireless in AP")
             wifi_access_point.interfaces.wifi.stop_ap()
             time.sleep(10)
             logger.info(f"Enabling Wireless in AP")
             wifi_access_point.interfaces.wifi.start_ap()
+            time.sleep(2)
+        for socket_no in range(0, 4):
+            wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=4)
+            socket_id = 7
+            wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            buffer_length = len(tx_buffer)
+            client_socket[socket_no].send_data_tcp(tx_buffer)
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            assert len(events) == 1, "Socket select asynchronous event is not received"
+            logger.info(f"Socket select event received")
+            sock_list = []
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                    socket_select_event_payload = event.event_data
+                    since_time = event.timestamp + 1
+                    logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                    sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                    sock_id = get_socket_id(sock_fd)
+                    if sock_id is not None:
+                        sock_list.append(sock_id)
+            if not (len(sock_list)):
+                logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+            assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
 
-        wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-        wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-        tx_buffer = "12345678901234567890123456789012345678901234567890"
-        buffer_length = len(tx_buffer)
-        # send 50 bytes of data from tcp server opened remotely
-        remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-        # DUT receives data over tcp socket after execution of below api
-        time.sleep(10)
-        if count == 0:
-            since_time = 0
-        else:
-            since_time = async_timestamp + 1
-        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-        assert len(events) == 1, "Socket select asynchronous event is not received"
-        logger.info(f"Socket select event received")
-        sock_list = []
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-                socket_select_event_payload = event.event_data
-                async_timestamp = event.timestamp
-                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-                sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-                sock_id = get_socket_id(sock_fd)
-                if sock_id is not None:
-                    sock_list.append(sock_id)
-        if not (len(sock_list)):
-            logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-        assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-        for sock in sock_list:
-            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-            if not (buffer_length == buffer_length_rx):
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"not matched ")
-            else:
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"matched ")
-            assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-            if not (tx_buffer.encode() == buffer_rx):
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is not matched ")
-            else:
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is matched ")
-            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
-                                                    f"id {sock} opened in the DUT is not matched "
-
-    # DUT closes the tcp socket
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close opened tcp socket in the dut"
+            for sock in sock_list:
+                logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                    data_len=buffer_length)
+                if not (buffer_length == buffer_length_rx):
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"not matched ")
+                else:
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"matched ")
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the " \
+                                                          f"socket id {sock} opened in the DUT is not matched "
+                if not (tx_buffer.encode() == buffer_rx):
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is not matched ")
+                else:
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is matched ")
+                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
+                                                        f"socket " \
+                                                        f"id {sock} opened in the DUT is not matched "
+    sock_count = 7
+    while sock_count >= 0:
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+        sock_count = sock_count - 1
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -973,91 +1108,49 @@ def test_socket_select_tcp_after_successful_rejoin_TC19330(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
-@pytest.mark.skip()
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_socket_select_tcp_after_reconnect_TC19331(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
-    capture_filename = "test_socket_select_tcp_after_reconnect_TC19331"
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-        )
-    wifi_dut.interfaces.wifi.scan(ssid=None)
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"DUT MAC_Address: {mac_address}")
-    capture_filter = "ether host " + mac_address
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap", capture_filter=capture_filter
-        )
-    logger.info(f"sending rejoin params with rejoin_max=40, scan_interval=6, beacon_missedcount=40 and  "
-                f"first_time_retry=0")
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
-                                    scan_interval=6,
-                                    beacon_missedcount=40,
-                                    first_time_retry=0)
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
-    for count in range(0, 2):
-        if count == 1:
-            logger.info(f"Disabling Wireless in AP")
-            wifi_access_point.interfaces.wifi.stop_ap()
-            time.sleep(150)
-            logger.info(f"Enabling Wireless in AP")
-            wifi_access_point.interfaces.wifi.start_ap()
-
-        if count == 0:
-            since_time = 0
-        else:
-            since_time = async_timestamp
-
-        if count == 1:
-            rejoin_error_recv = 0
-            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-            for event in events:
-                if event.event_type == RS9116AsyncEventType.RejoinError:
-                    rejoin_error_recv = 1
-                    async_timestamp = event.timestamp
-                    async_timestamp = async_timestamp + 1
-            if rejoin_error_recv:
-                logger.info(f"DUT received rejoin failure error as configured AP is powered off")
-                wifi_dut.interfaces.wifi.associated = False
-                remote_socket.interfaces.socket.stop()
-            else:
-                logger.info(f"DUT didn't receive rejoin failure error within time even after AP is powered off")
-                assert rejoin_error_recv == 1, f"DUT didn't receive rejoin failure error within time even after AP is " \
-                                               f"powered off "
-        # DUT connects to AP after join_ap API is executed
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-        # DUT to power save in Wifi+bluetooth mode
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-        remote_socket.interfaces.socket.start_server()
-        # time.sleep(10)
-        # DUT opens tcp client socket
-        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        assert sock == 0, f"socket id received is wrong, expected is 0"
-        # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
-
-        wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-        wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-
-        # send 50 bytes of data from tcp server opened remotely
-        remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-        # DUT receives data over tcp socket after execution of below api
-        time.sleep(10)
+def test_socket_select_after_remote_terminate_TC19333(
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger
+):
+    capture_filename = "test_socket_select_after_remote_terminate_TC19333"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    device_port = 5001
+    # The below api opens ssl server socket in the DUT
+    server_sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+    assert server_sock == 0, f"socket id received is wrong, expected is 0"
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(server_sock, device_ip, device_port)
+    wifi_dut.interfaces.wifi.listen(server_sock, backlog=1)
+    since_time = 0
+    for count in range(0, 20):
+        logger.info(f"#####################################################Iteration count -> {count}")
+        if (count == 0) or (count == 11):
+            client_socket = remote_socket_factory.interfaces.socket.create_socket()
+            result = ThreadBase.call_functions_simultaneously(
+                [
+                    (wifi_dut.interfaces.wifi.accept, server_sock),
+                    (
+                        client_socket.connect_client_tcp,
+                        device_ip,
+                        device_port,
+                    ),
+                ],
+                timeout=10,
+            )
+        socket_id = result[0]
+        wifi_dut.interfaces.wifi.set_fd(socket_count=2)
+        wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        buffer_length = len(tx_buffer)
+        client_socket.send_data_tcp(tx_buffer)
+        time.sleep(5)
         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
         assert len(events) == 1, "Socket select asynchronous event is not received"
         logger.info(f"Socket select event received")
@@ -1065,7 +1158,7 @@ def test_socket_select_tcp_after_reconnect_TC19331(
         for event in events:
             if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
                 socket_select_event_payload = event.event_data
-                async_timestamp = event.timestamp + 1
+                since_time = event.timestamp + 1
                 logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
                 sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
                 sock_id = get_socket_id(sock_fd)
@@ -1098,6 +1191,42 @@ def test_socket_select_tcp_after_reconnect_TC19331(
             assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
                                                     f"id {sock} opened in the DUT is not matched "
 
+        if count == 10:
+            client_socket.stop()
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                since_time = event.timestamp + 1
+                if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+                    logger.info("Received TCP_REMOTE_TERMINATE event")
+                    remote_terminate = event.event_data
+                    socket_id = int(remote_terminate.split(b",")[1].split(b":")[1])
+                    bytes_sent = int(remote_terminate.split(b",")[2].split(b":")[1])
+                    logger.info(f"Number of bytes sent on socket {socket_id}->  {bytes_sent}")
+                    assert 0 == bytes_sent, f"Number of bytes triggered and actually sent by dut are not matched. " \
+                                            f"triggered {0} bytes, But actually sent {bytes_sent} bytes by DUT"
+
+                else:
+                    logger.info(f"Remote terminate event is not received by DUT even though tcp socket connected is "
+                                f"closed ")
+                    assert False, f"Remote terminate event is not received by DUT even though tcp socket connected is " \
+                                  f"closed "
+    sock_count = 1
+    while sock_count >= 0:
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+        sock_count = sock_count - 1
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1109,97 +1238,268 @@ def test_socket_select_tcp_after_reconnect_TC19331(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
+            4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("test_run_time", [900])
+def test_socket_select_tcp_close_stress_TC19334(
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time
+):
+    capture_filename = "test_socket_select_multiple_sockets_TC19329"
+    since_time = 0
+    remote_socket_factory.interfaces.socket.time_limit = 3600
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    start_port = 5001
+    iteration = 0
+    sw = Stopwatch()
+    while sw.elapsed_sec < test_run_time:
+        iteration = iteration + 1
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        for sock_count in range(0, 4):
+            port = start_port + sock_count
+            server_socket = remote_socket_factory.interfaces.socket.create_socket()
+            server_socket.start_server(port=port, socket_type=SOCKET_TYPE_TCP)
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            if sock_count == 0:
+                local_port = 5001
+                assert sock == 0, f"socket id received is wrong, expected is 0"
+            elif sock_count == 1:
+                local_port = 5002
+                assert sock == 1, f"socket id received is wrong, expected is 1"
+            elif sock_count == 2:
+                local_port = 5003
+                assert sock == 2, f"socket id received is wrong, expected is 2"
+            else:
+                local_port = 5004
+                assert sock == 3, f"socket id received is wrong, expected is 3"
+            # Socket binds at (device_ip, 5001) in DUT
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+            wifi_dut.interfaces.wifi.connect_to_server(
+                sock, server_socket
+            )
+        for socket_no in range(0, 4):
+            wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=0)
+            socket_id = 3
+            wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            buffer_length = len(tx_buffer)
+            remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_tcp(tx_buffer, True)
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            assert len(events) == 1, "Socket select asynchronous event is not received"
+            logger.info(f"Socket select event received")
+            sock_list = []
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                    socket_select_event_payload = event.event_data
+                    since_time = event.timestamp + 1
+                    logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                    sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                    sock_id = get_socket_id(sock_fd)
+                    if sock_id is not None:
+                        sock_list.append(sock_id)
+            if not (len(sock_list)):
+                logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+            assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
+
+            for sock in sock_list:
+                logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                    data_len=buffer_length)
+                if not (buffer_length == buffer_length_rx):
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"not matched ")
+                else:
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"matched ")
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the " \
+                                                          f"socket id {sock} opened in the DUT is not matched "
+                if not (tx_buffer.encode() == buffer_rx):
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is not matched ")
+                else:
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is matched ")
+                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
+                                                        f"socket " \
+                                                        f"id {sock} opened in the DUT is not matched "
+        for dut_sock in range(0, 4):
+            logger.info(f"Closing socket_id->{dut_sock}")
+            result = wifi_dut.interfaces.wifi.close_socket(dut_sock)
+            assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{dut_sock}"
+            logger.info(f"Successfully closed socket_id->{dut_sock}")
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
+    time.sleep(1)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            4),
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
 def test_socket_select_tcp_server_bidirectional_TC19337(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_tcp_client, test_run_time, logger
-        ):
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time
+):
     capture_filename = "test_socket_select_tcp_server_bidirectional_TC19337"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
-    # The below api opens ssl server socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-    assert sock == 0, f"socket id received is wrong, expected is 0"
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-    # Connect from third party device to the socket opened in the DUT
-    remote_tcp_client.interfaces.socket.connect_to_server(device_ip, server_port=5001)
-    socket_id = wifi_dut.interfaces.wifi.accept(sock)
+    server_port_base = 5001
+    for count in range(0, 4):
+        server_port = server_port_base + count
+        # The below api opens ssl server socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+        if count == 0:
+            assert sock == 0, f"socket id received is wrong, expected is 0"
+        if count == 1:
+            assert sock == 1, f"socket id received is wrong, expected is 1"
+        if count == 2:
+            assert sock == 2, f"socket id received is wrong, expected is 2"
+        if count == 3:
+            assert sock == 3, f"socket id received is wrong, expected is 3"
+        # Socket binds at (device_ip, 5001) in DUT
 
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, server_port)
+        wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+    client_socket = []
+    for count in range(0, 4):
+        client_socket.append(remote_socket_factory.interfaces.socket.create_socket())
+        result = ThreadBase.call_functions_simultaneously(
+            [
+                (wifi_dut.interfaces.wifi.accept, count),
+                (
+                    client_socket[count].connect_client_tcp,
+                    device_ip,
+                    server_port_base + count,
+                ),
+            ],
+            timeout=10,
+        )
+
+        socket_id = result[0]
+        if count == 0:
+            assert socket_id == 4, f"socket id received is wrong, expected is 4"
+        if count == 1:
+            assert socket_id == 5, f"socket id received is wrong, expected is 5"
+        if count == 2:
+            assert socket_id == 6, f"socket id received is wrong, expected is 6"
+        if count == 3:
+            assert socket_id == 7, f"socket id received is wrong, expected is 7"
+
+    iteration = 0
     sw = Stopwatch()
-    since_time = 0
-    logger.info(f"Running tcp server bidirectional test for {test_run_time} seconds")
     while sw.elapsed_sec < test_run_time:
-        # The api returns 100 bytes of random data
-        data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-        data_length = len(data_sent)
-        # DUT sends 100 bytes of data over ssl socket
-        wifi_dut.interfaces.wifi.send_data(socket_id, data_length, data_sent)
+        iteration = iteration + 1
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        for socket_no in range(0, 4):
+            data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            data_length = len(data_sent)
+            wifi_dut.interfaces.wifi.send_data((socket_no + 4), data_length, data_sent)
+            data_receive = client_socket[socket_no].recv_data_tcp(data_length, True)
+            assert data_sent == data_receive.decode(), "Data sent by DUT and received on remote peer is not matched"
+            logger.info(f"Data sent by DUT and received on remote peer is matched")
+            wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=4)
+            socket_id = 7
+            wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            buffer_length = len(tx_buffer)
+            client_socket[socket_no].send_data_tcp(tx_buffer)
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            assert len(events) == 1, "Socket select asynchronous event is not received"
+            logger.info(f"Socket select event received")
+            sock_list = []
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                    socket_select_event_payload = event.event_data
+                    since_time = event.timestamp + 1
+                    logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                    sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                    sock_id = get_socket_id(sock_fd)
+                    if sock_id is not None:
+                        sock_list.append(sock_id)
+            if not (len(sock_list)):
+                logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+            assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
 
-        data_receive = remote_tcp_client.interfaces.socket.data_recv_content(data_length)
-        assert data_sent == data_receive.decode(), "Data sent by DUT and received on remote peer is not matched"
-        logger.info(f"Data sent by DUT and received on remote peer is matched")
-        wifi_dut.interfaces.wifi.set_fd(socket_count=2)
-        wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            for sock in sock_list:
+                logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                    data_len=buffer_length)
+                if not (buffer_length == buffer_length_rx):
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"not matched ")
+                else:
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                        f"matched ")
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the " \
+                                                          f"socket id {sock} opened in the DUT is not matched "
+                if not (tx_buffer.encode() == buffer_rx):
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is not matched ")
+                else:
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                        f"is matched ")
+                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
+                                                        f"socket " \
+                                                        f"id {sock} opened in the DUT is not matched "
 
-        tx_buffer = "12345678901234567890123456789012345678901234567890"
-        buffer_length = len(tx_buffer)
-        # send 50 bytes of data from tcp server opened remotely
-        remote_tcp_client.interfaces.socket.send_data(tx_buffer)
-        # DUT receives data over tcp socket after execution of below api
-        time.sleep(10)
-        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-        assert len(events) == 1, "Socket select asynchronous event is not received"
-        logger.info(f"Socket select event received")
-        sock_list = []
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-                socket_select_event_payload = event.event_data
-                since_time = event.timestamp + 1
-                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-                sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-                sock_id = get_socket_id(sock_fd)
-                if sock_id is not None:
-                    sock_list.append(sock_id)
-        if not (len(sock_list)):
-            logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-        assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-        for sock in sock_list:
-            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-            if not (buffer_length == buffer_length_rx):
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"not matched ")
-            else:
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"matched ")
-            assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-            if not (tx_buffer.encode() == buffer_rx):
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is not matched ")
-            else:
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is matched ")
-            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
-                                                    f"id {sock} opened in the DUT is not matched "
-
-    # DUT closes the tcp socket
-    result = wifi_dut.interfaces.wifi.close_socket(socket_id)
-    assert b"success" in result, "unable to close opened tcp socket"
+    sock_count = 7
+    while sock_count >= 0:
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+        sock_count = sock_count - 1
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -1212,294 +1512,132 @@ def test_socket_select_tcp_server_bidirectional_TC19337(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
+            4),
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "server_socket_limit": 4,
+        "client_socket_limit": 4,
 
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
 def test_socket_select_udp_bidirectional_TC19338(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, test_run_time, logger
-        ):
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time
+):
     capture_filename = "test_socket_select_udp_bidirectional_TC19338"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    since_time = 0
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    # Open UDP socket remotely
-    remote_socket.interfaces.socket.start_server(socket_type=1)
-    # Open UDP socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
-    assert sock == 0, "socket id received is not matched. Expected is 0"
-    # DUT binds to socket(device_ip, 5001)
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-
-    sw = Stopwatch()
-    since_time = 0
-    logger.info(f"Running udp bidirectional test for {test_run_time} seconds")
-    while sw.elapsed_sec < test_run_time:
-        # The api returns 100 bytes of random data
-        data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-        data_length = len(data_sent)
-
-        socket_address = remote_socket.interfaces.socket
-        if isinstance(socket_address, str):
-            addr_port = socket_address.split(":")
-            server_ip = addr_port[0]
-            server_port = int(addr_port[1])
+    start_port = 5001
+    for sock_count in range(0, 4):
+        port = start_port + sock_count
+        server_socket = remote_socket_factory.interfaces.socket.create_socket()
+        server_socket.start_server(port=port, socket_type=SOCKET_TYPE_UDP)
+        sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
+        if sock_count == 0:
+            local_port = 5001
+            assert sock == 0, f"socket id received is wrong, expected is 0"
+        elif sock_count == 1:
+            local_port = 5002
+            assert sock == 1, f"socket id received is wrong, expected is 1"
+        elif sock_count == 2:
+            local_port = 5003
+            assert sock == 2, f"socket id received is wrong, expected is 2"
         else:
-            server_port = socket_address.server_port
-            server_ip = socket_address.server_ip
-        # DUT sends 100 bytes of data over ssl socket
-        wifi_dut.interfaces.wifi.send_to(sock, data_length, server_ip, server_port)
-
-        data_receive = remote_socket.interfaces.socket.data_recv_content(data_length)
-        assert len(data_sent) == len(data_receive.decode()), "data length sent by DUT and received on remote peer is " \
-                                                             "not matching "
-        logger.info("data length sent by DUT and received on remote peer is matching")
-
-        wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-        wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-        tx_buffer = "12345678901234567890123456789012345678901234567890"
-        buffer_length = len(tx_buffer)
-        # send 50 bytes of data from udp socket opened remotely
-        remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
-        time.sleep(10)
-        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-        assert len(events) == 1, "Socket select asynchronous event is not received"
-        logger.info(f"Socket select event received")
-        sock_list = []
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-                socket_select_event_payload = event.event_data
-                since_time = event.timestamp + 1
-                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-                sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-                sock_id = get_socket_id(sock_fd)
-                if sock_id is not None:
-                    sock_list.append(sock_id)
-        if not (len(sock_list)):
-            logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-        assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-        for sock in sock_list:
-            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-            if not (buffer_length == buffer_length_rx):
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"not matched ")
-            else:
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"matched ")
-            assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-            if not (tx_buffer.encode() == buffer_rx):
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is not matched ")
-            else:
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is matched ")
-            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
-                                                    f"id {sock} opened in the DUT is not matched "
-
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close udp socket opened in the dut"
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("test_run_time", [300])
-def test_socket_select_tcp_close_stress_TC19334(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, test_run_time, logger
-        ):
-    capture_filename = "test_socket_select_tcp_close_stress_TC19334"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    sw = Stopwatch()
-
-    since_time = 0
-    logger.info(f"Running test_socket_select_tcp_close_stress_TC19334 test for {test_run_time} seconds")
-    while sw.elapsed_sec < test_run_time:
-        time.sleep(1)
-        remote_socket.interfaces.socket.start_server()
-        # time.sleep(10)
-        # DUT opens tcp client socket
-        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        assert sock == 0, f"socket id received is wrong, expected is 0"
+            local_port = 5004
+            assert sock == 3, f"socket id received is wrong, expected is 3"
         # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-        # tcp socket opened in DUT connects to the tcp server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
-        wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-        wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-        tx_buffer = "12345678901234567890123456789012345678901234567890"
-        buffer_length = len(tx_buffer)
-        # send 50 bytes of data from tcp server opened remotely
-        remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-        # DUT receives data over tcp socket after execution of below api
-        time.sleep(5)
-
-        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-        assert len(events) == 1, "Socket select asynchronous event is not received"
-        logger.info(f"Socket select event received")
-        sock_list = []
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-                socket_select_event_payload = event.event_data
-                since_time = event.timestamp + 1
-                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-                sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-                sock_id = get_socket_id(sock_fd)
-                if sock_id is not None:
-                    sock_list.append(sock_id)
-        if not (len(sock_list)):
-            logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-        assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
-
-        for sock in sock_list:
-            logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-            if not (buffer_length == buffer_length_rx):
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"not matched ")
-            else:
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"matched ")
-            assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-            if not (tx_buffer.encode() == buffer_rx):
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is not matched ")
-            else:
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is matched ")
-            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
-                                                    f"id {sock} opened in the DUT is not matched "
-        # DUT closes the tcp socket
-        result = wifi_dut.interfaces.wifi.close_socket(sock)
-        assert b"success" in result, "unable to close opened tcp socket in the dut"
-        remote_socket.interfaces.socket.stop()
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-            1),
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-
-        }
-    )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("test_run_time", [300])
-def test_socket_select_tcp_socket_fd_disable_TC19339(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, test_run_time, logger
-        ):
-    capture_filename = "test_socket_select_tcp_socket_fd_disable_TC19339"
-    join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    remote_socket.interfaces.socket.start_server()
-    # time.sleep(10)
-    # DUT opens tcp client socket
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-    assert sock == 0, f"socket id received is wrong, expected is 0"
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    # tcp socket opened in DUT connects to the tcp server
-    wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    server_ip = remote_socket_factory.interfaces.socket.sockets[0].hostname_or_ip_address()
+    iteration = 0
     sw = Stopwatch()
-
-    logger.info(f"Running test_socket_select_tcp_socket_fd_disable_TC19339 test for {test_run_time} seconds")
     while sw.elapsed_sec < test_run_time:
-        time.sleep(1)
+        iteration = iteration + 1
+        logger.info(f"#####################################################Iteration count -> {iteration}")
+        for socket_no in range(0, 4):
+            data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            data_length = len(data_sent)
+            if socket_no == 0:
+                server_port = 5001
+            elif socket_no == 1:
+                server_port = 5002
+            elif socket_no == 2:
+                server_port = 5003
+            else:
+                server_port = 5004
 
-        tx_buffer = "12345678901234567890123456789012345678901234567890"
-        buffer_length = len(tx_buffer)
-        # send 50 bytes of data from tcp server opened remotely
-        remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        assert buffer_length == buffer_length_rx, "buffer length sent by remote peer and received on DUT is not matched"
-        logger.info("buffer length sent by remote peer and received on DUT is matched")
-        assert tx_buffer.encode() == buffer_rx, "contents of data sent by remote peer and received on DUT is not " \
-                                                "matched "
-        logger.info("contents of data sent by remote peer and received on DUT is matched")
-    wifi_dut.interfaces.wifi.set_fd(socket_count=1)
-    wifi_dut.interfaces.wifi.socket_select(0, select_timeout=60)
-    tx_buffer = "12345678901234567890123456789012345678901234567890"
-    buffer_length = len(tx_buffer)
-    # send 50 bytes of data from tcp server opened remotely
-    remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
-    # DUT receives data over tcp socket after execution of below api
-    time.sleep(5)
+            wifi_dut.interfaces.wifi.send_to(sock, data_length, server_ip, server_port)
 
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 1, "Socket select asynchronous event is not received"
-    logger.info(f"Socket select event received")
-    sock_list = []
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-            socket_select_event_payload = event.event_data
-            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-            sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
-            sock_id = get_socket_id(sock_fd)
-            if sock_id is not None:
-                sock_list.append(sock_id)
-    if not (len(sock_list)):
-        logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
-    assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
+            data_receive, address = remote_socket_factory.interfaces.socket.sockets[socket_no].recv_data_udp(
+                data_length)
+            logger.info(f"DUT Received data ->  {data_receive} from address {address}")
+            assert len(data_sent) == len(
+                data_receive.decode()), "data length sent by DUT and received on remote peer is " \
+                                        "not matching "
+            logger.info("data length sent by DUT and received on remote peer is matching")
+            wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=0)
+            socket_id = 3
+            wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            buffer_length = len(tx_buffer)
 
-    for sock in sock_list:
-        logger.info(f"Data is received on the socket id {sock} opened in the DUT")
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-        if not (buffer_length == buffer_length_rx):
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+            remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_udp(tx_buffer, device_ip,
+                                                                                     port=server_port)
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            assert len(events) == 1, "Socket select asynchronous event is not received"
+            logger.info(f"Socket select event received")
+            sock_list = []
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                    socket_select_event_payload = event.event_data
+                    since_time = event.timestamp + 1
+                    logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                    sock_fd = int(socket_select_event_payload.split(b",")[1].split(b":")[1].strip(b"\r\n"))
+                    sock_id = get_socket_id(sock_fd)
+                    if sock_id is not None:
+                        sock_list.append(sock_id)
+            if not (len(sock_list)):
+                logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
+            assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
+
+            for sock in sock_list:
+                logger.info(f"Data is received on the socket id {sock} opened in the DUT")
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock,
+                                                                                    data_len=buffer_length)
+                if not (buffer_length == buffer_length_rx):
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
                         f"not matched ")
-        else:
-            logger.info(f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
+                else:
+                    logger.info(
+                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
                         f"matched ")
-        assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-        if not (tx_buffer.encode() == buffer_rx):
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the " \
+                                                          f"socket id {sock} opened in the DUT is not matched "
+                if not (tx_buffer.encode() == buffer_rx):
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
                         f"is not matched ")
-        else:
-            logger.info(f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
+                else:
+                    logger.info(
+                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
                         f"is matched ")
-        assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-
-    # DUT closes the tcp socket
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close opened tcp socket in the dut"
-    remote_socket.interfaces.socket.stop()
+                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
+                                                        f"socket " \
+                                                        f"id {sock} opened in the DUT is not matched "
+    for sock_count in range(0, 4):
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info("Stop Sniffer finally")
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")

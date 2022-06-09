@@ -1,11 +1,10 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap
-from utf.interfaces.bluetooth import BTSocketRole
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,\
+    RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116CustomFeatureBitMap,RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf.interfaces.wifi import WlanError
 import time
 import datetime
-from utf.interfaces.bluetooth import BLEDeviceState
 
 def logger():
     return get_logger(__name__)
@@ -29,86 +28,103 @@ def logger():
 '''=================== Ble-gap IO test cases ===================== '''
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_io_cap_displayonly_C19851(bt_dut,ble_client):
+def test_ble_io_cap_displayonly_C19851(ble_dut,ble_client):
 
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
-
-    # Set up DUT for BLE advertising
     logger().info("Initiate ble service in DUT")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch dut bd address...."
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 0)
+    assert bt_dut_address, "failed to initiate ble in dut"
 
     logger().info("Set DUT in advertise mode")
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
 
     logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     time.sleep(5)
     logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
-    # See that we found our device
     logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
     connect_time=datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
     logger().info(f"connect_time  {connect_time}")
     assert bt_dut_address,"unable to connect to the given address"
     time.sleep(30)
-    #checing if the connection exists to disconnect
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+
+    #checking if the connection exists to disconnect
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
-        disconnect_time = datetime.datetime.now(bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        disconnect_time = datetime.datetime.now(ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  { disconnect_time}")
         assert "unable to disconnect since the connection never existed"
 
     logger().info(f"connection existed for {disconnect_time-connect_time}")
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_io_cap_display_yesno_C19852(bt_dut,ble_client):
-
-    logger().info("Setting the dut IO capability to display yes no.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=1)
+def test_ble_io_cap_display_yesno_C19852(ble_dut,ble_client):
 
     logger().info("Initiate ble service in DUT")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 1)
+    assert bt_dut_address,"failed to initiate ble in dut"
 
     logger().info("Set DUT in advertise mode")
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
 
     logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     time.sleep(5)
     logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
     connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
@@ -116,63 +132,15 @@ def test_ble_io_cap_display_yesno_C19852(bt_dut,ble_client):
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
     # checking if the connection exists to disconnect
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
         disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
-def test_ble_io_cap_keyboard_only_C19853(bt_dut,ble_client):
-
-    logger().info("Setting the dut IO capability to keyboard only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=2)
-
-    logger().info("Initiate ble service in DUT")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
-
-    logger().info("Set DUT in advertise mode")
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
-
-    logger().info("Start smp scan from the remote device")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
-    time.sleep(5)
-    logger().info("stop scanning ....")
-    ble_client.interfaces.bluetooth.stop_scanning()
-
-    logger().info("Check the dut is listed...")
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
-
-    logger().info("Connect to the dut with mac address..")
-    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
-    logger().info(f"connect_time  {connect_time}")
-    assert bt_dut_address, "unable to connect to the given address"
-    time.sleep(30)
-    # checking if the connection exists to disconnect
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
-        logger().info("Disconnecting the bt host....")
-        disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
-        logger().info(f"disconnect_time  {disconnect_time}")
-        assert "unable to disconnect since the connection never existed"
-
     logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 @pytest.mark.config(
@@ -180,30 +148,40 @@ def test_ble_io_cap_keyboard_only_C19853(bt_dut,ble_client):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_io_cap_No_input_output_C19854(bt_dut,ble_client):
-
-    logger().info("Setting the dut IO capability to No input output.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=3)
+def test_ble_io_cap_keyboard_only_C19853(ble_dut,ble_client):
 
     logger().info("Initiate ble service in DUT")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 2)
+    assert bt_dut_address,"failed to initiate ble in dut"
 
     logger().info("Set DUT in advertise mode")
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
 
     logger().info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     time.sleep(5)
     logger().info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Check the dut is listed...")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices
 
     logger().info("Connect to the dut with mac address..")
     connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
@@ -211,16 +189,72 @@ def test_ble_io_cap_No_input_output_C19854(bt_dut,ble_client):
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
     # checking if the connection exists to disconnect
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
         disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
+    logger().info(f"connection existed for {disconnect_time - connect_time}")
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_ble_io_cap_No_input_output_C19854(ble_dut,ble_client):
+
+    logger().info("Initiate ble service in DUT")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 3)
+    assert bt_dut_address,"failed to initiate ble in dut"
+
+    logger().info("Set DUT in advertise mode")
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
+
+    logger().info("Start smp scan from the remote device")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address,"failed to initiate ble in remote device"
+    time.sleep(5)
+    logger().info("stop scanning ....")
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    logger().info("Check the dut is listed...")
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices
+
+    logger().info("Connect to the dut with mac address..")
+    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
+    logger().info(f"connect_time  {connect_time}")
+    assert bt_dut_address, "unable to connect to the given address"
+    time.sleep(30)
+    # checking if the connection exists to disconnect
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    logger().info(f"state_int==============>>,  {state_int}")
+    if (state_int > 0):
+        logger().info("Disconnecting the bt host....")
+        disconnect_time = datetime.datetime.now(
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+        logger().info(f"disconnect_time  {disconnect_time}")
+        assert "unable to disconnect since the connection never existed"
     logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 '''======================= Ble-gap IO test cases dut as initiator ====================='''
@@ -231,39 +265,39 @@ def test_ble_io_cap_No_input_output_C19854(bt_dut,ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_displayonly_C19855(bt_dut,ble_client):
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+def test_ble_io_cap_displayonly_C19855(ble_dut,ble_client):
 
     logger().info("Initiating ble service in dut")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address of dut...."
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 0)
+    assert bt_dut_address, "failed to initiate ble in dut"
 
     logger().info("Starting the advertisement in ble client")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "failed to fetch client bt address..."
+    assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(5)
 
     logger().info("dut start scanning.....")
-    bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
 
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    connect_time = datetime.datetime.now(bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+    connect_time = datetime.datetime.now(ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
     logger().info(f"connect_time  {connect_time}")
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
 
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
         disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-
     logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 
@@ -274,41 +308,40 @@ def test_ble_io_cap_displayonly_C19855(bt_dut,ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_display_yesno_C19856(bt_dut,ble_client):
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=1)
+def test_ble_io_cap_display_yesno_C19856(ble_dut,ble_client):
 
     logger().info("Initiating ble service in dut")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address of dut...."
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 1)
+    assert bt_dut_address, "failed to initiate ble in dut"
 
     logger().info("Starting the advertisement in ble client")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "failed to fetch client bt address..."
+    assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(5)
 
     logger().info("dut start scanning.....")
-    bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
 
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-    connect_time = datetime.datetime.now(bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+    connect_time = datetime.datetime.now(ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
     logger().info(f"connect_time  {connect_time}")
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
 
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
         disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-
     logger().info(f"connection existed for {disconnect_time - connect_time}")
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -317,42 +350,41 @@ def test_ble_io_cap_display_yesno_C19856(bt_dut,ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_keyboard_only_C19857(bt_dut,ble_client):
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=2)
+def test_ble_io_cap_keyboard_only_C19857(ble_dut,ble_client):
 
     logger().info("Initiating ble service in dut")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address of dut...."
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 2)
+    assert bt_dut_address, "failed to initiate ble in dut"
 
     logger().info("Starting the advertisement in ble client")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "failed to fetch client bt address..."
+    assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(5)
 
     logger().info("dut start scanning.....")
-    bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
 
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     connect_time = datetime.datetime.now(
-        bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+        ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
     logger().info(f"connect_time  {connect_time}")
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
 
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
         disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-
     logger().info(f"connection existed for {disconnect_time - connect_time}")
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -361,42 +393,41 @@ def test_ble_io_cap_keyboard_only_C19857(bt_dut,ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_io_cap_no_input_output_C19858(bt_dut,ble_client):
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=3)
+def test_ble_io_cap_no_input_output_C19858(ble_dut,ble_client):
 
     logger().info("Initiating ble service in dut")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address of dut...."
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability= 3)
+    assert bt_dut_address, "failed to initiate ble in dut"
 
     logger().info("Starting the advertisement in ble client")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "failed to fetch client bt address...."
+    assert bt_client_address, "failed to initiate ble in remote dut"
     time.sleep(5)
 
     logger().info("dut start scanning.....")
-    bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
 
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     connect_time = datetime.datetime.now(
-        bt_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
+        ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
     logger().info(f"connect_time  {connect_time}")
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
 
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
         logger().info("Disconnecting the bt host....")
         disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-
     logger().info(f"connection existed for {disconnect_time - connect_time}")
-
 
 """============================ Ble-gap dut scan for adv types ============================================="""
 @pytest.mark.config(
@@ -404,12 +435,18 @@ def test_ble_io_cap_no_input_output_C19858(bt_dut,ble_client):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_scan_connectable_undirected_adv_C19805(bt_dut, ble_client):
+def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
     logger().info("start ble...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address"
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to initiate ble in dut"
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
@@ -422,28 +459,49 @@ def test_ble_scan_connectable_undirected_adv_C19805(bt_dut, ble_client):
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
     )
-    assert bt_client_address is not None
-    logger().info(f"ble client add..{bt_client_address}")
+    assert bt_client_address,"failed to initiate ble in remote device"
+    logger().info(f"ble client addr..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps,"failed to enable bt power save"
+    time.sleep(5)
+
     logger().info("verifying client addr is available in scan list...")
     assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
+    logger().info("found BT client address in dut scan list")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_scan_connectable_directed_adv_C19806(bt_dut, ble_client):
+def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     logger().info("start ble...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address"
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to initiate ble in dut"
     logger().info(f"bt_dut_address {bt_dut_address}")
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
@@ -457,28 +515,47 @@ def test_ble_scan_connectable_directed_adv_C19806(bt_dut, ble_client):
                        "0x07 "
                        "0x00"
     )
-    assert bt_client_address is not None
+    assert bt_client_address ,"failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
     logger().info("verifying client addr, is available in scan list...")
     assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
     logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_scan_non_connectable_undirected_adv_C19807(bt_dut, ble_client):
+def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
     logger().info("start ble...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address"
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to start ble in dut"
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
@@ -491,28 +568,48 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(bt_dut, ble_client):
                        "0x07 "
                        "0x00"
     )
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     logger().info("verifying client addr, is available in scan list...")
     assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
     logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_scannable_undirected_adv_C19808(bt_dut, ble_client):
+def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
     logger().info("start ble...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address"
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to start ble in dut"
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
@@ -525,53 +622,48 @@ def test_ble_scannable_undirected_adv_C19808(bt_dut, ble_client):
                        "0x07 "
                        "0x00"
     )
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     logger().info("verifying client addr, is available in scan list...")
     assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
     logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_adv_report_C19848(bt_dut, ble_client):
+def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
     logger().info("start ble...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address..."
-    logger().info("start ble client...")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    time.sleep(1)
-    assert bt_client_address is not None
-    logger().info(f"ble client add..{bt_client_address}")
-    time.sleep(1)
-    logger().info("Start scanning....")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-    logger().info(f" scan result '{result}")
-    assert result, "no bt device found"
-    logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
-def test_ble_adv_state_in_scan_C19840(bt_dut, ble_client):
-    logger().info("start ble...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch bd address... "
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to initiate ble in dut"
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
@@ -584,44 +676,79 @@ def test_ble_adv_state_in_scan_C19840(bt_dut, ble_client):
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
     )
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     time.sleep(3)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+
     logger().info("verifying client addr is available in scan list...")
-    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
     logger().info("found BT client address")
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+    time.sleep(3)
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address, "failed to initiate ble in remote device"
+    time.sleep(5)
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices,"dut is not listed in scan results"
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
+def test_ble_dut_slave_connect_C19832(ble_dut,ble_client):
 
     logger().info("set dut in adv mode...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch  bd address..."
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to initiate ble in dut"
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("start ble scan from remote le device...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     time.sleep(5)
     ble_client.interfaces.bluetooth.stop_scanning()
 
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices
     assert (
-            found_devices[bt_dut.interfaces.wifi.ble_address]
-            == bt_dut.interfaces.bluetooth.ble_advertising_data
+            found_devices[ble_dut.interfaces.wifi.ble_address]
+            == ble_dut.interfaces.bluetooth.ble_advertising_data
     )
     logger().info("connect to dut from remote le device....")
     connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
@@ -629,10 +756,10 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
     with pytest.raises(WlanError) as exc_info:
-        bt_dut.interfaces.bluetooth.ble_stop_advertising()
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
     assert exc_info.value.error_code == 0x4E0C
 
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
@@ -640,57 +767,6 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
         disconnect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.disconnect(bt_dut_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
-def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
-
-    logger().info("set dut in adv mode...")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address, "unable to fetch  bd address..."
-    bt_dut.interfaces.bluetooth.ble_start_advertising()
-
-    logger().info("start ble scan from remote le device...")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
-    time.sleep(5)
-    logger().info("stopping the ble scan from remote le device...")
-    ble_client.interfaces.bluetooth.stop_scanning()
-
-    found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
-    assert (
-            found_devices[bt_dut.interfaces.wifi.ble_address]
-            == bt_dut.interfaces.bluetooth.ble_advertising_data
-    )
-    logger().info("connect to dut from remote le device....")
-    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
-    logger().info(f"connect_time  {connect_time}")
-    assert bt_dut_address, "unable to connect to the given address"
-    time.sleep(30)
-
-    with pytest.raises(WlanError) as exc_info:
-        bt_dut.interfaces.bluetooth.ble_stop_advertising()
-    assert exc_info.value.error_code == 0x4E0C
-
-    # checking if the connection exists to disconnect
-    state = bt_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
-        logger().info("Disconnecting the bt host....")
-        disconnect_time = datetime.datetime.now(
-            bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address))
-        logger().info(f"disconnect_time  {disconnect_time}")
-        assert "unable to disconnect since the connection never existed"
-
     logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 @pytest.mark.config(
@@ -710,32 +786,37 @@ def test_ble_dut_slave_connect_C19832(bt_dut,ble_client):
             "first_time_retry": 0,
             }
         )
-def test_directed_connectable_adv_C19802(bt_dut, ble_client, bt_logs):
+def test_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs):
 
     logger().info("start ble in dut....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    logger().info("starting the advertisement on the Dut")
-    bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129) #high duty cycle
-    logger().info("enabling the power save mode")
-    bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    bt_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    logger().info("enabling the power save mode")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address,"failed to initiate ble in dut"
+    logger().info("advertising Dut")
+    ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129) #high duty cycle
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address, "unable to fetch dut bd address..."
     time.sleep(5)
 
     logger().info("stop bt advertising...")
-    bt_dut.interfaces.bluetooth.ble_stop_advertising()
+    ble_dut.interfaces.bluetooth.ble_stop_advertising()
     ble_client.interfaces.bluetooth.stop_scanning()
 
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert bt_dut.interfaces.bluetooth.ble_address in found_devices
+    logger().info("checking dut,listed in scan")
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices
     assert (
-            found_devices[bt_dut.interfaces.bluetooth.ble_address]
-            == bt_dut.interfaces.bluetooth.ble_advertising_data
+            found_devices[ble_dut.interfaces.bluetooth.ble_address]
+            == ble_dut.interfaces.bluetooth.ble_advertising_data
     )
-    bt_logs.device_characteristics(bt_dut.interfaces.bluetooth.ble_address)
-    assert 'Connectable undirected - ADV_IND (0x81)' in bt_logs.device_adv_type
+    bt_logs.device_characteristics(ble_dut.interfaces.bluetooth.ble_address)
+    assert 'Connectable directed - ADV_IND (0x81)' in bt_logs.device_adv_type,"device not in connectable directed mode"
+    logger().info("found dut with connectable directed mode")
 
 " ============ ble-gap pdu length test cases ====================== "
 @pytest.mark.config(
@@ -743,15 +824,20 @@ def test_directed_connectable_adv_C19802(bt_dut, ble_client, bt_logs):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_scan_resp_8_bytes_C19821(bt_dut, ble_client):
+def test_ble_scan_resp_8_bytes_C19821(ble_dut, ble_client):
     logger().info("start ble dut....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address,"failed to initiate ble in dut"
 
-    #pdu name -- automate
+    #pdu name -- No PDU name as address itself satisfies the 8 bytes
     logger().info("start ble client with pdu length 8 bytes....")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
@@ -763,119 +849,111 @@ def test_ble_scan_resp_8_bytes_C19821(bt_dut, ble_client):
                        "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
-    , scan_resp_name_params = "0x0a 0x09 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65  "
-                                "0x00 0x00 0x00 0x00 " \
-                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+    , scan_resp_name_params = "0x00 0x09 0x09 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                              "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                              "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+
     )
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     time.sleep(1)
     logger().info("Start ble scanning...")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     logger().info("verifying client addr, is available in scan list...")
     assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
     logger().info("found BT client address")
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
-    },
-)
-def test_ble_scan_resp_20_bytes_C19822(bt_dut, ble_client):
-    logger().info("start ble dut....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
-
-    # pdu name -- letmeusethisaspdulen
-    logger().info("start ble client with pdu length 8 bytes....")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-    , scan_resp_name_params = "0x16 0x15 0x09 0x6c 0x65 0x74 0x6d 0x65 0x75 0x73 0x65  "
-                                "0x74 0x68 0x69 0x73 " \
-                                "0x61 0x73 0x70 0x64 0x75 0x6c 0x65 0x6e 0x00 "
-                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
-    )
-    assert bt_client_address is not None
-    time.sleep(1)
-    logger().info("Start ble scanning...")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-    logger().info(f" scan result '{result}")
-    assert result, "no bt device found"
-    logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
-    },
-)
-def test_ble_scan_resp_30_bytes_C19823(bt_dut, ble_client):
-    logger().info("start ble dut....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
-
-    # pdu name -- thisispdulengthofthirteeybytes
-    logger().info("start ble client with pdu length 30 bytes....")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-    , scan_resp_name_params = "0x20 0x1f 0x09 0x74 0x68 0x69 0x73 0x69 0x73 0x70 0x64  "
-                                "0x75 0x6c 0x65 0x6e " \
-                                "0x67 0x74 0x68 0x6f 0x66 0x74 0x68 0x69 0x72 0x74 0x65 0x65 "
-                                "0x79 0x62 0x79 0x74 0x65 0x73 0x00 0x00"
-
-    )
-    assert bt_client_address is not None
-    time.sleep(1)
-    logger().info("Start ble scanning...")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
-    logger().info(f" scan result '{result}")
-    assert result, "no bt device found"
-    logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
-    },
-)
-def test_ble_scan_resp_32_bytes_C19824(bt_dut, ble_client):
-    logger().info("NOTE: As per test rail this case is for 39 bytes due to hci command limiting to 32 bytes from RPI")
+    ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
-    logger().info("start ble dut....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.ble_start()
-    assert bt_dut_address is not None
 
-    # pdu name -- thisispdulengthofthirteeytobytes
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_ble_scan_resp_20_bytes_C19822(ble_dut, ble_client):
+    logger().info("start ble dut....")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address,"failed to initiate ble in dut"
+
+    # pdu name -- automateaa
+    logger().info("start ble client with pdu length 8 bytes....")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x0c 0x0b 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
+                              "0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                              "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+    )
+    assert bt_client_address,"failed to initiate ble in remote device"
+    time.sleep(1)
+    logger().info("Start ble scanning...")
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_ble_scan_resp_30_bytes_C19823(ble_dut, ble_client):
+    logger().info("start ble dut....")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address,"failed to initiate ble in dut"
+
+    # pdu name -- automateaaaaaaaaaaaa
     logger().info("start ble client with pdu length 30 bytes....")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
@@ -887,18 +965,136 @@ def test_ble_scan_resp_32_bytes_C19824(bt_dut, ble_client):
                        "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
-    , scan_resp_name_params = "0x22 0x21 0x09 0x74 0x68 0x69 0x73 0x69 0x73 0x70 0x64  "
-                                "0x75 0x6c 0x65 0x6e " \
-                                "0x67 0x74 0x68 0x6f 0x66 0x74 0x68 0x69 0x72 0x74 0x65 0x65 "
-                                "0x79 0x74 0x6f 0x62 0x79 0x74 0x65 0x73"
+    , scan_resp_name_params = "0x16 0x15 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 "
+                              "0x65 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
+                              "0x61 0x61 0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
 
     )
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in remote device"
     time.sleep(1)
     logger().info("Start ble scanning...")
-    result = bt_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
     assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_ble_scan_resp_39_bytes_C19824(ble_dut, ble_client):
+    logger().info("start ble dut....")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address,"failed to initiate ble in dut"
+
+    # pdu name -- automateaaaaaaaaaaaaaaaaaaaaa
+    logger().info("start ble client with pdu length 30 bytes....")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                       "0x40 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    , scan_resp_name_params = "0x1F 0x1E 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
+                              "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
+                              "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x00 0x00 "
+
+    )
+    assert bt_client_address,"failed to initiate ble in remote device"
+    time.sleep(1)
+    logger().info("Start ble scanning...")
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     logger().info("verifying client addr, is available in scan list...")
     assert str(bt_client_address) in str(result), "failed to find client bt address in scan list...."
     logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_ble_adv_report_C19848(ble_dut, ble_client):
+    logger().info("start ble...")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address,"failed to initiate ble in dut"
+    logger().info("start ble client...")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    time.sleep(1)
+    assert bt_client_address,"failed to initiate ble in remote device"
+    logger().info(f"ble client add..{bt_client_address}")
+    time.sleep(1)
+    logger().info("Start scanning....")
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
+    logger().info(f" scan result '{result}")
+    assert result, "no bt device found"
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info("verifying client addr, is available in scan list...")
+    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
+    logger().info("found BT client address")
+
+    ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+    logger().info("stop scanning")
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)

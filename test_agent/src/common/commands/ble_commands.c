@@ -61,6 +61,9 @@
 #define RSI_BLE_SMP_PASSKEY       0
 //TODO make the above definitions to dynamic variable
 
+// global for ble capabilities
+uint8_t g_ble_capability=3;
+
 //! max data length
 #define RSI_BLE_MAX_DATA_LEN 20
 
@@ -187,29 +190,29 @@ static void ble_task(void* arg)
         switch (temp_event_map) {
             case RSI_APP_EVENT_ADV_REPORT:
                 //! advertise report event.
-                LOG_EVENT("\nRSI_APP_EVENT_ADV_REPORT \n");      
+                LOG_EVENT("\nRSI_APP_EVENT_ADV_REPORT \n");
                 rsi_ble_app_clear_event(RSI_APP_EVENT_ADV_REPORT);
-                //TODO: Do we keep this here are move it outside and call from UTF       
+                //TODO: Do we keep this here are move it outside and call from UTF
                 // LOG_PRINT("\nSending rsi_ble_connect\n");
                 // print_status(rsi_ble_connect(remote_addr_type, (int8_t *)ble_remote_dev_addr));
                 break;
 
             case RSI_BLE_CONN_EVENT:
                 //! event invokes when connection was completed
-                LOG_EVENT("\nRSI_BLE_CONN_EVENT \n");     
+                LOG_EVENT("\nRSI_BLE_CONN_EVENT \n");
                 rsi_ble_app_clear_event(RSI_BLE_CONN_EVENT);
                 break;
 
             case RSI_BLE_DISCONN_EVENT:
                 //! event invokes when disconnection was completed
-                LOG_EVENT("\nRSI_BLE_DISCONN_EVENT \n");     
+                LOG_EVENT("\nRSI_BLE_DISCONN_EVENT \n");
                 rsi_ble_app_clear_event(RSI_BLE_DISCONN_EVENT);
                 device_found = 0;
                 // if(current_ble_role == BLE_SLAVE_ROLE){
                 //     //! start the advertising
                 //     LOG_PRINT("\nSending rsi_ble_start_advertising\n");
                 //     print_status(rsi_ble_start_advertising());
-                // } 
+                // }
                 // if (current_ble_role == BLE_MASTER_ROLE){
                 //     //! start scanning
                 //     device_found = 0;
@@ -227,14 +230,14 @@ static void ble_task(void* arg)
 
             case RSI_BLE_MTU_EVENT:
                 //! event invokes when write/notification events received
-                LOG_EVENT("\nRSI_BLE_MTU_EVENT \n");   
+                LOG_EVENT("\nRSI_BLE_MTU_EVENT \n");
                 rsi_ble_app_clear_event(RSI_BLE_MTU_EVENT);
                 if (current_ble_role == BLE_MASTER_ROLE){
                     if (!already_paired) {
                         //! If not paired even once
                         //! initiating the SMP pairing process
                         LOG_PRINT("\nSending rsi_ble_smp_pair_request\n");
-                        print_status(rsi_ble_smp_pair_request(app_ble_mtu_event.dev_addr , RSI_BLE_SMP_IO_CAPABILITY, MITM_REQ));
+                        print_status(rsi_ble_smp_pair_request(app_ble_mtu_event.dev_addr , g_ble_capability, MITM_REQ));
                     }
                 }
                 break;
@@ -268,7 +271,7 @@ static void ble_task(void* arg)
                         //! If once paired
                         //! initiating the SMP pairing process
                         LOG_PRINT("\nSending rsi_ble_smp_pair_request\n");
-                        print_status(rsi_ble_smp_pair_request(ble_remote_dev_addr, RSI_BLE_SMP_IO_CAPABILITY, MITM_REQ));
+                        print_status(rsi_ble_smp_pair_request(ble_remote_dev_addr, g_ble_capability, MITM_REQ));
                     }
                 }
                 break;
@@ -278,7 +281,7 @@ static void ble_task(void* arg)
                 LOG_EVENT("\nRSI_BLE_SMP_RESP_EVENT \n");
                 rsi_ble_app_clear_event(RSI_BLE_SMP_RESP_EVENT);
                 LOG_PRINT("\nSending rsi_ble_smp_pair_response\n");
-                print_status(rsi_ble_smp_pair_response(ble_remote_dev_addr, RSI_BLE_SMP_IO_CAPABILITY, MITM_REQ));
+                print_status(rsi_ble_smp_pair_response(ble_remote_dev_addr, g_ble_capability, MITM_REQ));
                 break;
 
             case RSI_BLE_SMP_PASSKEY_EVENT:
@@ -292,7 +295,7 @@ static void ble_task(void* arg)
                 LOG_EVENT("\nRSI_BLE_SMP_PASSKEY_DISPLAY_EVENT \n");
                 rsi_ble_app_clear_event(RSI_BLE_SMP_PASSKEY_DISPLAY_EVENT);
                 break;
-            
+
             case RSI_BLE_SC_PASSKEY_EVENT:
                 LOG_EVENT("\nRSI_BLE_SC_PASSKEY_EVENT\n");
                 rsi_ble_app_clear_event(RSI_BLE_SC_PASSKEY_EVENT);
@@ -311,14 +314,14 @@ static void ble_task(void* arg)
                 rsi_ble_app_clear_event(RSI_BLE_ENCRYPT_STARTED_EVENT);
                 already_paired = 1;
                 break;
-            
+
             case RSI_BLE_GATT_WRITE_EVENT:
                 //! event invokes when write/notification events received
                 //! clear the served event
                 LOG_EVENT("\nRSI_BLE_GATT_WRITE_EVENT \n");
                 rsi_ble_app_clear_event(RSI_BLE_GATT_WRITE_EVENT);
-                
-                LOG_PRINT("\n rsi_ble_att_val_hndl = %d, rsi_ble_att2_val_hndl = %d, *((uint16_t *)app_ble_write_event.handle) = %d\n", 
+
+                LOG_PRINT("\n rsi_ble_att_val_hndl = %d, rsi_ble_att2_val_hndl = %d, *((uint16_t *)app_ble_write_event.handle) = %d\n",
                 rsi_ble_att_val_hndl, rsi_ble_att2_val_hndl, *((uint16_t *)app_ble_write_event.handle));
 
                 if(rsi_ble_att_val_hndl == *((uint16_t *)app_ble_write_event.handle)) {
@@ -331,7 +334,7 @@ static void ble_task(void* arg)
                     //! set the local attribute value.
                     rsi_ble_set_local_att_value(rsi_ble_att_val_hndl, RSI_BLE_MAX_DATA_LEN, (uint8_t *)ble_gatt_data);
                     rsi_ble_get_local_att_value(rsi_ble_att_val_hndl, &local_att_val);
-                }  
+                }
                 if(rsi_ble_att_val_hndl == *((uint16_t *)app_ble_write_event.handle)-1) {
                     //This block is executed when Notification are turned on/off by remote device
                     //check for valid notifications
@@ -342,7 +345,7 @@ static void ble_task(void* arg)
                         notification_tx_handle = 0;
                         LOG_PRINT("\n Remote device disabled the notification\n");
                     }
-                }                
+                }
                 break;
 
             default:{
@@ -352,22 +355,23 @@ static void ble_task(void* arg)
     }
 }
 
-void init_ble_command()
+void init_ble_command(sl_cli_command_arg_t *arguments)
 {
     if (ble_task_handle != NULL) {
         // already initialized
         print_status(RSI_ERROR_NONE);
         return;
     }
+    g_ble_capability = sl_cli_get_argument_uint8(arguments, 0);
     int32_t status = intialize_bt_stack(STACK_BTLE_MODE);
     if (status == RSI_SUCCESS) {
         //set default role to master
         current_ble_role = BLE_MASTER_ROLE;
 
-        rsi_task_create((rsi_task_function_t)ble_task, 
-                        (uint8_t*)"ble_task", 
-                        RSI_BLE_TASK_STACK_SIZE, 
-                        NULL, 
+        rsi_task_create((rsi_task_function_t)ble_task,
+                        (uint8_t*)"ble_task",
+                        RSI_BLE_TASK_STACK_SIZE,
+                        NULL,
                         RSI_BLE_TASK_PRIORITY, &ble_task_handle);
         //! registering the GAP callback functions
         rsi_ble_gap_register_callbacks(rsi_ble_simple_central_on_adv_report_event,
@@ -483,7 +487,7 @@ void rsi_ble_disconnect_comamnd(sl_cli_command_arg_t* arguments){
         sscanf(remote_dev_addr + 3 * i, "%02X", &val);
         device_address[5-i] = (uint8_t)val;
     }
-    
+
     print_status(rsi_ble_disconnect((int8_t *)device_address));
 }
 
@@ -630,7 +634,7 @@ int32_t rsi_ble_notify_value_internal()
                                     notification_tx_handle,
                                     sizeof(ble_gatt_data),
                                     (uint8_t *)ble_gatt_data);
-    return status;                       
+    return status;
 }
 
 void rsi_ble_notify_value_command(sl_cli_command_arg_t* arguments)
@@ -715,7 +719,7 @@ void rsi_ble_get_profile_async_command(sl_cli_command_arg_t* arguments){
 
 	char* remote_dev_bd_addr = sl_cli_get_argument_string(arguments, 0);
 
-  
+
   uuid_t search_serv                               = { 0 };
   search_serv.size = 2;
   search_serv.val.val16 = sl_cli_get_argument_uint16(arguments, 1);
@@ -753,7 +757,7 @@ void rsi_ble_set_att_value_async_command(sl_cli_command_arg_t* arguments){
     char* remote_dev_bd_addr = sl_cli_get_argument_string(arguments, 0);
     uint16_t handle = sl_cli_get_argument_uint16(arguments, 1);
     uint8_t data = sl_cli_get_argument_uint8(arguments, 2);
-    
+
     uint8_t data_to_send[1] = {data};
 
     uint8_t rsi_connected_dev_addr[6] = { 0 };
@@ -940,9 +944,9 @@ static int32_t rsi_ble_app_get_event(void)
  */
 void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_report)
 {
-    if (device_found == 1) {
-        return;
-    }
+//    if (device_found == 1) {
+//        return;
+//    }
 
     // memset(remote_name, 0, 31);
     // BT_LE_ADPacketExtract(remote_name, adv_report->adv_data, adv_report->adv_data_len);
@@ -952,7 +956,7 @@ void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_
 
     rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, adv_report->dev_addr);
 
-    LOG_EVENT("Found : %s\n",ble_str_conn_bd_addr); 
+    LOG_EVENT("Found : %s\n",ble_str_conn_bd_addr);
 
     if(current_ble_role == BLE_MASTER_ROLE){
         bool device_was_not_found_yet = device_found == 0;
@@ -962,10 +966,10 @@ void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_
         //if (device_was_not_found_yet && found_desired_remote_name || (found_desired_remote_type && found_desired_remote_addr)) {
         if (device_was_not_found_yet && found_desired_remote_addr) {
             device_found = 1;
-            // LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s, dev_addr_type: %s, remote_name: %s\n", 
-            //     ble_str_conn_bd_addr, 
+            // LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s, dev_addr_type: %s, remote_name: %s\n",
+            //     ble_str_conn_bd_addr,
             //     remote_addr_type, remote_name);
-            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s\n", 
+            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s\n",
                 ble_str_conn_bd_addr);
             rsi_ble_app_set_event(RSI_APP_EVENT_ADV_REPORT);
         }
@@ -998,7 +1002,7 @@ void rsi_ble_data_length_change_event(rsi_ble_event_data_length_update_t *rsi_bl
 void rsi_ble_on_enhance_conn_status_event(rsi_ble_event_enhance_conn_status_t *resp_enh_conn)
 {
     memcpy((int8_t *)ble_remote_dev_addr, resp_enh_conn->dev_addr, RSI_DEV_ADDR_LEN);
-    LOG_EVENT("\nrsi_ble_on_enhance_conn_status_event- dev_addr: %s\n", 
+    LOG_EVENT("\nrsi_ble_on_enhance_conn_status_event- dev_addr: %s\n",
             rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, resp_enh_conn->dev_addr));
     rsi_ble_app_set_event(RSI_BLE_CONN_EVENT);
 }
@@ -1015,7 +1019,7 @@ void rsi_ble_on_enhance_conn_status_event(rsi_ble_event_enhance_conn_status_t *r
 static void rsi_ble_on_connect_event(rsi_ble_event_conn_status_t *resp_conn)
 {
     memcpy((int8_t *)ble_remote_dev_addr, resp_conn->dev_addr, RSI_DEV_ADDR_LEN);
-    LOG_EVENT("\nrsi_ble_on_connect_event- dev_addr: %s\n", 
+    LOG_EVENT("\nrsi_ble_on_connect_event- dev_addr: %s\n",
                 rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, resp_conn->dev_addr));
 
     rsi_ble_app_set_event(RSI_BLE_CONN_EVENT);
@@ -1034,7 +1038,7 @@ static void rsi_ble_on_connect_event(rsi_ble_event_conn_status_t *resp_conn)
 static void rsi_ble_on_disconnect_event(rsi_ble_event_disconnect_t *resp_disconnect, uint16_t reason)
 {
     memcpy((int8_t *)ble_remote_dev_addr, resp_disconnect->dev_addr, RSI_DEV_ADDR_LEN);
-    LOG_EVENT("\nrsi_ble_on_disconnect_event- dev_addr: %s, reason: 0x%x\n", 
+    LOG_EVENT("\nrsi_ble_on_disconnect_event- dev_addr: %s, reason: 0x%x\n",
                 rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, resp_disconnect->dev_addr), reason);
 
     rsi_ble_app_set_event(RSI_BLE_DISCONN_EVENT);
@@ -1042,7 +1046,7 @@ static void rsi_ble_on_disconnect_event(rsi_ble_event_disconnect_t *resp_disconn
 
 /*==============================================*/
 /**
- * @fn         rsi_ble_on_smp_request 
+ * @fn         rsi_ble_on_smp_request
  * @brief      its invoked when smp request event is received.
  * @param[in]  remote_dev_address, it indicates remote bd address.
  * @return     none.
@@ -1053,32 +1057,32 @@ static void rsi_ble_on_disconnect_event(rsi_ble_event_disconnect_t *resp_disconn
 void rsi_ble_on_smp_request(rsi_bt_event_smp_req_t *remote_dev_address)
 {
     memcpy((int8_t *)ble_remote_dev_addr, remote_dev_address->dev_addr, RSI_DEV_ADDR_LEN);
-    LOG_EVENT("\nrsi_ble_on_smp_request- dev_addr: %s\n", 
+    LOG_EVENT("\nrsi_ble_on_smp_request- dev_addr: %s\n",
                 rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, remote_dev_address->dev_addr));
     rsi_ble_app_set_event(RSI_BLE_SMP_REQ_EVENT);
 }
 
 /*==============================================*/
 /**
- * @fn         rsi_ble_on_smp_response 
+ * @fn         rsi_ble_on_smp_response
  * @brief      its invoked when smp response event is received.
  * @param[in]  remote_dev_address, it indicates remote bd address.
  * @return     none.
  * @section description
- * This callback function is invoked when SMP response events is received(we are in slave mode) 
+ * This callback function is invoked when SMP response events is received(we are in slave mode)
  * Note: Master initiated SMP protocol, we have to send SMP response command
  */
 void rsi_ble_on_smp_response(rsi_bt_event_smp_resp_t *remote_dev_address)
 {
     memcpy((int8_t *)ble_remote_dev_addr, remote_dev_address->dev_addr, RSI_DEV_ADDR_LEN);
-    LOG_EVENT("\nrsi_ble_on_smp_response- dev_addr: %s\n", 
+    LOG_EVENT("\nrsi_ble_on_smp_response- dev_addr: %s\n",
                 rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, remote_dev_address->dev_addr));
     rsi_ble_app_set_event(RSI_BLE_SMP_RESP_EVENT);
 }
 
 /*==============================================*/
 /**
- * @fn         rsi_ble_on_smp_passkey 
+ * @fn         rsi_ble_on_smp_passkey
  * @brief      its invoked when smp passkey event is received.
  * @param[in]  remote_dev_address, it indicates remote bd address.
  * @return     none.
@@ -1089,14 +1093,14 @@ void rsi_ble_on_smp_response(rsi_bt_event_smp_resp_t *remote_dev_address)
 void rsi_ble_on_smp_passkey(rsi_bt_event_smp_passkey_t *remote_dev_address)
 {
     memcpy((int8_t *)ble_remote_dev_addr, remote_dev_address->dev_addr, RSI_DEV_ADDR_LEN);
-    LOG_EVENT("\nrsi_ble_on_smp_passkey- dev_addr: %s\n", 
+    LOG_EVENT("\nrsi_ble_on_smp_passkey- dev_addr: %s\n",
                 rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, remote_dev_address->dev_addr));
     rsi_ble_app_set_event(RSI_BLE_SMP_PASSKEY_EVENT);
 }
 
 /*==============================================*/
 /**
- * @fn         rsi_ble_on_smp_passkey_display 
+ * @fn         rsi_ble_on_smp_passkey_display
  * @brief      its invoked when smp passkey event is received.
  * @param[in]  remote_dev_address, it indicates remote bd address.
  * @return     none.
@@ -1122,7 +1126,7 @@ void rsi_ble_on_sc_passkey(rsi_bt_event_sc_passkey_t *sc_passkey)
 
 /*==============================================*/
 /**
- * @fn         rsi_ble_on_smp_failed 
+ * @fn         rsi_ble_on_smp_failed
  * @brief      its invoked when smp failed event is received.
  * @param[in]  remote_dev_address, it indicates remote bd address.
  * @return     none.
@@ -1139,7 +1143,7 @@ void rsi_ble_on_smp_failed(uint16_t resp_status, rsi_bt_event_smp_failed_t *remo
 
 /*==============================================*/
 /**
- * @fn         rsi_ble_on_encrypt_started 
+ * @fn         rsi_ble_on_encrypt_started
  * @brief      its invoked when encryption started event is received.
  * @param[in]  remote_dev_address, it indicates remote bd address.
  * @return     none.
@@ -1178,7 +1182,7 @@ static void rsi_ble_on_le_ltk_req_event(rsi_bt_event_le_ltk_request_t *le_ltk_re
  * @param[in]  rsi_ble_event_le_security_keys, secure event parameters.
  * @return     none.
  * @section description
- * This callback function is invoked when security keys event is received after encription started. 
+ * This callback function is invoked when security keys event is received after encription started.
  */
 void rsi_ble_on_le_security_keys(rsi_bt_event_le_security_keys_t *rsi_ble_event_le_security_keys)
 {

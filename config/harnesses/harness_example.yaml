@@ -302,6 +302,11 @@ devices:
                 type: 'bluetooth.pybluez'
                 shell: 'linux_shell'
 
+    ip_socket_factory:
+        interfaces:
+            socket:
+                type: 'socket.ip_socket_factory'
+
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
     secondary_raspi_bt_client:
@@ -810,6 +815,9 @@ defaults:
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
     multicast_client: 'raspi_multicast'
+    remote_socket_factory: "ip_socket_factory"
+
+    switch: 'switched_ap'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:

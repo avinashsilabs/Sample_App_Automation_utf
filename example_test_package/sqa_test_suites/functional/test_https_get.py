@@ -1,11 +1,9 @@
 from utf.utils.logger import get_logger
 import pytest
 from utf.utils.iperf.iperf_utils import ping
-import time
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
-    RS9116CertificateType,
     RS9116CoexMode,
     RS9116PowerSaveModes,
     RS9116FeatureBitMap,
@@ -52,9 +50,7 @@ ping_count = 10
 @pytest.mark.http_client("raspi_http_client")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test cases verifies the https get with the linux as server and client
-def test_http_server_and_linux_client_get(
-    http_server, http_client, logger
-):
+def test_http_server_and_linux_client_get(http_server, http_client, logger):
     method = "GET"
     index_path = "index.html"
     # content = {"example": "data"}
@@ -196,7 +192,7 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut,h
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
     assert scan_results,"scan failure, no ap found"
-    wifi_dut.interfaces.wifi.clear_certificate(cert_type=3,cert_index=0)
+    wifi_dut.interfaces.wifi.clear_certificate(cert_type=5,cert_index=0)
     logger().info("Joining access point")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -409,6 +405,7 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut,http_client, w
     )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config("http_server", port=10)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut,http_client, wifi_access_point, index_path):
@@ -443,7 +440,7 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut,http_
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetches https data using get method")
-    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,port=10)
+    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     logger().info(status)
     logger().info(content)
     assert status, "failed to fetch the http data"
@@ -464,6 +461,7 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut,http_
     )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config("http_server", port=200)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut,http_client, wifi_access_point, index_path):
@@ -497,7 +495,7 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut,http
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetches https data using get method")
-    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,port=200)
+    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     logger().info(status)
     logger().info(content)
     assert status, "failed to fetch the http data"
@@ -518,6 +516,7 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut,http
     )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config("http_server", port=2000)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut,http_client, wifi_access_point, index_path):
@@ -552,7 +551,7 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut,htt
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
-    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,port=2000)
+    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     logger().info(status)
     logger().info(content)
     assert status, "failed to fetch the https data"
@@ -572,6 +571,7 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut,htt
         }
     )
 @pytest.mark.dut("rs9116_sapi")
+@pytest.mark.config("http_server", port=20000)
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -606,7 +606,7 @@ def test_https_get_functionality_port20000_C19207_case4(http_server, wifi_dut,ht
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
-    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,port = 3343)
+    status, content= wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     logger().info(status)
     logger().info(content)
     assert status, "failed to fetch the http data"
