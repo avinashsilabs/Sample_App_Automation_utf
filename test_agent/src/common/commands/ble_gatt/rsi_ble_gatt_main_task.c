@@ -1894,6 +1894,7 @@ void rsi_ble_main_app_task()
     }
     switch (event_id) {
       case RSI_APP_EVENT_ADV_REPORT: {
+        LOG_EVENT("\nRSI_APP_EVENT_ADV_REPORT\n");
         //! clear the advertise report event.
         rsi_ble_app_clear_event(RSI_APP_EVENT_ADV_REPORT);
         //! create task if max slave connections not reached
