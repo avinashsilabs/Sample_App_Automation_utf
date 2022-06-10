@@ -280,6 +280,13 @@ def test_ble_io_cap_displayonly_C19855(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
 
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
+
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     connect_time = datetime.datetime.now(ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
     logger().info(f"connect_time  {connect_time}")
@@ -323,6 +330,15 @@ def test_ble_io_cap_display_yesno_C19856(ble_dut,ble_client):
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
 
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
+
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     connect_time = datetime.datetime.now(ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout))
     logger().info(f"connect_time  {connect_time}")
@@ -364,6 +380,15 @@ def test_ble_io_cap_keyboard_only_C19857(ble_dut,ble_client):
     logger().info("dut start scanning.....")
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
 
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     connect_time = datetime.datetime.now(
@@ -407,6 +432,15 @@ def test_ble_io_cap_no_input_output_C19858(ble_dut,ble_client):
     logger().info("dut start scanning.....")
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     timeout = 60
+
+    logger().info("enabling the power save modes ")
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
 
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     connect_time = datetime.datetime.now(
