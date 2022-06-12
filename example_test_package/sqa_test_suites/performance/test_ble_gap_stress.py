@@ -1,0 +1,80 @@
+import pytest
+from utf_wiseconnect.devices.rs911x import (
+    RS9116CoexMode,
+    RS9116FeatureBitMap,
+    RS9116TCPIPFeatureBitMap,
+    RS9116CustomFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap,
+    RS9116ExtTCPIPFeatureBitMap,
+    RS9116ConfigFeatureBitMap,
+    RS9116PowerSaveModes)
+from utf.utils.logger import get_logger
+import time
+import datetime
+from utf.utils.stopwatch import Stopwatch
+from utf.interfaces.bluetooth import BLEDeviceState
+
+def logger():
+    return get_logger(__name__)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_scan_1000_times_C19810(wifi_dut, ble_client):
+    logger().info("start ble in dut")
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address ,"ble initialization failed in dut"
+
+    for i in range(0,10):
+        logger().info("start ble scan in rd_1")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        assert bt_client_address , "ble initialization failed in remote device_1"
+        time.sleep(2)
+
+        result = wifi_dut.interfaces.wifi.ble_start_scanning(bt_client_address,timeout=120)
+        time.sleep(10)
+
+        logger().info(f" scan result '{result}")
+        assert result, "ble devices not found"
+
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_scan_continuous_48_hrs_C19825(wifi_dut, ble_client):
+    t_end = time.time() + 60 * 2880
+    while time.time() < t_end:
+
+        logger().info("start ble in dut")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address ,"ble initialization failed in dut"
+
+        logger().info("start ble scan in rd_1")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        assert bt_client_address , "ble initialization failed in remote device"
+        time.sleep(2)
+
+        result = wifi_dut.interfaces.wifi.ble_start_scanning(bt_client_address=bt_client_address,timeout=120)
+        time.sleep(10)
+
+        logger().info(f" scan result '{result}")
+        assert result, "ble devices not found"
+
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.stop_advertising()
+    time.sleep(5)
