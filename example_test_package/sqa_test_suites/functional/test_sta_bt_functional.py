@@ -31,7 +31,7 @@ pytestmark = [
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "features": RS9116FeatureBitMap.ULPGPIOHandshake
                         | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "custom_features": RS9116CustomFeatureBitMap.Default,
             "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
                                    | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid
