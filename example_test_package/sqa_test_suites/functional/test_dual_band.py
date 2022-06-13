@@ -196,7 +196,7 @@ def test_dual_band_scan_with_World_regions_c19014(wifi_access_point, wifi_dut):
 )
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dual_band_connection_with_country_IE_Mismatch(wifi_access_points, wifi_dut):
+def test_dual_band_connection_with_country_IE_Mismatch_C19010(wifi_access_points, wifi_dut):
 
         ssid= 'Codecom123'
         security= 'WPA2'
