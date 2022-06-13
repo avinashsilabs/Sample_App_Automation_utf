@@ -223,7 +223,6 @@ def test_dual_band_connection_with_country_IE_Mismatch_C19010(wifi_access_points
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, 10)
-        # logger().info("getting wireless info")
         result = wifi_dut.interfaces.wifi.get_wireless_info()
         logger().info("getting wireless info to validate whether the DUT is connected to 2.4ghz AP or 5ghz AP")
         assert f"rf_channel: {wifi_access_points[0].interfaces.wifi.channel}" in result, 'DUT is not connected to 2.4ghz AP ssid '
