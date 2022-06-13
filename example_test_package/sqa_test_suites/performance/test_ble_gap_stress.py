@@ -17,6 +17,7 @@ from utf.interfaces.bluetooth import BLEDeviceState
 def logger():
     return get_logger(__name__)
 
+iter_count = 10
 
 @pytest.mark.config(
     "wifi_dut",
@@ -28,19 +29,21 @@ def logger():
 def test_ble_scan_1000_times_C19810(wifi_dut, ble_client):
     logger().info("start ble in dut")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address ,"ble initialization failed in dut"
+    assert bt_dut_address, "ble initialization failed in dut"
 
-    for i in range(0,10):
+    for i in range(0, iter_count):
         logger().info("start ble scan in rd_1")
+        logger().info(f"interation {iter_count}")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-        assert bt_client_address , "ble initialization failed in remote device_1"
+        assert bt_client_address, "ble initialization failed in remote device_1"
         time.sleep(2)
 
         result = wifi_dut.interfaces.wifi.ble_start_scanning(bt_client_address,timeout=120)
         time.sleep(10)
 
-        logger().info(f" scan result '{result}")
-        assert result, "ble devices not found"
+        logger().info("verifying client address, is available in scan list...")
+        assert str(bt_client_address) in str(result), "failed to find client bt address in scan list...."
+        logger().info("found BT client address")
 
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         time.sleep(5)
@@ -61,18 +64,19 @@ def test_ble_scan_continuous_48_hrs_C19825(wifi_dut, ble_client):
 
         logger().info("start ble in dut")
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-        assert bt_dut_address ,"ble initialization failed in dut"
+        assert bt_dut_address, "ble initialization failed in dut"
 
         logger().info("start ble scan in rd_1")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-        assert bt_client_address , "ble initialization failed in remote device"
+        assert bt_client_address, "ble initialization failed in remote device"
         time.sleep(2)
 
         result = wifi_dut.interfaces.wifi.ble_start_scanning(bt_client_address=bt_client_address,timeout=120)
         time.sleep(10)
 
-        logger().info(f" scan result '{result}")
-        assert result, "ble devices not found"
+        logger().info("verifying client address, is available in scan list...")
+        assert str(bt_client_address) in str(result), "failed to find client bt address in scan list...."
+        logger().info("found BT client address")
 
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         time.sleep(5)
