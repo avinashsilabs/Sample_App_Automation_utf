@@ -49,7 +49,7 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
     __print_throughput(tp)
 
 
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video, "mss_value": '32k'})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video, "mss_value": '32k', "tcp_window_size": '32k'})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
