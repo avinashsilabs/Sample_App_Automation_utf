@@ -6,12 +6,13 @@ from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.time_measurer import TimeMeasurer
 from datetime import datetime, timedelta
-import time
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116FeatureBitMap,
-    RS9116BTFeatureBitMap
+    RS9116BTFeatureBitMap,
+    RS9116PowerSaveModes,
+    RS9116PowerSaveProcedureTypes
     )
 
 def logger():
@@ -1023,10 +1024,9 @@ def test_bt_hid_functionality_in_sniff_mode_C20037(bt_dut, bt_client):
 
     time.sleep(5)
     logger().info("set dut in power save.....")
-    bt_dut.interfaces.bluetooth.power_save(3, 2)
+    bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode3,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
     logger().info("bt power save configuration success")
-
-    time.sleep(5)
 
     with HidRecorder() as hid_recorder:
         for item in test_data:
@@ -1038,8 +1038,7 @@ def test_bt_hid_functionality_in_sniff_mode_C20037(bt_dut, bt_client):
         assert hid_logs[i] == test_data[i], "hid data and test data is not same"
 
     logger().info("fetching the rssi value of remote bt device ")
-    rssi_value = bt_dut.interfaces.bluetooth.bt_get_rssi(bt_remote_dev_address=bt_client_address)
-    logger().info(f'Rssi value of remote bt device is {rssi_value}')
+    bt_dut.interfaces.bluetooth.bt_get_rssi(bt_remote_dev_address=bt_client_address)
 
     time.sleep(60)
 
@@ -1107,11 +1106,10 @@ def test_bt_hid_send_continuous_Hid_Interrupt_data_C20038(bt_dut, bt_client):
 
     time.sleep(5)
     logger().info("set dut in power save.....")
-    bt_dut.interfaces.bluetooth.power_save(3, 2)
+    bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode3,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
     logger().info("bt power save configuration success")
-
     time.sleep(15)
-
     # Data will transfer 60 seconds
     end_time = datetime.now() + timedelta(seconds=60)
     while datetime.now() < end_time:
