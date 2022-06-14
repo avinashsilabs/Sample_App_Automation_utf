@@ -32,6 +32,11 @@ def get_git_branch(path=None):
 
 @click.command()
 @click.option(
+    "--hwmux_label_name",
+    default=None,
+    help="HWMux label Name",
+)
+@click.option(
     "--rerun_failed_tests",
     default=False,
     help="Enable rerun of failed tests",
@@ -116,7 +121,8 @@ def main(
     hwmux_token: Optional[str],
     hwmux_group_json: Optional[str],
     publish_test_results: Optional[bool],
-    rerun_failed_tests: bool
+    rerun_failed_tests: bool,
+    hwmux_label_name: Optional[str]
 ) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     package_manifest = os.path.join(WORKSPACE_ROOT, "manifest", "manifest.yaml")
@@ -141,7 +147,8 @@ def main(
         if hwmux_group_json is not None
         else None,
         reports_dir=reports_dir,
-        rerun_failed_tests=rerun_failed_tests
+        rerun_failed_tests=rerun_failed_tests,
+        hwmux_label_name=hwmux_label_name
     )
     docker_manager.logger.setLevel(logging.INFO)
     docker_manager.run()
