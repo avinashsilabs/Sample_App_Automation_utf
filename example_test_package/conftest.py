@@ -1,4 +1,4 @@
-from utf.utils.test_management.utils import generate_base_test_definitions_yaml
+from utf.utils.test_management.test_definition_utils import generate_base_test_definitions_yaml
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
 import pytest
 import os
