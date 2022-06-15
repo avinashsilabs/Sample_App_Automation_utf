@@ -151,7 +151,7 @@ def main(
         hwmux_group_label=hwmux_group_label
     )
     docker_manager.logger.setLevel(logging.INFO)
-    docker_manager.run()
+    docker_manager.extract_target()
     return docker_manager.exit_code
 
 
