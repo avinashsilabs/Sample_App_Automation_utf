@@ -40,13 +40,13 @@ def logger():
     wifi={
         # Here, indexing (starts with 0) applies as per order defined in harness.
         0: {
-             'ssid': 'Codecom123',
+             'ssid': 'same-security',
              'security': 'WPA2',
              'passphrase': '123123123',
              'channel': 1
         },
         1: {
-             'ssid': 'Codecom123',
+             'ssid': 'same-security',
              'security': 'WPA2',
              'passphrase': '123123123',
              'channel': 1
@@ -66,7 +66,7 @@ def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
     logger().info(" Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
     logger().info(" scan initiated...")
-    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[0].interfaces.wifi.ssid)
     time.sleep(20)
     logger().info(scan_results)
     scan_list = list(scan_results)
@@ -97,7 +97,7 @@ def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
     wifi={
         # Here, indexing (starts with 0) applies as per order defined in harness.
         0: {
-             'ssid': 'TESTTESTTEST2',
+             'ssid': 'diff_security',
              'security': 'WPA2',
              'passphrase': '123123123',
               'channel': 11,
@@ -105,8 +105,8 @@ def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
 
         },
         1: {
-             'ssid': 'TESTTESTTEST2',
-             'security': 'WPA',
+             'ssid': 'diff_security',
+             'security': 'Open',
              'passphrase': '123123123',
              'channel': 1,
              'region': 'US'
@@ -128,7 +128,7 @@ def test_same_2aps_diff_security_c19066(wifi_dut, wifi_access_points):
     wifi_dut.interfaces.wifi.rejoin()
     logger().info(" scan initiated...")
     time.sleep(20)
-    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[0].interfaces.wifi.ssid)
     logger().info(scan_results)
     scan_list = list(scan_results)
 
