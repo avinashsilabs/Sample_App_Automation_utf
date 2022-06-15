@@ -600,13 +600,18 @@ devices:
 
     keysight_power_analyzer_benchvue_win_wcf:
         interfaces:
-            windows_wcf_service: 
+            wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_power_meter_keysight_benchvue_wcf_service_library/PowerMeterService/?wsdl'
+                wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
+                timeout: 1
+            wcf_file_transfer_service: 
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 1
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
-                wcf_service: 'windows_wcf_service'
+                power_service: 'wcf_power_meter_keysight_benchvue_service'
+                file_transfer_service: 'wcf_file_transfer_service'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
 
@@ -761,7 +766,7 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
@@ -772,7 +777,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink_ap'
+    wifi_access_point: 'raspi_wifi'
 
     # To connect the multiple access points
     wifi_access_points:
@@ -917,7 +922,7 @@ defaults:
                 data_len: 1472
         tos_value: '0xC8'
     
-    power_meter:
+    power_meter_keysight_benchvue:
         data_log_file_name: 'UTF_DataLog_'
         data_log_file_name_is_append_date:  true
         data_log_file_name_is_append_time: true 
