@@ -139,64 +139,6 @@ def test_bt_spp_dut_as_slave_spp_disconnect(wifi_dut, wifi_access_point, bt_clie
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                 dest_addr=bt_dut_address
             )
-            logger().info("================================")
-            # Close connection
-            bt_server_socket.close() #TODO : check different disconnect method to close only SPP
-            time.sleep(4)
-            # Send data from dut to bt_client
-            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-            time.sleep(2)
-            wifi_dut.interfaces.wifi.leave()
-    logger().info(f"Scan in {t.duration} seconds")
-
-def test_bt_spp_dut_as_slave_spp_disconnect(wifi_dut, wifi_access_point, bt_client):
-    send_text = "yAbdcUK0tAOSMhCT4d6U"
-    recv_text = "9cDKpYOnOJeqYPsL987v"
-    with TimeMeasurer() as t:
-        # Join Wi-Fi Access Point
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
-        assert bt_dut_address is not None
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-        assert bt_client_address is not None
-        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
-        if not found:
-            logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
-        with bt_client.interfaces.bluetooth.bt_socket(
-            mode=BTSocketRole.Server
-        ) as bt_server_socket:
-            # SPP Connection
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                bt_server_socket.create_server()
-                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
-                assert connected
-            # Initiating power save
-            if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-                wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-                wifi_dut.interfaces.wifi.power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-                )
-                wifi_dut.interfaces.wifi.bt_power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode1
-                )
-            # Send data from bt_client to dut
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                sent = bt_server_socket.send(
-                    recv_text
-                )  # SQA Agent is programmed to send back data
-                assert sent
-                data = bt_server_socket.recv()
-                assert data is not None
-                assert data.decode() == recv_text
-            # Send data from dut to bt_client
-            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-            data = bt_server_socket.recv()
-            assert data is not None
-            assert data.decode() == send_text
-            # Ping dut
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-                dest_addr=bt_dut_address
-            )
             # Close connection
             start_capture_time = time.perf_counter_ns()
             bt_server_socket.close() 
