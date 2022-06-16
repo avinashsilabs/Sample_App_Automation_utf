@@ -60,16 +60,14 @@ def logger():
 
 
 class DNSThread(ThreadBase):
-    def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer=None, testcase1=None, testcase2=None, testcase3=None,
+    def __init__(self, wifi_dut, wifi_access_point,  wifi_sniffer, dns_mode,
                  testcase=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.wifi_sniffer = wifi_sniffer
+        self.dns_mode = dns_mode
         self.testcase = testcase
-        self.testcase1 = testcase1
-        self.testcase2 = testcase2
-        self.testcase3 = testcase3
 
     def run(self):
         validation = True
@@ -77,7 +75,7 @@ class DNSThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
 
         logger().info("start capturing with Sniffer by giving the test case name as filename")
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file='testcase_sta_ble_dns')
         logger().info(f"this thread is used for wifi join")
         with TimeMeasurer() as t:
             logger().info(f"Scan for the AP's")
@@ -85,13 +83,14 @@ class DNSThread(ThreadBase):
             ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
             logger().info(f'AP BSSID = {ap_bssid}')
             self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+            time.sleep(8)
             self.wifi_dut.interfaces.wifi.start_ip()
             device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
             time.sleep(5)
             logger().info(f"enabling powersave in both wifi and bluetooth")
             self.wifi_dut.interfaces.wifi.power_save(2,1)
             self.wifi_dut.interfaces.wifi.bt_power_save(2,1)
-            time.sleep(10)
+            time.sleep(5)
             dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"DUT MAC_Address: {dut_mac_address}")
             logger().info(f"Validate Probe req(Broadcast/Unicast), authentication ,association, eapol")
@@ -100,19 +99,19 @@ class DNSThread(ThreadBase):
                              f'(wlan.fc.type_subtype == 0x000b))'
             logger().info(f"Validating the power management bit")
             packet_filter2 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address}'
-            if (self.testcase1 == "dnsquery"):
+            if (self.dns_mode == "dnsquery"):
                 with pytest.raises(WlanError) as exc_info:
                  logger().info("=======DNS SERVER WITH DHCP========")
                  result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
                  logger().info(result.decode())
                 assert exc_info.value.error_code == 0xFF74
-            elif (self.testcase2 == "dnswrongip"):
+            elif (self.dns_mode == "dnswrongip"):
                 with pytest.raises(WlanError) as exc_info:
                     logger().info("=======DNS SERVER WITH DHCP========")
                     result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.210.110.11", "10.89.41.10")
                     logger().info(result.decode())
                 assert exc_info.value.error_code == 0xbba3 or 0xBBA1 or 0xaf
-            elif (self.testcase3 == "dnsstatic"):
+            elif (self.dns_mode == "dnsstatic"):
                 with pytest.raises(WlanError) as exc_info:
                    logger().info("=======DNS SERVER WITH DHCP========")
                    result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "10.8.4.10")
@@ -138,14 +137,14 @@ class DNSThread(ThreadBase):
             'packet_count'], 'Unable to find dhcp in sniffer '
 
 class BleThread_connection(ThreadBase):
-    def __init__(self, wifi_dut, ble_client, mode):
+    def __init__(self, wifi_dut, ble_client, ble_mode):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
-        self.mode = mode
+        self.ble_mode = ble_mode
 
     def run(self):
-        if self.mode == "ble_master":
+        if self.ble_mode == "ble_master":
             logger().info(f"this is ble thread, Start DUT as a master")
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address is not None
@@ -180,7 +179,7 @@ class BleThread_connection(ThreadBase):
             assert not state_int == BLEDeviceState.Connected
             logger().info(f"*****BLE sniffer validation is pending*******")
 
-        if self.mode == "ble_slave":
+        if self.ble_mode == "ble_slave":
             logger().info(f" this is ble thread, start DUT as a slave")
             logger().info(f"Set up DUT for BLE advertising")
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
@@ -225,24 +224,21 @@ class BleThread_connection(ThreadBase):
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode ,
-        "bt_features": RS9116BTFeatureBitMap.Default
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_sta_ble_dns_C20360(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_master"
-    testcase1 = "dnsquery"
-    testcase2 = ""
-    testcase3 = ""
-    testcase = "dns Query with ble"
-    dns_obj = DNSThread(wifi_dut, wifi_access_point, wifi_sniffer, testcase1=testcase1, testcase2=testcase2,
-                   testcase3=testcase3, testcase=testcase)
-    ble_obj = BleThread_connection(wifi_dut, ble_client, mode)
+    ble_mode = "ble_master"
+    dns_mode = "dnsquery"
+    dns_obj = DNSThread(wifi_dut, wifi_access_point, wifi_sniffer, dns_mode)
+    ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
     ble_obj.start()
     dns_obj.start()
     ble_obj.wait_for_exit()
@@ -255,29 +251,25 @@ def test_threading_sta_ble_dns_C20360(wifi_dut, wifi_access_point, wifi_sniffer,
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode ,
-        "bt_features": RS9116BTFeatureBitMap.Default
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_threading_sta_ble_dns_C20234(wifi_dut, wifi_access_point, wifi_sniffer, ble_client ):
-    mode = "ble_slave"
-    testcase1 = ""
-    testcase2 = "dnswrongip"
-    testcase3 = ""
-    testcase = "dns wrong ip with ble"
-    dns_obj = DNSThread(wifi_dut, wifi_access_point, wifi_sniffer, testcase1=testcase1, testcase2=testcase2,
-                        testcase3=testcase3, testcase=testcase)
-    ble_obj = BleThread_connection(wifi_dut, ble_client, mode)
+def test_threading_sta_ble_dns_C20234(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+    ble_mode = "ble_slave"
+    dns_mode = "dnswrongip"
+    dns_obj = DNSThread(wifi_dut, wifi_access_point, wifi_sniffer, dns_mode)
+    ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
     ble_obj.start()
     dns_obj.start()
     ble_obj.wait_for_exit()
     dns_obj.wait_for_exit()
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -286,24 +278,21 @@ def test_threading_sta_ble_dns_C20234(wifi_dut, wifi_access_point, wifi_sniffer,
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode ,
-        "bt_features": RS9116BTFeatureBitMap.Default
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_sta_ble_dns_C20233(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
-    mode = "ble_slave"
-    testcase1 = ""
-    testcase2 = ""
-    testcase3 = "dnsstatic"
-    testcase = "dns static with ble connection"
-    dns_obj = DNSThread(wifi_dut, wifi_access_point, wifi_sniffer, testcase1=testcase1, testcase2=testcase2,
-                        testcase3=testcase3, testcase=testcase)
-    ble_obj = BleThread_connection(wifi_dut, ble_client, mode)
+    ble_mode = "ble_slave"
+    dns_mode = "dnsstatic"
+    dns_obj = DNSThread(wifi_dut, wifi_access_point, wifi_sniffer, dns_mode)
+    ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
     ble_obj.start()
     dns_obj.start()
     ble_obj.wait_for_exit()
