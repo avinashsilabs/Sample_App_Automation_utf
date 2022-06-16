@@ -19,7 +19,7 @@ def logger():
     return get_logger(__name__)
 
 
-iter_count = 10
+iter_count = 1001
 
 
 @pytest.mark.config(
@@ -62,7 +62,7 @@ def test_ble_scan_1000_times_C19810(wifi_dut, ble_client):
     },
 )
 def test_ble_scan_continuous_48_hrs_C19825(wifi_dut, ble_client):
-    t_end = time.time() + 60 * 10
+    t_end = time.time() + 60 * 2880
     while time.time() < t_end:
 
         logger().info("start ble in dut")
