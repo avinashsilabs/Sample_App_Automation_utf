@@ -201,7 +201,7 @@ def test_bt_spp_dut_as_slave_spp_disconnect(wifi_dut, wifi_access_point, bt_clie
             start_capture_time = time.perf_counter_ns()
             bt_server_socket.close() 
             time.sleep(4)        
-
+            # cheking for disconnected event 
             rsi_bt_on_spp_disconnect = False
             rsi_bt_on_disconn_event = False
             events = wifi_dut.interfaces.wifi.get_async_events(since_time=start_capture_time)
