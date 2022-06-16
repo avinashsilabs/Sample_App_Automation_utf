@@ -14,15 +14,21 @@ def logger():
 
 pytestmark = [
     pytest.mark.user_properties("database_test_results",
-                                database_test_results={"feature_name": 'wifi_tests', "test_creation_date": '2022-06-06',
-                                                       "module_name": 'wifi', "test_description": 'module desc',
-                                                       "iot_req_id": 'UTF-1194', "tool_chain": 'IAR'})
+                                database_test_results={TestResultsModelAttrs.test_result_type: 'FEATURE',
+                                                       TestResultsModelAttrs.feature_name: 'wifi_tests',
+                                                       TestResultsModelAttrs.test_creation_date: '2022-06-06',
+                                                       TestResultsModelAttrs.module_name: 'wifi',
+                                                       TestResultsModelAttrs.test_description: 'module desc',
+                                                       TestResultsModelAttrs.iot_req_id: 'UTF-1194',
+                                                       TestResultsModelAttrs.engineer_name: 'Hidayathulla'})
 ]
 
 
 @pytest.mark.user_properties("database_test_results",
-                             database_test_results={"test_result_type": 'FEATURE', "test_case_name": 'test_version2',
-                                                    "test_case_id": 'test_version2::1', "test_notes": 'notes'})
+                             database_test_results={TestResultsModelAttrs.test_result_type: 'SMOKE',
+                                                    TestResultsModelAttrs.test_case_name: 'test_version1',
+                                                    TestResultsModelAttrs.test_case_id: 'test_version1::1',
+                                                    TestResultsModelAttrs.notes: 'notes'})
 def test_version(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
