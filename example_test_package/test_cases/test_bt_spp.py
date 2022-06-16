@@ -149,12 +149,11 @@ def test_bt_spp_dut_as_slave_spp_disconnect(wifi_dut, wifi_access_point, bt_clie
             events = wifi_dut.interfaces.wifi.get_async_events(since_time=start_capture_time)
             if len(events):
                 for event in events:
-                    if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_SPP_DISCONN:
-                        rsi_bt_on_spp_disconnect = b"resp_status: 0x0" in event.event_data
-                       
+                    if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_SPP_DISCONN:                        
+                       rsi_bt_on_spp_disconnect = True
                     if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_DISCONNECTED:
-                        rsi_bt_on_disconn_event = b"resp_status: 0x4E13" in event.event_data
-                        
+                        rsi_bt_on_disconn_event = b"4E13" in event.event_data
+
             assert rsi_bt_on_spp_disconnect
             assert rsi_bt_on_disconn_event
             
