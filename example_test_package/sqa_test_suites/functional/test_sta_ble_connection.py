@@ -478,7 +478,6 @@ def test_threading_selective_channels_2_4_C20208(wifi_dut, wifi_access_point, wi
      ble_obj.wait_for_exit()
      scan_obj.wait_for_exit()
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
