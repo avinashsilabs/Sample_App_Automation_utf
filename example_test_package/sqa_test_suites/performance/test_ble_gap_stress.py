@@ -61,7 +61,7 @@ def test_ble_scan_1000_times_C19810(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_ble_scan_continuous_48_hrs_C19825(wifi_dut, ble_client):
+def test_ble_scan_continuous_48_hrs_C19829(wifi_dut, ble_client):
     t_end = time.time() + 60 * 2880
     while time.time() < t_end:
 
