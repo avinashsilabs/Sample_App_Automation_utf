@@ -766,7 +766,7 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116_sapi'
+    dut: 'rs9116'
 
     efx32: 'efr32_4180b'
 
@@ -777,7 +777,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'raspi_wifi'
+    wifi_access_point: 'dlink_ap'
 
     # To connect the multiple access points
     wifi_access_points:
