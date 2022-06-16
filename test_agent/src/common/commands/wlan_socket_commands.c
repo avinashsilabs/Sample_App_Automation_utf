@@ -59,7 +59,7 @@ void rsi_websocket_data_receive_handler(uint32_t sock_no, uint8_t *buffer, uint3
 
 //! SNTP response handler
 void rsi_sntp_client_create_response_handler(uint16_t status, const uint8_t cmd_type, const uint8_t *buffer);
-static void measure_throughput(int32_t total_bytes, int32_t start_time, int32_t end_time, int32_t pkt_cnt);
+static void measure_throughput(int32_t total_bytes, int32_t start_time, int32_t end_time, int32_t pkt_cnt, char* command);
 
 static const sl_cli_command_info_t rsi_socket_command_info = SL_CLI_COMMAND(rsi_socket_command, "Create a socket", "family" SL_CLI_UNIT_SEPARATOR "type" SL_CLI_UNIT_SEPARATOR "protocol", { SL_CLI_ARG_INT32, SL_CLI_ARG_INT32, SL_CLI_ARG_INT32, SL_CLI_ARG_END, });
 static const sl_cli_command_info_t rsi_bind_command_info = SL_CLI_COMMAND(rsi_bind_command, "Bind socket to port", "socket" SL_CLI_UNIT_SEPARATOR "port" SL_CLI_UNIT_SEPARATOR "ip", { SL_CLI_ARG_INT32, SL_CLI_ARG_UINT16, SL_CLI_ARG_STRING, SL_CLI_ARG_END, });
@@ -640,7 +640,7 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
         }
-        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
+        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM");
 
         //close socket
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
@@ -707,7 +707,7 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
         }
-        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
+        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM");
         //close socket
         if(!receive_completed)
         {
@@ -822,7 +822,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         }
 
         if (compute_throughput == 1) {
-            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
+            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_SEND_TO");
         }
 
         //close socket
@@ -886,7 +886,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
         }
         if (compute_throughput == 1) {
-            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt);
+            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_SEND_TO");
         }
         break;
     }
@@ -895,27 +895,27 @@ remote_terminate=0;
     free(buffer);
 }
 
-static void measure_throughput(int32_t total_bytes, int32_t start_time, int32_t end_time, int32_t pkt_cnt)
+static void measure_throughput(int32_t total_bytes, int32_t start_time, int32_t end_time, int32_t pkt_cnt, char* command)
 {
     double total_sec = ((end_time - start_time) / 1000);
     if (total_sec > 0) {
         double through_put = ((double)(total_bytes * 8)) / total_sec;
-        printf("\r\n through_put : %f ", (double)through_put);
-        printf("\r\n Test start time in ms :%ld", start_time);
-        printf("\r\n Test end time in ms :%ld", end_time);
-        printf("\r\n Number of interactions with server are : %ld", pkt_cnt);
-        printf("\r\n Time taken in sec: %lu \r\n", (uint32_t)((end_time - start_time) / 1000));
+        printf("\r\n %s:through_put : %f ",command,  (double)through_put);
+        printf("\r\n %s:Test start time in ms :%ld",command,  start_time);
+        printf("\r\n %s:Test end time in ms :%ld",command,  end_time);
+        printf("\r\n %s:Number of interactions with server are : %ld",command,  pkt_cnt);
+        printf("\r\n %s:Time taken in sec: %lu \r\n",command,  (uint32_t)((end_time - start_time) / 1000));
         //printf("\r\n Throughput in kbps (KiloBitsPerSec) is : %.5f \r\n", (float)through_put);
-        printf("\r\n Throughput in kbps (KiloBits/Second) is : %d \r\n", (int)through_put / 1000);
-        printf("\r\n Total bytes  : %ld \r\n", total_bytes);
+        printf("\r\n %s:Throughput in kbps (KiloBits/Second) is : %d \r\n",command,  (int)through_put / 1000);
+        printf("\r\n %s:Total bytes  : %ld \r\n", command, total_bytes);
     }
     else {
-        printf("\r\n Seems test didn't run successfully, please try again !!");
-        printf("\r\n Test start time in ms :%ld", start_time);
-        printf("\r\n Test end time in ms :%ld", end_time);
-        printf("\r\n Number of interactions with server are : %ld", pkt_cnt);
-        printf("\r\n Time taken in sec: %lu \r\n", (uint32_t)((end_time - start_time) / 1000));
-        printf("\r\n Total bytes  : %ld \r\n", total_bytes);
+        printf("\r\n %s:Seems test didn't run successfully, please try again !!");
+        printf("\r\n %s:Test start time in ms :%ld",command,  start_time);
+        printf("\r\n %s:Test end time in ms :%ld",command,  end_time);
+        printf("\r\n %s:Number of interactions with server are : %ld",command,  pkt_cnt);
+        printf("\r\n %s:Time taken in sec: %lu \r\n",command,  (uint32_t)((end_time - start_time) / 1000));
+        printf("\r\n %s:Total bytes  : %ld \r\n",command,  command, total_bytes);
     }
 }
 
