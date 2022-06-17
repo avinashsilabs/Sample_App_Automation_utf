@@ -108,7 +108,7 @@ from utf.utils.firmware_manager import FirmwareManager
 
 def test_something():
     fw_mgr = FirmwareManager.get_instance()
-    fw_mgr.load_default_firmware_at_test_case_teardown(app_name='wifitest')
+    fw_mgr.roll_back_to_default_firmware(app_name='wifitest')
     pass
 
 # Use case 6
@@ -129,5 +129,5 @@ from utf.utils.firmware_manager import FirmwareManager
 
 def test_something():
     fw_mgr = FirmwareManager.get_instance()
-    fw_mgr.load_default_firmware_at_test_case_teardown(app_name='wifitest')
+    fw_mgr.roll_back_to_default_firmware(app_name='wifitest')
     pass

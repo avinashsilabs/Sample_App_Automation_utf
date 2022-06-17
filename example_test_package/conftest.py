@@ -61,7 +61,7 @@ def roll_back_to_default_firmware(request):
     global last_loaded_custom_app_name
     if 'firmware_loader' not in request.fixturenames and last_loaded_custom_app_name is not None:
         fw_mgr = FirmwareManager.get_instance()
-        fw_mgr.load_default_firmware_at_test_case_teardown(last_loaded_custom_app_name)
+        fw_mgr.roll_back_to_default_firmware(last_loaded_custom_app_name)
         last_loaded_custom_app_name = None
 
 
