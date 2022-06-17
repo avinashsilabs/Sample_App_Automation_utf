@@ -110,7 +110,7 @@ class WifiPingThread(ThreadBase):
 
     def run(self):
         # Initiate ping from third party wifi-client to DUT
-        ping(self.device_ip, 60)
+        ping(self.device_ip, 300)
 
 
 class AccessPointApOnOff(ThreadBase):
@@ -122,7 +122,7 @@ class AccessPointApOnOff(ThreadBase):
         logger().info('******* Turn on the AP radio **********')
         self.switch.interfaces.pdu_switch.turn_on()
         logger().info('******* Wait for 30 second after disable the AP radio **********')
-        time.sleep(30)
+        time.sleep(150)
         logger().info('******* Turn off the AP radio **********')
         self.switch.interfaces.pdu_switch.turn_off()
 
