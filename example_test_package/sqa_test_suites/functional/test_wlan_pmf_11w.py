@@ -1,6 +1,5 @@
 import re
 import time
-
 import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError
@@ -12,10 +11,9 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, 
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
-    DeviceConstants,
 )
 
-
+ping_count=10
 def logger():
     return get_logger(__name__)
 
@@ -98,7 +96,7 @@ class IopTcpIpSockets:
 )
 def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check whether the device is advertising MFP Capable under RSN Information in the association request'''
@@ -123,10 +121,8 @@ def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wif
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-    
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter for Association req, with mgmt frame with protection capable
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -178,7 +174,7 @@ def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wif
 )
 def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check whether the device is advertising MFP Required under RSN Information in the association request'''
@@ -205,10 +201,8 @@ def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wi
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter for Association req, with mgmt frame with protection capable
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -261,7 +255,7 @@ def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wi
 def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF capable)"""
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check whether the device is connecting to PMF Required AP when the device is configured with PMF Capable'''
@@ -287,10 +281,8 @@ def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_a
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter for Association req, with mgmt frame with protection capable
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -342,7 +334,7 @@ def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_a
 def test_mgmt_pmfrequiredAP_pmfreqireandcapableDUT_connection_C19670(wifi_sniffer, wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF capable+required)"""
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required and 
@@ -370,10 +362,8 @@ def test_mgmt_pmfrequiredAP_pmfreqireandcapableDUT_connection_C19670(wifi_sniffe
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter for Association req, with mgmt frame with protection capable+required
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -446,7 +436,6 @@ def test_mgmt_pmf_required_connection_fail_C19664(wifi_access_point, wifi_dut):
     "wifi_dut",
 
     wifi={
-
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
@@ -459,7 +448,7 @@ def test_mgmt_pmf_required_connection_fail_C19664(wifi_access_point, wifi_dut):
 )
 def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required 
@@ -489,10 +478,8 @@ def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter for Association req, with mgmt frame with protection capable+required
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -547,7 +534,7 @@ def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer
 def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Verify that after association only unicast mgmt packet transmission with protection bit enable '''
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check whether the device is sending the Unicast Management frames(Action Frames) with Protection bit set after 
@@ -575,10 +562,8 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter for Association req, with protection capable & required bit enable
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -645,7 +630,7 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
 def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Validate encrypted mgmt action frame after association with protection bit enable'''
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     ''' Check whether the device is sending the Unicast Management frames(Action Frames) with Payload Encrypted'''
@@ -672,10 +657,8 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     # Packet filter to verify Association req with pmf capable & required enable bit
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
@@ -741,7 +724,7 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
 def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Validate disassoc mgmt frame after association with protection bit enable'''
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 10000
+    send_bytes = 1000
     validation = True
 
     '''Check the Disconnection Functionality when the PMF is enabled'''
@@ -768,10 +751,8 @@ def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
-
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
                      f'== 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 ' \
@@ -860,9 +841,8 @@ def test_mgmt_pmf_enable_recieve_data_C19671(wifi_dut, wifi_access_point, wifi_s
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     # The below api parses DUTs IP address
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, 10)
+    logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+    ping(dut_ip, ping_count)
 
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype ' \
                      f'== 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 ' \
