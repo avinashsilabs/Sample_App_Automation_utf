@@ -4,21 +4,21 @@ from threading import Thread
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf.interfaces.bluetooth import BTSocketRole
-import utf.interfaces.bluetooth.bluetooth_interface
-from utf.interfaces.wifi import WlanError
+# import utf.interfaces.bluetooth.bluetooth_interface
+# from utf.interfaces.wifi import WlanError
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.time_measurer import TimeMeasurer
 from random import randint
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.subprocess_manager import SubprocessManager
-from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+# from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType, \
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116CustomFeatureBitMap, \
     RS9116BTFeatureBitMap, RS9116ExtTCPIPFeatureBitMap ,DeviceConstants,SocketOptions
 
-# configure ping_count to ping dut
 ping_count = 10
-iter_count = 5
+iter_cnt = 5
 
 def logger():
     return get_logger(__name__)
@@ -292,13 +292,16 @@ class BtThread_cancel_inquiry(ThreadBase):
         # Disable scan
         self.bt_client.interfaces.bluetooth.bt_adapter.set_noscan()
 
+
 class wifi_traffic_thread(Thread):
-    def __init__(self, wifi_access_point, wifi_dut, bt_client, iperf_time):
+    def __init__(self, wifi_access_point, wifi_dut, bt_client, protocol, iperf_time):
         super().__init__()
         self.wifi_access_point = wifi_access_point
         self.wifi_dut = wifi_dut
         self.bt_client = bt_client
+        self.protocol = protocol
         self.iperf_time = iperf_time
+
 
     def run(self):
         run_iperf_server(self.net_perf_client, self.wifi_access_point, self.wifi_dut, self.wifi_client, self.protocol,
@@ -427,7 +430,7 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut,wifi_access_point,bt_client):
     with wifiJoinThread(wifi_dut, wifi_access_point):
         time.sleep(3)
     t2 = BtSppMaster_SlaveThread(wifi_dut, bt_client, mode)
-    for i in range(1,iter_count):
+    for i in range(1,iter_cnt):
         t2.start()
         time.sleep(5)
         t2.wait_for_exit(True)
@@ -440,7 +443,7 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut,wifi_access_point,bt_client):
     with wifiJoinThread(wifi_dut, wifi_access_point):
         time.sleep(3)
     t3 = BtSppMaster_SlaveThread(wifi_dut, bt_client, mode)
-    for i in range(1,iter_count):
+    for i in range(1,iter_cnt):
         t3.start()
         time.sleep(5)
         t3.wait_for_exit(True)
@@ -529,10 +532,10 @@ def test_bt_coex_noremote_C20102(wifi_dut, wifi_access_point, bt_client):
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"Configuring DUT as SPP MASTER")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
@@ -601,6 +604,7 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_dut, bt_client, wifi_access_point):
         wifi_leave(wifi_dut)
 
 
+
 # BT functionality when Pincode is not entered when prompted
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -632,10 +636,10 @@ def test_bt_coex_without_pin_C20105(wifi_dut, wifi_access_point, bt_client):
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"Configuring DUT as SPP Master")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp(bt_pin_code=1234)
@@ -713,11 +717,6 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
         logger().info(f" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bt_coex_unbond_C20108')
 
-        #logger().info(f"scan for the ap's.....")
-        #ap_mac = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid, channel=wifi_access_point.interfaces.wifi.channel)
-        #ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
-        #logger().info(f'AP BSSID = {ap_bssid}')
-
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
 
@@ -736,10 +735,10 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2,1)
@@ -827,6 +826,7 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
         wifi_leave(wifi_dut)
 
 
+
 #RSSI value of the connected remote device
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -878,10 +878,10 @@ def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut,wifi_access_point,bt_client)
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2,1)
@@ -967,6 +967,7 @@ def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut,wifi_access_point,bt_client)
         wifi_leave(wifi_dut)
 
 
+
 #To get local BD address and local name
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -1015,10 +1016,10 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point,bt_client):
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2,1)
@@ -1084,6 +1085,7 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point,bt_client):
         wifi_leave(wifi_dut)
 
 
+
 #SPP transfer by taking remote ooo
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1128,10 +1130,10 @@ def test_bt_coex_ooo_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2,1)
@@ -1220,6 +1222,7 @@ def test_bt_coex_ooo_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_bt_coex_buffer_tcp_C20119(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,remote_socket):
+    send_text = "yAbdcUK0tAOSMhCT4d6U"
     with TimeMeasurer() as t:
         validation = True
         logger().info(f" ====== configuring the sniffer with access point channel ====== ")
@@ -1243,10 +1246,10 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer,wifi_dut,wifi_access_point,bt_cl
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2,1)
@@ -1275,146 +1278,16 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer,wifi_dut,wifi_access_point,bt_cl
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
                 assert connected
                 logger().info(f" BT_CONNECT SUCCESSFUL ")
+
+            # Send data from dut to bt_client
+            logger().info(f" Initiating BT_SPP TRANSFER ")
+            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+            data = bt_server_socket.recv()
+            assert data is not None, "Unable to find BT server socket connection"
+            assert data.decode() == send_text
+            logger().info(f"  BT_SPP TRANSFER COMPELTED ")
 
         # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-        logger().info(f" decode :{device_ip} ")
-        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
-        logger().info(f" Hostname :{server_ip} ")
-
-        server_port = randint(5001, 50000)
-        execute_command = ['iperf', '-s', '-i 1', '-p', str(server_port)]
-
-        iperf_process = SubprocessManager(execute_command)
-        iperf_process.start()
-
-        # DUT opens tcp client sockets
-        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        assert sock == 0, f"socket id received is wrong, expected is 0"
-
-        logger().info(f"socket id received is {sock} which is expected")
-
-        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                   SocketOptions.TCP_MAX_RETRY)
-        local_port = randint(5001, 60000)
-        # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-
-        wifi_dut.interfaces.wifi.connect(sock, server_ip, server_port)
-        data_length = 1460
-        no_of_pkts = 20000
-        bytes_triggered = (data_length * no_of_pkts)
-        thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 15), )
-        thread.start()
-        wifi_dut.interfaces.wifi.send_data_pkts(sock, data_length, no_of_pkts, timeout=600)
-        time.sleep(5)
-        iperf_process.stop()
-        time.sleep(1)
-        data_received = iperf_process.get_all_lines()
-
-        receive_stats = 0
-        for count in data_received:
-            if "sec" in count:
-                if ("Bytes" in count) and (not ("KBytes" in count)) and (not ("MBytes" in count)):
-                    receive_stats = receive_stats + (float(count.split("Bytes")[0].split("sec")[1].strip()))
-                elif "KBytes" in count:
-                    receive_stats = receive_stats + (float(count.split("KBytes")[0].split("sec")[1].strip()) * 1024)
-                elif "MBytes" in count:
-                    receive_stats = receive_stats + (
-                                float(count.split("MBytes")[0].split("sec")[1].strip()) * 1024 * 1024)
-        logger().info(f"Bytes sent on the DUT -> {bytes_triggered}, received on remote tcp socket {receive_stats}")
-
-        # Sniffer stop
-        logger().info(f"Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        # Validating the power management bit
-        packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
-
-        logger().info(f" Validate power management bit 1")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
-
-    logger().info(f"Test case executed in {t.duration} seconds")
-    logger().info(f"Initiating Wi-Fi disconnection on DUT")
-    wifi_leave(wifi_dut)
-
-
-
-#Buffer full exception by initiating TCP packet retrials through rejoin failure
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
-    }
-)
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,remote_socket):
-    with TimeMeasurer() as t:
-        validation = True
-        logger().info(f" ====== configuring the sniffer with access point channel ====== ")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bt_coex_buffer_tcp_rejoin_C20120')
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"Device mac address: {dut_mac_address}")
-        ap_bssid = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f'AP BSSID = {ap_bssid}')
-
-        # Join Wi-Fi Access Point
-        logger().info(f"connecting to access point.....")
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        logger().info(f"enabling dhcp in DUT.......")
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-        # Initiate ping from third party wifi-client to DUT
-        logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
-        status = ping(device_ip, ping_count)
-        assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
-
-        logger().info(f"enabling wifi power save mode in DUT......")
-        wifi_dut.interfaces.wifi.power_save(2,1)
-
-        logger().info(f"enabling bt power save mode in DUT......")
-        wifi_dut.interfaces.wifi.bt_power_save(2,1)
-
-        logger().info(f"Configuring DUT as SPP Slave")
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
-        assert bt_dut_address is not None, "Unable to find BT DUT address"
-        logger().info(f"DUT is BT-SLAVE with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-        assert bt_client_address is not None, "Unable to find BT client address"
-        logger().info(f"Raspberry PI is BT-MASTER  with MAC address {bt_client_address} ")
-
-        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
-        if not found:
-            logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
-
-        logger().info(f"Starting Raspberry PI as BT Server")
-        with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server) as bt_server_socket:
-            # SPP Connection
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                logger().info(f"Initiating BT_CONNECT ")
-                bt_server_socket.create_server()
-                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
-                assert connected
-                logger().info(f" BT_CONNECT SUCCESSFUL ")
-
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         # tcp socket opened in DUT connects to the tcp server
         server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
@@ -1470,7 +1343,7 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_poin
 
 
 
-#Data transfer with different RSSI values
+#Buffer full exception by initiating TCP packet retrials through rejoin failure
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
@@ -1487,7 +1360,157 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_poin
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_point,bt_client):
+def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,remote_socket):
+    send_text = "9cDKpYOnOJeqYPsL987v"
+    with TimeMeasurer() as t:
+        validation = True
+        logger().info(f" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bt_coex_buffer_tcp_rejoin_C20120')
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid}')
+
+        # Join Wi-Fi Access Point
+        logger().info(f"connecting to access point.....")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        logger().info(f"enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+        # Initiate ping from third party wifi-client to DUT
+        logger().info(f'DUT ip {device_ip}')
+        logger().info(f"pinging to dut.....")
+        status = ping(device_ip, ping_count)
+        assert status == 1,"DUT not responding for ping request......"
+        logger().info(f"ping to DUT is successful....")
+
+        logger().info(f"enabling wifi power save mode in DUT......")
+        wifi_dut.interfaces.wifi.power_save(2,1)
+
+        logger().info(f"enabling bt power save mode in DUT......")
+        wifi_dut.interfaces.wifi.bt_power_save(2,1)
+
+        logger().info(f"Configuring DUT as SPP Slave")
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+        assert bt_dut_address is not None, "Unable to find BT DUT address"
+        logger().info(f"DUT is BT-SLAVE with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+        assert bt_client_address is not None, "Unable to find BT client address"
+        logger().info(f"Raspberry PI is BT-MASTER  with MAC address {bt_client_address} ")
+
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+        if not found:
+            logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
+
+        logger().info(f"Starting Raspberry PI as BT Server")
+        with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server) as bt_server_socket:
+            # SPP Connection
+            with wifi_dut.interfaces.wifi.run_bt_task():
+                logger().info(f"Initiating BT_CONNECT ")
+                bt_server_socket.create_server()
+                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                assert connected
+                logger().info(f" BT_CONNECT SUCCESSFUL ")
+
+            # Send data from dut to bt_client
+            logger().info(f" Initiating BT_SPP TRANSFER ")
+            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+            data = bt_server_socket.recv()
+            assert data is not None, "Unable to find BT server socket connection"
+            assert data.decode() == send_text
+            logger().info(f"  BT_SPP TRANSFER COMPELTED ")
+
+        # The below api parses DUTs IP address
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+
+        server_port = randint(5001, 50000)
+        execute_command = ['iperf', '-s', '-i 1', '-p', str(server_port)]
+
+        iperf_process = SubprocessManager(execute_command)
+        iperf_process.start()
+
+        # DUT opens tcp client sockets
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+
+        logger().info(f"socket id received is {sock} which is expected")
+
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+
+        wifi_dut.interfaces.wifi.connect(sock, server_ip, server_port)
+        data_length = 1460
+        no_of_pkts = 20000
+        bytes_triggered = (data_length * no_of_pkts)
+        thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 15, logger), )
+        thread.start()
+        wifi_dut.interfaces.wifi.send_data_pkts(sock, data_length, no_of_pkts, timeout=600)
+        time.sleep(5)
+        iperf_process.stop()
+        time.sleep(1)
+        data_received = iperf_process.get_all_lines()
+
+        receive_stats = 0
+        for count in data_received:
+            if "sec" in count:
+                if ("Bytes" in count) and (not ("KBytes" in count)) and (not ("MBytes" in count)):
+                    receive_stats = receive_stats + (float(count.split("Bytes")[0].split("sec")[1].strip()))
+                elif "KBytes" in count:
+                    receive_stats = receive_stats + (float(count.split("KBytes")[0].split("sec")[1].strip()) * 1024)
+                elif "MBytes" in count:
+                    receive_stats = receive_stats + (
+                                float(count.split("MBytes")[0].split("sec")[1].strip()) * 1024 * 1024)
+        logger().info(f"Bytes sent on the DUT -> {bytes_triggered}, received on remote tcp socket {receive_stats}")
+
+        # Sniffer stop
+        logger().info(f"Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Validating the power management bit
+        packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
+
+        logger().info(f" Validate power management bit 1")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+
+    logger().info(f"Test case executed in {t.duration} seconds")
+    logger().info(f"Initiating Wi-Fi disconnection on DUT")
+    wifi_leave(wifi_dut)
+
+
+
+#Data transfer with different RSSI values
+@pytest.mark.rf_attenuator('50pa500_attenuator')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+    "net_perf_client",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+    },
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_point,bt_client, protocol,rf_attenuator):
     inq_type = 1
     duration = 10000
     max_no_dev = 10
@@ -1517,10 +1540,10 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
+        logger().info(f"pinging to dut.....")
         status = ping(device_ip, ping_count)
         assert status == 1,"DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+        logger().info(f"ping to DUT is successful....")
 
         logger().info(f"enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2,1)
@@ -1536,12 +1559,7 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_
         assert bt_client_address is not None, "Unable to find BT client address"
         logger().info(f"Raspberry PI is BT-SLAVE with MAC address {bt_client_address} ")
 
-        logger().info(f"Initiating traffic with client '{bt_client.name}' and Wi-Fi Connect-Disconnect thread")
-        t1 = wifi_traffic_thread( wifi_access_point, wifi_dut,  bt_client, iperf_time=200)
-        t2 = connect_disconnect_wifi_thread(wifi_dut, wifi_access_point, iter_count=5)
 
-        t1.start()
-        t2.start()
 
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
                                                               inquiry_type=1,
@@ -1611,9 +1629,6 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_
         # Sniffer stop
         logger().info(f"Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-
-        t1.join()
-        t2.join()
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
