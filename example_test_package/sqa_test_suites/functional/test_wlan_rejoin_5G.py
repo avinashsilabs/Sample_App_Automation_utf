@@ -1,6 +1,7 @@
 import re
 import time
 from datetime import datetime, timedelta
+from utf.interfaces.switch import Switch
 from utf.utils.iperf.iperf_utils import print_dict, ping
 import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
@@ -113,17 +114,18 @@ class WifiPingThread(ThreadBase):
 
 
 class AccessPointApOnOff(ThreadBase):
-    def __init__(self, wifi_access_point):
+    def __init__(self, switch):
         super().__init__()
-        self.wifi_access_point = wifi_access_point
+        self.switch = switch
 
     def run(self):
-        logger().info('******* Disable the AP radio **********')
-        self.wifi_access_point.interfaces.wifi.stop_ap()
+        logger().info('******* Turn on the AP radio **********')
+        self.switch.interfaces.pdu_switch.turn_on()
         logger().info('******* Wait for 30 second after disable the AP radio **********')
         time.sleep(30)
-        logger().info('******* Enable the AP radio **********')
-        self.wifi_access_point.interfaces.wifi.start_ap()
+        logger().info('******* Turn off the AP radio **********')
+        self.switch.interfaces.pdu_switch.turn_off()
+
 
 pytestmark = [
     pytest.mark.start_state("wifi_dut", wifi="init"),
@@ -131,6 +133,8 @@ pytestmark = [
     pytest.mark.start_state("wifi_access_point", wifi="ap_enabled"),
     pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 ]
+
+pdu_state = False
 
 
 @pytest.mark.parametrize("channel_list",
@@ -148,12 +152,18 @@ pytestmark = [
         "band": 1,
     },
 )
-def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
+def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''Check rejoin is happening in all 5G channels or not'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
     for channel in channel_list:
@@ -177,8 +187,6 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
 
-        packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
         packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
 
@@ -201,39 +209,53 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
         file_name = f'5g_uni_broad_prob_req_for_ch_{channel}'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-        logger().info('***** Disable the AP radio *****')
-        wifi_access_point.interfaces.wifi.stop_ap()
+        logger().info('***** Turn off the AP radio *****')
+        if pdu_state is True:
+            switch.interfaces.pdu_switch.turn_off()
+            pdu_state = False
 
-        logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
-        time.sleep(30)
+        logger().info('***** Wait... Enable the time sleep for 150 second for rejoin process *****')
+        time.sleep(150)
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-            'Unable to find Unicast Probe request packet'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-            'Unable to find Broadcast Probe request packet'
+        try:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+                'Unable to find Broadcast Probe request packet'
 
-        logger().info('***** Enable the AP radio *****')
-        wifi_access_point.interfaces.wifi.start_ap()
-        file_name_rejoin = f'Rejoin_for_ch_{channel}'
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
-        time.sleep(10)
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
+            logger().info('***** Turn on the AP radio *****')
+            if pdu_state is False:
+                switch.interfaces.pdu_switch.turn_on()
+                pdu_state = True
+
+            time.sleep(60)
+            file_name_rejoin = f'Rejoin_for_ch_{channel}'
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+            time.sleep(10)
+            if connect_status is False:
+                logger().info("Unable to connect with Server")
+                assert connect_status
             else:
-                logger().info(f"Data transfer failed")
-                assert send_response
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.leave()
+                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                logger().info(f'SEND-RESPONSE = {send_response}')
+                if 'status 10' in str(send_response):
+                    result = send_response.decode().replace("\r\n", '').strip()
+                    match = re.findall(r"\d+", result)
+                    if int(match[1]) == send_bytes:
+                        logger().info(f"Send {send_bytes} bytes successfully")
+                else:
+                    logger().info(f"Data transfer failed")
+                    assert send_response
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+        except (AssertionError, IndexError, CLITransportException):
+            assert False, 'Find exception'
+        finally:
+            if pdu_state is False:
+                logger().info('\n\n Finally Turn on the AP ')
+                switch.interfaces.pdu_switch.turn_on()
+                pdu_state = True
+                time.sleep(60)
+            wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("change_security_mode_startup_time, change_security_mode", [('WPA2', 'Open'), ('Open', 'WPA2'),
@@ -258,13 +280,19 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
 )
 def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                    change_security_mode_startup_time,
-                                                                   change_security_mode):
+                                                                   change_security_mode, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     rejoin_value = 4
+    global pdu_state
 
     '''Verify rejoin functionality by changing connected AP security settings in 5Ghz'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     security_mode_startup = f'SecurityMode.{change_security_mode_startup_time}'
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     logger().info(f'\n\n ***** Security mode configured in {change_security_mode_startup_time} *****\n\n')
@@ -318,20 +346,20 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
 
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
     time.sleep(2)
-    end_time = datetime.now() + timedelta(minutes=1)
+    end_time = datetime.now() + timedelta(minutes=2)
 
     security_mode = f'SecurityMode.{change_security_mode}'
     logger().info(
         f'\n\n***** Change the security mode from {change_security_mode_startup_time} to {security_mode} *****\n\n')
-    wifi_access_point.interfaces.wifi.start_ap(security=eval(security_mode))
-    time.sleep(5)
+    # wifi_access_point.interfaces.wifi.start_ap(security=eval(security_mode))
+    # time.sleep(5)
+    #
+    # logger().info('***** Turn off the AP radio *****')
+    # switch.interfaces.pdu_switch.turn_off()
+    # time.sleep(150)
 
-    logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
-    time.sleep(5)
-
     wifi_access_point.interfaces.wifi.start_ap(security=eval(security_mode))
-    time.sleep(5)
+    time.sleep(15)
 
     """validate rejoin retry failure"""
     while datetime.now() < end_time:
@@ -346,20 +374,36 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    packet_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num']
+    # logger().info('***** Turn on AP radio *****')
+    # if pdu_state is False:
+    #     switch.interfaces.pdu_switch.turn_on()
+    #     pdu_state = True
+    # time.sleep(60)
 
-    if (int(packet_count) + 1) == rejoin_value:
-        logger().info(
-            f"\n\nSuccessfully matched broadcast probe request packet count = {rejoin_value} is equal to one less "
-            f"sniffer packet "
-            f"count = {packet_count}\n\n")
-        assert True
-    else:
-        logger().info(f"Failed, broadcast probe request packet count = {rejoin_value} is not equal to one less "
-                      f"sniffer "
-                      f"packet "
-                      f"count = {packet_count}")
-        assert False
+    try:
+        packet_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num']
+
+        if (int(packet_count) + 1) == rejoin_value:
+            logger().info(
+                f"\n\nSuccessfully matched broadcast probe request packet count = {rejoin_value} is equal to one less "
+                f"sniffer packet "
+                f"count = {packet_count}\n\n")
+            assert True
+        else:
+            logger().info(f"Failed, broadcast probe request packet count = {rejoin_value} is not equal to one less "
+                          f"sniffer "
+                          f"packet "
+                          f"count = {packet_count}")
+            assert False
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("channel_list",
@@ -375,12 +419,18 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
         "band": 2,
     },
 )
-def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
+def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''Rejoin functionality when dual band selected'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_access_point.interfaces.wifi.config['channel'] = channel_list
     wifi_access_point.interfaces.wifi.start_ap()
@@ -424,42 +474,57 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
             assert send_response
 
     time.sleep(2)
-    file_name = f'5g_uni_broad_prob_req_for_ch_{channel_list}'
+    file_name = f'5g_broad_prob_req_for_ch_{channel_list}'
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     logger().info('\n\n***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
+    if pdu_state is True:
+        switch.interfaces.pdu_switch.turn_off()
+        pdu_state = False
 
-    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n\n')
-    time.sleep(30)
+    logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n\n')
+    time.sleep(150)
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
 
-    logger().info('***** Enable the AP radio *****')
-    wifi_access_point.interfaces.wifi.start_ap()
-    file_name_rejoin = f'Rejoin_for_ch_{channel_list}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+        logger().info('***** Turn on the AP radio *****')
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
+        file_name_rejoin = f'Rejoin_for_ch_{channel_list}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
 
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    wifi_dut.interfaces.wifi.leave()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
 
 
 @pytest.mark.config(
@@ -473,15 +538,21 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
         "band": 1,
     },
 )
-def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''Verify rejoin functionality in DFS channels '''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(70)
+    time.sleep(20)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
@@ -495,80 +566,95 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
                      f'and wlan.fc.type_subtype == 0x0008'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
-        'Unable to find Beacon packets'
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+            'Unable to find Beacon packets'
 
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    logger().info(f"DUT ip address : {dut_ip}")
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT ip address : {dut_ip}")
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+        logger().info(f"*****Enable Max PSP in DUT******")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
 
-    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    file_name = f'5g_uni_broad_prob_req'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        file_name = f'5g_uni_broad_prob_req'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-    time.sleep(5)
-    connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
+        time.sleep(5)
+        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
+        logger().info('***** Disable the AP radio *****')
+        if pdu_state is True:
+            switch.interfaces.pdu_switch.turn_off()
+            pdu_state = False
 
-    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
-    time.sleep(30)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Unicast Probe request packet'
+        logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n')
+        time.sleep(150)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find Unicast Probe request packet'
 
-    logger().info('***** Enable the AP radio *****')
-    wifi_access_point.interfaces.wifi.start_ap()
-    file_name_rejoin = f'5G_Rejoin_dfs'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+        logger().info('***** Enable the AP radio *****')
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
+        file_name_rejoin = f'5G_Rejoin_dfs'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
 
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.leave()
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -584,13 +670,19 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 )
 def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
-                                                set_region_dut):
+                                                set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''Verify Rejoin Functionality with different regions enabled in 5GHZ band with non DFS channels US, EU, JP & 
        world mode'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -617,8 +709,6 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
     packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
 
@@ -644,39 +734,52 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
+    if pdu_state is True:
+        switch.interfaces.pdu_switch.turn_off()
+        pdu_state = False
 
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
-    time.sleep(60)
+    logger().info('***** Wait... Enable the time sleep for 150 second for rejoin process *****')
+    time.sleep(150)
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
-    logger().info('***** Enable the AP radio *****')
-    wifi_access_point.interfaces.wifi.start_ap()
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_rejoin')
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
 
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        logger().info('***** Turn on the AP radio *****')
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_rejoin')
+
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    wifi_dut.interfaces.wifi.leave()
-    time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -692,14 +795,20 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     },
 )
 def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
-                                               set_region_dut):
+                                               set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''	Verify Rejoin Functionality with different regions enabled in 5GHZ band with DFS channels US, EU, JP & world 
     mode'''
     '''Please note - ASUS AP does not support Japan region so I removed the japan region entry '''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -721,80 +830,97 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
     packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
                      f'and wlan.fc.type_subtype == 0x0008'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
-        'Unable to find Beacon packets'
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+            'Unable to find Beacon packets'
 
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    logger().info(f"DUT ip address : {dut_ip}")
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT ip address : {dut_ip}")
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+        logger().info(f"*****Enable Max PSP in DUT******")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
 
-    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-    time.sleep(5)
-    connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
+        time.sleep(5)
+        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
+        logger().info('***** Disable the AP radio *****')
+        logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n')
+        if pdu_state is True:
+            switch.interfaces.pdu_switch.turn_off()
+            pdu_state = False
+        time.sleep(150)
 
-    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
-    time.sleep(30)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Unicast Probe request packet'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find Unicast Probe request packet'
 
-    logger().info('***** Enable the AP radio *****')
-    wifi_access_point.interfaces.wifi.start_ap()
-    file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+        logger().info('***** Turn on the AP radio *****')
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
 
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.leave()
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -810,12 +936,18 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
     },
 )
 def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
-                                                          set_region_dut):
+                                                          set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''Verify Rejoin Functionality with different regions enabled in Dual band US, EU, JP & world mode'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     time.sleep(20)
     # Set the region value in AP side
@@ -869,39 +1001,56 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
+    if pdu_state is True:
+        switch.interfaces.pdu_switch.turn_off()
+        pdu_state = False
 
-    logger().info('***** Wait... Enable the time sleep for 30 second for rejoin process *****')
-    time.sleep(30)
+    logger().info('***** Wait... Enable the time sleep for 150 second for rejoin process *****')
+    time.sleep(150)
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Unicast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
-    logger().info('***** Enable the AP radio *****')
-    wifi_access_point.interfaces.wifi.start_ap()
-    file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find Unicast Probe request packet'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+
+        logger().info('***** Enable the AP radio *****')
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
+
+        file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.leave()
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -917,14 +1066,20 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     },
 )
 def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
-                                                         set_region_dut):
+                                                         set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
+    global pdu_state
 
     '''	Verify Rejoin Functionality with different regions enabled in Dual band with DFS channels US, EU, JP & world 
     mode'''
     '''Please note - ASUS AP does not support Japan region so I removed the japan region entry '''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -946,80 +1101,97 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
     packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
                      f'and wlan.fc.type_subtype == 0x0008'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
-        'Unable to find Beacon packets'
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+            'Unable to find Beacon packets'
 
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    logger().info(f"DUT ip address : {dut_ip}")
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT ip address : {dut_ip}")
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+        logger().info(f"*****Enable Max PSP in DUT******")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
 
-    packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        file_name = f'5g_uni_broad_prob_req_{set_region_ap}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-    time.sleep(5)
-    connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
+        time.sleep(5)
+        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    logger().info('***** Disable the AP radio *****')
-    wifi_access_point.interfaces.wifi.stop_ap()
+        logger().info('***** Disable the AP radio *****')
+        if pdu_state is True:
+            switch.interfaces.pdu_switch.turn_off()
+            pdu_state = False
 
-    logger().info('\n\n***** Wait... Enable the time sleep for 30 second for rejoin process *****\n')
-    time.sleep(30)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Unicast Probe request packet'
+        logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n')
+        time.sleep(150)
 
-    logger().info('***** Enable the AP radio *****')
-    wifi_access_point.interfaces.wifi.start_ap()
-    file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find Unicast Probe request packet'
 
-    if connect_status is False:
-        logger().info("Unable to connect with Server")
-        assert connect_status
-    else:
-        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-        logger().info(f'SEND-RESPONSE = {send_response}')
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+        logger().info('***** Turn on the AP radio *****')
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
+        file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
+
+        if connect_status is False:
+            logger().info("Unable to connect with Server")
+            assert connect_status
         else:
-            logger().info(f"Data transfer failed")
-            assert send_response
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                if int(match[1]) == send_bytes:
+                    logger().info(f"Send {send_bytes} bytes successfully")
+            else:
+                logger().info(f"Data transfer failed")
+                assert send_response
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.leave()
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -1032,10 +1204,16 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
         "band": 1,
     },
 )
-def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
+    global pdu_state
 
     '''Check rejoin is happening or not when select channel as 36,48,165'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
     channel_dict = {0:36,3:48,24:165}
@@ -1088,32 +1266,46 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {dut_mac_address})'
 
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-            'Unable to find Broadcast Probe request packet'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-            'Unable to find Null data packet with PM bit 1'
-        time.sleep(2)
 
-        wifi_sniffer.interfaces.capture.configure_interface(channel=channel_dict[channel])
-        time.sleep(2)
-        file_name = f'5g_broad_prob_req_for_ch_{channel_dict[channel]}'
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+        try:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+                'Unable to find Broadcast Probe request packet'
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+                'Unable to find Null data packet with PM bit 1'
+            time.sleep(2)
 
-        wlan_obj = WifiPingThread(wifi_dut, dut_ip)
-        ap_obj = AccessPointApOnOff(wifi_access_point)
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel_dict[channel])
+            time.sleep(2)
+            file_name = f'5g_broad_prob_req_for_ch_{channel_dict[channel]}'
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-        wlan_obj.start()
-        ap_obj.start()
-        wlan_obj.wait_for_exit()
-        ap_obj.wait_for_exit()
+            wlan_obj = WifiPingThread(wifi_dut, dut_ip)
+            ap_obj = AccessPointApOnOff(switch)
 
-        wifi_sniffer.interfaces.capture.stop_capture()
+            wlan_obj.start()
+            ap_obj.start()
+            wlan_obj.wait_for_exit()
+            ap_obj.wait_for_exit()
 
-        logger().info(f"\n\n*****Sniffer validation for rejoin broadcast probe request ******\n")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-            'Unable to find Broadcast Probe request packet'
+            wifi_sniffer.interfaces.capture.stop_capture()
 
-        wifi_dut.interfaces.wifi.leave()
+            logger().info(f"\n\n*****Sniffer validation for rejoin broadcast probe request ******\n")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+                'Unable to find Broadcast Probe request packet'
+
+            if pdu_state is False:
+                switch.interfaces.pdu_switch.turn_on()
+                pdu_state = True
+            time.sleep(60)
+            wifi_dut.interfaces.wifi.leave()
+        except (AssertionError, IndexError, CLITransportException):
+            assert False, 'Find exception'
+        finally:
+            if pdu_state is False:
+                logger().info('\n\n Finally Turn on the AP ')
+                switch.interfaces.pdu_switch.turn_on()
+                pdu_state = True
+                time.sleep(60)
 
 
 @pytest.mark.config(
@@ -1126,11 +1318,17 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
         "band": 1,
     },
 )
-def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
     channel = 36
+    global pdu_state
 
     '''Check rejoin is happening or not when select channel as 36'''
+    logger().info(f'PDU state = {pdu_state}')
+    if pdu_state is False:
+        switch.interfaces.pdu_switch.turn_on()
+        pdu_state = True
+        time.sleep(60)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_access_point.interfaces.wifi.config['channel'] = channel
     wifi_access_point.interfaces.wifi.start_ap()
@@ -1169,29 +1367,44 @@ def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_du
                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {dut_mac_address})'
 
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Null data packet with PM bit 1'
-    time.sleep(2)
 
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    time.sleep(2)
-    file_name = f'5g_broad_prob_req_for_ch_{channel}'
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+    try:
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            'Unable to find Null data packet with PM bit 1'
+        time.sleep(2)
 
-    wlan_obj = WifiPingThread(wifi_dut, dut_ip)
-    ap_obj = AccessPointApOnOff(wifi_access_point)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        time.sleep(2)
+        file_name = f'5g_broad_prob_req_for_ch_{channel}'
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-    wlan_obj.start()
-    ap_obj.start()
-    wlan_obj.wait_for_exit()
-    ap_obj.wait_for_exit()
+        wlan_obj = WifiPingThread(wifi_dut, dut_ip)
+        ap_obj = AccessPointApOnOff(switch)
 
-    wifi_sniffer.interfaces.capture.stop_capture()
+        wlan_obj.start()
+        ap_obj.start()
+        wlan_obj.wait_for_exit()
+        ap_obj.wait_for_exit()
 
-    logger().info(f"\n\n*****Sniffer validation for rejoin broadcast probe request ******\n")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
+        wifi_sniffer.interfaces.capture.stop_capture()
 
-    wifi_dut.interfaces.wifi.leave()
+        logger().info(f"\n\n*****Sniffer validation for rejoin broadcast probe request ******\n")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+
+        if pdu_state is False:
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+        time.sleep(60)
+        wifi_dut.interfaces.wifi.leave()
+
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if pdu_state is False:
+            logger().info('\n\n Finally Turn on the AP ')
+            switch.interfaces.pdu_switch.turn_on()
+            pdu_state = True
+            time.sleep(60)
