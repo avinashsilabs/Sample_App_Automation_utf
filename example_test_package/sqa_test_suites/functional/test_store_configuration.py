@@ -11,11 +11,17 @@ from utf.interfaces.cli import CLITransportException
 from utf.utils.iperf.iperf_utils import print_dict
 
 
-"""setup requirement:
+"""
+    setup requirement:
+
+        setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
-        4. Access Point(Third Party AP's)
+        4. Access Point(Third Party AP -ASUS)
+        5. Sniffer(NUC)
+        
+    Author: swathi.pathuri
 """
 def logger():
     return get_logger(__name__)
