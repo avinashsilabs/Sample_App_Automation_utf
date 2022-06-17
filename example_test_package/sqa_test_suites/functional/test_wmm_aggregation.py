@@ -346,7 +346,6 @@ def test_udp_tx_aggregation_open_mode_with_power_save_c19033(wifi_sniffer, net_p
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-
     packet_filter1 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x00) && (wlan.sa == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.da == {dut_mac_address})'
     packet_filter2 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.da == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.sa == {dut_mac_address})'
     packet_filter3 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x00) && (wlan.da == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.sa == {dut_mac_address})'
