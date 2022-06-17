@@ -11,7 +11,7 @@ from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 
-custom_app_name = None
+last_loaded_custom_app_name = None
 
 
 @pytest.fixture()
@@ -51,18 +51,18 @@ def firmware_loader(request, wiseconnect_duts):
         fw_mgr = FirmwareManager.get_instance()
         if fw_mgr is not None:
             fw_mgr.load_app_firmware(app_name, wiseconnect_duts)
-            global custom_app_name
-            custom_app_name = app_name
+            global last_loaded_custom_app_name
+            last_loaded_custom_app_name = app_name
         yield fw_mgr
 
 
 @pytest.fixture(autouse=True, scope='function')
 def load_default_firmware_at_test_case_setup(request):
-    global custom_app_name
-    if 'firmware_loader' not in request.fixturenames and custom_app_name is not None:
+    global last_loaded_custom_app_name
+    if 'firmware_loader' not in request.fixturenames and last_loaded_custom_app_name is not None:
         fw_mgr = FirmwareManager.get_instance()
-        fw_mgr.load_default_firmware_at_test_case_teardown(custom_app_name)
-        custom_app_name = None
+        fw_mgr.load_default_firmware_at_test_case_teardown(last_loaded_custom_app_name)
+        last_loaded_custom_app_name = None
 
 
 @pytest.fixture(autouse=True, scope='session')
