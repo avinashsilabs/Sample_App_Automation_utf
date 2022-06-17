@@ -438,13 +438,14 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 		print_status(RSI_ERROR_INVALID_PARAM);
 		return;
 	}
+	printf("\r\nConfig_ipaddress command invoked");
 	int32_t status = rsi_config_ipaddress(RSI_IP_VERSION_4, mode, (uint8_t *)&ip_address, (uint8_t *)&subnet_mask, (uint8_t *)&gateway, (uint8_t *)&current_ip, sizeof(current_ip), vap_id);
 	if (status == RSI_ERROR_NONE) {
 		printf("RSI_CONFIG_IP:IP:      %d.%d.%d.%d\n", current_ip.ipaddr[0], current_ip.ipaddr[1], current_ip.ipaddr[2], current_ip.ipaddr[3]);
 		printf("RSI_CONFIG_IP:netmask: %d.%d.%d.%d\n", current_ip.netmask[0], current_ip.netmask[1], current_ip.netmask[2], current_ip.netmask[3]);
 		printf("RSI_CONFIG_IP:gateway: %d.%d.%d.%d\n", current_ip.gateway[0], current_ip.gateway[1], current_ip.gateway[2], current_ip.gateway[3]);
+        printf("RSI_CONFIG_IP:Success");
 	}
-
 	print_status(status);
 }
 
