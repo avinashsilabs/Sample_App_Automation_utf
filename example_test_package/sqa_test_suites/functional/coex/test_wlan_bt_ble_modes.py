@@ -45,10 +45,10 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         bt_client.interfaces.bluetooth.close()
         logger().info("Setting DUT as bt_slave....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
-        assert bt_dut_address is not None
+        assert bt_dut_address is not None, f"Unable to get bt_dut_address"
         logger().info("Advertising started on BT SLAVE device....DUT")
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-        assert bt_client_address is not None
+        assert bt_client_address is not None, f"Unable to get bt_client_address"
         logger().info("Started BT in MASTER device....bt_client")
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
         if not found:
@@ -75,10 +75,10 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             with wifi_dut.interfaces.wifi.run_bt_task():
                 sent = bt_server_socket.send(recv_text)  # SQA Agent is programmed to send back data
                 logger().info(f"Data: '{recv_text}' sent from bt_client to DUT.....'{sent}'")
-                assert sent
+                assert sent, f"Not sent data from bt_client to DUT"
                 data = bt_server_socket.recv()
                 logger().info(f"Data received back from DUT is......'{data.decode()}'")
-                assert data is not None
+                assert data is not None, f"Data not received back from DUT "
                 assert data.decode() == recv_text
                 logger().info(f"Send data from bt_client to dut is successful")
 
@@ -88,7 +88,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             data = bt_server_socket.recv()
             logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
             logger().info(f"Data received back from bt_client is......'{data.decode()}'")
-            assert data is not None
+            assert data is not None, f"Data not received back from bt_client"
             assert data.decode() == send_text
             logger().info(f"Send data from dut to bt_client is successful")
 
@@ -111,10 +111,10 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
 
         logger().info("Setting DUT as bt_master....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
-        assert bt_dut_address is not None
+        assert bt_dut_address is not None, f"Unable to get bt_dut_address"
         logger().info("Started BT in MASTER device....DUT")
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
-        assert bt_client_address is not None
+        assert bt_client_address is not None,  f"Unable to get bt_client_address"
         logger().info("Advertising started on SLAVE device....bt_client")
         time.sleep(3)
 
@@ -149,7 +149,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
                 time.sleep(2)
                 data = bt_client_socket.recv()
                 logger().info(f"Data received back from DUT is......'{data.decode()}'")
-                assert data is not None
+                assert data is not None, f"Data not received back from DUT "
                 assert data.decode() == recv_text
                 logger().info(f"Send data from bt_client to dut is successful")
 
@@ -159,7 +159,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             data = bt_client_socket.recv()
             logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
             logger().info(f"Data received back from bt_client is......'{data.decode()}'")
-            assert data is not None
+            assert data is not None, f"Data received back from bt_client"
             assert data.decode() == send_text
             logger().info("Send data from DUT to bt_client is successful.")
 
@@ -180,11 +180,11 @@ def ble_master_slave(wifi_dut, ble_client, mode, start_needed=True):
         if start_needed:
             ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
             time.sleep(3)
-            assert ble_dut_address is not None
+            assert ble_dut_address is not None, f"Unable to get ble_dut_address"
             logger().info(f"Started BLE in DUT")
         logger().info(f"Start ble client")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
-        assert ble_client_address is not None
+        assert ble_client_address is not None, f"Unable to get ble_client_address"
         time.sleep(5)
         logger().info(f"Start scanning and connect to ble client")
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=100)
@@ -199,12 +199,12 @@ def ble_master_slave(wifi_dut, ble_client, mode, start_needed=True):
         if start_needed:
             logger().info(f"Set up DUT for BLE advertising")
             ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-            assert ble_dut_address is not None
+            assert ble_dut_address is not None,  f"Unable to get ble_dut_address"
         wifi_dut.interfaces.wifi.ble_start_advertising()
         time.sleep(3)
         logger().info(f"Begin Scanning for BLE devices")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-        assert ble_client_address is not None
+        assert ble_client_address is not None, f"Unable to get ble_client_address"
         time.sleep(5)
         ble_client.interfaces.bluetooth.stop_scanning()
         logger().info(f"See that we found our device")
@@ -346,7 +346,7 @@ def connect_disconnect_ble(wifi_dut, ble_client, ble_client_address, iter_count)
         time.sleep(3)
         logger().info(f"Re-Initiating BLE connection...iteration: '{i}'")
         ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-        assert ble_dut_address is not None
+        assert ble_dut_address is not None, f"Unable to get ble_dut_address"
         wifi_dut.interfaces.wifi.ble_start_advertising()
         ble_client.interfaces.bluetooth.connect(ble_dut_address)
         logger().info(f"DUT successfully connected to {ble_client} Device...iteration: '{i}'")
@@ -504,7 +504,7 @@ class connect_disconnect_ble_thread(Thread):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -569,7 +569,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -628,7 +628,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -638,7 +638,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
-    assert len(ble_clients) >= 2
+    assert len(ble_clients) >= 2, f"Minimum 2 raspi devices needed for this test"
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
 
@@ -695,7 +695,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -746,7 +746,7 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
 @pytest.mark.dut("rs9116_sapi")
@@ -788,7 +788,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
 
     logger().info(status)
     logger().info(content)
-    assert content == content1
+    assert content == content1, f"http send and receive content is not same"
 
     logger().info("Checking connection status of BT, BLE, Wi-Fi")
     check_connection_status(wifi_dut)
@@ -819,7 +819,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -872,7 +872,7 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -932,7 +932,7 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -986,7 +986,7 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -1043,7 +1043,7 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -1125,7 +1125,7 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -1209,7 +1209,7 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
@@ -1230,9 +1230,9 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
     logger().info(f"ble_address: '{ble_address}'")
 
     with TimeMeasurer() as t:
-        scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid)
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(scan_results)
-    assert len(scan_results) > 0
+    assert len(scan_results) > 0, f"Scan list is empty"
     logger().info(f"Scan in {t.duration} seconds")
 
     logger().info("Joining into Wi-Fi")
@@ -1269,7 +1269,7 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
