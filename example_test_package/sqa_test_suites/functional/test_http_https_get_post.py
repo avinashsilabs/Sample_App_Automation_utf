@@ -46,11 +46,11 @@ ping_count = 10
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
     }
 )
@@ -74,12 +74,6 @@ def test_http_get_with_different_lengths_C19213(http_server, http_client, wifi_d
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     # Enables the wifi power save in dut
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -89,6 +83,12 @@ def test_http_get_with_different_lengths_C19213(http_server, http_client, wifi_d
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
@@ -106,7 +106,8 @@ def test_http_get_with_different_lengths_C19213(http_server, http_client, wifi_d
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
@@ -134,12 +135,6 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -147,6 +142,12 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
     logger().info("Enables the bt power save in dut")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching the data from  http server using get method")
@@ -161,7 +162,8 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
@@ -190,12 +192,6 @@ def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_poi
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -203,6 +199,12 @@ def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_poi
     logger().info("Enables the bt power save in dut")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching the http data using get method")
@@ -215,8 +217,9 @@ def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_poi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -244,12 +247,6 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut, http_cl
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -257,6 +254,12 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut, http_cl
     logger().info("Enables the bt power save in dut")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetches the http data using get method")
@@ -276,8 +279,9 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut, http_cl
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -302,12 +306,6 @@ def test_http_post_functionality_C19219(http_server, wifi_dut, http_client, wifi
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -316,6 +314,12 @@ def test_http_post_functionality_C19219(http_server, wifi_dut, http_client, wifi
     logger().info("Enables the bt power save in dut")
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     assert enable_bt_ps, "failed to enable bt ps"
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
@@ -334,8 +338,9 @@ def test_http_post_functionality_C19219(http_server, wifi_dut, http_client, wifi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -360,12 +365,6 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, htt
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -375,6 +374,13 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, htt
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("API used to post the http data")
@@ -392,8 +398,9 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, htt
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -420,12 +427,6 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut, ht
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -435,6 +436,13 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut, ht
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable "
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("http functionality using post method")
@@ -451,8 +459,9 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut, ht
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -478,12 +487,6 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut, 
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
-        status = ping(device_ip, ping_count)
-        assert status == 1, "DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
-
         logger().info("Enables the wifi power save in dut")
         enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -492,9 +495,15 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut, 
         logger().info("Enables the bt power save in dut")
         enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_bt_ps, "failed to enable bt power save"
-        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
+        assert enable_bt_ps, "failed to enable bt power save"
+        logger().info(f'DUT ip {device_ip}')
+        logger().info("pinging to dut.....")
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
         logger().info("sends data to http server using post method")
         status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
                                                              post_data="hellotestingfrohttppostcontent")
@@ -512,8 +521,9 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut, 
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
@@ -537,13 +547,6 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_c
         result, wifi_dut.interfaces.wifi.IPConfig
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
-
     logger().info("Enables the wifi power save in dut")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -553,6 +556,13 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_c
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("API used to post the http data")
