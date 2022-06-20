@@ -1004,8 +1004,11 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
 	int32_t socketID = sl_cli_get_argument_uint32(arguments, 0);
 	int32_t data_len = sl_cli_get_argument_uint32(arguments, 1);
 	int32_t no_of_pkts = sl_cli_get_argument_uint32(arguments, 2);
+	int32_t ttl_sec = sl_cli_get_argument_uint32(arguments, 3);
 	int32_t status = 0;
     uint32_t count = 0;
+    int32_t tt_start = 0, tt_end = 0;
+    uint32_t sent_bytes = 0;
 
     if (data_len == 0) {
     	data_len = 1460;
@@ -1020,19 +1023,28 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
 
     // generate random buffer
     set_random_bytes(buffer, data_len);
-
+    tt_start = rsi_hal_gettickcount();
     for(count = 0; count < (uint32_t)no_of_pkts ; count++)
     {
+        if(((tt_end - tt_start) / 1000) > ttl_sec)
+        {
+        break;
+        }
     	status = rsi_send(socketID, buffer, data_len, 0);
     	if(status < 0)
     	{
+    	    status = rsi_wlan_get_status();
     		print_status(status);
-    		break;
+    		free(buffer);
+    		return;
     	}
+    	sent_bytes += status;
+    	tt_end = rsi_hal_gettickcount();
     }
 
     if(status)
     {
+        printf("Bytes sent:%u\n",sent_bytes);
     	print_status(0);
     }
 
