@@ -401,66 +401,6 @@ devices:
                             shell: 'linux_shell'
             defaults: { }
 
-    secondary_raspi_ble_client_2:
-        interfaces:
-            docker_host:
-                type: 'docker'
-                ip_address: '192.168.50.219'  #configure secondary Rpi rd_2 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary'
-                username: pi
-                password: 'raspberry'
-            shell:
-                type: 'rpc.rpc_client'
-                # the 'forward_to' property specifies the destination device and interface on the server
-                # the format is 'device:interface'
-                forward_to: 'raspi_bt_client:linux_shell'
-                host: 'docker_host'
-
-            bluetooth:
-                type: 'rpc.rpc_client'
-                forward_to: 'raspi_ble_client:bluetooth'
-                host: 'docker_host'
-        harness:
-            devices:
-                raspi_ble_client:
-                    interfaces:
-                        linux_shell:
-                            type: 'shell.shell'
-                        bluetooth:
-                            type: 'bluetooth.bluez'
-                            shell: 'linux_shell'
-            defaults: { }
-
-    secondary_raspi_ble_client_3:
-        interfaces:
-            docker_host:
-                type: 'docker'
-                ip_address: '192.168.50.219'  #configure secondary Rpi rd_3 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary'
-                username: pi
-                password: 'raspberry'
-            shell:
-                type: 'rpc.rpc_client'
-                # the 'forward_to' property specifies the destination device and interface on the server
-                # the format is 'device:interface'
-                forward_to: 'raspi_bt_client:linux_shell'
-                host: 'docker_host'
-
-            bluetooth:
-                type: 'rpc.rpc_client'
-                forward_to: 'raspi_ble_client:bluetooth'
-                host: 'docker_host'
-        harness:
-            devices:
-                raspi_ble_client:
-                    interfaces:
-                        linux_shell:
-                            type: 'shell.shell'
-                        bluetooth:
-                            type: 'bluetooth.bluez'
-                            shell: 'linux_shell'
-            defaults: { }
-
     # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
         interfaces:
@@ -567,7 +507,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'eth0'
+                interface: 'wlan0'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -577,7 +517,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'eth0'
+                interface: 'wlan0'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -836,9 +776,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'asus_rt_ax3000_ap'
-        - 'dlink_ap'
-        -
+        - 'raspi_wifi'
+        - 'static_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -857,10 +796,8 @@ defaults:
     ble_client: 'raspi_ble_client'
 
     ble_clients:
-        - 'raspi_ble_client'
         - 'secondary_raspi_ble_client'
-        - 'secondary_raspi_ble_client_2'
-        - 'secondary_raspi_ble_client_3'
+        - 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
 
