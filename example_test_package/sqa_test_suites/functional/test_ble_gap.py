@@ -1202,7 +1202,7 @@ def test_ble_scan_window_time_C19819(wifi_dut, ble_client):
     logger().info("start ble in dut")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address, "ble initialization failed in dut"
-
+    logger().info("initiating scan on dut with scan interval 0x40 and scan window 0x50")
     logger().info("start ble scan in rd_1")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address, "ble initialization failed in remote device_1"
@@ -1214,7 +1214,7 @@ def test_ble_scan_window_time_C19819(wifi_dut, ble_client):
                                                                timeout=120)
     time.sleep(10)
     logger().info(f" scan result '{scan_results}")
-    assert scan_results, "ble devices not found"
+    assert bt_client_address in scan_results, "ble device not listed in scan"
     logger().info(f"Currently we are supporting this "
                   f"Check weather the DUT is able receive adverse report in 3 channel are not using sniffer")
     logger().info(f"found BT client address of {bt_client_address}")
@@ -1264,6 +1264,8 @@ def test_ble_scan_window_C19820(wifi_dut, ble_client):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_power_save_connected_state_as_a_slave_C19831(wifi_dut, ble_client):
