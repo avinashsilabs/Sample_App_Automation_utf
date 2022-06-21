@@ -210,7 +210,7 @@ def test_bt_spp_remote_reject(wifi_dut, wifi_access_point, bt_client):
 
         time.sleep(10)
 
-        with pytest.raises(CLITransportException, WlanError):
+        with pytest.raises(Exception):
             wifi_dut.interfaces.wifi.bt_spp_transfer("DUMMYTEXT", bt_client_address)
             time.sleep(5)
 
