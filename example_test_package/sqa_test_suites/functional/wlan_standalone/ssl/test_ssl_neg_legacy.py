@@ -39,7 +39,7 @@ import time
 """
 
 
-def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger):
+def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
@@ -166,4 +166,3 @@ def test_ssl_socket_limit_https_testcase_TC19124(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-
