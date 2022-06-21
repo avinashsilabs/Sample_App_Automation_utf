@@ -196,8 +196,11 @@ def test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252(
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2)
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2)
+    except:
+        time.sleep(1)
 
     # publish a message with the third-party mqtt client
     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, message1.encode())
@@ -274,8 +277,11 @@ def test_mqtt_qos1_connect_sub_publish_TC19254(
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, qos=RS9116MqttQos.QOS1)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+    except:
+        time.sleep(1)
 
     # publish a message with the third-party mqtt client
     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, message1.encode(), qos=RS9116MqttQos.QOS1)
@@ -440,8 +446,11 @@ def test_mqtt_authentication_TC19246(
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, qos=RS9116MqttQos.QOS1)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+    except:
+        time.sleep(1)
 
     # publish a message with the third-party mqtt client
     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, message1.encode(), qos=RS9116MqttQos.QOS1)
@@ -552,8 +561,11 @@ def test_mqtt_retain_TC19256(
     # publish a message with the dut with retain 1
     wifi_dut.interfaces.mqtt.mqtt_client_publish(topic, message2.encode(), qos=RS9116MqttQos.QOS1,
                                                  retain=RS9116MqttQos.QOS1)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+    except:
+        time.sleep(1)
 
     sw = Stopwatch()
     while sw.elapsed_sec < 10:
@@ -600,8 +612,11 @@ def test_mqtt_delete_retain_message_TC19262(
     # publish a message with the dut with retain 1
     wifi_dut.interfaces.mqtt.mqtt_client_publish(topic, "", qos=RS9116MqttQos.QOS1,
                                                  retain=RS9116MqttQos.QOS1)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+    except:
+        time.sleep(1)
 
     sw = Stopwatch()
     while sw.elapsed_sec < 10:
@@ -925,9 +940,12 @@ def test_mqtt_tx_after_rejoin_testcaseC19273(
 
     time.sleep(5)
 
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep()
 
     send_count = 0
     ap_power_off = 0
@@ -1062,9 +1080,12 @@ def test_mqtt_init_after_rejoin_fail_TC19265(
             )
 
     time.sleep(5)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
 
     with open(tx_file, "r") as temp:
         while 1:
@@ -1119,7 +1140,6 @@ def test_mqtt_init_after_rejoin_fail_TC19265(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_mqtt_rx_after_rejoin_TC19270(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
@@ -1237,9 +1257,12 @@ def test_mqtt_publish_qos1_TC19272(
 
     time.sleep(5)
 
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
 
     with open(tx_file, "r") as temp:
         while 1:
@@ -1293,7 +1316,6 @@ def test_mqtt_publish_qos1_TC19272(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_mqtt_rx_TC19283(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):

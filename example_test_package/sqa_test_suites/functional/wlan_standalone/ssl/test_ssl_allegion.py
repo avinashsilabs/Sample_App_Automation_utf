@@ -154,7 +154,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     if listen_interval_feature:
         # DUT connects to AP after join_ap API is executed
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
-                                         join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                         join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromPowerSave,
                                          )
     else:
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

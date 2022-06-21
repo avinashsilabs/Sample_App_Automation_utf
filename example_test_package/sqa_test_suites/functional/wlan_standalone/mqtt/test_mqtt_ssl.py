@@ -162,8 +162,11 @@ def test_mqtt_authentication_ssl_TC19258(
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, qos=RS9116MqttQos.QOS1)
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic2, qos=RS9116MqttQos.QOS1)
+    except:
+        time.sleep(1)
 
     # publish a message with the third-party mqtt client
     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, message1.encode(), qos=RS9116MqttQos.QOS1)
@@ -237,7 +240,6 @@ def test_mqtt_authentication_ssl_TC19258(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_mqtt_rx_after_rejoin_ssl_TC19271(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
@@ -264,9 +266,12 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
 
     time.sleep(1)
 
-    if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{wifi_dut.name}' is connected to MQTT server")
+    try:
+        if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{wifi_dut.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
 
     send_count = 0
     ap_power_off = 0
@@ -375,9 +380,12 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
 
     time.sleep(5)
 
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
 
     send_count = 0
     ap_power_off = 0
@@ -461,7 +469,6 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_mqtt_rx_ssl_TC19285(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
@@ -590,9 +597,12 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
 
     time.sleep(5)
 
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
 
     with open(tx_file, "r") as temp:
         while 1:
@@ -692,9 +702,12 @@ def test_mqtt_publish_max_len_ssl_TC19287(
 
     time.sleep(5)
 
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
     publish_len = (1370 - len(topic1) - MQTTHeaderLength.Length)
     with open(tx_file, "r") as temp:
         while 1:
@@ -792,9 +805,12 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
 
     time.sleep(5)
 
-    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
-        logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    try:
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            logger.info(f"'{mqtt_client.name}' is connected to MQTT server")
+    except:
+        time.sleep(1)
     publish_len = (1370 - len(topic1) - MQTTHeaderLength.Length)
     with open(tx_file, "r") as temp:
         while 1:
@@ -965,7 +981,6 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_mqtt_rx_ssl_ecdsa_TC19291(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):

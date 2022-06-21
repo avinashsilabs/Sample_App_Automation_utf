@@ -618,7 +618,7 @@ class FilterPacket:
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -654,7 +654,7 @@ def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wif
 
     # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
     packet_filter1 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
-                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == 0x01)'
+                     f'(wlan.fc.type_subtype == 0x0008 && wlan.tim.aid == 0x01)'
 
     # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
     packet_filter3 = f'wlan.fc.type_subtype == 0x001a'
@@ -695,10 +695,10 @@ def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wif
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -771,10 +771,10 @@ def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_dtim_4_c19675(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -867,7 +867,7 @@ def test_max_psp_dtim_4_c19675(wifi_sniffer, wifi_access_point, wifi_dut):
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -968,8 +968,8 @@ def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_poin
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1058,7 +1058,7 @@ def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1145,7 +1145,7 @@ def test_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wif
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1225,10 +1225,10 @@ def test_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1309,7 +1309,7 @@ def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1319,10 +1319,10 @@ def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1405,8 +1405,8 @@ def test_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point, wifi_dut
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1531,8 +1531,8 @@ def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1629,10 +1629,10 @@ def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
             EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1732,10 +1732,10 @@ def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
             EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1834,10 +1834,10 @@ def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
             EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -1929,7 +1929,7 @@ def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
                       'Qos Data packet time difference passed successfully')
         assert True
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1939,10 +1939,10 @@ def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
             EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -2024,8 +2024,8 @@ def test_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point, wifi_dut
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features":RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -2129,8 +2129,8 @@ def test_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access_point, w
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client,
@@ -2254,8 +2254,8 @@ def test_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_access_po
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -2362,8 +2362,8 @@ def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -2471,8 +2471,8 @@ def test_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_p
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_listen_interval_c196705(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
@@ -2572,8 +2572,8 @@ def test_enhanced_max_psp_listen_interval_c196705(wifi_sniffer, wifi_access_poin
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
 def test_enhanced_max_psp_dtim_c196706(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
@@ -2671,8 +2671,8 @@ def test_enhanced_max_psp_dtim_c196706(wifi_sniffer, wifi_access_point, wifi_dut
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 
 )
@@ -2733,10 +2733,10 @@ def test_power_save3_c19685(firmware_loader, wifi_sniffer, wifi_access_point, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 
 )
@@ -2797,10 +2797,10 @@ def test_power_save3_c19686(firmware_loader, wifi_sniffer, wifi_access_point, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 
 )
@@ -2892,10 +2892,10 @@ def test_power_save3_listen_interval_c19687(firmware_loader, wifi_sniffer, wifi_
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 
 )
@@ -2984,10 +2984,10 @@ def test_power_save3_dtim_c19688(firmware_loader, wifi_sniffer, wifi_access_poin
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 
 )
@@ -3069,7 +3069,7 @@ def test_power_save3_c19689(firmware_loader, wifi_sniffer, wifi_access_point, wi
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -3080,10 +3080,10 @@ def test_power_save3_c19689(firmware_loader, wifi_sniffer, wifi_access_point, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 
 )
