@@ -2176,3 +2176,10 @@ template_contribution:
     name: cfg_get
     handler: rsi_cfg_get_command
     help: Get store configuration profile info
+
+- name: cli_command
+  priority: 0
+  value:
+    name: clear_linkkey
+    handler: bt_clear_linkkey_command
+    help: clear linkkey

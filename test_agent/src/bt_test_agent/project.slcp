@@ -1994,3 +1994,10 @@ template_contribution:
     help: spp disconnect
     argument:
     - {type: string, help: device_addr}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: clear_linkkey
+    handler: bt_clear_linkkey_command
+    help: clear linkkey

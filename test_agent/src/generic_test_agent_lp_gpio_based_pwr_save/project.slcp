@@ -1943,3 +1943,10 @@ template_contribution:
     help: Closes web socket
     argument:
     - {type: uint32, help: socket_id}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: clear_linkkey
+    handler: bt_clear_linkkey_command
+    help: clear linkkey
