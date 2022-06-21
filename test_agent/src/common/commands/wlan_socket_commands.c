@@ -445,7 +445,7 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 		printf("\r\n RSI_CONFIG_IP:IP:      %d.%d.%d.%d\n", current_ip.ipaddr[0], current_ip.ipaddr[1], current_ip.ipaddr[2], current_ip.ipaddr[3]);
 		printf("\r\n RSI_CONFIG_IP:netmask: %d.%d.%d.%d\n", current_ip.netmask[0], current_ip.netmask[1], current_ip.netmask[2], current_ip.netmask[3]);
 		printf("\r\n RSI_CONFIG_IP:gateway: %d.%d.%d.%d\n", current_ip.gateway[0], current_ip.gateway[1], current_ip.gateway[2], current_ip.gateway[3]);
-        printf("\r\n RSI_CONFIG_IP:Success \n");
+        printf("\r\n RSI_CONFIG_IP:Success\n");
 	}
 	print_status(status);
 }
