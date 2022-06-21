@@ -442,7 +442,7 @@ void rsi_bt_set_local_name_command(sl_cli_command_arg_t* arguments)
 }
 
 void rsi_ble_start_scanning_command(sl_cli_command_arg_t* arguments){
-    printf("\r\n rsi_ble_start_scanning_command invoked");
+    printf("\r\n rsi_ble_start_scanning_command invoked \r\n");
 	char* remote_dev_addr = sl_cli_get_argument_string(arguments, 0);
 	g_ble_scan_type = sl_cli_get_argument_uint8(arguments, 1);
 	g_ble_scan_filter_type = sl_cli_get_argument_uint8(arguments, 2);

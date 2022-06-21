@@ -424,6 +424,8 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 	char* gateway_ip_string = sl_cli_get_argument_string(arguments, 3);
 	uint8_t vap_id = sl_cli_get_argument_string(arguments, 4);
 
+	printf("\r\n rsi_config_ipaddress_command invoked\r\n");
+
 	if (strncmp(mode_string, "static", 6) == 0) {
 		mode = RSI_STATIC;
 		ip_address = str_to_ipv4(ip_string);
@@ -438,13 +440,12 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 		print_status(RSI_ERROR_INVALID_PARAM);
 		return;
 	}
-	printf("\r\nrsi_config_ipaddress_command invoked");
 	int32_t status = rsi_config_ipaddress(RSI_IP_VERSION_4, mode, (uint8_t *)&ip_address, (uint8_t *)&subnet_mask, (uint8_t *)&gateway, (uint8_t *)&current_ip, sizeof(current_ip), vap_id);
 	if (status == RSI_ERROR_NONE) {
-		printf("RSI_CONFIG_IP:IP:      %d.%d.%d.%d\n", current_ip.ipaddr[0], current_ip.ipaddr[1], current_ip.ipaddr[2], current_ip.ipaddr[3]);
-		printf("RSI_CONFIG_IP:netmask: %d.%d.%d.%d\n", current_ip.netmask[0], current_ip.netmask[1], current_ip.netmask[2], current_ip.netmask[3]);
-		printf("RSI_CONFIG_IP:gateway: %d.%d.%d.%d\n", current_ip.gateway[0], current_ip.gateway[1], current_ip.gateway[2], current_ip.gateway[3]);
-        printf("RSI_CONFIG_IP:Success");
+		printf("\r\n RSI_CONFIG_IP:IP:      %d.%d.%d.%d\n", current_ip.ipaddr[0], current_ip.ipaddr[1], current_ip.ipaddr[2], current_ip.ipaddr[3]);
+		printf("\r\n RSI_CONFIG_IP:netmask: %d.%d.%d.%d\n", current_ip.netmask[0], current_ip.netmask[1], current_ip.netmask[2], current_ip.netmask[3]);
+		printf("\r\n RSI_CONFIG_IP:gateway: %d.%d.%d.%d\n", current_ip.gateway[0], current_ip.gateway[1], current_ip.gateway[2], current_ip.gateway[3]);
+        printf("\r\n RSI_CONFIG_IP:Success \n");
 	}
 	print_status(status);
 }
@@ -588,7 +589,6 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
     int32_t client_address_length;
 
     if (debug_output == 1) {
-        printf("\r\n rsi_recvfrom_iperf_command invoked");
         printf("\r\n socket_type is :%s", (type == 1 ? "TCP" : "UDP"));
         printf("\r\n protocol_family is :%ld", protocol_family);
         printf("\r\n protocol is :%ld", protocol);
@@ -599,6 +599,7 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
         printf("\r\n debug_output is :%d", debug_output);
     }
 
+    printf("\r\n rsi_recvfrom_iperf_command invoked \r\n");
     switch (type) {
     case 2: {
         printf("\r\nUDP RX start\r\n");
@@ -723,7 +724,6 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
 
 void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
 {
-    printf("\r\n rsi_sendto_iperf_command invoked");
     int32_t protocol_family = sl_cli_get_argument_int32(arguments, 0);
     int32_t type = sl_cli_get_argument_int32(arguments, 1); /* scoket_type tcp is 1, udp 2 */
     int32_t protocol = sl_cli_get_argument_int32(arguments, 2);
@@ -790,6 +790,8 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         print_data(buffer, data_len);
     }
 
+
+    printf("\r\n rsi_sendto_iperf_command invoked \r\n");
     switch (type) {
     case 2: {
         printf("\r\nUDP_TX TEST\r\n");
