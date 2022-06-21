@@ -1919,8 +1919,9 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3, repeat_count
         ):
     capture_filename = "test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162"
+    listen_interval = 700
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger, cert1, cert2,
-                                  cert3)
+                                  cert3, listen_interval_feature=True,listen_interval=listen_interval)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
