@@ -1666,6 +1666,7 @@ template_contribution:
     - {type: uint32, help: 'socket id'}
     - {type: uint32, help: 'data length'}
     - {type: uint32, help: 'number of pkts'}
+    - {type: uint32, help: 'time in seconds'}
     
 
 - name: cli_command
@@ -2101,3 +2102,9 @@ template_contribution:
     handler: rsi_cfg_get_command
     help: Get store configuration profile info
 
+- name: cli_command
+  priority: 0
+  value:
+    name: clear_linkkey
+    handler: bt_clear_linkkey_command
+    help: clear linkkey
