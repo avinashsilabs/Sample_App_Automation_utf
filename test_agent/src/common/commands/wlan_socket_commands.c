@@ -642,7 +642,7 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
         }
-        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM");
+        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "");
 
         //close socket
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
@@ -709,7 +709,7 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
         }
-        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM");
+        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "");
         //close socket
         if(!receive_completed)
         {
@@ -825,7 +825,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         }
 
         if (compute_throughput == 1) {
-            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_SEND_TO");
+            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_SEND_TO:");
         }
 
         //close socket
@@ -889,7 +889,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
         checkStatus(rsi_shutdown(socketID, 0), "rsi_shutdown", socketID, 1, 1);
         }
         if (compute_throughput == 1) {
-            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_SEND_TO");
+            measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_SEND_TO:");
         }
         break;
     }
@@ -903,22 +903,22 @@ static void measure_throughput(int32_t total_bytes, int32_t start_time, int32_t 
     double total_sec = ((end_time - start_time) / 1000);
     if (total_sec > 0) {
         double through_put = ((double)(total_bytes * 8)) / total_sec;
-        printf("\r\n %s:through_put : %f ",command,  (double)through_put);
-        printf("\r\n %s:Test start time in ms :%ld",command,  start_time);
-        printf("\r\n %s:Test end time in ms :%ld",command,  end_time);
-        printf("\r\n %s:Number of interactions with server are : %ld",command,  pkt_cnt);
-        printf("\r\n %s:Time taken in sec: %lu \r\n",command,  (uint32_t)((end_time - start_time) / 1000));
+        printf("\r\n %sthrough_put : %f ",command,  (double)through_put);
+        printf("\r\n %sTest start time in ms :%ld",command,  start_time);
+        printf("\r\n %sTest end time in ms :%ld",command,  end_time);
+        printf("\r\n %sNumber of interactions with server are : %ld",command,  pkt_cnt);
+        printf("\r\n %sTime taken in sec: %lu \r\n",command,  (uint32_t)((end_time - start_time) / 1000));
         //printf("\r\n Throughput in kbps (KiloBitsPerSec) is : %.5f \r\n", (float)through_put);
-        printf("\r\n %s:Throughput in kbps (KiloBits/Second) is : %d \r\n",command,  (int)through_put / 1000);
-        printf("\r\n %s:Total bytes  : %ld \r\n", command, total_bytes);
+        printf("\r\n %sThroughput in kbps (KiloBits/Second) is : %d \r\n",command,  (int)through_put / 1000);
+        printf("\r\n %sTotal bytes  : %ld \r\n", command, total_bytes);
     }
     else {
-        printf("\r\n %s:Seems test didn't run successfully, please try again !!");
-        printf("\r\n %s:Test start time in ms :%ld",command,  start_time);
-        printf("\r\n %s:Test end time in ms :%ld",command,  end_time);
-        printf("\r\n %s:Number of interactions with server are : %ld",command,  pkt_cnt);
-        printf("\r\n %s:Time taken in sec: %lu \r\n",command,  (uint32_t)((end_time - start_time) / 1000));
-        printf("\r\n %s:Total bytes  : %ld \r\n",command,  command, total_bytes);
+        printf("\r\n %sSeems test didn't run successfully, please try again !!");
+        printf("\r\n %sTest start time in ms :%ld",command,  start_time);
+        printf("\r\n %sTest end time in ms :%ld",command,  end_time);
+        printf("\r\n %sNumber of interactions with server are : %ld",command,  pkt_cnt);
+        printf("\r\n %sTime taken in sec: %lu \r\n",command,  (uint32_t)((end_time - start_time) / 1000));
+        printf("\r\n %sTotal bytes  : %ld \r\n",command,  command, total_bytes);
     }
 }
 
