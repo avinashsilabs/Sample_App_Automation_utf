@@ -242,7 +242,9 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
 
             if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
                 ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-            wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+            result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+            logger.info(f"Number of bytes sent by dut {result}")
+            bytes_sent = result
 
             bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
             assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer are" \
@@ -328,7 +330,9 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
 
             if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
                 ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-            wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+            result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+            logger.info(f"Number of bytes sent by dut {result}")
+            bytes_sent = result
 
             bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
             assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer are" \
@@ -337,13 +341,15 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
                 f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
         elif mode == 1:  # if mode is set to 1, socket open, rx over the socket test will be initiated
             pkt_count = 1000
-            ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length)
-            logger.info("Wait for 120 seconds to receive data")
-            time.sleep(120)
+            ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length, duration=300)
+            logger.info("Wait for 300 seconds to receive the data")
+            time.sleep(320)
+            bytes_sent = ssl_server.interfaces.ssl.data_send_stats(server_socket_no)
             result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
             bytes_received = int(result.split(b":")[1])
+            logger.info(f"Bytes sent by remote peer {bytes_sent} on socket {server_socket_no}")
             logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-            assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
+            assert bytes_received == bytes_sent, "Packet loss observed while receive test"
 
         # Close socket 1
         result = wifi_dut.interfaces.wifi.close_socket(sock)
@@ -523,7 +529,9 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
 
         if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
             ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-        wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+        result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+        logger.info(f"Number of bytes sent by dut {result}")
+        bytes_sent = result
 
         bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
         assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer are" \
