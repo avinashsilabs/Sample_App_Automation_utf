@@ -1,3 +1,4 @@
+from itertools import count
 import pytest
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType, \
     RS9116ExtCustomFeatureBitMap
@@ -7,6 +8,7 @@ from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 import time
 from utf.utils.thread_base import ThreadBase
+from utf.interfaces.wifi import WlanError
 
 pytestmark = [
     pytest.mark.config(
@@ -83,12 +85,11 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
                 dest_addr=bt_dut_address
             )
 
-            # Close connection
+            # Close connectiontest_bt_spp.py
             bt_server_socket.close()
             time.sleep(2)
             wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
-
 
 def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
     send_text = "sA0L9b1xEgGuUqN5YOlx"
