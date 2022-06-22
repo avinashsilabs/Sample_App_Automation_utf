@@ -35,6 +35,25 @@ from utf_wiseconnect.devices.rs911x import (
 def logger():
     return get_logger(__name__)
 
+"""
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+        5. Sniffer(NUC)
+
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify power management bit to be enable in Null data frames 
+        5. Initiate BLE advertise/scan
+
+    Author: Swathi pathuri
+"""
+
 
 
 
