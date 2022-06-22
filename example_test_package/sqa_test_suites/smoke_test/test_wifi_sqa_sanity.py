@@ -17,6 +17,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116AsyncEventType,
     RS9116StoreConfiguration,
     RS9116CustomFeatureBitMap,
+    RS9116PowerSaveProcedureTypes,
     RS9116MqttQos,
     DeviceConstants,
     )
@@ -120,18 +121,10 @@ class WifiJoinThread(ThreadBase):
 
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
 
-            for i in range(0,3):
+           #bles the scan in dut on channel
+            scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
 
-                try:
-                    #enables the scan in dut on channel
-                    scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
-
-                    logger().info(f"scan results : {scan_results}")
-                    if self.wifi_access_point.interfaces.wifi.ssid in scan_results:
-                        break
-                except:
-                    logger().info(f"scan failed ,Retrying for multiple times")
-
+            logger().info(f"scan results : {scan_results}")
             assert (len(scan_results) >= 1),"Scan failed"
 
             # Join Wi-Fi Access Point
@@ -150,11 +143,13 @@ class WifiJoinThread(ThreadBase):
 
 
             logger().info("Initiating power save")
-            # This API Enables the wifi power save mode in DUT
-            self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+            logger().info("enabling wifi power save mode in DUT......")
+            self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-            # # Enables the bt power save in DUT
-            self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+            logger().info("enabling bt power save mode in DUT......")
+            self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
             time.sleep(5)
 
             # Initiate ping from third party wifi-client to DUT
@@ -228,13 +223,13 @@ class WifiThread(ThreadBase):
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         logger().info(f"Found device ip: {device_ip}")
 
-        logger().info("Initiating power save")
-        #This API Enables the wifi power save mode in DUT
-        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info("enabling wifi power save mode in DUT......")
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        # # Enables the bt power save in DUT
-        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        time.sleep(5)
+        logger().info("enabling bt power save mode in DUT......")
+        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, ping_count)
@@ -352,6 +347,8 @@ class BleThread_Connection(ThreadBase):
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 0,
         "region": 1,
         "region_code": 4,
@@ -384,6 +381,8 @@ def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client,  wi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 0,
         "region": 1,
         "region_code": 2,
@@ -414,6 +413,8 @@ def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_s
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 0,
         "region": 1,
         "region_code": 1,
@@ -445,7 +446,8 @@ def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client,  wifi_
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 1,
         "region": 1,
         "region_code": 1,
@@ -476,6 +478,8 @@ def test_join_US_5Ghz_C34789(wifi_access_point, wifi_dut, net_perf_client,  wifi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 1,
         "region": 1,
         "region_code": 2,
@@ -507,6 +511,8 @@ def test_join_EU_5Ghz_C34790(wifi_access_point, wifi_dut, net_perf_client,  wifi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 1,
         "region": 1,
         "region_code": 4,
@@ -537,6 +543,8 @@ def test_join_WORLD_5Ghz_C34792(wifi_access_point, wifi_dut, net_perf_client,  w
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 2,
         "region": 1,
         "region_code": 1,
@@ -578,6 +586,8 @@ def test_join_US_dual_band_C34793(wifi_access_point, wifi_dut, net_perf_client, 
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 2,
         "region": 1,
         "region_code": 2,
@@ -618,6 +628,8 @@ def test_join_EU_dual_band_C34794(wifi_access_point, wifi_dut, net_perf_client, 
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "band": 2,
         "region": 1,
         "region_code": 4,
@@ -658,8 +670,9 @@ def test_join_WORLD_dual_band_C34796(wifi_access_point, wifi_dut, net_perf_clien
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -692,10 +705,12 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
         logger().info("enabling wifi power save mode in DUT......")
-        wifi_dut.interfaces.wifi.power_save(2)
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("enabling bt power save mode in DUT......")
-        wifi_dut.interfaces.wifi.bt_power_save(2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("fetching dut mac address....")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -746,7 +761,9 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     },
 )
 
@@ -779,12 +796,13 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
 
     logger().info("Initiating power save")
 
-    # This API Enables the wifi power save mode in DUT
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    # # Enables the bt power save in DUT
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    time.sleep(5)
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
@@ -837,8 +855,9 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -868,8 +887,9 @@ def test_connectivity_and_ping_in_STA_BLE_coex_mode_C34778(wifi_access_point, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -887,8 +907,13 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     logger().info(f"Start Advertising on DUT")
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     # Begin Scanning for BLE devices
     logger().info(f"Begin Scanning for BLE devices")
@@ -928,8 +953,9 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
@@ -975,10 +1001,12 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
 
     # Get the state of the dut
     logger().info("enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(2)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     logger().info("enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     time.sleep(60)
 
