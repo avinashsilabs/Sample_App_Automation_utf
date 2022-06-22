@@ -96,6 +96,23 @@ class IopTcpIpSockets:
 
 
 class FilterPacket:
+    def get_association_id(self):
+        # This function will parse the pacap file and find & return the association id
+        packet_filter = "        ..00 0000 0000 0001 = Association ID:"
+        association_id = None
+        count = 0
+
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+        for x in line:
+            count = count + 1
+            if packet_filter in x:
+                association_id = x.strip().split(':')[1].strip()
+                print(f'Association id = {association_id}')
+                break
+        filter_file.close()
+        return association_id
+
     def delta_between_ps_poll_packet(self):
         packet_filter = "Time delta from previous captured frame"
         count = 0
@@ -306,7 +323,7 @@ class FilterPacket:
         dtim_beacon_status = False
         ps_poll_status = False
         data_status = False
-        status = False
+        status = {'wake_up_validation': True, 'sequence': False}
         data_key = 0
         ps_poll_key = 0
         dtim1_key = 0
@@ -315,9 +332,12 @@ class FilterPacket:
         match_key = 0
 
         for key, value in sniffer_dict.items():
+            # Note-> DTIM1 means DTIM count = 1
             if value == 'DTIM1' or ((value == 'DTIM1') and (int(key) == int(dtim0_key) + 1)):
                 dtim1_key = key
                 dtim1_status = True
+
+            # Note-> DTIM0 means DTIM count = 0
             if value == 'DTIM0':
                 if (int(key) == int(dtim1_key) + 1) and (dtim1_status is True):
                     dtim0_key = key
@@ -325,6 +345,7 @@ class FilterPacket:
                     if counter < 5:
                         counter = counter + 1
 
+            # Note-> DTIM beacon means DTIM count = 0 & association id = 0x01
             if (value == 'DTIM_Beacon') and (key == dtim0_key + 'A') and (counter == 5):
                 dtim_beacon_key = key
                 dtim_beacon_status = True
@@ -342,6 +363,21 @@ class FilterPacket:
                     data_key = key
                     data_status = True
 
+            # if DTIM count is 0 then check TIM bit is 0(means association id should not be present in TIM bit)
+            # or not if not then DUT should not send PS-POLL
+            if dtim0_status is True and dtim_beacon_status is False:
+                if int(ps_poll_key) == int(dtim0_key) + 1:
+                    logger().info("Validating wake up indication when TIM bit is not set")
+                    status['wake_up_validation'] = False
+
+            # if DTIM count is nonzero then check DUT should not send any PS-POLL
+            # Logic is DUT should not wake up or send PS-POLL packets in Non DTIM beacon intervals
+            # So next packet should not be PS-POLL packet
+            if dtim1_status is True:
+                if int(ps_poll_key) == int(dtim1_key) + 1:
+                    logger().info("Validating wake up indication at non DTIM intervals")
+                    status['wake_up_validation'] = False
+
             if dtim0_status:
                 logger().info(f'Beacon+DTIM1 = {dtim1_key}, Beacon+DTIM0 = {dtim0_key}')
                 dtim1_status = False
@@ -353,13 +389,13 @@ class FilterPacket:
                 # else:
                 #     pass
 
-            if (dtim_beacon_status == True) and (ps_poll_status == True) and (data_status == True):
+            if (dtim_beacon_status is True) and (ps_poll_status is True) and (data_status is True):
                 logger().info(f'DTIM Beacon = {dtim_beacon_key}, PS-Poll = {ps_poll_key}, Qos Data = {data_key}\n\n')
                 dtim_beacon_status = False
                 ps_poll_status = False
                 data_status = False
                 counter = 0
-                status = True
+                status['sequence'] = True
         if status:
             logger().info("------------------Expected packet sequence found--------------")
             return status
@@ -605,6 +641,26 @@ class FilterPacket:
         else:
             return True
 
+    def validate_time_delta(self, ps_poll_packets_time_delta_list, time_delta_for_listen_interval):
+        list_status = []
+        ps_poll_packets_time_delta_list.pop(0)
+        del ps_poll_packets_time_delta_list[-1]
+        logger().info(f'\n\n PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
+        for time_diff in ps_poll_packets_time_delta_list:
+            time_diff = int(round(time_diff, 3) * 1000)
+            is_between = time_diff in range(time_delta_for_listen_interval, time_delta_for_listen_interval + 10)
+            logger().info(f'is_between = {is_between}')
+            if is_between is True:
+                logger().info(
+                    f'DUT sends PS-poll after 11 consecutive beacon frame and time diff is = {time_diff / 1000}')
+                list_status.append(is_between)
+            else:
+                logger().info(
+                    f'DUT unable to send PS-poll after 11 consecutive beacon frame and time diff is = {time_diff / 1000}')
+                list_status.append(is_between)
+        logger().info(list_status)
+        return False if False in list_status else True
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -622,15 +678,19 @@ class FilterPacket:
     },
 )
 def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wifi_dut):
-    time_delta_for_listen_interval = 1.23
+    time_delta_for_listen_interval = 1220
+    assoc_obj = FilterPacket()
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
-    list_status = []
+    packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.start_ap()
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C19673')
@@ -652,38 +712,47 @@ def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wif
     status = ping(device_ip, 10)
     assert status == 1
 
-    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
-    packet_filter1 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
-                     f'(wlan.fc.type_subtype == 0x0008 && wlan.tim.aid == 0x01)'
-
-    # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
-    packet_filter3 = f'wlan.fc.type_subtype == 0x001a'
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
 
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
         'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    packet_filter2 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) &&' \
+                     f' (wlan.da == {ap_bssid}))'
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter3 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} && ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+    # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
+    packet_filter5 = f'wlan.fc.type_subtype == 0x001a'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter11)[
         'packet_count']
 
     # Validate the time delta between PS-poll packet
     ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
     logger().info(ps_poll_packets_time_delta_list)
-    ps_poll_packets_time_delta_list.pop(0)
-    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
-    for time_diff in ps_poll_packets_time_delta_list:
-        time_diff = round(time_diff, 2)
-        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
-        if is_between is True:
-            logger().info(f'DUT sends PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-            break
-        else:
-            logger().info(
-                f'DUT unable to send PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-    wifi_dut.interfaces.wifi.leave()
-    logger().info(list_status)
-    assert False if False in list_status else True
+
+    # Validate the time delta between PS-poll packet
+    assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -703,7 +772,9 @@ def test_maxpsp_listen_interval_12ms_c19673(wifi_sniffer, wifi_access_point, wif
 )
 def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
+    assoc_obj = FilterPacket()
     ps_packet_exchange_obj = FilterPacket()
 
     '''Configure the AP DTIM count=3 and validate when DTIM count reach 0 DUT should wake up and send PS poll & data
@@ -735,6 +806,22 @@ def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count']
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
     # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter3 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a) || ' \
                      f'(wlan.addr == {ap_bssid} && ' \
@@ -742,13 +829,13 @@ def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable -> Qos
     packet_filter4 = f'(wlan.fc.type_subtype == 0x001a || wlan.fc.type_subtype == 0x0028) || (wlan.tim.dtim_count == 0 ' \
-                     f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == 0x01)'
+                     f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == {association_id})'
 
-    wifi_sniffer.interfaces.capture.stop_capture()
+
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
     # Validate beacon DTIM count=0
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
         'packet_count']
 
     logger().info('-----------Validation for DTIM count = 0 sequence---------------- ')
@@ -780,7 +867,9 @@ def test_max_psp_dtim_3_c19674(wifi_sniffer, wifi_access_point, wifi_dut):
 def test_max_psp_dtim_4_c19675(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     dtim_beacon_obj = FilterPacket()
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    assoc_obj = FilterPacket()
+    packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
@@ -813,40 +902,58 @@ def test_max_psp_dtim_4_c19675(wifi_sniffer, wifi_access_point, wifi_dut):
     status = ping(device_ip, 50)
     assert status == 1
 
-    # broad cast probe requests from DUT
-    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
+    #  DUT Assoc ID from Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count']
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # broadcast probe requests from DUT
+    packet_filter2 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
                      f'wlan.da == ff:ff:ff:ff:ff:ff)'
 
-    #  DUT Assoc ID from Assoc resp frame in sniffer
-    packet_filter3 = f'(wlan.fc.type_subtype == 0x0001) and (wlan.sa == {ap_bssid} and wlan.da == {dut_mac_address})'
-
     # Power save mode 1
-    packet_filter4 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+    packet_filter3 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {ap_bssid}))'
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} && ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
 
     # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter5 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a) || ' \
                      f'(wlan.addr == {ap_bssid} && ' \
                      f'(wlan.fc.type_subtype ==8) || (wlan.fc.type_subtype==0x0028) || (wlan.fc.type_subtype==0x002c))'
 
-    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(2)
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
         'packet_count'], 'No packet found for broad cast probe requests from DUT'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count'], 'No packet found for Assoc resp frame'
-
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'No packet found for Power save mode 1/Null frame'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find any  PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter11)[
         'packet_count'], 'No packet found for Beacon, Ps-Poll, Qos Data'
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for DTIM beacon-----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
+
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    assert dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict), 'No sequence found for sniffer packets ' \
-                                                                          '5th DTIM beacon-> Ps-Poll-> Data'
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict)
+    assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_more_data()
@@ -871,11 +978,12 @@ def test_max_psp_dtim_4_c19675(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 )
 def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_point, wifi_dut):
-    time_delta_for_listen_interval = 1.23
+    time_delta_for_listen_interval = 1220
     ps_poll_time_delta_obj = FilterPacket()
+    assoc_obj = FilterPacket()
+    packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
-    list_status = []
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -905,12 +1013,25 @@ def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_poin
     status = ping(device_ip, 30)
     assert status == 1
 
-    # broad cast probe requests from DUT
+    # broadcast probe requests from DUT
     packet_filter4 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
                      f'wlan.da == ff:ff:ff:ff:ff:ff)'
 
     #  DUT Assoc ID from Assoc resp frame in sniffer
     packet_filter5 = f'(wlan.fc.type_subtype == 0x0001) and (wlan.sa == {ap_bssid} and wlan.da == {dut_mac_address})'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter10)[
+        'packet_count']
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
     # Power save mode 1
     packet_filter6 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
@@ -918,7 +1039,7 @@ def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_poin
 
     # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
     packet_filter1 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
-                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == 0x01)'
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
 
     # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
     packet_filter3 = f'wlan.fc.type_subtype == 0x001a'
@@ -932,29 +1053,16 @@ def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_poin
         'packet_count'], 'Unable to find PM bit 1 in sniffer packet'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find association-id and PS-poll packet with pm bit enable in beacon'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter11)[
         'packet_count'], 'Unable to find PS-Poll packet'
 
     # time.sleep(5)
     # Validate the time delta between PS-poll packet
     ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
     logger().info(ps_poll_packets_time_delta_list)
-    ps_poll_packets_time_delta_list.pop(0)
-    del ps_poll_packets_time_delta_list[-1]
-    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
-    for time_diff in ps_poll_packets_time_delta_list:
-        time_diff = round(time_diff, 2)
-        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
-        if is_between is True:
-            logger().info(f'DUT sends PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-        else:
-            logger().info(
-                f'DUT unable to send PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
 
-    logger().info(list_status)
-    assert False if False in list_status else True
+    # Validate the time delta between PS-poll packet
+    assert filter_pack_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -973,11 +1081,12 @@ def test_max_psp_gpio_listen_interval_12ms_c19677(wifi_sniffer, wifi_access_poin
     },
 )
 def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
-    time_delta_for_listen_interval = 1.23
+    time_delta_for_listen_interval = 1220
     ps_poll_time_delta_obj = FilterPacket()
+    assoc_obj = FilterPacket()
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
-    list_status = []
+    packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -1008,8 +1117,24 @@ def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
     status = ping(device_ip, 10)
     assert status == 1
 
+    logger().info('\n\n Time sleep ! Wait for 60 seconds......')
+    time.sleep(60)
+
     #  DUT Assoc ID from Assoc resp frame in sniffer
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0001) and (wlan.sa == {ap_bssid} and wlan.da == {dut_mac_address})'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count']
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
     # Power save mode 1
     packet_filter3 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
@@ -1018,32 +1143,18 @@ def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
     # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
     packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find PM bit 1 in packets'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
         'packet_count'], 'Unable to find PS-Poll packet'
 
-    # time.sleep(5)
+    time.sleep(5)
     # Validate the time delta between PS-poll packet
     ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
     logger().info(ps_poll_packets_time_delta_list)
-    ps_poll_packets_time_delta_list.pop(0)
-    del ps_poll_packets_time_delta_list[-1]
-    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
-    for time_diff in ps_poll_packets_time_delta_list:
-        time_diff = round(time_diff, 2)
-        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
-        if is_between is True:
-            logger().info(f'DUT sends PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-        else:
-            logger().info(
-                f'DUT unable to send PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
 
-    logger().info(list_status)
-    assert False if False in list_status else True
+    # Validate the time delta between PS-poll packet
+    assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1062,10 +1173,12 @@ def test_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut):
     },
 )
 def test_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wifi_dut):
-    time_delta_for_listen_interval = 1.13
+    time_delta_for_listen_interval = 1220
     ps_poll_time_delta_obj = FilterPacket()
+    assoc_obj = FilterPacket()
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     list_status = []
     '''Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power save 
        2 & MAX PSP mode and set listen_interval_dtim is 0'''
@@ -1099,38 +1212,38 @@ def test_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wif
     status = ping(device_ip, 10)
     assert status == 1
 
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count']
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
     # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
-    packet_filter1 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
-                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == 0x01)'
+    packet_filter3 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
 
     # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
-    packet_filter3 = f'wlan.fc.type_subtype == 0x001a'
+    packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
 
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-        'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
         'packet_count']
 
     # Validate the time delta between PS-poll packet
     ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
     logger().info(ps_poll_packets_time_delta_list)
-    ps_poll_packets_time_delta_list.pop(0)
-    del ps_poll_packets_time_delta_list[-1]
-    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
-    for time_diff in ps_poll_packets_time_delta_list:
-        time_diff = round(time_diff, 2)
-        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
-        logger().info(f'is_between = {is_between}')
-        if is_between is True:
-            logger().info(f'DUT sends PS-poll after 11 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-        else:
-            logger().info(
-                f'DUT unable to send PS-poll after 11 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-    logger().info(list_status)
-    assert False if False in list_status else True
+
+    # Validate the time delta between PS-poll packet
+    assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1150,8 +1263,10 @@ def test_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wif
 )
 def test_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
     ps_packet_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
 
     '''Configure the AP DTIM count=3 and validate when DTIM count reach 0 DUT should wake up and send PS poll & data
     packet, second validation is check Qos data will send again after Ps-Poll if More data bit is set to 1'''
@@ -1184,25 +1299,36 @@ def test_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut):
     status = ping(device_ip, 20)
     assert status == 1
 
-    packet_filter1 = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid}'
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
     # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable -> Qos
     packet_filter3 = f'(wlan.fc.type_subtype == 0x001a || wlan.fc.type_subtype == 0x0028) || (wlan.tim.dtim_count == 0 ' \
-                     f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == 0x01)'
+                     f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == {association_id})'
 
     # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter4 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a) || ' \
                      f'(wlan.addr == {ap_bssid} && ' \
                      f'(wlan.fc.type_subtype ==8) || (wlan.fc.type_subtype==0x0028) || (wlan.fc.type_subtype==0x002c))'
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find any packet from DUT/AP side'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'Unable to find any packet from beacon with association-id and PS-poll packet'
 
     # Validate beacon DTIM count=0
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
         'packet_count'], 'Unable to find beacon DTIM count 0'
 
     logger().info('-----------Validation for DTIM count = 0 sequence---------------- ')
@@ -1234,7 +1360,9 @@ def test_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut):
 def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     dtim_beacon_obj = FilterPacket()
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    assoc_obj = FilterPacket()
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
 
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
@@ -1268,12 +1396,25 @@ def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
     status = ping(device_ip, 50)
     assert status == 1
 
-    # broad cast probe requests from DUT
+    # broadcast probe requests from DUT
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
                      f'wlan.da == ff:ff:ff:ff:ff:ff)'
 
     #  DUT Assoc ID from Assoc resp frame in sniffer
     packet_filter3 = f'(wlan.fc.type_subtype == 0x0001) and (wlan.sa == {ap_bssid} and wlan.da == {dut_mac_address})'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
     # Power save mode 1
     packet_filter4 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
@@ -1284,24 +1425,20 @@ def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'(wlan.addr == {ap_bssid} && ' \
                      f'(wlan.fc.type_subtype ==8) || (wlan.fc.type_subtype==0x0028) || (wlan.fc.type_subtype==0x002c))'
 
-    wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(2)
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'No packet found for broad cast probe requests from DUT'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
-        'packet_count'], 'No packet found for Assoc resp frame'
-
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'No packet found for Power save mode 1/Null frame'
-
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter11)[
         'packet_count'], 'No packet found for Beacon, Ps-Poll, Qos Data'
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for DTIM beacon-----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
+
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    assert dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict), 'No sequence found for sniffer packets ' \
-                                                                          '5th DTIM beacon-> Ps-Poll-> Data'
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict)
+    assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_more_data()
@@ -1309,7 +1446,7 @@ def test_max_psp_dtim_4_c19681(wifi_sniffer, wifi_access_point, wifi_dut):
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-@pytest.mark.skip()
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1387,9 +1524,9 @@ def test_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point, wifi_dut
         end_time = datetime.datetime.now()
         exact_execution_time = end_time - start_time
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'No packet found for pwmt bit enable'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'No packet found for pwmt bit disable'
         logger().info(f"********* Total execution time of test case = {exact_execution_time}**********")
 
@@ -1409,14 +1546,19 @@ def test_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point, wifi_dut
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
-def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
     send_bytes = 1000
+    validation = True
     tcp_socket_obj = IopTcpIpSockets()
-    time_delta_for_listen_interval = 1.23
+    time_delta_for_listen_interval = 1220
     ps_poll_time_delta_obj = FilterPacket()
     ps_packet_exchange_obj = FilterPacket()
-    validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    assoc_obj = FilterPacket()
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
+
+    '''Verify the DUT functionality when ULP POWER SAVE MODE 2,Enhanced MAX PSP and LISTEN INTERVAL based power 
+    save feature enabled.'''
 
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
@@ -1446,15 +1588,6 @@ def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
     dut_ip = result.ip.decode()
     logger().info(f"DUT ip address : {dut_ip}")
 
-    # Power save mode 1
-    packet_filter3 = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} '
-    packet_filter1 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                     f'and (wlan.da == {ap_bssid}))'
-    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} && ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
-    packet_filter5 = f'wlan.fc.type_subtype == 0x001a'
-
     # logger().info(f"*****Enable Max PSP in DUT******")
     wifi_dut.interfaces.wifi.power_save(2, 1)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -1462,7 +1595,7 @@ def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-    ping_status = ping(device_ip, 10)
+    ping_status = ping(device_ip, 50)
     assert ping_status == 1
 
     # Open a socket and receive data
@@ -1482,13 +1615,39 @@ def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
                 logger().info(f"Send {send_bytes} bytes successfully")
         time.sleep(2)
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+
+    logger().info('\n\n Time sleep! Wait for 10 seconds.....')
+    time.sleep(10)
+
+    # Assoc resp frame in sniffer
+    packet_filter3 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
     wifi_sniffer.interfaces.capture.stop_capture()
-    time.sleep(2)
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # Power save mode 1
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {ap_bssid}))'
+    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} && ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+    packet_filter5 = f'wlan.fc.type_subtype == 0x001a'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'No packet found for pwmt bit enable'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
         'packet_count'], 'No packet found for pwmt bit enable'
 
     logger().info('-----------Validation for More data bit sequence---------------- ')
@@ -1496,28 +1655,16 @@ def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
     assert ps_packet_exchange_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter11)[
         'packet_count'], 'No sequence found for 12 consecutive beacon'
 
     time.sleep(5)
     # Validate the time delta between PS-poll packet
     ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
     logger().info(ps_poll_packets_time_delta_list)
-    ps_poll_packets_time_delta_list.pop(0)
-    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
-    for time_diff in ps_poll_packets_time_delta_list:
-        time_diff = round(time_diff, 2)
-        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
-        if is_between is True:
-            logger().info(f'DUT sends PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            status = is_between
-            break
-        else:
-            logger().info(
-                f'DUT unable to send PS-poll after 12 consecutive beacon frame and time diff is = {time_diff}')
-            status = is_between
 
-    assert status
+    # Validate the time delta between PS-poll packet
+    assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1537,8 +1684,10 @@ def test_enhanced_max_psp_c19693(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
     ps_packet_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
 
     '''Verify whether DUT is waking up before every DTIM Beacon, when ULP POWER SAVE MODE 2, Enhanced MAX PSP and
        DTIM based power save features are enabled.'''
@@ -1569,22 +1718,30 @@ def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # validate association response packet with association id
-    packet_filter1 = f'(((wlan.fc.type_subtype == 0x0001) and (wlan.fixed.aid == 0x0001)) and (wlan.ta == {ap_bssid})) ' \
-                     f'and (wlan.da == {dut_mac_address})'
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
     # validate NULL data frame with PM bit set to '1'
     packet_filter3 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {ap_bssid}))'
 
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
-
     '''Configure the AP DTIM count=3 and validate when DTIM count reach 0 DUT should wake up and send PS poll & data
     packet'''
     packet_filter5 = f'(wlan.fc.type_subtype == 0x001a || wlan.fc.type_subtype == 0x0028) || (wlan.tim.dtim_count == 0 ' \
-                     f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == 0x01)'
+                     f'&& wlan.tim.dtim_period == 3 && wlan.tim.aid == {association_id})'
 
     # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
     packet_filter6 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
@@ -1592,18 +1749,13 @@ def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
 
     time.sleep(200)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
-        'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
-        'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2=False)[
-        'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2=False)[
-        'packet_count']
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter2)[
-        'packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to find validate NULL data frame with PM bit set to 1'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+        'packet_count'], 'Unable to find association -id for DTIM count reach 3'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6, packet_filter11)[
+        'packet_count'], 'Unable to find data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)'
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
     logger().info(
@@ -1637,10 +1789,12 @@ def test_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify the DUT functionality when ULP POWER SAVE MODE 2, Enhanced MAX PSP with monitor interval 70 and LISTEN
        INTERVAL based power save features are enabled.(TC_2).			'''
@@ -1669,10 +1823,6 @@ def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -1690,11 +1840,38 @@ def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
+    logger().info('\n\n Time sleep ! Wait for 200 seconds......')
     time.sleep(200)
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-        'packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter4 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter3 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find beacon with association-id and PS-poll packet with pm bit enable'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter11)[
+        'packet_count'], 'Unable to find Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)'
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
     logger().info('-----------2. Validation for PS-Poll & Qos Data packet time difference---------------- ')
@@ -1740,10 +1917,12 @@ def test_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify the DUT functionality when ULP POWER SAVE MODE 2, FAST PSP with monitor interval 100 and LISTEN INTERVAL
        based power save features are enabled'''
@@ -1773,10 +1952,6 @@ def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -1793,11 +1968,38 @@ def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
+    logger().info('\n\n Time sleep ! Wait for 200 seconds......')
     time.sleep(200)
+
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-        'packet_count']
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter3 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter4 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter11)[
+        'packet_count'], 'Unable to find data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find beacon with association-id and PS-poll packet with pm bit enable'
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
     logger().info('-----------2. Validation for PS-Poll & Qos Data packet time difference---------------- ')
@@ -1842,10 +2044,12 @@ def test_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify the functionality of DUT when ULP POWER SAVE MODE 2, FAST PSP and listen interval is changed in power
        save command to 600 msec'''
@@ -1876,12 +2080,6 @@ def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel}'
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
-
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -1897,12 +2095,39 @@ def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
+    logger().info('\n\n Time sleep ! Wait for 200 seconds......')
     time.sleep(200)
+
     wifi_sniffer.interfaces.capture.stop_capture()
+
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter3 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-        'packet_count']
+        'packet_count'], 'Unable to find beacon with association-id and PS-poll packet with pm bit enable'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
+        'packet_count'], 'Unable to find data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
     logger().info('-----------2. Validation for PS-Poll & Qos Data packet time difference---------------- ')
@@ -1929,7 +2154,7 @@ def test_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_dut):
                       'Qos Data packet time difference passed successfully')
         assert True
 
-@pytest.mark.skip()
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2005,14 +2230,14 @@ def test_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point, wifi_dut
         end_time = datetime.datetime.now()
         exact_execution_time = end_time - start_time
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'No packet found for pwmt bit enable'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'No packet found for pwmt bit disable'
         logger().info(f"********* Total execution time of test case = {exact_execution_time}**********")
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2030,10 +2255,12 @@ def test_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point, wifi_dut
 )
 def test_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Note - Please use preconfigured different AP's, with same ssid as you mentioned in Harness file
        Netgear WNR1000,TP-LINK(TL-WDR5620),ASUS-LYRA, Xfinity XB3 ,Xfinity XB6 & Belkin AP'''
@@ -2066,10 +2293,6 @@ def test_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access_point, w
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
@@ -2087,10 +2310,38 @@ def test_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access_point, w
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
-    time.sleep(200)
+    logger().info('\n\n Time sleep ! Wait for 200 seconds......')
+    time.sleep(100)
+
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter3 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter4 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count']
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter11)[
         'packet_count']
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
@@ -2177,7 +2428,7 @@ def test_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_access_po
                      f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
 
     '''Start different traffic streams'''
-    # # preparing iperf, 0x00=Background, 0x20 = Best effort, 0x80 = Voice, 0xC8 = Video
+    # preparing iperf, 0x00=Background, 0x20 = Best effort, 0x80 = Voice, 0xC8 = Video
 
     for qos in qos_value:
         net_perf_client.interfaces.net_perf.init_client(
@@ -2261,9 +2512,11 @@ def test_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_access_po
 def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 100
+    assoc_obj = FilterPacket()
+    send_bytes = 1000
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify whether DUT is able to wake up and receive Data based on listen interval with high data rates in power
       save 2 and ULP1, Listen interval based with Enhanced MAX PSP'''
@@ -2298,14 +2551,6 @@ def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    # Validation for High data rates from DUT side
-    packet_filter3 = f'((radiotap.mcs.index == 7) && (wlan.sa == {dut_mac_address}))'
-
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
-
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -2321,12 +2566,43 @@ def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
+    logger().info('\n\n Time sleep ! Wait for 200 seconds......')
     time.sleep(200)
+
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
-        'packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # Validation for High data rates from DUT side
+    packet_filter3 = f'((radiotap.mcs.index == 7) && (wlan.sa == {dut_mac_address}))'
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter5 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)['packet_count'], \
+        'Unable to find beacon with association-id and PS-poll packet with pm bit enable'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find  High data rates packets from DUT side'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)['packet_count']\
+        , 'Unable to find data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)'
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
     logger().info('-----------2. Validation for PS-Poll & Qos Data packet time difference---------------- ')
@@ -2369,9 +2645,11 @@ def test_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_
 def test_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_point, wifi_dut):
     frame_exchange_obj = FilterPacket()
     tcp_socket_obj = IopTcpIpSockets()
-    send_bytes = 100
+    assoc_obj = FilterPacket()
+    send_bytes = 1000
     validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
+    packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
 
     '''Verify whether DUT is able to wake up and receive Data based on DTIM beacon with power save mode2 and ULP mode &
        DTIM Based and Enhanced MAX PSP'''
@@ -2404,14 +2682,6 @@ def test_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_p
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    # Validation for High data rates from DUT side
-    packet_filter3 = f'((radiotap.mcs.index == 7) && (wlan.sa == {dut_mac_address}))'
-
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
-    packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
-                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
-                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
-
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     time.sleep(5)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -2427,11 +2697,39 @@ def test_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_p
             if int(match[1]) == send_bytes:
                 logger().info(f"Send {send_bytes} bytes successfully")
 
+    logger().info('\n\n Time sleep ! Wait for 200 seconds......')
     time.sleep(200)
     wifi_sniffer.interfaces.capture.stop_capture()
 
+    # Assoc resp frame in sniffer
+    packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+        'packet_count'], 'No packet found for Assoc resp frame'
+
+    time.sleep(5)
+    association_id = assoc_obj.get_association_id()
+    if association_id is None:
+        logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+        assert False
+    else:
+        logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+
+    # Applying filter to find the beacon with association-id and PS-poll packet with pm bit enable.(for manual QA ref.)
+    packet_filter5 = f'(wlan.ta == {dut_mac_address} && wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1) || ' \
+                     f'(wlan.fc.type_subtype == 0x0008 || wlan.tim.aid == {association_id})'
+
+    # Validation for High data rates from DUT side
+    packet_filter3 = f'((radiotap.mcs.index == 7) && (wlan.sa == {dut_mac_address}))'
+
+    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} and ' \
+                     f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} and ' \
+                     f'(wlan.fc.type_subtype==8 || wlan.fc.type_subtype == 0x002c))'
+
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
         'packet_count']
 
     logger().info('---------1. Validation for Beacon(DTIM count 0)->PS-POLL->Qos data packet sequence-------------- ')
@@ -2805,7 +3103,7 @@ def test_power_save3_c19686(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
 )
 def test_power_save3_listen_interval_c19687(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
-    time_delta_for_listen_interval = 1.13
+    time_delta_for_listen_interval = 1220
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -2865,21 +3163,9 @@ def test_power_save3_listen_interval_c19687(firmware_loader, wifi_sniffer, wifi_
     # Validate the time delta between PS-poll packet
     ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
     logger().info(ps_poll_packets_time_delta_list)
-    ps_poll_packets_time_delta_list.pop(0)
-    logger().info(f'PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
-    for time_diff in ps_poll_packets_time_delta_list:
-        time_diff = round(time_diff, 2)
-        is_between = float(time_diff) in arange(time_delta_for_listen_interval, time_delta_for_listen_interval + .01)
-        if is_between is True:
-            logger().info(f'DUT sends PS-poll after 11 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-            break
-        else:
-            logger().info(
-                f'DUT unable to send PS-poll after 11 consecutive beacon frame and time diff is = {time_diff}')
-            list_status.append(is_between)
-    logger().info(list_status)
-    assert False if False in list_status else True
+
+    # Validate the time delta between PS-poll packet
+    assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2950,9 +3236,9 @@ def test_power_save3_dtim_c19688(firmware_loader, wifi_sniffer, wifi_access_poin
     assert status == 1
 
     wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find any packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found for pwmt bit enable'
 
     # Validate beacon DTIM count=0
@@ -3046,12 +3332,12 @@ def test_power_save3_c19689(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(2)
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'No packet found for broad cast probe requests from DUT'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found for Assoc resp frame'
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2=False)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'No packet found for Power save mode 1/Null frame'
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5, packet_filter2)[
@@ -3059,9 +3345,10 @@ def test_power_save3_c19689(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for DTIM beacon-----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
+
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    assert dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict), 'No sequence found for sniffer packets ' \
-                                                                          '5th DTIM beacon-> Ps-Poll-> Data'
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict)
+    assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_more_data()
@@ -3069,7 +3356,7 @@ def test_power_save3_c19689(firmware_loader, wifi_sniffer, wifi_access_point, wi
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-@pytest.mark.skip()
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -3147,8 +3434,8 @@ def test_power_save3_enable_disable_c19690(firmware_loader, wifi_sniffer, wifi_a
         end_time = datetime.datetime.now()
         exact_execution_time = end_time - start_time
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2=False)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'No packet found for pwmt bit enable'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, packet_filter2=False)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'No packet found for pwmt bit disable'
         logger().info(f"********* Total execution time of test case = {exact_execution_time}**********")
