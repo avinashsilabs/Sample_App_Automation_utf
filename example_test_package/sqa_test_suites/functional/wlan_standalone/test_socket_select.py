@@ -836,7 +836,7 @@ def test_socket_select_multiple_sockets_tcp_udp_TC19329(
 ):
     capture_filename = "test_socket_select_multiple_sockets_TC19329"
     since_time = 0
-    remote_socket_factory.interfaces.socket.time_limit = 3600
+
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -844,6 +844,7 @@ def test_socket_select_multiple_sockets_tcp_udp_TC19329(
     for sock_count in range(0, 4):
         port = start_port + sock_count
         server_socket = remote_socket_factory.interfaces.socket.create_socket()
+        server_socket.time_limit = 3600
         if sock_count < 2:
             server_socket.start_server(port=port, socket_type=SOCKET_TYPE_TCP)
         else:
@@ -1253,7 +1254,7 @@ def test_socket_select_tcp_close_stress_TC19334(
 ):
     capture_filename = "test_socket_select_multiple_sockets_TC19329"
     since_time = 0
-    remote_socket_factory.interfaces.socket.time_limit = 3600
+
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -1266,6 +1267,7 @@ def test_socket_select_tcp_close_stress_TC19334(
         for sock_count in range(0, 4):
             port = start_port + sock_count
             server_socket = remote_socket_factory.interfaces.socket.create_socket()
+            server_socket.time_limit = 3600
             server_socket.start_server(port=port, socket_type=SOCKET_TYPE_TCP)
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
             if sock_count == 0:
