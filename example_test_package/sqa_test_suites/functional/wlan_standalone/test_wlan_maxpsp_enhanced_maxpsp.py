@@ -98,7 +98,7 @@ class IopTcpIpSockets:
 class FilterPacket:
     def get_association_id(self):
         # This function will parse the pacap file and find & return the association id
-        packet_filter = "        ..00 0000 0000 0001 = Association ID:"
+        packet_filter = "= Association ID:"
         association_id = None
         count = 0
 
