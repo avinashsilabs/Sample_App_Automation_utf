@@ -825,7 +825,7 @@ def test_ble_scan_in_busy_environment_C19827_C19828(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
 
     ble_advertisers = []
-    for item in range(0, 2):
+    for item in range(0, remote_le_devices):
         ble_advertisers.append(ble_clients[item])
 
     logger().info("start ble in dut")
