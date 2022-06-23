@@ -1741,6 +1741,7 @@ template_contribution:
     - {type: uint32, help: 'socket id'}
     - {type: uint32, help: 'data length'}
     - {type: uint32, help: 'number of pkts'}
+    - {type: uint32, help: 'time in seconds'}
     
 
 - name: cli_command

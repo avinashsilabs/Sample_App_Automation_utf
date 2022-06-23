@@ -22,6 +22,7 @@ import string
 import random
 from utf.utils.iperf.iperf_utils import ping
 import time
+from threading import Thread
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -38,6 +39,18 @@ import time
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
 """
+
+
+def connect_to_server(client_socket, device_ip, logger, server_port=5001):
+    time.sleep(5)
+    logger.info(f"Connecting from remote device to DUT socket {(device_ip, server_port)}")
+    client_socket.connect_client_tcp(device_ip, server_port)
+
+
+def send_data_from_client(ssl_client, pkt_count, buffer_length, logger):
+    logger.info(f"Sending {pkt_count} number of pkts each with buffer length {buffer_length} from client")
+    for count in range(0, pkt_count):
+        ssl_client.interfaces.ssl.send_data(buffer_length)
 
 
 def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger):
@@ -142,6 +155,8 @@ def test_ssl_server_testcase_TC19110(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger
         ):
     capture_filename = "test_ssl_server_testcase_TC19110"
+    pkt_count = 5000
+    buffer_length = 1300
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -166,7 +181,15 @@ def test_ssl_server_testcase_TC19110(
 
     if data_sent == data_receive.decode():
         logger.info("Data sent and received is matching")
-    # DUT closes the tcp socket
+    # thread = Thread(target=send_data_from_client, args=(ssl_client, pkt_count, buffer_length, logger), )
+    # thread.start()
+    # logger.info("wait for 300 seconds to receive the data on the socket")
+    # time.sleep(300)
+    # result = wifi_dut.interfaces.wifi.get_socket_rx_stats(socket_id)
+    # bytes_received = int(result.split(b":")[1])
+    # logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    # assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
+
     result = wifi_dut.interfaces.wifi.close_socket(socket_id)
     assert b"success" in result, "unable to close opened tcp socket"
     logger.info(f"Successfully closed socket_id:{socket_id}  in the DUT")
@@ -212,7 +235,7 @@ def test_ssl_server_diff_cipher_suite_testcase_TC19132(
         wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=cipher)
         # The below api opens ssl server socket in the DUT
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=1)
-        assert sock == 0
+        assert sock == 0, "Socket id received is wrong. expected is 0"
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
@@ -341,9 +364,8 @@ def test_ssl_server_no_server_cert_testcase_TC19111(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
-        wifi_sniffer, wifi_access_point, wifi_dut, remote_tcp_client, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, remote_socket_factory, logger
         ):
     capture_filename = "test_ssl_server_connect_non_ssl_client_testcase_TC19112"
 
@@ -358,13 +380,18 @@ def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
     # Socket binds at (device_ip, 5001) in DUT
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
     wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-    remote_tcp_client.interfaces.socket.connect_to_server(device_ip, server_port=5001)
+    client_socket = remote_socket_factory.interfaces.socket.create_socket()
+    thread = Thread(target=connect_to_server, args=(client_socket, device_ip, logger, 5001), )
+    thread.start()
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.accept(sock)
     assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
+    logger.info(f"DUT sent error code {exc_info.value.error_code} when third-party tcp client is connected to it,"
+                f"But not starting "
+                f"ssl-handshake which is expected")
 
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()

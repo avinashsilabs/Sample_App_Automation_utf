@@ -192,7 +192,9 @@ def test_dynamic_load_cert_no_index_TC19638(
 
     if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
         ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-    wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+    result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+    logger.info(f"Number of bytes sent by dut {result}")
+    bytes_sent = result
 
     bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
     assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer are" \
@@ -334,7 +336,9 @@ def test_dynamic_load_new_cert_TC19640(
 
     if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
         ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-    wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+    result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+    logger.info(f"Number of bytes sent by dut {result}")
+    bytes_sent = result
 
     bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
     assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer are" \
@@ -486,7 +490,9 @@ def test_dynamic_load_three_ssl_sockets_TC19641(
         for socket in socket_no:
             if ssl_server.interfaces.ssl.socket_connection_status(socket):
                 # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
-                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                result = wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                logger.info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
                 time.sleep(10)
                 bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
                 assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
@@ -810,7 +816,9 @@ def test_load_certs_without_erasing_multiple_times_TC19644(
                 socket_no = [1, 2]
                 for socket in socket_no:
                     if ssl_server.interfaces.ssl.socket_connection_status(socket):
-                        wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                        result = wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                        logger.info(f"Number of bytes sent by dut {result}")
+                        bytes_sent = result
                         time.sleep(10)
                         bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
                         assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote " \
@@ -941,7 +949,9 @@ def test_dynamic_load_powersave_not_enabled_TC19646(
         for socket in socket_no:
             if ssl_server.interfaces.ssl.socket_connection_status(socket):
                 # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
-                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                result = wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                logger.info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
                 time.sleep(10)
                 bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
                 assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
@@ -1070,7 +1080,9 @@ def test_dynamic_load_powersave_enabled_testcase14(
         for socket in socket_no:
             if ssl_server.interfaces.ssl.socket_connection_status(socket):
                 ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
-                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                result = wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                logger.info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
                 time.sleep(3)
                 bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
                 assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
@@ -1264,7 +1276,9 @@ def test_dynamic_load_auto_join_TC19645(
         for socket in socket_no:
             if ssl_server.interfaces.ssl.socket_connection_status(socket):
                 # ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
-                wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                result = wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
+                logger.info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
                 time.sleep(10)
                 bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
                 assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \

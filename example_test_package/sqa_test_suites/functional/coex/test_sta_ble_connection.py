@@ -47,6 +47,7 @@ def logger():
 """
 
 iter_count = 5
+ping_count = 100
 
 class BleThread_connection(ThreadBase):
     def __init__(self, wifi_dut, ble_client, ble_mode):
@@ -447,6 +448,61 @@ class httppostThread(ThreadBase):
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find association response in sniffer '
 
+class WifiDeeppowersave(ThreadBase):
+    def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer= None, testcase= None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.testcase = testcase
+
+
+    def run(self):
+        validation = True
+
+        logger().info("configuring the Sniffer with the channel")
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        self.wifi_sniffer.interfaces.capture.start_capture('sta_deeppowersave +  ble connection ')
+        time.sleep(10)
+        logger().info(f"use the corresponding hex file when using gpio and msg based")
+        logger().info(f"this thread is used for wifi join")
+        with TimeMeasurer() as t:
+          logger().info("enabling wifi power save")
+          enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(8, 1)
+          assert enable_wifi_ps, 'failed to enable'
+          logger().info("enabling bt power save")
+          enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(8, 1)
+          assert enable_bt_ps, 'failed to enable'
+          logger().info(f"Scan for the AP's")
+          ap_mac = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=self.wifi_access_point.interfaces.wifi.channel)
+          ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
+          logger().info(f'AP BSSID = {ap_bssid}')
+          logger().info(f"Join Wi-Fi Access Point")
+          self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+          logger().info(f"This API Enables the DHCP in DUT")
+          result = self.wifi_dut.interfaces.wifi.start_ip()
+          assert isinstance(
+            result, self.wifi_dut.interfaces.wifi.IPConfig
+          ), f"Failed to get IP address. Result = {result}"
+          device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+          logger().info(f"Fetches the DUT mac address")
+          dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+          logger().info(f"Device mac address: {dut_mac_address}")
+          time.sleep(5)
+          logger().info(f"Validate Probe req(Broadcast/Unicast), authentication ,association, eapol")
+          packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
+                           f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                           f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+          logger().info(f"Initiate ping from third party wifi-client to DUT")
+          status = ping(device_ip, ping_count)
+          assert status == 1, "DUT not responding for ping request......"
+          logger().info("ping to DUT is successful....")
+        logger().info(f"Associated and ping, Scan in {t.duration} seconds")
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
+                             'in sniffer'
 
 @pytest.mark.config(
      "wifi_dut",
@@ -478,7 +534,6 @@ def test_threading_selective_channels_2_4_C20208(wifi_dut, wifi_access_point, wi
      ble_obj.wait_for_exit()
      scan_obj.wait_for_exit()
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -509,7 +564,6 @@ def test_threading_httpgetfunctionality_ble_C20339(wifi_dut, wifi_access_point, 
     httpget_obj.start()
     ble_obj.wait_for_exit()
     httpget_obj.wait_for_exit()
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -543,3 +597,30 @@ def test_threading_httppostfunctionality_ble_C20236(wifi_dut, wifi_access_point,
     httppost_obj.start()
     ble_obj.wait_for_exit()
     httppost_obj.wait_for_exit()
+
+@pytest.mark.config(
+     "wifi_dut",
+     wifi={
+         "oper_mode": 0,
+         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+         "custom_features": RS9116CustomFeatureBitMap.Default,
+         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+         "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+         "band": 0,
+     },
+ )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_threading_sta_deeppowersave_ble_C20274(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+    ble_mode = "ble_slave"
+    wifidp_obj = WifiDeeppowersave(wifi_dut, wifi_access_point, wifi_sniffer)
+    ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
+    ble_obj.start()
+    wifidp_obj.start()
+    ble_obj.wait_for_exit()
+    wifidp_obj.wait_for_exit()
