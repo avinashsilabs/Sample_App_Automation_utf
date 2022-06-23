@@ -17,7 +17,7 @@ from utf_wiseconnect.devices.rs911x import (
     SocketType,
     Cipher,
     DeviceConstants,
-    )
+)
 import string
 import random
 from utf.interfaces.wifi import WlanError
@@ -48,7 +48,7 @@ def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, log
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     for count in range(1, 3):
         try:
             scan_fail = 1
@@ -69,7 +69,7 @@ def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, log
 
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
 
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
@@ -130,11 +130,9 @@ pytestmark = [
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ca_cert": "ca-chain.cert.pem",
             "set_send_feature_frame": True,
-            "server_socket_limit": 0,
-            "client_socket_limit": 2,
-            }
-        )
-    ]
+        }
+    )
+]
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -142,7 +140,7 @@ pytestmark = [
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_testcase_TC19109(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_client_testcase_TC19109"
     pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
@@ -212,7 +210,7 @@ def test_ssl_client_testcase_TC19109(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_connect_close_sequence_testcase133(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, repeat
-        ):
+):
     capture_filename = "test_ssl_client_connect_close_sequence_testcase133"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -287,7 +285,7 @@ def test_ssl_client_connect_close_sequence_testcase133(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_client_tx_rx_bidirectional_testcase_TC19129"
     pkt_count = 10000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
@@ -302,7 +300,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     ssl_server.interfaces.ssl.start_server()
     ssl_server.interfaces.ssl.start_server(port=port2)
     # Open ssl client socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE,
                                                            socket_flag=SocketType.ASYNCHRONOUS)
 
     assert sock == 0, "Socket id received is wrong. expected is 0"
@@ -335,22 +333,24 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     # ssl socket opened in DUT connects to the server
     wifi_dut.interfaces.wifi.connect_to_server(sock1, ssl_server.interfaces.ssl, server_port=port2)
     # pkt_count = 1000
-    ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
+    ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length, duration=300)
     ssl_server.interfaces.ssl.data_receive(2, pkt_count, buffer_length)
     logger.info("Start tx on the DUT on socket_id1")
-    result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+    result = wifi_dut.interfaces.wifi.send_data_pkts(sock1, buffer_length, pkt_count)
     logger.info(f"Number of bytes sent by dut {result}")
     bytes_sent = result
     bytes_received = ssl_server.interfaces.ssl.data_receive_stats(2)
     assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
                                          f"not matched on socket {2} "
     logger.info("Number of bytes sent by DUT and received on the remote peer are matched")
-    logger.info("Wait for 300 seconds to receive data on the socket_id->0")
-    time.sleep(300)
+    logger.info("Wait for 320 seconds to receive data on the socket_id->0")
+    time.sleep(320)
+    bytes_sent = ssl_server.interfaces.ssl.data_send_stats(1)
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
+    logger.info(f"Bytes sent by remote peer {bytes_sent} on socket {1}")
+    assert bytes_received == bytes_sent, "Packet loss observed while receive test"
     result = wifi_dut.interfaces.wifi.close_socket(sock)
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info(f"Successfully closed opened socket {sock} in the DUT")
@@ -383,7 +383,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
 def test_ssl_client_cipher_list_testcase_TC19133(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cipher_list
-        ):
+):
     capture_filename = "test_ssl_client_cipher_list_testcase_TC19133"
     pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
@@ -473,7 +473,7 @@ def test_ssl_client_cipher_list_testcase_TC19133(
                              "disable_cipher"])
 def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_client_ciphersuite_mismatch_testcase_TC19133"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -517,7 +517,7 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_socket_limit_testcase_TC19121(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_socket_limit_testcase_TC19121"
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -588,7 +588,7 @@ def test_ssl_socket_limit_testcase_TC19121(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_client_version_1_2_testcase_TC19119(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_client_version_1_2_testcase_TC19119"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -635,13 +635,13 @@ def test_ssl_client_version_1_2_testcase_TC19119(
                               ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
                                "mosquitto-utf.silabs.com.key.pem"],
                               )
-                             ]
+                         ]
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
 def test_ssl_max_sockets_testcaseTC19128(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2
-        ):
+):
     capture_filename = "test_ssl_max_sockets_testcaseTC19128"
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -716,7 +716,7 @@ def test_ssl_max_sockets_testcaseTC19128(
             assert bytes_sent_list[socket - 1] == bytes_received, f"Number of bytes sent by DUT and received on the " \
                                                                   f"remote peer " \
                                                                   f"not matched on socket {socket} "
-    for sock_count in range(0, 3):
+    for sock_count in range(0, 2):
         logger.info(f"Closing socket_id->{sock_count}")
         result = wifi_dut.interfaces.wifi.close_socket(sock_count)
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
