@@ -1668,6 +1668,7 @@ template_contribution:
     - {type: uint32, help: 'socket id'}
     - {type: uint32, help: 'data length'}
     - {type: uint32, help: 'number of pkts'}
+    - {type: uint32, help: 'time in seconds'}
     
 
 - name: cli_command
@@ -1962,3 +1963,10 @@ template_contribution:
     help: Closes web socket
     argument:
     - {type: uint32, help: socket_id}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: clear_linkkey
+    handler: bt_clear_linkkey_command
+    help: clear linkkey
