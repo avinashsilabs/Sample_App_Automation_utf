@@ -1306,8 +1306,18 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 	uint32_t tx_stats[10][5] = {0};
 	uint8_t max_sock = 0;
 	uint8_t flag = 0;
+    rsi_rsp_sockets_info_t socket_info;
 
-	max_sock = (g_rsi_ltcp_sockets+g_rsi_client_sockets);
+    status = rsi_wlan_get(RSI_SOCKETS_INFO, (uint8_t *)&socket_info, (uint16_t)sizeof(rsi_rsp_sockets_info_t));
+	if(!status)
+	{
+		max_sock = rsi_bytes2R_to_uint16(&(socket_info.num_open_socks[0]));
+	}
+	else
+	{
+	    print_status(status);
+	    return;
+	}
 
 	if (data_len == 0) {
 		data_len = 1460;
