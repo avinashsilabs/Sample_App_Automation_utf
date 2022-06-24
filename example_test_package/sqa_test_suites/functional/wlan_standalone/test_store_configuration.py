@@ -125,13 +125,16 @@ class cleanup_store_config():
 
     def disconnect(self):
 
+        try:
             logger().info("Initiating disconnect for cleanup")
-            self.wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+            self.wifi_dut.interfaces.wifi.leave()
             time.sleep(5)
             logger().info("cfg disable")
             # Enables the store configuration
             self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
             return True
+        except:
+            logger().info("clean up process failed")
 
 
 
@@ -1152,8 +1155,6 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
         clean_up.disconnect()
         raise e
 
-
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1176,7 +1177,7 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
 
     try:
         validation = True
-        time_delta = 4
+        time_delta = 1
         packet_filter2 = 'Probe Request'
         prob_req_obj = FilterPacket()
         testcase = "test_verify_rejoin_func_with_max_retry_50_C19087"
@@ -1229,35 +1230,48 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
         logger().info(f"{result}")
         assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
 
-        for i in range(0, 2):
+        logger().info("==========stopping access point========")
+        wifi_access_point.interfaces.wifi.stop_ap()
+        wifi_dut.interfaces.wifi.associated = False
+        time.sleep(100)
+        logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
+
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
+
+        logger().info("stopping the capture")
+        # Stop Sniffer
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Validating beacons
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0008 and wlan.addr == {bssid}'
+
+        logger().info(
+            f"beacons : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']}")
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+            "beacons found even AP is turned OFF"
+
+        for i in range(0, iter_count):
 
             logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
             wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
 
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_probe_req")
 
-            if i==0:
+            logger().info("Resetting DUT instead of de init")
+            # resetting the dut
+            wifi_dut.interfaces.wifi.reset_soft()
+            #time.sleep(2)
+            logger().info("Initializing the DUT")
+            wifi_dut.interfaces.wifi.associated = False
 
-                logger().info("==========stopping access point========")
-                wifi_access_point.interfaces.wifi.stop_ap()
-                wifi_dut.interfaces.wifi.associated = False
-                time.sleep(200)
-
-            else:
-
-                logger().info("Resetting DUT instead of de init")
-                # resetting the dut
-                wifi_dut.interfaces.wifi.reset_soft()
-                time.sleep(200)
+            with pytest.raises(CLITransportException) as ex:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.associated = False
-
-                with pytest.raises(CLITransportException) as ex:
-                    logger().info("Initializing the DUT")
-                    wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=0)
-                    assert ("Error Code : 0x3" or "Error Code : 0x19") in str(ex), "Wrong error code found"
-
+                wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=0)
+                assert ("Error Code : 0x3" or "Error Code : 0x19") in str(ex), "Wrong error code found"
+            time.sleep(150)
             logger().info("stopping the capture")
             #Stop Sniffer
             wifi_sniffer.interfaces.capture.stop_capture()
@@ -1266,8 +1280,34 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
 
             logger().info(f"Validating broadcast probe requests : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num']}")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num'],\
-            "Unable to find the brodcast probe requests"
+
+            logger().info("Validating broadcast probe requests")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+                'packet_count'], \
+                "Unable to find the brodcast probe requests"
+
+            probe_packets_dict = prob_req_obj.delta_between_probe_packet()
+
+            seq_num_list = list(probe_packets_dict.keys())
+
+            logger().info(f'probe request packet sequence numbers list = {seq_num_list}')
+
+            packet_count = len(seq_num_list)
+
+            logger().info(f"packet_count: {packet_count}")
+
+            diff_bw_seq_num = [int(seq_num_list[i + 1]) - int(seq_num_list[i]) for i in range(len(seq_num_list) - 1)]
+            for diff in diff_bw_seq_num:
+                if int(diff) == 1:
+                    logger().info("difference between probe req  seq numbers is 1")
+                    continue
+                else:
+                    packet_count = packet_count + int(diff-1)
+                    logger().info(f"difference between probe req  seq numbers is {diff}")
+            assert packet_count == 50,\
+            f"Unable to find the brodcast probe requests count {packet_count}"
+
+            logger().info(f"packet_count : {packet_count}")
 
         logger().info("Disabling auto configuration")
         # Enables the store configuration
