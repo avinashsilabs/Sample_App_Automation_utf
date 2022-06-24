@@ -15,7 +15,7 @@ utf_extension_dirs:
 test_executor_script: executor/launch_utf_tests.py
 
 # The group label for HWMux integration
-hwmux_group_name: utf_wifi
+hwmux_group_name: Hyderabad
 
 # The python virtual environment directory
 python_venv_dir: venv
