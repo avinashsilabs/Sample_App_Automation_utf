@@ -2699,3 +2699,9 @@ void bt_spp_disconnect_command(sl_cli_command_arg_t* arguments)
 	rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_dev_addr);
     print_status(rsi_bt_spp_disconnect(device_address));
 }
+
+void bt_clear_linkkey_command()
+{
+    memset(linkkey_bt,'\0',sizeof(linkkey_bt));
+    print_status(RSI_ERROR_NONE);
+}
