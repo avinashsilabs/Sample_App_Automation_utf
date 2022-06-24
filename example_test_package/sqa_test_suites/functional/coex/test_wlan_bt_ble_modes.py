@@ -258,13 +258,13 @@ def run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, 
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     time.sleep(3)
 
-    # preparing wifi_client
-    if wifi_access_point != wifi_client:
-        status = wifi_client.interfaces.wifi.join_ap(wifi_access_point)
-        time.sleep(5)
+    # # preparing wifi_client
+    # if wifi_access_point != wifi_client:
+    #     status = wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+    #     time.sleep(5)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f"Host IP: {host_ip}")
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) is not None
+    # assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) is not None
 
     # starting iperf
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
