@@ -47,3 +47,7 @@ firmware_applications:
       device_subtype: 'efr32'
       filename: 'sqa_test_agent_msg_ulp.hex'
 
+    test_ap_ht_caps:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'ap_htcaps_enable.hex'

@@ -172,8 +172,8 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '192.168.0.1'
-                web_ui_port: 80
+                ip_address: '10.207.18.131'
+                web_ui_port: 8080
                 admin_password: '12345678'
                 security: WPA
                 ssid: 'Dlink-10-207-18-11'
@@ -370,7 +370,67 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.1.154'
+                ip_address: '10.207.18.128'       #configure secondary Rpi rd_1 IP address
+                image: 'utfsilabs/rpi_ubuntu_secondary'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    secondary_raspi_ble_client_2:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '10.207.18.129'  #configure secondary Rpi rd_2 IP address
+                image: 'utfsilabs/rpi_ubuntu_secondary'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    secondary_raspi_ble_client_3:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '10.207.18.130'  #configure secondary Rpi rd_3 IP address
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -502,7 +562,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'wlan0'
+                interface: 'eth0'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -512,7 +572,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'wlan0'
+                interface: 'eth0'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -775,8 +835,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
+        - 'asus_rt_ax3000_ap'
+        - 'dlink_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -795,8 +855,10 @@ defaults:
     ble_client: 'raspi_ble_client'
 
     ble_clients:
-        - 'secondary_raspi_ble_client'
         - 'raspi_ble_client'
+        - 'secondary_raspi_ble_client'
+        - 'secondary_raspi_ble_client_2'
+        - 'secondary_raspi_ble_client_3'
 
     bt_client: 'raspi_bt_client'
 
