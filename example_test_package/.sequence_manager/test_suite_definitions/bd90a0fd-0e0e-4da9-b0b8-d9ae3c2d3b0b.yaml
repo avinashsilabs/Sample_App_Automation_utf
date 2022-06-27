@@ -2,6 +2,24 @@ id: bd90a0fd-0e0e-4da9-b0b8-d9ae3c2d3b0b
 name: Coex
 description: Coex
 test_cases:
+  - test_case_id: e20d3e18aae9d7323d2cb89df276d29071b32c80
+    iterations: 1
+  - test_case_id: 093465e1a4227dfb1d975093fb69a55b333c08ea
+    iterations: 1
+  - test_case_id: 835795d141e101222d8898ddf81d5bfd7d8bb67d
+    iterations: 1
+  - test_case_id: bca083ae5be3ca3718297766e925d3c9afe57348
+    iterations: 1
+  - test_case_id: 7ff4b847d75807f4d0595e8be708f04dc3cb048c
+    iterations: 1
+  - test_case_id: 809ed9d75f497d48b1fcfc7e5a7afabe65d5d0e5
+    iterations: 1
+  - test_case_id: 534e99006adae185646c3e9cc4ae42fcfbf25d48
+    iterations: 1
+  - test_case_id: 7169b1f4b308ea899f6dcd69eef154e7c48cda16
+    iterations: 1
+  - test_case_id: 474fb6bf6b9ce114c13a9ae2cc11755b5e38f8ab
+    iterations: 1
   - test_case_id: 526216edc23985394900a238eec1c1ebe22f313f
     iterations: 1
   - test_case_id: b681643248f34d50ccf0c17ac00dfa0c1e088361

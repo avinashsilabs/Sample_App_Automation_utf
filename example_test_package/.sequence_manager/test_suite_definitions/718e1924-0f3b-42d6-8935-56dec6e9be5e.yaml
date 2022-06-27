@@ -2,18 +2,6 @@ id: 718e1924-0f3b-42d6-8935-56dec6e9be5e
 name: AP Mode
 description: AP Mode
 test_cases:
-  - test_case_id: d92b74cca7b6e1da52710fae961f53aaf4f90c33
-    iterations: 1
-  - test_case_id: 958555a245e533c4d638e1d913d029f5017890af
-    iterations: 1
-  - test_case_id: c914a3d01b6fc1b40a8a4214dacfba1b1a81eac4
-    iterations: 1
-  - test_case_id: 5620347bda25445629df317c918c48d5c62e7095
-    iterations: 1
-  - test_case_id: 2fa57fcf9218a4eeef90b509b2a13739b5c5f657
-    iterations: 1
-  - test_case_id: 93d6fe22c0511ff77e341e1633a21ed511f0692c
-    iterations: 1
   - test_case_id: 19605c7d4e85fa65c57453165c02f1df1b196b89
     iterations: 1
   - test_case_id: f425f456189cc9f93212b38b76bcf9260ef95c8c
