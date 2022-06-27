@@ -12,7 +12,6 @@ from utf.utils.iperf.iperf_utils import print_dict, ping
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 from numpy import arange
-
 import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
@@ -101,7 +100,7 @@ class BtSppScan(ThreadBase):
             bt_client_address = self.bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
             assert bt_client_address is not None
             # time.sleep(0.5)
-            #
+
             # # Added set class to 400100 to avoid [Errno 112] Host is down issue
             # self.bt_client.interfaces.bluetooth.bt_adapter.set_class('400100')
 
@@ -122,13 +121,6 @@ class BtSppScan(ThreadBase):
                     if bt_client_address in event_data and 'Inquiry_type = 0' in event_data:
                         logger().info(f'Inquiry type is = {inq_type}')
                     logger().info(f'BT address found = {bt_client_address}')
-            # # While doing BT enquiry need to turn off & turn on AP
-            # if i == 4:
-            #     logger().info('******* Disable the AP radio **********')
-            #     self.wifi_access_point.interfaces.wifi.stop_ap()
-            #     time.sleep(5)
-            #     logger().info('******* Enable the AP radio **********')
-            #     self.wifi_access_point.interfaces.wifi.start_ap()
 
 
 class BtSppThreadConnectionDataTransfer(ThreadBase):
@@ -165,8 +157,8 @@ class BleThreadDisconnection(ThreadBase):
         self.bt_client_address = ble_cli_add
 
     def run(self):
+        time.sleep(10)
         self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.bt_client_address, timeout=30)
-        # time.sleep(10)
 
 
 class BleThreadConnection(ThreadBase):
@@ -176,7 +168,7 @@ class BleThreadConnection(ThreadBase):
         self.ble_client = ble_client
         self.mode = mode
         self.ble_cli_add = None
-        self.tcp_socket_obj = TcpIpSockets()
+
         if self.mode:
             # Start DUT BLE as a Master
             self.logger.info('***** DUT BLE as a Master *****')
@@ -218,24 +210,13 @@ class BleThreadConnection(ThreadBase):
 
     def run(self):
         if self.mode:
-            # for i in range(0, 5):
-            #     self.logger.info('***** DUT BLE as a Master *****')
-            #     self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=self.bt_client_address, timeout=30)
-            #     time.sleep(10)
-            #
-            #     self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.bt_client_address, timeout=30)
-            #     time.sleep(10)
-
             self.logger.info('***** DUT BLE as a Master *****')
             self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=self.bt_client_address, timeout=30)
-            # time.sleep(10)
-            #
-            # self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.bt_client_address, timeout=30)
-            # time.sleep(10)
 
         elif self.mode is False:
             self.logger.info('********* DUT BLE as a Slave **********')
             self.ble_client.interfaces.bluetooth.connect(self.bt_dut_address)
+
 
 class BleThreadConnectionDataTransfer(ThreadBase):
     def __init__(self, wifi_dut, ble_client):
@@ -251,9 +232,9 @@ class BleThreadConnectionDataTransfer(ThreadBase):
 
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-        data1 = "LzY0LzY0LzY0LzY0"
-        data2 = "K09xK09xK09xK09x"
-        data3 = "Mx3YMx3YMx3YMx3Y"
+        data1 = "LzY0"
+        data2 = "K09x"
+        data3 = "Mx3Y"
 
         # Join Wi-Fi Access Point
         # self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
@@ -352,6 +333,17 @@ class BleThreadConnectionDataTransfer(ThreadBase):
 
         # disconnecting from dut
         self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+
+class BleThreadConnectionDisconnection(ThreadBase):
+    def __init__(self, wifi_dut, ble_client):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.connect_disconnect_obj = FilterPacket()
+
+    def run(self):
+        self.connect_disconnect_obj.test_ble_multi_connect_disconnect(self.wifi_dut, self.ble_client)
 
 
 class WifiJoinThread(ThreadBase):
@@ -1165,6 +1157,41 @@ class FilterPacket:
         logger().info(list_status)
         return False if False in list_status else True
 
+    def test_ble_multi_connect_disconnect(self, wifi_dut, ble_client):
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address is not None
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+
+        # Begin Scanning for BLE devices
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            found_devices = ble_client.interfaces.bluetooth.get_devices()
+            if bt_dut_address in found_devices and \
+                    found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+                device_found = True
+                break
+        ble_client.interfaces.bluetooth.stop_scanning()
+        assert device_found
+
+        logger().info(f'\n ****** Connect *******\n')
+        ble_client.interfaces.bluetooth.connect(bt_dut_address)
+        time.sleep(2)
+        logger().info(f'\n ****** Disonnect *******\n')
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(1)
+        logger().info(f'\n ****** BLE start advertising *******\n')
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+        time.sleep(1)
+        logger().info(f'\n ****** Connect *******\n')
+        ble_client.interfaces.bluetooth.connect(bt_dut_address)
+        time.sleep(2)
+        logger().info(f'\n ****** Disonnect *******\n')
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(1)
+
 
 @pytest.mark.net_perf_client("static_iperf")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1595,6 +1622,7 @@ def test_coex_bt_master_wlan_dual_mode_c34470(wifi_sniffer, wifi_access_point, w
     packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
 
     time.sleep(20)
+    bt_client_address = bt_client_obj.bt_client_address
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.leave()
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
@@ -1700,11 +1728,16 @@ def test_coex_bt_wlan_data_transfer_c34471(wifi_sniffer, wifi_access_point, wifi
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave
     )
 
-    ''' Initiating BT connection, DUT as a Master & send/receive data '''
-    bt_client_address = filter_pack_obj.connection_bt_spp_master_slave(wifi_dut, bt_client, data_transfer=True)
+    ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
+    wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip)
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    filter_pack_obj.start_iperf_dut_as_server(wifi_dut, net_perf_client, protocol, device_ip)
+    ''' Initiating BT connection, DUT as a Master & send/receive data '''
+    bt_client_obj = BtSppThreadConnectionDataTransfer(wifi_dut, bt_client, dut_as_master=True, data_transfer=True)
+
+    wlan_obj.start()
+    bt_client_obj.start()
+    wlan_obj.wait_for_exit()
+    bt_client_obj.wait_for_exit()
 
     packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} ' \
                      f'&& (wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} ' \
@@ -1718,6 +1751,7 @@ def test_coex_bt_wlan_data_transfer_c34471(wifi_sniffer, wifi_access_point, wifi
     packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
 
     time.sleep(20)
+    bt_client_address = bt_client_obj.bt_client_address
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.leave()
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
@@ -1848,6 +1882,7 @@ def test_coex_bt_slave_wlan_data_transfer_c34472(wifi_sniffer, wifi_access_point
     packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
 
     time.sleep(20)
+    bt_client_address = bt_client_obj.bt_client_address
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.leave()
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
@@ -2110,6 +2145,7 @@ def test_coex_wlan_datatransfer_ble_master_c34474(wifi_sniffer, wifi_access_poin
     packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
 
     time.sleep(20)
+    ble_client_address = ble_client_obj.bt_client_address
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_dut.interfaces.wifi.leave()
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
@@ -2348,6 +2384,7 @@ def test_coex_ble_wlan_datatransfer_c34476(wifi_sniffer, wifi_access_point, wifi
 
     ''' Initiating BLE connection(Master) and start data transfer '''
     ble_obj = BleThreadConnectionDataTransfer(wifi_dut, ble_client)
+
     ble_obj.start()
     wlan_obj.start()
     ble_obj.wait_for_exit()
@@ -2439,8 +2476,6 @@ def test_ble_connect_disconnect_wlan_datatransfer_c34477(wifi_sniffer, wifi_acce
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     monitor_interval = 50
-    ''' Note this test cases has one failure 0x4b0b(SMP DH Key check failed)
-        https://docs.silabs.com/rs9116-wiseconnect/latest/wifibt-wc-sapi-reference/error-codes'''
 
     # '''Validate listen interval from DUT side, DUT should wake up and send data after 11 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -2474,18 +2509,12 @@ def test_ble_connect_disconnect_wlan_datatransfer_c34477(wifi_sniffer, wifi_acce
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
     wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip)
     ''' Initiating BLE connection(Master) and should be in connected state'''
-    ble_client_obj = BleThreadConnection(wifi_dut, ble_client, mode=True)
+    ble_client_obj = BleThreadConnectionDisconnection(wifi_dut, ble_client)
 
-    ble_client_address = ble_client_obj.ble_cli_add
-    logger().info(f'\n\nBLE client address = {ble_client_address}\n')
-
-    ble_client_obj.start()
-    ble_client_obj.wait_for_exit()
     wlan_obj.start()
+    ble_client_obj.start()
     wlan_obj.wait_for_exit()
-    ble_dis_obj = BleThreadDisconnection(wifi_dut, ble_client, ble_client_address)
-    ble_dis_obj.start()
-    ble_dis_obj.wait_for_exit()
+    ble_client_obj.wait_for_exit()
 
     packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} ' \
                      f'&& (wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} ' \
@@ -2574,8 +2603,6 @@ def test_coex_wlan_datatransfer_ble_connect_disconnect_c34478(wifi_sniffer, wifi
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     monitor_interval = 70
-    ''' Note this test cases has one failure 0x4b0b(SMP DH Key check failed)
-        https://docs.silabs.com/rs9116-wiseconnect/latest/wifibt-wc-sapi-reference/error-codes'''
 
     # '''Validate listen interval from DUT side, DUT should wake up and send data after 11 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -2609,20 +2636,12 @@ def test_coex_wlan_datatransfer_ble_connect_disconnect_c34478(wifi_sniffer, wifi
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
     wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip)
     ''' Initiating BLE connection and should be in connected state'''
-    ble_client_obj = BleThreadConnection(wifi_dut, ble_client, mode=True)
+    ble_client_obj = BleThreadConnectionDisconnection(wifi_dut, ble_client)
 
-    ble_client_address = ble_client_obj.ble_cli_add
-    logger().info(f'\n\nBLE client address = {ble_client_address}\n')
-
-    ble_client_obj.start()
-    ble_client_address = ble_client_obj.ble_cli_add
-    logger().info(f'\n\nBLE client address = {ble_client_address}\n')
-    ble_client_obj.wait_for_exit()
     wlan_obj.start()
+    ble_client_obj.start()
     wlan_obj.wait_for_exit()
-    ble_dis_obj = BleThreadDisconnection(wifi_dut, ble_client, ble_client_address)
-    ble_dis_obj.start()
-    ble_dis_obj.wait_for_exit()
+    ble_client_obj.wait_for_exit()
 
     packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} ' \
                      f'&& (wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} ' \
@@ -2741,19 +2760,13 @@ def test_coex_ble_wlan_datatransfer_dtim_based_c34479(wifi_sniffer, wifi_access_
 
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
     wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip)
-    ''' Initiating BLE connection and should be in connected state'''
-    ble_client_obj = BleThreadConnection(wifi_dut, ble_client, mode=True)
+    ''' Initiating BLE connection and should be able to connect & data transfer'''
+    ble_client_obj = BleThreadConnectionDataTransfer(wifi_dut, ble_client)
 
-    ble_client_address = ble_client_obj.ble_cli_add
-    logger().info(f'\n\nBLE client address = {ble_client_address}\n')
-
+    wlan_obj.start()
     ble_client_obj.start()
     ble_client_obj.wait_for_exit()
-    wlan_obj.start()
     wlan_obj.wait_for_exit()
-    ble_dis_obj = BleThreadDisconnection(wifi_dut, ble_client, ble_client_address)
-    ble_dis_obj.start()
-    ble_dis_obj.wait_for_exit()
 
     # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter3 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a) || ' \
@@ -2791,6 +2804,7 @@ def test_coex_ble_wlan_datatransfer_dtim_based_c34479(wifi_sniffer, wifi_access_
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
 
+@pytest.mark.skip
 @pytest.mark.net_perf_client("static_iperf")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2812,7 +2826,7 @@ def test_coex_ble_wlan_datatransfer_dtim_based_c34479(wifi_sniffer, wifi_access_
 
     },
 )
-def test_coex_wlan_datatransfer_bt_connection_disconnection_c34485(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
+def test_coex_wlan_datatransfer_bt_enable_disable_c34485(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
     validation = True
@@ -2821,6 +2835,7 @@ def test_coex_wlan_datatransfer_bt_connection_disconnection_c34485(wifi_sniffer,
     '''Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in 
     WLAN+DUAL mode with while doing WLAN data transfer do disable and enable BT radio'''
 
+    '''Note - https://jira.silabs.com/browse/WIFI_BT_UTFHELP-422'''
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C34485')
@@ -2855,16 +2870,16 @@ def test_coex_wlan_datatransfer_bt_connection_disconnection_c34485(wifi_sniffer,
     ''' Initiating BT(Master) connection and should be in connected state'''
     bt_client_obj = BtSppThreadConnectionDataTransfer(wifi_dut, bt_client, dut_as_master=True, data_transfer=False)
 
-    wlan_obj.start()
-    bt_client_obj.start()
-
-    logger().info(f'BT client address = {bt_client_obj.bt_client_address}')
-    time.sleep(15)
-    bt_disconnection_obj = BtThreadDisconnection(wifi_dut, bt_client_obj.bt_client_address)
-    bt_disconnection_obj.start()
-    wlan_obj.wait_for_exit()
-    bt_client_obj.wait_for_exit()
-    bt_disconnection_obj.wait_for_exit()
+    # wlan_obj.start()
+    # bt_client_obj.start()
+    #
+    # logger().info(f'BT client address = {bt_client_obj.bt_client_address}')
+    # time.sleep(15)
+    # bt_disconnection_obj = BtThreadDisconnection(wifi_dut, bt_client_obj.bt_client_address)
+    # bt_disconnection_obj.start()
+    # wlan_obj.wait_for_exit()
+    # bt_client_obj.wait_for_exit()
+    # bt_disconnection_obj.wait_for_exit()
 
     # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter3 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a) || ' \
@@ -3093,18 +3108,12 @@ def test_ble_connect_disconnect_wlan_datatransfer_c34488(wifi_sniffer, wifi_acce
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
     wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip)
     ''' Initiating BT connection and should be in connected state '''
-    ble_client_obj = BleThreadConnection(wifi_dut, ble_client, mode=True)
-
-    ble_client_address = ble_client_obj.ble_cli_add
-    logger().info(f'\n\nBLE client address = {ble_client_address}\n')
+    ble_client_obj = BleThreadConnectionDisconnection(wifi_dut, ble_client)
 
     ble_client_obj.start()
     ble_client_obj.wait_for_exit()
     wlan_obj.start()
     wlan_obj.wait_for_exit()
-    ble_dis_obj = BleThreadDisconnection(wifi_dut, ble_client, ble_client_address)
-    ble_dis_obj.start()
-    ble_dis_obj.wait_for_exit()
 
     packet_filter1 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} ' \
                      f'&& (wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.addr == {ap_bssid} ' \
@@ -3832,10 +3841,6 @@ def test_ble_slave_wlan_5g_dual_mode_C34496(wifi_sniffer, wifi_access_point, wif
     },
 )
 def test_coex_wlan_bt_enquiry_ap_on_off_c34502(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
-    time_delta_for_listen_interval = 1120
-    filter_pack_obj = FilterPacket()
-    validation = True
-    packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     monitor_interval = 50
     '''Verify enhanced max psp functionality if AP is not responding to the PS-POLL for 10msec in WLAN+DUAL mode and 
         also check the stability of the WLAN connection while doing BT and WLAN data transfer with set to#define 
