@@ -303,7 +303,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.2.154'
+                ip_address: '192.168.14.3'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 container_name: 'secondary_raspi_bt_client'
                 username: pi
@@ -364,7 +364,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.2.154'
+                ip_address: '192.168.14.3'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -669,7 +669,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap_static'
+    wifi_access_point: 'raspi_wifi'
 
     # To connect the multiple access points
     wifi_access_points:
