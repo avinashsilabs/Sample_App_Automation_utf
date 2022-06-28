@@ -167,11 +167,11 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.dlink810'
-                ip_address: '192.168.2.1'
+                ip_address: '192.168.14.1'
                 web_ui_port: 80
                 admin_password: 'bhuvgycft'
                 security: WPA2
-                ssid: "TESTTEST-DLINK"
+                ssid: "TESTTEST-DLINK-RK"
                 channel: 1
                 cipher: 'AES'
 
@@ -232,7 +232,7 @@ devices:
                 # running hostapd to create a soft AP
                 type: 'wifi.access_points.linux'
                 shell: 'linux_shell'
-                interface: 'wlan0'
+                interface: 'eth0'
 
     secondary_raspi_client:
         interfaces:
@@ -669,7 +669,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'raspi_wifi'
+    wifi_access_point: 'dlink810_ap'
 
     # To connect the multiple access points
     wifi_access_points:
