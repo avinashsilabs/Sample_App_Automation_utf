@@ -24,6 +24,28 @@ from utf_wiseconnect.devices.rs911x import (
 
 )
 
+"""Author : Vivek"""
+
+"""This test plan runs below test steps for validation of DUT-RS9116 for Enhanced max psp.
+        1. Configuration of DUT in 2G : BGN
+        2. Configure AP as per test case requirement(DTIM/Beacon interval)
+        3. Association of Third party AP's
+        4. Get the valid IP address
+        5. Verification of basic power save/pm bit enable or not
+        6. Validation of DTIM interval/Listen Interval/Monitor interval.
+        7. Validation of power save with Coax(WLAN+BT+BLE) mode with different combination like BT/BLE(Master/Slave) mode.
+        8. Validation of power save in Coax(WLAN+BT)/(WLAN+BLE) traffic.
+        9. Validation of power save in Coax(WLAN+BT)/(WLAN+BLE) traffic while WLAN connected in 5G mode.
+        10.Validation of power save in Coax(WLAN+BT)/(WLAN+BLE) with BT/BLE connect-disconnect multiple times.  
+
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's-ASUS-RTAX3000)
+        5. Sniffer(NUC device)
+"""
+
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
