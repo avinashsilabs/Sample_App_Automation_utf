@@ -649,11 +649,8 @@ def test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-@pytest.mark.parametrize(
-    "ip_address,subnet,gateway", [("192.168.50.123", "255.255.255.0", "192.168.50.1")]
-)
 def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(
-    wifi_sniffer, wifi_dut, wifi_access_point, ip_address, subnet, gateway
+    wifi_sniffer, wifi_dut, wifi_access_point
 ):
     validation = True
     logger().info(f"***** Sniffer going to start ******")
@@ -690,9 +687,7 @@ def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(
     logger().info(f"***** preparing wifi_dut to join third party AP ******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     logger().info(f"***** Assigning static IP for DUT with wrong gateway ******")
-    wifi_dut.interfaces.wifi.start_ip(
-        mode="static", ip_address=ip_address, subnet=subnet, gateway=gateway
-    )
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_gateway="192.168.50.55")
 
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
     logger().info(f"Device is {device_ip}")

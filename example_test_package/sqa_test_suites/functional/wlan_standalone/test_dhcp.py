@@ -60,11 +60,8 @@ ping_count = 10
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-@pytest.mark.parametrize(
-    "ip_address,subnet,gateway", [("192.168.50.123", "255.255.255.0", "192.168.50.1")]
-)
 def test_verify_static_ip_allocation_to_dut(
-    wifi_sniffer, wifi_dut, wifi_access_point, ip_address, subnet, gateway
+    wifi_sniffer, wifi_dut, wifi_access_point
 ):
     """=============================Verify Static IP allocation to DUT=========================="""
     validation = True
@@ -102,9 +99,7 @@ def test_verify_static_ip_allocation_to_dut(
     logger().info(f" DUT_Version: {result}")
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip(
-        mode="static", ip_address=ip_address, subnet=subnet, gateway=gateway
-    )
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode()
 
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
     logger().info(f"Device is {device_ip}")
