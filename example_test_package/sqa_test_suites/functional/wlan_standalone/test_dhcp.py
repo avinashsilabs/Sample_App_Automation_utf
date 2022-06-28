@@ -61,7 +61,7 @@ ping_count = 10
     },
 )
 @pytest.mark.parametrize(
-    "ip_address,subnet,gateway", ("192.168.50.123", "255.255.255.0", "192.168.50.1")
+    "ip_address,subnet,gateway", [("192.168.50.123", "255.255.255.0", "192.168.50.1")]
 )
 def test_verify_static_ip_allocation_to_dut(
     wifi_sniffer, wifi_dut, wifi_access_point, ip_address, subnet, gateway
