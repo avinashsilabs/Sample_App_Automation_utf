@@ -650,7 +650,7 @@ def test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(
     },
 )
 @pytest.mark.parametrize(
-    "ip_address,subnet,gateway", ("192.168.50.123", "255.255.255.0", "192.168.50.55")
+    "ip_address,subnet,gateway", [("192.168.50.123", "255.255.255.0", "192.168.50.1")]
 )
 def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(
     wifi_sniffer, wifi_dut, wifi_access_point, ip_address, subnet, gateway
