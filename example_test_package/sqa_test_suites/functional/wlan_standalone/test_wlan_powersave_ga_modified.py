@@ -9,14 +9,11 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes
                                             RS9116OperatingMode,
                                             RS9116PowerSaveProcedureTypes
                                             )
-from utf.interfaces import wifi
-from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
-from utf.interfaces.wifi import WlanError
 from utf.utils.stopwatch import Stopwatch
 import time
 
@@ -100,8 +97,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         ping_count = 10
         logger().info("pinging to dut ip")
         status = ping(device_ip, ping_count)
-        assert status == 1, "ping dut failed..."
-        logger().info("ping to dut is successful...")
+        assert status == 1, "ping to dut is failed after power save..."
+        logger().info("ping to dut is successful after power save...")
         time.sleep(30)
         # Add disconnect.leave api
         wifi_dut.interfaces.wifi.leave()
@@ -115,7 +112,6 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         logger().info('Validation for NULL packet with pm bit 1')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
-        logger().info("doing EFR reset instead of device reset till reset issue is fixed")
         wifi_dut.interfaces.wifi.inited = False
         wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.wireless_deinit()
@@ -141,6 +137,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                                             wifi_client,
                                                             protocol):
@@ -158,7 +156,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"Fetched the device ip address,{device_ip}")
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
+    logger().info(f"*****Enable  Max Power save in DUT******")
     # Initiating power save1
     result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1,
                                                  RS9116PowerSaveProcedureTypes.MaxPowerSave)
@@ -166,13 +164,13 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode1, RS9116PowerSaveProcedureTypes.MaxPowerSave
         )
-    # bssid = wifi_access_point.interfaces.wifi.bssid
-    bssid = '6c:19:8f:e5:dd:ff'
+    bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f'Fetching the host ip address...{host_ip}')
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -195,7 +193,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
             print_dict("## ", tp)
         logger().info(f"Iperf data transfer completed successfully")
 
-        logger().info("validate NULL data frame with PM bit set to '1'")
+    logger().info("validate NULL data frame with PM bit set to '1'")
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {bssid}))'
     # Disconnect the AP
@@ -204,7 +202,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info('Validation for NULL packet with pm bit 1')
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit set to 1'
 
 
 @pytest.mark.config(
@@ -228,9 +226,12 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.skip()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
-                                                            wifi_client,
-                                                            protocol):
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, net_perf_client, wifi_sniffer,
+                                                               wifi_access_point, wifi_dut,
+                                                               wifi_client,
+                                                               protocol):
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(
@@ -250,7 +251,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
     # preparing wifi_client
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f'Fetching the host ip address...{host_ip}')
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
+    logger().info(f"*****Enable  Max Power save in DUT******")
     result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                  RS9116PowerSaveProcedureTypes.MaxPowerSave)
     assert result is not None, "Powersave Command Failed"
@@ -260,13 +261,12 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
-    assert status == 1, "ping dut failed..."
-    logger().info("ping to dut is successful...")
+    assert status == 1, "ping to dut is failed..."
+    logger().info("ping to dut is successful after power save...")
     # starting iperf
 
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
-    # net_perf_client.interfaces.net_perf.client_options["time"] = 300
-    # net_perf_client.interfaces.net_perf.server_options["time"] = 300
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
     net_perf_client.interfaces.net_perf.start()
 
     # open socket and send traffic
@@ -314,10 +314,13 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.skip()
-def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
-                                                            wifi_client,
-                                                            protocol):
+def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, net_perf_client, wifi_sniffer,
+                                                               wifi_access_point, wifi_dut,
+                                                               wifi_client,
+                                                               protocol):
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(
@@ -326,8 +329,6 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
     assert result_scan is not None, "No AP found"
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
-    time.sleep(2)
-    # scan the AP
     result_scan = wifi_dut.interfaces.wifi.scan()
     assert result_scan is not None, "No AP found"
     # Connect to the AP
@@ -349,7 +350,12 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
     # preparing iperf
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f'Fetching the host ip address...{host_ip}')
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    ping_count = 10
+    logger().info("pinging to dut ip")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "ping to dut is failed..."
+    logger().info("ping to dut is successful after power save...")
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -404,9 +410,12 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
-                                                            wifi_client,
-                                                            protocol):
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, net_perf_client, wifi_sniffer,
+                                                               wifi_access_point, wifi_dut,
+                                                               wifi_client,
+                                                               protocol):
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(
@@ -417,8 +426,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
-    time.sleep(2)
-    # Connect to the AP
+
     logger().info("Connecting to the Access point")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -439,7 +447,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
     assert status == 1, "ping dut failed..."
     logger().info("ping to dut is successful...")
     # starting iperf
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
     net_perf_client.interfaces.net_perf.start()
 
     # open socket and send traffic
@@ -484,11 +492,107 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
         "set_send_feature_frame": True,
         }
     )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, net_perf_client, wifi_sniffer,
+                                                               wifi_access_point, wifi_dut,
+                                                               wifi_client,
+                                                               protocol):
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492')
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
+    # preparing wifi_dut
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger().info(f"Fetched the device ip address, {device_ip}")
+
+    result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                 RS9116PowerSaveProcedureTypes.MaxPowerSave)
+    assert result is not None, "Powersave Command Failed"
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
+        )
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
+    # preparing iperf
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f'Fetching the host ip address...{host_ip}')
+    ping_count = 10
+    logger().info("pinging to dut ip")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "ping to dut is failed..."
+    logger().info("ping to dut is successful after power save...")
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
+    # open socket and start listening
+    with wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=net_perf_client.interfaces.net_perf.protocol,
+            port=net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=net_perf_client.interfaces.net_perf.client_data_len,
+            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
+        # start iperf
+        net_perf_client.interfaces.net_perf.start()
+        # capture device output
+        wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+        tp = net_perf_client.interfaces.net_perf.process_output(result)
+        if tp is not None:
+            print_dict("## ", tp)
+        logger().info(f"Iperf data transfer completed successfully")
+
+        # validate NULL data frame with PM bit set to '1'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
+    # Disconnect the AP
+    wifi_dut.interfaces.wifi.leave()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "band": 0,
+        "set_send_feature_frame": True,
+        }
+    )
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net_perf_client, wifi_sniffer,
+                                                            wifi_access_point, wifi_dut,
                                                             wifi_client,
                                                             protocol):
     validation = True
@@ -520,10 +624,10 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
-    assert status == 1, "ping dut failed..."
-    logger().info("ping to dut is successful...")
+    assert status == 1, "ping to dut failed..."
+    logger().info("ping to dut is successful after power save...")
     # starting iperf
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
     net_perf_client.interfaces.net_perf.start()
 
     # open socket and send traffic
@@ -566,7 +670,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net_perf_client, wifi_sniffer,
+                                                            wifi_access_point, wifi_dut,
                                                             wifi_client,
                                                             protocol):
     validation = True
@@ -577,11 +682,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
     assert result_scan is not None, "No AP found"
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
-    time.sleep(2)
-    # scan the AP
-    result_scan = wifi_dut.interfaces.wifi.scan()
-    assert result_scan is not None, "No AP found"
-    # Connect to the AP
+
     result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     assert result_ap is not None, "Could not connect to the AP"
     # preparing wifi_dut
@@ -599,7 +700,12 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
     # preparing iperf
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f'Fetching the host ip address...{host_ip}')
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    ping_count = 10
+    logger().info("pinging to dut ip")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "ping to dut failed..."
+    logger().info("ping to dut is successful after power save...")
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -660,8 +766,8 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
     # scan the AP
-    result_scan = wifi_dut.interfaces.wifi.scan()
-    assert result_scan is not None, "No AP Found"
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
     # Connect to the AP
     result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     assert result_ap is not None, "Could not connect to the AP"
@@ -731,9 +837,8 @@ def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wi
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
-    # scan the AP
-    result_scan = wifi_dut.interfaces.wifi.scan()
-    assert result_scan is not None, "No AP Found"
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
     # Connect to the AP
     result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     assert result_ap is not None, "Could not connect to the AP"
@@ -804,9 +909,8 @@ def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
-    # scan the AP
-    result_scan = wifi_dut.interfaces.wifi.scan()
-    assert result_scan is not None, "No AP Found"
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
     # Connect to the AP
     result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     assert result_ap is not None, "Could not connect to the AP"
