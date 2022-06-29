@@ -2001,3 +2001,52 @@ template_contribution:
     name: clear_linkkey
     handler: bt_clear_linkkey_command
     help: clear linkkey
+
+- name: cli_command
+  priority: 0
+  value:
+    name: filter_broadcast
+    handler: rsi_wlan_filter_broadcast_handler
+    help: program broadcast packet threshold
+    argument:
+    - {type: uint16, help: beacon_drop}
+    - {type: uint8, help: bcast_in_tim}
+    - {type: uint8, help: bcast_in_tim_next_cmd}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wireless_antenna
+    handler: rsi_wireless_antenna_handler
+    help: select the antenna
+    argument:
+    - {type: uint8, help: type}
+    - {type: uint8, help: gain_2g}
+    - {type: uint8, help: gain_5g}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_per_tx
+    handler: rsi_bt_per_tx_handler
+    help: configure the per transmit parameters
+    argument:
+    - {type: uint32, help: struct_input}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_per_rx
+    handler: rsi_bt_per_rx_handler
+    help: configure the per receive parameters
+    argument:
+    - {type: uint32, help: struct_input}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_per_stats
+    handler: rsi_bt_per_stats_handler
+    help: request the local device for bt per operation
+    argument:
+    - {type: uint8, help: cmd_type}
