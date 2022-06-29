@@ -98,6 +98,10 @@ extern uint16_t g_rsi_active_scan_duration;
 extern uint16_t g_rsi_passive_scan_duration;
 // Multi probe
 extern uint8_t g_rsi_multiprobe;
+//Parameter to set Config Threshold
+extern uint8_t config_threshold;
+//Parameter to set RTS Threshold
+extern uint16_t rts_threshold;
 
 //globals for roaming api, referenced in #defines below
 extern uint32_t g_rsi_roaming_threshold;
@@ -763,3 +767,9 @@ extern uint32_t g_features_enable;
 #define RSI_WMM_PS_UAPSD_BITMAP 15
 
 #define TX_WAIT_TIME  g_tx_wait_time
+
+#define CONFIG_RTSTHRESHOLD config_threshold
+
+#define RSI_RTS_THRESHOLD rts_threshold
+
+
