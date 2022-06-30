@@ -709,7 +709,7 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
         }
-        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "");
+        measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM");
         //close socket
         if(!receive_completed)
         {
