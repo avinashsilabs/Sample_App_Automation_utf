@@ -679,11 +679,11 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
         if (checkStatus(status, "rsi_listen", socketID, 1, debug_output) == -1)
             return;
 
-        int32_t addr_size = sizeof(socketID);
         struct rsi_sockaddr_in local_address1;
+        int32_t addr_size = sizeof(local_address1);
 
         // Socket accept
-        new_socket = rsi_accept(socketID, (struct rsi_sockaddr*)&local_address1, &addr_size);
+        new_socket = rsi_accept(socketID, (struct rsi_sockaddr*)&local_address1, (rsi_socklen_t*)&addr_size);
         if (checkStatus(status, "rsi_accept", socketID, 1, debug_output) == -1)
             return;
 
