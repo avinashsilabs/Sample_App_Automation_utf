@@ -780,8 +780,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
+        - 'asus_rt_ax3000_ap'
+        - 'dlink_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -830,7 +830,7 @@ defaults:
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
-        server_ip: '172.16.0.1'
+        server_ip: '192.168.18.1'
         sniffer_validation: True
 
         # firmware path for http/https otaf
