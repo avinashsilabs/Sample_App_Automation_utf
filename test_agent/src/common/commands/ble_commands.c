@@ -623,6 +623,7 @@ void rsi_ble_add_service_command(sl_cli_command_arg_t* arguments)
     uuid_t new_uuid                       = { 0 };
     new_uuid.size      = 2;
     new_uuid.val.val16 = uuid;
+    printf("\r\n rsi_ble_add_service_command invoked \r\n");
     print_status(rsi_ble_add_service(new_uuid, &new_serv_resp));
 }
 
