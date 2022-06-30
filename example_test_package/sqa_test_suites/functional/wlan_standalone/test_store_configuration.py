@@ -266,10 +266,11 @@ def test_store_config_open_C19081(wifi_sniffer, wifi_access_point, wifi_dut):
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'],\
+            'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -537,10 +538,11 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
 
             # Validating the power management bit
             packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                             f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                             f'and wlan.sa == {dut_mac_address}'
 
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                      packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                      packet_filter1)['packet_count'],\
+                'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
             logger().info(f"Exception: {str(e)}")
             clean_up = cleanup_store_config(wifi_dut)
@@ -670,10 +672,11 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
             wifi_sniffer.interfaces.capture.stop_capture()
             # Validating the power management bit
             packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                             f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                      packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                             f'and wlan.sa == {dut_mac_address}'
 
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
+                                                                      packet_filter1)['packet_count'], \
+                'Sniffer validation failed for NULL data frame with PM bit 1'
             #wifi_dut.interfaces.wifi.inited = True
 
             logger().info(f"Disabling the radio of AP")
@@ -989,9 +992,11 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {mac_address}'
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),'Sniffer validation failed for NULL data frame with PM bit 1'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
+                                                                  packet_filter1)['packet_count'], \
+            'Sniffer validation failed for NULL data frame with PM bit 1'
         # Disable store configuration
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
 
@@ -1419,12 +1424,13 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         logger().info(f"validating power save in sniffer with filter {packet_filter1}")
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'],\
+            'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -1718,9 +1724,9 @@ def test_store_config_AWS_conn_listen_inter_C19105(wifi_sniffer, wifi_dut, wifi_
 
             # Validating the power management bit
             packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                             f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                             f'and wlan.sa == {dut_mac_address}'
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                      packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                      packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
             logger().info(f"Exception: {str(e)}")
             clean_up = cleanup_store_config(wifi_dut)
@@ -1848,10 +1854,10 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point,wifi_client
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -1986,12 +1992,12 @@ def test_wireless_config_5GHZ_C19097(wifi_sniffer, wifi_access_point,wifi_client
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         logger().info(f"validating power save in sniffer with filter {packet_filter1}")
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -2125,10 +2131,10 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point,wifi_clie
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
@@ -2255,10 +2261,10 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point,wifi_clie
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
