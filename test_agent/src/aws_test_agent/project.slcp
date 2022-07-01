@@ -609,3 +609,20 @@ template_contribution:
     help: request the local device for bt per operation
     argument:
     - {type: uint8, help: cmd_type}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_config_enable
+    handler: rsi_set_auto_config
+    help: sets the auto configuration
+    argument:
+    - {type: uint8, help: config_enable parameter}
+    - {type: uint32, help: profile_type parameter}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: set_config_save
+    handler: rsi_set_config_save
+    help: saves the configuration
