@@ -1,0 +1,22 @@
+root_path: tests
+test_sequence:
+  - test_case_id: test_ble_gatt_client_master
+    labels:
+      - ble
+    test_id: test_ble_gatt_client_master::1
+    test_module: test_cases/test_ble.py
+    test_function: test_ble_gatt_client_master
+    test_markers:
+      - pytest.mark.firmware_app("test_multi_gatt_conn")
+      - pytest.mark.wiseconnect_duts(["rs9116_sapi", "efr32_4180b"])
+      - pytest.mark.dut("rs9116_sapi")
+      - pytest.mark.wifi_access_point("raspi_wifi")
+      - |
+        pytest.mark.config(
+              "wifi_dut",
+              wifi={
+                  "oper_mode": 0,
+                  "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+              },
+          )
+    library_name: Wi-Fi UTF Integration Test Library
