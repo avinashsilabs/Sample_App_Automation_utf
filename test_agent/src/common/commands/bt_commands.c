@@ -1568,7 +1568,7 @@ void rsi_bt_get_services_command(sl_cli_command_arg_t *arguments){
     int32_t status = rsi_bt_get_services_async((uint8_t *)remote_bond_dev_addr, &bt_resp_query_services);
     print_status(status);
 }
-void rsi_bt_per_tx_handler(sl_cli_command_arg_t *arguments){
+void rsi_bt_per_tx_command(sl_cli_command_arg_t *arguments){
 
 rsi_bt_tx_per_params_t bt_per_tx;
 
@@ -1612,7 +1612,7 @@ int32_t status = rsi_bt_per_tx((uint32_t *)&bt_per_tx);
 print_status(status);
 }
 
-void rsi_bt_per_rx_handler(sl_cli_command_arg_t *arguments){
+void rsi_bt_per_rx_command(sl_cli_command_arg_t *arguments){
 
 rsi_bt_rx_per_params_t bt_per_rx;
 
@@ -1648,7 +1648,7 @@ int32_t status = rsi_bt_per_rx((uint32_t *)&bt_per_rx);
 print_status(status);
 }
 
-void rsi_bt_per_stats_handler(sl_cli_command_arg_t *arguments){
+void rsi_bt_per_stats_command(sl_cli_command_arg_t *arguments){
 
   uint8_t cmd_type = sl_cli_get_argument_uint8(arguments, 0);
   rsi_bt_per_stats_t temp;

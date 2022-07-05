@@ -2188,7 +2188,7 @@ template_contribution:
   priority: 0
   value:
     name: filter_broadcast
-    handler: rsi_wlan_filter_broadcast_handler
+    handler: rsi_wlan_filter_broadcast_command
     help: program broadcast packet threshold
     argument:
     - {type: uint16, help: beacon_drop}
@@ -2199,7 +2199,7 @@ template_contribution:
   priority: 0
   value:
     name: wireless_antenna
-    handler: rsi_wireless_antenna_handler
+    handler: rsi_wireless_antenna_command
     help: select the antenna
     argument:
     - {type: uint8, help: type}
@@ -2210,7 +2210,7 @@ template_contribution:
   priority: 0
   value:
     name: bt_per_tx
-    handler: rsi_bt_per_tx_handler
+    handler: rsi_bt_per_tx_command
     help: configure the per transmit parameters
     argument:
     - {type: uint32, help: struct_input}
@@ -2219,7 +2219,7 @@ template_contribution:
   priority: 0
   value:
     name: bt_per_rx
-    handler: rsi_bt_per_rx_handler
+    handler: rsi_bt_per_rx_command
     help: configure the per receive parameters
     argument:
     - {type: uint32, help: struct_input}
@@ -2228,7 +2228,7 @@ template_contribution:
   priority: 0
   value:
     name: bt_per_stats
-    handler: rsi_bt_per_stats_handler
+    handler: rsi_bt_per_stats_command
     help: request the local device for bt per operation
     argument:
     - {type: uint8, help: cmd_type}

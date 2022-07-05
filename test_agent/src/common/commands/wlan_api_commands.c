@@ -1055,7 +1055,7 @@ void rsi_cfg_get_command()
 	}
 	free(cfg_get);
 }
-void rsi_wlan_filter_broadcast_handler(sl_cli_command_arg_t* arguments)
+void rsi_wlan_filter_broadcast_command(sl_cli_command_arg_t* arguments)
 {
    uint16_t beacon_drop_threshold = sl_cli_get_argument_uint16(arguments, 0);
    uint8_t filter_bcast_in_tim  = sl_cli_get_argument_uint8(arguments, 1);
@@ -1064,7 +1064,7 @@ void rsi_wlan_filter_broadcast_handler(sl_cli_command_arg_t* arguments)
    print_status(status);
 
 }
-void rsi_wireless_antenna_handler(sl_cli_command_arg_t* arguments)
+void rsi_wireless_antenna_command(sl_cli_command_arg_t* arguments)
 {
    uint8_t type = sl_cli_get_argument_uint8(arguments, 0);
    uint8_t gain_2g  = sl_cli_get_argument_uint8(arguments, 1);
@@ -1072,7 +1072,7 @@ void rsi_wireless_antenna_handler(sl_cli_command_arg_t* arguments)
    int32_t status = rsi_wireless_antenna(type, gain_2g, gain_5g);
    print_status(status);
 }
-void rsi_set_rts_handler(sl_cli_command_arg_t* arguments)
+void rsi_set_rts_command(sl_cli_command_arg_t* arguments)
 {
     config_threshold = sl_cli_get_argument_uint8(arguments, 0);
     rts_threshold = sl_cli_get_argument_uint16(arguments, 1);
