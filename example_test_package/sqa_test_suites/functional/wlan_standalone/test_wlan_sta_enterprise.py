@@ -5,7 +5,8 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes
                             RS9116TCPIPFeatureBitMap,
                             RS9116ExtCustomFeatureBitMap,
                             RS9116ExtTCPIPFeatureBitMap,
-                            RS9116CertificateType, RS9116SecurityMode, RS9116PowerSaveProcedureTypes
+                            RS9116CertificateType,
+                            RS9116SecurityMode, RS9116PowerSaveProcedureTypes,RS9116JoinFeatureBitMap
                             )
 from utf.interfaces import wifi
 from utf.utils.logger import get_logger
@@ -30,12 +31,13 @@ setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
-        4. Access Point(Third Party AP's)
-        5. Radio Server (For now running on NUC)
+        4. Access Point(Third Party AP's) -ASUS
+        5. Sniffer -NUC 
+        6. Free Radius Server (For now running on NUC)
 Step1: 1. Configuration of DUT in 2G mode
-Step2 : Verifying EAP Connection in TTLS mode
-Step3: Verifying EAP Connection in PEAPv0 mode
-Step4 : Verifying EAP Connection in TLS mode
+Step2 : Verifying EAP Connection in TLS mode
+Step3 : Verifying EAP Connection in TTLS mode
+Step4: Verifying EAP Connection in PEAPv0 mode
 Step5 : Verifying EAP Connection by loading wrong certificate in TLS mode
 Step6 : Verifying EAP Connection by loading no certificate in TLS mode
 Step7 : Verifying EAP Connection by setting expired date in TLS mode
@@ -47,7 +49,7 @@ Author: swathi.pathuri
 class sniffer_validation_process:
 
     def __init__(self, wifi_sniffer = None, wifi_dut = None, wifi_access_point = None, dut_mac_address=None ,\
-                 ap_bssid = None, conn_status = True):
+                 ap_bssid = None, conn_status = True, eap_type = "TLS"):
 
         self.wifi_sniffer = wifi_sniffer
         self.wifi_dut = wifi_dut
@@ -55,13 +57,14 @@ class sniffer_validation_process:
         self.dut_mac_address = dut_mac_address
         self.ap_bssid = ap_bssid
         self.conn_status = conn_status
+        self.eap_type = eap_type
 
     def verify_sniffer_validation(self):
 
         validation = True
 
 
-        beacon_filter = f"(wlan.fc.type_subtype == 0x0008) and (wlan.sa == {self.ap_bssid} && wlan.da == ff:ff:ff:ff:ff:ff)"
+        beacon_filter = f"(wlan.fc.type_subtype == 0x0008) and wlan.rsn.akms.type == 1 and (wlan.sa == {self.ap_bssid} && wlan.da == ff:ff:ff:ff:ff:ff)"
 
         packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {self.dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
 
@@ -79,9 +82,6 @@ class sniffer_validation_process:
 
         # Validating the de auth frames
         packet_filter7 = f'wlan.addr == {self.dut_mac_address} and wlan.fc.type_subtype == 0x000c'
-
-        # Validating the EAP failure frames
-        packet_filter8 = f'wlan.sa == {self.ap_bssid} and wlan.da == {self.dut_mac_address} and eap.code == 4'
 
 
         logger().info(
@@ -108,16 +108,41 @@ class sniffer_validation_process:
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find association, eapol sent from AP in sniffer '
 
+
         if not self.conn_status:
+
+            # Validating the EAP failure frames
+            packet_filter9 = f'wlan.sa == {self.ap_bssid} and wlan.da == {self.dut_mac_address} and eap.code == 4'
 
             logger().info(
                 f"Validating EAP failure frame in sniffer"
             )
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8)[
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)[
                 'packet_count'], 'Unable to find EAP faliure frames sent from AP in sniffer '
 
 
         if self.conn_status:
+
+            if self.eap_type == "TLS":
+
+                # Validating the EAP failure frames
+                packet_filter8 = f'wlan.addr == {self.ap_bssid} and wlan.addr == {self.dut_mac_address} and eap.type == 13'
+
+            if self.eap_type == "TTLS":
+                # Validating the EAP failure frames
+                packet_filter8 = f'wlan.addr == {self.ap_bssid} and wlan.addr == {self.dut_mac_address} and eap.type == 21'
+
+            if self.eap_type == "PEAP":
+                # Validating the EAP failure frames
+                packet_filter8 = f'wlan.addr == {self.ap_bssid} and wlan.addr == {self.dut_mac_address} and eap.type == 25'
+
+
+
+            logger().info(
+                f"Validating EAP frames in sniffer"
+            )
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8)[
+                'packet_count'], 'Unable to find EAP frames sent from AP in sniffer '
 
             logger().info(f"Validating QOS  NULL data frames with power management bit")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -161,7 +186,7 @@ class sniffer_validation_process:
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_in_WPA2_EAP_TLS_C19018(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_C19018"
     validation = True
@@ -265,7 +290,7 @@ def test_connectivity_in_WPA2_EAP_TLS_C19018(wifi_sniffer, wifi_dut, wifi_access
  #EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_connectivity_in_WPA2_EAP_TTLS_C19019"
     validation = True
@@ -334,7 +359,7 @@ def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_acces
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    verify_sniffer = sniffer_validation_process(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
+    verify_sniffer = sniffer_validation_process(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid, eap_type="TTLS")
     verify_sniffer.verify_sniffer_validation()
 
 
@@ -365,7 +390,7 @@ def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_acces
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_connectivity_in_WPA2_EAP_PEAPv0_C19020"
     validation = True
@@ -434,7 +459,7 @@ def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_acc
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    verify_sniffer = sniffer_validation_process(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
+    verify_sniffer = sniffer_validation_process(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid, eap_type="PEAP")
     verify_sniffer.verify_sniffer_validation()
 
 
@@ -466,7 +491,7 @@ def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_acc
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022"
     validation = True
@@ -547,7 +572,7 @@ def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022(wifi_sniffer, wifi_dut
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 # EAP Connection in TTS mode with no certificate
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023"
     validation = True
@@ -630,7 +655,7 @@ def test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023(wifi_sniffer, w
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 # EAP Connection in TTS mode with no certificate
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_with_WPA2_EAP_with_valid_and_expired_cert_TLS_C19025(wifi_sniffer, wifi_dut, wifi_access_point):
 
     ap_user_name = "\\\"user1\\\""
@@ -764,7 +789,7 @@ def test_connectivity_with_WPA2_EAP_with_valid_and_expired_cert_TLS_C19025(wifi_
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024"
     validation = True
@@ -814,3 +839,225 @@ def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_
     verify_sniffer = sniffer_validation_process(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid,
                                                 conn_status=False)
     verify_sniffer.verify_sniffer_validation()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.TLS_V1,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+ #EAP Connection in TLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+def test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027(wifi_sniffer, wifi_access_point, wifi_dut):
+    testcase = "test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    ap_user_name = "\\\"user1\\\""
+    ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+    dut_ssid = wifi_access_point.interfaces.wifi.ssid
+    dut_security = wifi_access_point.interfaces.wifi.security
+
+    logger().info("Setting roam parameters")
+    # enable Roaming
+    wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=60, roaming_hysterisis=4)
+
+    logger().info("scanning for AP")
+    # test_scan
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+    logger().info(scan_results)
+
+    logger().info("enable rejoin")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    # test_wifi_join
+    wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+    result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+    # Get IP through DHCP
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f"Found device ip :{device_ip}")
+
+    logger().info("Getting the DUT mac")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP bssid {ap_bssid}")
+
+    logger().info("Initiating powersave")
+    # Initiating power save
+    # This API Enables the wifi power save mode in DUT
+
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # # Enables the bt power save in DUT
+
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    time.sleep(2)
+
+    logger().info("Initiating ping")
+    # Initiate ping from third party wifi-client to DUT
+    status = ping(device_ip, ping_count)
+    assert status == True, "DUT is not responding to ping request from third party device before store configuration"
+    logger().info("ping is successful")
+
+    logger().info("Initiating disconnect from DUT")
+    # Wlan Disconnect
+    wifi_dut.interfaces.wifi.leave()
+    time.sleep(10)
+
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    verify_sniffer = sniffer_validation_process(wifi_sniffer,wifi_dut,wifi_access_point, dut_mac_address, ap_bssid)
+    verify_sniffer.verify_sniffer_validation()
+
+    # Validating the EAP failure frames
+    packet_filter9 = f'eap || tls.record.version == 0x0301'
+
+    logger().info(
+        f"Validating EAP frames TLS version in sniffer"
+    )
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)[
+        'packet_count'], 'Unable to find EAP frames with TLS version 0 sent'
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode
+        | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+ #EAP Connection in TLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', \
+                          'protected_management_frame': 'Capable'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+def test_connectivity_in_WPA2_EAP_TLS_PMF_C19026(wifi_sniffer, wifi_access_point, wifi_dut):
+    testcase = "test_connectivity_in_WPA2_EAP_TLS_PMF_C19026"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    ap_user_name = "\\\"user1\\\""
+    ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+    dut_ssid = wifi_access_point.interfaces.wifi.ssid
+    dut_security = wifi_access_point.interfaces.wifi.security
+
+    logger().info("Setting roam parameters")
+    # enable Roaming
+    wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=60, roaming_hysterisis=4)
+
+    logger().info("scanning for AP")
+    # test_scan
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+    logger().info(scan_results)
+
+    logger().info("enable rejoin")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    # test_wifi_join
+    wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+    result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password,\
+                                                  join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable)
+    # Get IP through DHCP
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info(f"Found device ip :{device_ip}")
+
+    logger().info("Getting the DUT mac")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP bssid {ap_bssid}")
+
+    logger().info("Initiating powersave")
+    # Initiating power save
+    # This API Enables the wifi power save mode in DUT
+
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # # Enables the bt power save in DUT
+
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    time.sleep(2)
+
+    logger().info("Initiating ping")
+    # Initiate ping from third party wifi-client to DUT
+    status = ping(device_ip, ping_count)
+    assert status == True, "DUT is not responding to ping request from third party device before store configuration"
+    logger().info("ping is successful")
+
+    logger().info("Initiating disconnect from DUT")
+    # Wlan Disconnect
+    wifi_dut.interfaces.wifi.leave()
+    time.sleep(10)
+
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    verify_sniffer = sniffer_validation_process(wifi_sniffer,wifi_dut,wifi_access_point, dut_mac_address, ap_bssid)
+    verify_sniffer.verify_sniffer_validation()
+
+    # Validating the assoc req frames with pmf bit
+    packet_filter9 = f'(wlan.fc.type_subtype == 0) && (wlan.rsn.capabilities.mfpc == 1) and wlan.addr == {dut_mac_address}'
+
+    logger().info(
+        f"Validating the assoc req frames with pmf bit in sniffer"
+    )
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)[
+        'packet_count'], 'Unable to find assoc req frames with pmf bit'
+
