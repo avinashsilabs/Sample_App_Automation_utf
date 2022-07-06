@@ -1,4 +1,4 @@
-root_path: tests
+root_path: integration_test/tests
 test_sequence:
   - test_case_id: test_ble_gatt_client_master
     labels:
