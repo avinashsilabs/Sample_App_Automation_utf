@@ -107,16 +107,16 @@ pipeline {
                                             rd /s /q reports
 
                                             call venv\\scripts\\activate
-                                            copy utf_core\\unit_tests\\.coveragerc tests\\.coveragerc
+                                            copy utf_core\\unit_tests\\.coveragerc integration_test\\tests\\.coveragerc
                                             pushd executor
 
                                             if "%TEST_CONFIG_FILE%"=="" (
                                                 set TEST_CONFIG_FILE=integration_test_config.yaml
                                             )
 
-                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig tests/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml tests"
+                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/tests/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
                                             if "%ENABLE_COVERAGE%"=="true" (
-                                               set "PYTEST_COMMAND=coverage run --branch --rcfile=tests/.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
+                                               set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test\\tests\.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
                                             )
 
                                             call launch_utf_tests.bat --harness integration_test --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%" --docker_flags "-e COVERAGE_FILE=/app/reports/.coverage.integration"
