@@ -116,7 +116,7 @@ pipeline {
 
                                             set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/tests/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
                                             if "%ENABLE_COVERAGE%"=="true" (
-                                               set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test\\tests\.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
+                                               set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test/tests/.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
                                             )
 
                                             call launch_utf_tests.bat --harness integration_test --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%" --docker_flags "-e COVERAGE_FILE=/app/reports/.coverage.integration"
