@@ -1113,8 +1113,12 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
-                                             "matched "
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
     packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
     logger.info(f"Packet loss {packet_loss}")
     assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
@@ -1246,8 +1250,13 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remot
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
-                                             "matched "
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
+
     packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
     logger.info(f"Packet loss {packet_loss}")
     assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
@@ -1378,8 +1387,12 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remot
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
-                                             "matched "
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
     packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
     logger.info(f"Packet loss {packet_loss}")
     assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
@@ -1509,8 +1522,12 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
-                                             "matched "
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
     packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
     logger.info(f"Packet loss {packet_loss}")
     assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
@@ -1641,8 +1658,12 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(wifi_sniffer, remo
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
     bytes_received = int(result.split(b":")[1])
     logger.info(f"bytes received on socket {sock} -> {bytes_received}")
-    assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
-                                             "matched "
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
     packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
     logger.info(f"Packet loss {packet_loss}")
     assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
