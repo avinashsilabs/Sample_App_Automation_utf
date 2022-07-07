@@ -121,14 +121,19 @@ pipeline {
 
                                             call launch_utf_tests.bat --harness integration_test --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%" --docker_flags "-e COVERAGE_FILE=/app/reports/.coverage.integration"
                                             set exitcode=%ERRORLEVEL%
+                                            echo "tests completed"
 
                                             if "%ENABLE_COVERAGE%"=="true" (
+                                                echo "coverage block start"
                                                 copy reports\\.coverage.integration .
+                                                echo "coverage block start"
                                             )
-
+                                            echo "before ssh"
                                             ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
                                             :: wait a bit for reboot, otherwise next job may fail
+                                            echo "after ssh"
                                             ping -n 15 %UTF_DOCKER_TARGET%
+                                            echo "after ping
                                             exit /b %exitcode%
                                         """)
                                         dir('integration_test/tests') {
