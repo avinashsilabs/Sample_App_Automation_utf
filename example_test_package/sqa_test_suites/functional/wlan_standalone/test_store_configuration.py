@@ -1105,7 +1105,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
         #Validating Prob Request
         packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
         time.sleep(120)
-        wifi_dut.interfaces.wifi.associated = False
+        wifi_dut.interfaces.wifi.associated = True
 
         logger().info("stopping the capture")
         #Stop Sniffer
@@ -1134,9 +1134,10 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 
         for i in range(0, len(diff_seq_list)):
             time_diff = probe_packets_time_delta_list[i]
-            logger().info(f"time diff between packets {float(time_diff)}")
+            logger().info(f"time diff between packets {int(float(time_diff))}")
             logger().info(f"diff between seq numbers {diff_seq_list[i]}")
-            is_between = int(float(time_diff)) in range((time_delta * diff_seq_list[i]),((time_delta * diff_seq_list[i]) + 1))
+            logger().info(f"min : {int(time_delta) * diff_seq_list[i]} and max : {(int(time_delta+0.5 * diff_seq_list[i]) + 1)}")
+            is_between = int(float(time_diff)) in range((int(time_delta) * diff_seq_list[i]),(int(time_delta+0.5 * diff_seq_list[i]) + 1))
             if is_between is False:
                 logger().info(is_between)
                 status = is_between
@@ -1148,7 +1149,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 
         logger().info("Initiating disconnect from DUT")
         # Wlan Disconnect
-        wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+        wifi_dut.interfaces.wifi.leave()
 
         logger().info("Disabling auto configuration")
         # Enables the store configuration
