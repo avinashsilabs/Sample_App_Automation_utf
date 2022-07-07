@@ -1004,10 +1004,15 @@ void rsi_set_socket_option(sl_cli_command_arg_t* arguments)
 
 void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
 {
+    uint32_t server_ip = 0;
+    struct rsi_sockaddr_in server_addr;
 	int32_t socketID = sl_cli_get_argument_uint32(arguments, 0);
 	int32_t data_len = sl_cli_get_argument_uint32(arguments, 1);
 	int32_t no_of_pkts = sl_cli_get_argument_uint32(arguments, 2);
 	int32_t ttl_sec = sl_cli_get_argument_uint32(arguments, 3);
+	char* server_ip_str = sl_cli_get_argument_string(arguments, 4);
+	uint32_t server_port = sl_cli_get_argument_uint32(arguments, 5);
+
 	int32_t status = 0;
     uint32_t count = 0;
     int32_t tt_start = 0, tt_end = 0;
@@ -1015,6 +1020,14 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
 
     if (data_len == 0) {
     	data_len = 1460;
+    }
+    if(server_port)
+    {
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_ip = ip_to_reverse_hex(server_ip_str);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(server_port);
+    server_addr.sin_addr.s_addr = server_ip;
     }
 
     int8_t* buffer = malloc(data_len);
@@ -1033,7 +1046,19 @@ void rsi_send_data_config_pkts(sl_cli_command_arg_t* arguments)
         {
         break;
         }
+        if(server_port)
+        {
+            status = rsi_sendto(socketID,
+                        buffer,
+                        data_len,
+                        0,
+                        (struct rsi_sockaddr *)&server_addr,
+                        sizeof(server_addr));
+        }
+        else
+        {
     	status = rsi_send(socketID, buffer, data_len, 0);
+    	}
     	if(status < 0)
     	{
     	    status = rsi_wlan_get_status();
