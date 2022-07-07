@@ -1657,7 +1657,7 @@ def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, c
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.firmware_app("test_concurrent_mode")
+@pytest.mark.firmware_app("test_ap_ht_caps")
 def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
