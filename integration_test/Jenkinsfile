@@ -131,7 +131,7 @@ pipeline {
                                             ping -n 15 %UTF_DOCKER_TARGET%
                                             exit /b %exitcode%
                                         """)
-                                        dir('tests') {
+                                        dir('integration_test/tests') {
                                             archiveArtifacts artifacts: "integration_test_config.yaml"
                                         }
                                         script {

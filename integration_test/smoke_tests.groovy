@@ -72,7 +72,7 @@ pipeline {
                                     ping -n 15 %UTF_DOCKER_TARGET%
                                     exit /b %exitcode%
                                 """)
-                                dir('tests') {
+                                dir('integration_test/tests') {
                                     archiveArtifacts artifacts: "smoke_test_suite.yaml"
                                 }
                                 archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
