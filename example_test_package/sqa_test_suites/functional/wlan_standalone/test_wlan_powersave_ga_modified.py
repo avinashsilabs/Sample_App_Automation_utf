@@ -1102,8 +1102,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
         if protocol == "TCP":
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
         else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
-                                                                 server_ip="192.168.50.81", server_port=5001)
+                                                                 server_ip=server_ip, server_port=server_port)
     tx_time = t.duration
     logger.info(f"Number of bytes sent by dut {bytes_sent}")
     delta_time = 5
@@ -1239,8 +1241,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remot
         if protocol == "TCP":
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
         else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
-                                                                 server_ip="192.168.50.81", server_port=5001)
+                                                                 server_ip=server_ip, server_port=server_port)
     tx_time = t.duration
     logger.info(f"Number of bytes sent by dut {bytes_sent}")
     delta_time = 5
@@ -1376,8 +1380,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remot
         if protocol == "TCP":
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
         else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
-                                                                 server_ip="192.168.50.81", server_port=5001)
+                                                                 server_ip=server_ip, server_port=server_port)
     tx_time = t.duration
     logger.info(f"Number of bytes sent by dut {bytes_sent}")
     delta_time = 5
@@ -1511,8 +1517,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
         if protocol == "TCP":
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
         else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
-                                                                 server_ip="192.168.50.81", server_port=5001)
+                                                                 server_ip=server_ip, server_port=server_port)
     tx_time = t.duration
     logger.info(f"Number of bytes sent by dut {bytes_sent}")
     delta_time = 5
@@ -1647,8 +1655,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(wifi_sniffer, remo
         if protocol == "TCP":
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
         else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
-                                                                 server_ip="192.168.50.81", server_port=5001)
+                                                                 server_ip=server_ip, server_port=server_port)
     tx_time = t.duration
     logger.info(f"Number of bytes sent by dut {bytes_sent}")
     delta_time = 5
