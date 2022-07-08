@@ -400,7 +400,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.129'  #configure secondary Rpi rd_2 IP address
+                ip_address: '10.207.18.138'  #configure secondary Rpi rd_2 IP address
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
