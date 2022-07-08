@@ -649,3 +649,63 @@ def test_https_get_with_wrong_certificate_C19211(http_server, wifi_sniffer, http
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Sniffer validation for power save packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ca_cert": "ca-chain.cert.pem"
+        }
+    )
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_https_post_functionality_for_5_iterations_C19225(http_server, wifi_dut, http_client, wifi_access_point):
+    for count in range(0, iter_count):
+        logger().info(f"******************* iteration {count}  ********************* ")
+        logger().info("Initiates scan in dut")
+        scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
+        assert scan_result, "scan failure,no ap found"
+
+        logger().info("Joining access point")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        logger().info("starts the dhcp in dut")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+        logger().info("Enables the wifi power save in dut")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "failed to enable wifi power save "
+
+        logger().info("Enables the bt power save in dut")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+        assert enable_bt_ps, "failed to enable bt power save"
+        logger().info(f'DUT ip {device_ip}')
+        logger().info("pinging to dut.....")
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        logger().info("sends data to http server using post method")
+        status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                                             post_data="hellotestingfrohttppostcontent")
+        assert status, "failed to post data"
+        logger().info(status)
+
+        logger().info("disconnecting ap")
+        wifi_dut.interfaces.wifi.leave()
+    logger().info(content)
+    logger().info(f"******************* iteration {count} completed ********************* ")
