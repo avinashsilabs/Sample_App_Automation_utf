@@ -451,7 +451,7 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="skipped as it is removed from test rail")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -535,7 +535,7 @@ def test_http_otaf_ap_11g_mode(http_server, wifi_dut, wifi_access_point):
     logger().info("fetching dut version after init....")
     wifi_dut.interfaces.wifi.version()
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="skipped as it is removed from test rail")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -711,7 +711,7 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="skipped as it is removed from test rail")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
