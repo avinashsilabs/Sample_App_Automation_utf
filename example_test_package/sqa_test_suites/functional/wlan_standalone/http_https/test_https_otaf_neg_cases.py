@@ -203,6 +203,7 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
     # API does soft reset on DUT
+    time.sleep(5)
     logger().info("resetting DUT....")
     wifi_dut.interfaces.wifi.wireless_deinit()
     time.sleep(10)
