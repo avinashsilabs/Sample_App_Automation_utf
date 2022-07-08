@@ -115,7 +115,7 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
     iteration = 0
     while sw.elapsed_sec < test_run_time:
         iteration = iteration + 1
-        logger.info(f"#####################################################Iteration count -> {iteration}")
+        logger().info(f"#####################################################Iteration count -> {iteration}")
         validation = True
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
