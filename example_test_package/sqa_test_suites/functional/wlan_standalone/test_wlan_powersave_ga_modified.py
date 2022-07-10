@@ -62,9 +62,13 @@ class tx_rx:
 
     def receive_data_socket(self, remote_socket, logger, no_of_pkts, data_size, proto_type=0):
         fail_count = 0
+        if proto_type == 0:
+            remote_socket.interfaces.socket.set_recv_timeout(socket_type=0)
+        else:
+            remote_socket.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
         for count in range(0, no_of_pkts):
             if proto_type == 0:
-                data = remote_socket.interfaces.socket.recv_data_tcp(data_size, timeout=20)
+                data = remote_socket.interfaces.socket.recv_data_tcp(data_size)
             else:
                 data, address = remote_socket.interfaces.socket.recv_data_udp(data_size)
             if not isinstance(data, str):
@@ -104,8 +108,8 @@ class tx_rx:
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [1800])
 def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_dut, wifi_access_point, wifi_sniffer,
@@ -131,7 +135,7 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         result = wifi_dut.interfaces.wifi.start_ip()
         assert isinstance(
             result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
+        ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         logger().info(f"*****Enable Power save in DUT******")
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -177,8 +181,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -208,7 +212,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode1, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -264,8 +268,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
@@ -302,7 +306,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
@@ -321,7 +325,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
         net_perf_client.interfaces.net_perf.server_port,
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
-        )
+    )
     tp = net_perf_client.interfaces.net_perf.process_output()
     if tp is not None:
         print_dict("## ", tp)
@@ -353,8 +357,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -389,7 +393,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -450,8 +454,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
@@ -486,7 +490,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
@@ -504,7 +508,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
         net_perf_client.interfaces.net_perf.server_port,
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
-        )
+    )
     # get and print throughput
     tp = net_perf_client.interfaces.net_perf.process_output()
     if tp is not None:
@@ -537,8 +541,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -570,7 +574,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -631,8 +635,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
@@ -668,14 +672,15 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
     assert status == 1, "ping to dut failed..."
     logger().info("ping to dut is successful after power save...")
     # starting iperf
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
     net_perf_client.interfaces.net_perf.start()
 
     # open socket and send traffic
@@ -685,7 +690,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
         net_perf_client.interfaces.net_perf.server_port,
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
-        )
+    )
     logger().info("validate NULL data frame with PM bit set to 1")
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {bssid}))'
@@ -712,8 +717,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
@@ -742,7 +747,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -803,8 +808,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
@@ -875,8 +880,8 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
@@ -946,8 +951,8 @@ def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer):
@@ -1018,8 +1023,8 @@ def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
 @pytest.mark.config('wifi_access_point',
@@ -1052,7 +1057,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode1, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {bssid}')
     # The below api parses DUTs IP address
@@ -1155,8 +1160,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.end_state("wifi_dut",
@@ -1191,7 +1196,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remot
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {bssid}')
     # The below api parses DUTs IP address
@@ -1295,8 +1300,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remot
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
@@ -1330,7 +1335,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remot
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {bssid}')
     # The below api parses DUTs IP address
@@ -1433,8 +1438,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remot
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
 @pytest.mark.config('wifi_access_point',
@@ -1467,7 +1472,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {bssid}')
     # The below api parses DUTs IP address
@@ -1570,8 +1575,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
@@ -1605,7 +1610,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(wifi_sniffer, remo
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {bssid}')
     # The below api parses DUTs IP address
