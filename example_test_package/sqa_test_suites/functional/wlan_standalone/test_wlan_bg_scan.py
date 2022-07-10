@@ -2,6 +2,8 @@ import re
 import time
 
 import pytest as pytest
+
+from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
@@ -841,8 +843,10 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
 
-    # Validating 11n capabilities
-    packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) && (wlan.sa == {dut_mac_address})) && (wlan.tag.number == 45)'
+    # Validating probe request broadcast packet
+    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+                     f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+                     f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -866,7 +870,7 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
-        'Unable to find any HT capabilities'
+        'Unable to find any broadcast probe request packets'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -916,7 +920,6 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     send_bytes = 1000
     validation = True
 
-
     '''Verify BG Scan response when enable DFS channels'''
     wifi_access_point.interfaces.wifi.config['channel'] = channel_list
     wifi_access_point.interfaces.wifi.config['region'] = 'US'
@@ -941,8 +944,11 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
-    # Validating HT capabilities
-    packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) and (wlan.sa == {dut_mac_address})) and (wlan.tag.number == 45)'
+
+    # Validating probe request broadcast packet
+    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+                     f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+                     f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -966,7 +972,7 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
-        'Unable to find HT capabilities packet'
+        'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -1046,9 +1052,10 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
         )
 
-        # Validating HT capabilities
-        packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) and (wlan.sa == {dut_mac_address})) and ' \
-                         f'(wlan.tag.number == 45)'
+        # Validating probe request broadcast packet
+        packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+                         f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
+                         f'and wlan.da == ff:ff:ff:ff:ff:ff'
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
         time.sleep(2)
@@ -1071,7 +1078,7 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.leave()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-            'Unable to find the HT capabilities packet in DUT side'
+            'Unable to find the probe request broadcast packets from DUT side'
 
 
 @pytest.mark.dut("rs9116")
