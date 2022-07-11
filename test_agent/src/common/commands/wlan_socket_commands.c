@@ -1318,6 +1318,18 @@ void rsi_sntp_client_create_response_handler(uint16_t status, const uint8_t cmd_
 }
 
 
+
+/* Function to get no of set bits in binary
+representation of positive integer n */
+unsigned int countSetBits(unsigned int number)
+{
+    unsigned int count = 0;
+    while (number) {
+        count += number & 1;
+        number >>= 1;
+    }
+    return count;
+}
 void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 {
 	int32_t sock_list = sl_cli_get_argument_int32(arguments, 0);
@@ -1333,18 +1345,8 @@ void send_data_on_multiple_sockets(sl_cli_command_arg_t *arguments)
 	uint8_t flag = 0;
     rsi_rsp_sockets_info_t socket_info;
 
-    status = rsi_wlan_get(RSI_SOCKETS_INFO, (uint8_t *)&socket_info, (uint16_t)sizeof(rsi_rsp_sockets_info_t));
-	if(!status)
-	{
-		max_sock = rsi_bytes2R_to_uint16(&(socket_info.num_open_socks[0]));
-	}
-	else
-	{
-	    print_status(status);
-	    return;
-	}
-
-	if (data_len == 0) {
+    max_sock = countSetBits(sock_list);
+    if (data_len == 0) {
 		data_len = 1460;
 	}
 
