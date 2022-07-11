@@ -12,6 +12,10 @@ if [ ! -f venv/bin/activate ]; then
 fi
 
 . ./venv/bin/activate
+
+echo "upgrading pip"
+python -m pip install --upgrade pip
+
 echo "installing wheel"
 pip3 install wheel pyyaml
 
