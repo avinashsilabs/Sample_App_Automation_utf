@@ -714,7 +714,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 10)
-    assert status == 1
+    assert status
 
     # Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -782,6 +782,7 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     assoc_obj = FilterPacket()
     ps_packet_exchange_obj = FilterPacket()
+    ping_count = 20
 
     '''Configure the AP DTIM count=3 and validate when DTIM count reach 0 DUT should wake up and send PS poll & data
     packet, second validation is check Qos data will send again after Ps-Poll if More data bit is set to 1'''
@@ -806,8 +807,8 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 20)
-    assert status == 1
+    status = ping(device_ip, ping_count)
+    assert status
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -908,7 +909,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 50)
-    assert status == 1
+    assert status
 
     #  DUT Assoc ID from Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -1026,7 +1027,7 @@ def test_max_psp_lp_mode_c40152(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 30)
-    assert status == 1
+    assert status
 
     # broadcast probe requests from DUT
     packet_filter4 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
@@ -1134,7 +1135,7 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 10)
-    assert status == 1
+    assert status
 
     logger().info('\n\n Time sleep ! Wait for 60 seconds......')
     time.sleep(60)
@@ -1234,7 +1235,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 10)
-    assert status == 1
+    assert status
 
     # Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -1294,6 +1295,7 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
     ps_packet_exchange_obj = FilterPacket()
     assoc_obj = FilterPacket()
+    ping_count = 20
 
     '''Verify whether RSI_STA is wake up and receive data at DTIM beacon when enable power save2 & MAX PSP mode'''
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=0, monitor_interval=50,
@@ -1322,8 +1324,8 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 20)
-    assert status == 1
+    status = ping(device_ip, ping_count)
+    assert status
 
     # Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -1423,7 +1425,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 50)
-    assert status == 1
+    assert status
 
     # broadcast probe requests from DUT
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
@@ -1495,6 +1497,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    ping_count = 20
 
     '''Verify the power save mode2 functionality enable and disable while doing data transfer for overnight'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
@@ -1536,8 +1539,8 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
             )
 
             # Initiate ping from third party wifi-client to DUT
-            status = ping(device_ip, 20)
-            assert status == 1
+            status = ping(device_ip, ping_count)
+            assert status
 
             logger().info(f"*****Disable Max PSP in DUT******")
             wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled,
@@ -1547,8 +1550,8 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
             )
             time.sleep(2)
 
-            status = ping(device_ip, 20)
-            assert status == 1
+            status = ping(device_ip, ping_count)
+            assert status
     except():
         assert False, "Power save enable disable failure"
     finally:
@@ -1584,6 +1587,7 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
 )
 def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    ping_count = 20
 
     '''Verify RSI_STA is going to power save or not when enable power save mode3 with LP mode and MAX PSP'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '2'
@@ -1618,8 +1622,8 @@ def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
     time.sleep(30)
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 20)
-    assert status == 1
+    status = ping(device_ip, ping_count)
+    assert status
 
     wifi_sniffer.interfaces.capture.stop_capture()
     # time.sleep(2)
@@ -1647,6 +1651,7 @@ def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wi
 )
 def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    ping_count = 20
 
     '''Verify RSI_STA is going to power save or not when enable power save mode 3 with ULP mode with RAM retention and 
        MAX PSP'''
@@ -1681,8 +1686,8 @@ def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
     time.sleep(30)
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 20)
-    assert status == 1
+    status = ping(device_ip, ping_count)
+    assert status
 
     wifi_sniffer.interfaces.capture.stop_capture()
     # time.sleep(2)
@@ -1714,6 +1719,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
     ps_poll_time_delta_obj = FilterPacket()
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
+    ping_count = 20
 
     '''Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power save3 
        & MAX PSP mode and set listen_interval_dtim is 0'''
@@ -1751,8 +1757,8 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
     )
     time.sleep(30)
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 20)
-    assert status == 1
+    status = ping(device_ip, ping_count)
+    assert status
 
     wifi_sniffer.interfaces.capture.stop_capture()
     # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
@@ -1796,6 +1802,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
     validation = True
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ps_packet_exchange_obj = FilterPacket()
+    ping_count = 20
 
     '''Verify whether RSI_STA is wake up and receive data at DTIM beacon when enable power save 3 & MAX PSP mode'''
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
@@ -1839,8 +1846,8 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
 
     time.sleep(30)
     # Initiate ping from third party wifi-client to DUT
-    status = ping(device_ip, 20)
-    assert status == 1
+    status = ping(device_ip, ping_count)
+    assert status
 
     wifi_sniffer.interfaces.capture.stop_capture()
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
@@ -1920,7 +1927,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, 50)
-    assert status == 1
+    assert status
 
     # broad cast probe requests from DUT
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
@@ -1987,6 +1994,7 @@ def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_a
     validation = True
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
+    ping_count = 20
 
     '''Verify the power save mode3 functionality enable and disable while doing data transfer for overnight'''
     wifi_access_point.interfaces.wifi.start_ap()
@@ -2025,8 +2033,8 @@ def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_a
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
             # Initiate ping from third party wifi-client to DUT
-            status = ping(device_ip, 20)
-            assert status == 1
+            status = ping(device_ip, ping_count)
+            assert status
 
             logger().info(f"*****Disable Max PSP in DUT******")
             wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled,
@@ -2035,8 +2043,8 @@ def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_a
                 power_save_mode=RS9116PowerSaveModes.PowerSaveDisabled
             )
             time.sleep(2)
-            status = ping(device_ip, 20)
-            assert status == 1
+            status = ping(device_ip, ping_count)
+            assert status
     except():
         assert False, "Power save enable disable failure"
     finally:
