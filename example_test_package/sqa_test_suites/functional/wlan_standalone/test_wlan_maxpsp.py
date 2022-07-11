@@ -687,10 +687,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
     validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
-<<<<<<< HEAD
     ping_count = 10
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -717,11 +714,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 10)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     # Assoc resp frame in sniffer
@@ -887,10 +880,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     dtim_wake_up = 5
-<<<<<<< HEAD
     ping_count = 50
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
@@ -920,11 +910,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 50)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     #  DUT Assoc ID from Assoc resp frame in sniffer
@@ -1013,10 +999,7 @@ def test_max_psp_lp_mode_c40152(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     validation = True
-<<<<<<< HEAD
     ping_count = 30
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -1046,11 +1029,7 @@ def test_max_psp_lp_mode_c40152(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 30)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     # broadcast probe requests from DUT
@@ -1129,10 +1108,7 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
-<<<<<<< HEAD
     ping_count = 10
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after 12 consecutive beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -1162,11 +1138,7 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 10)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     logger().info('\n\n Time sleep ! Wait for 60 seconds......')
@@ -1233,10 +1205,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
     validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
-<<<<<<< HEAD
     ping_count = 10
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power save 
        2 & MAX PSP mode and set listen_interval_dtim is 0'''
@@ -1270,11 +1239,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 10)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     # Assoc resp frame in sniffer
@@ -1434,10 +1399,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     assoc_obj = FilterPacket()
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
-<<<<<<< HEAD
     ping_count = 50
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 3 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
@@ -1468,11 +1430,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 50)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     # broadcast probe requests from DUT
@@ -1944,10 +1902,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     dtim_wake_up = 5
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
-<<<<<<< HEAD
     ping_count = 50
-=======
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
 
     '''Verify whether RSI_STA is able to wakeup and receive data at 4th DTIM beacon when we configure num_of_dtim_skip
        is 3 with power save mode 3 with MAX PSP and set listen_interval_dtim is 1'''
@@ -1978,11 +1933,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     )
 
     # Initiate ping from third party wifi-client to DUT
-<<<<<<< HEAD
     status = ping(device_ip, ping_count)
-=======
-    status = ping(device_ip, 50)
->>>>>>> c3c3094eb86f3f668226635529d56e950afb62ab
     assert status
 
     # broad cast probe requests from DUT
