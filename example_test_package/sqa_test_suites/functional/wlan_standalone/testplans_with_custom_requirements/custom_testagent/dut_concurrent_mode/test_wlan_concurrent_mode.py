@@ -30,7 +30,7 @@ from utf.utils.iperf.iperf_utils import ping
 
 def logger():
     return get_logger(__name__)
-
+@pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
