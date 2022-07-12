@@ -847,7 +847,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     assoc_obj = FilterPacket()
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
-    dtim_wake_up = 5
+    dtim_skip = 5
     ping_count = 50
 
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
@@ -861,7 +861,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C40150')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=4)
+                                                  number_of_dtim_skip=dtim_skip-1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -931,16 +931,16 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_wake_up)
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_skip)
     assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
 
     if len(status['dtim_wakeup_packet_list']):
-        logger().info('\n\n STA wake up in another DTIM interval, expected is 5th DTIM beacon')
+        logger().info(f'\n\n STA wake up in another DTIM interval, expected is {dtim_skip}th DTIM beacon')
         logger().info('\n\n Please check the wakeup DTIM interval list........\n')
         logger().info(status['dtim_wakeup_packet_list'])
         assert False
     else:
-        logger().info('STA wake up as expected 5ht DTIM beacon interval')
+        logger().info(f'STA wake up as expected {dtim_skip} DTIM beacon interval')
         assert True
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
@@ -1371,7 +1371,7 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    dtim_wake_up = 4
+    dtim_skip = 4
     dtim_beacon_obj = FilterPacket()
     assoc_obj = FilterPacket()
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -1390,7 +1390,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=3)
+                                                  number_of_dtim_skip=dtim_skip-1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1451,16 +1451,16 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
     logger().info('-----------Validation for 4th DTIM beacon sequence----------------\n\n')
-    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_wake_up)
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_skip)
     assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
 
     if len(status['dtim_wakeup_packet_list']):
-        logger().info('\n\n STA wake up in another DTIM interval, expected is 5th DTIM beacon')
+        logger().info(f'\n\n STA wake up in another DTIM interval, expected is {dtim_skip}th DTIM beacon')
         logger().info('\n\n Please check the wakeup DTIM interval list........\n')
         logger().info(status['dtim_wakeup_packet_list'])
         assert False
     else:
-        logger().info('STA wake up as expected 5ht DTIM beacon interval')
+        logger().info(f'STA wake up as expected {dtim_skip} DTIM beacon interval')
         assert True
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
@@ -1885,7 +1885,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
 )
 def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    dtim_wake_up = 5
+    dtim_skip = 5
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ping_count = 50
@@ -1902,7 +1902,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='dtim_powersave3_C40164')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=4)
+                                                  number_of_dtim_skip=dtim_skip-1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1956,16 +1956,16 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_wake_up)
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_skip)
     assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
 
     if len(status['dtim_wakeup_packet_list']):
-        logger().info('\n\n STA wake up in another DTIM interval, expected is 5th DTIM beacon')
+        logger().info(f'\n\n STA wake up in another DTIM interval, expected is {dtim_skip}th DTIM beacon')
         logger().info('\n\n Please check the wakeup DTIM interval list........\n')
         logger().info(status['dtim_wakeup_packet_list'])
         assert False
     else:
-        logger().info('STA wake up as expected 5ht DTIM beacon interval')
+        logger().info(f'STA wake up as expected {dtim_skip}th DTIM beacon interval')
         assert True
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
