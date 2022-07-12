@@ -232,7 +232,7 @@ devices:
                 # running hostapd to create a soft AP
                 type: 'wifi.access_points.linux'
                 shell: 'linux_shell'
-                interface: 'eth0'
+                interface: 'wlan0'
 
     secondary_raspi_client:
         interfaces:
