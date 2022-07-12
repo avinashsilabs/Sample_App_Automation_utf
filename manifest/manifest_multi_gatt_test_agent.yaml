@@ -1,6 +1,6 @@
 firmware:
   rs911x: RS9116W.2.6.0.34.rps
-  efx32: aws_test_agent.hex
+  efx32: multi_gatt_generic_test_agent.hex
 
 # List of devices to be reset when needed
 # reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
@@ -15,7 +15,7 @@ firmware_applications:
       filename: 'RS9116W.2.6.0.34.rps'
     - device_type: 'efx32'
       device_subtype: 'efr32'
-      filename: 'aws_test_agent.hex'
+      filename: 'multi_gatt_generic_test_agent.hex'
 
     test_concurrent_mode:
     - device_type: 'efx32'
