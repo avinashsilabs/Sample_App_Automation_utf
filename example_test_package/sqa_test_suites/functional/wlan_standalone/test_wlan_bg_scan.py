@@ -1,6 +1,6 @@
 import re
 import time
-
+from utf.utils.time_measurer import TimeMeasurer
 import pytest as pytest
 
 from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
@@ -1096,7 +1096,7 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
     },
 )
 def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
-    #Verify BG Scan response before Connection ,it should return 0x0021 error(This we can test in
+    # Verify BG Scan response before Connection ,it should return 0x0021 error(This we can test in
     # AT mode only
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(
