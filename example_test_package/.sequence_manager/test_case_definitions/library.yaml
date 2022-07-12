@@ -9552,7 +9552,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9583,7 +9583,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9614,7 +9614,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9645,7 +9645,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.16384,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|16384,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9676,7 +9676,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params: []
@@ -9705,7 +9705,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params: []
@@ -9734,7 +9734,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params: []
@@ -9763,7 +9763,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.16384,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|16384,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9794,7 +9794,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.16384,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|16384,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9825,7 +9825,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.4096,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|4096,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params: []
@@ -9854,7 +9854,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.16384,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|16384,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9885,7 +9885,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.16384,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|16384,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -9916,7 +9916,7 @@ test_cases:
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.16384,'ext_custom_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|16384,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.Default,'server_socket_limit':
         4,'client_socket_limit': 4})
     test_params:
@@ -21723,11 +21723,12 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
-        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'rejoin_max_retry':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'rejoin_max_retry':
         10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry': 0})
     test_params:
       - name: cert1
@@ -21765,7 +21766,7 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode':
         RS9116OperatingMode.AccessPoint,'features':
-        RS9116FeatureBitMap.Aggregation,'tcpip_features':
+        RS9116FeatureBitMap.Default,'tcpip_features':
         RS9116TCPIPFeatureBitMap.DHCPv4Server})
     test_params: []
     test_class: null
@@ -21791,11 +21792,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','start_field.pem'],'client_cert':
         [False,False,'client-certificate.crt'],'client_key':
@@ -21835,11 +21836,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -21881,11 +21882,12 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
-        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'rejoin_max_retry':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
         10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry': 0})
     test_params:
       - name: cert1
@@ -21928,11 +21930,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem'],'set_tx_wait_time':
         True,'tx_wait_time': 160000})
@@ -21977,11 +21979,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem'],'set_tx_wait_time':
         True,'tx_wait_time': 160000})
@@ -22024,11 +22026,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22070,11 +22072,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22118,11 +22120,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22166,11 +22168,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22212,11 +22214,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22255,11 +22257,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
     test_params:
       - name: repeat_count
@@ -22304,11 +22306,12 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
-        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default})
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower})
     test_params:
       - name: cert1
         value:
@@ -22350,11 +22353,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca_ecdsa.crt','ca_ecdsa.crt','ca_ecdsa.crt']})
     test_params:
@@ -22398,11 +22401,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22448,11 +22451,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
     test_params: []
     test_class: null
@@ -22480,11 +22483,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
     test_params: []
     test_class: null
@@ -22510,11 +22513,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid|RS9116CustomFeatureBitMap.RealTimeClockFromHost,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
     test_params:
       - name: tolerance_threshold
@@ -22544,11 +22547,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22585,11 +22588,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.8192,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22626,11 +22629,13 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
-        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ca_cert': ['ca-chain.cert.pem']})
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ca_cert':
+        ['ca-chain.cert.pem']})
     test_params:
       - name: cert1
         value:
@@ -22660,11 +22665,12 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
-        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default})
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid})
     test_params: []
     test_class: null
     description: null
@@ -22689,11 +22695,12 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
-        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SNTPClient|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default})
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SNTPClient|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid})
     test_params: []
     test_class: null
     description: null
@@ -22717,12 +22724,12 @@ test_cases:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.WLAN,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         'ca-chain.cert.pem'})
     test_params: []
@@ -22748,12 +22755,12 @@ test_cases:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.WLAN,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         'ca-chain.cert.pem'})
     test_params: []
@@ -22779,12 +22786,12 @@ test_cases:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.WLAN,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116ExtTCPIPFeatureBitMap.4096,'config_features':
+        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         'ca-chain.cert.pem'})
     test_params: []
@@ -22811,11 +22818,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['ca-chain.cert.pem','ca-chain.cert.pem','ca-chain.cert.pem']})
     test_params:
@@ -22857,11 +22864,11 @@ test_cases:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.WLANOnly,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
         RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
         RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|8192|4096,'config_features':
         RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
         ['start_field.pem','ca-chain.cert.pem'],'client_cert':
         ['client-certificate.crt',False],'client_key':

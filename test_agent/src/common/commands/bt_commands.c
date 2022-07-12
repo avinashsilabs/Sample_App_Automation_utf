@@ -1440,8 +1440,9 @@ void rsi_bt_get_rssi_command(sl_cli_command_arg_t *arguments){
     char* remote_bond_dev_addr = sl_cli_get_argument_string(arguments, 0);
 
     int8_t bt_rsi_app_resp_rssi = 0;
-
-    int32_t status = rsi_bt_get_rssi((uint8_t *)remote_bond_dev_addr, &bt_rsi_app_resp_rssi);
+    uint8_t device_address[6] = {0};
+    rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_bond_dev_addr);
+    int32_t status = rsi_bt_get_rssi((uint8_t *)device_address, &bt_rsi_app_resp_rssi);
     if (status == RSI_SUCCESS) {
         printf("\n%d\n", bt_rsi_app_resp_rssi);
     }

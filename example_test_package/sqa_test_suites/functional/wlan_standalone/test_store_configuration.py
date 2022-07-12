@@ -2,7 +2,8 @@ import pytest
 from utf.utils.iperf.iperf_utils import ping, ping_qos
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116StoreConfiguration, RS9116Region, RS9116RegionCode, RS9116ModuleType, \
-    RS9116CustomFeatureBitMap, RS9116ExtTCPIPFeatureBitMap
+    RS9116CustomFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CertificateType, RS9116PowerSaveProcedureTypes,\
+    RS9116ExtCustomFeatureBitMap
 from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 import time
 from utf.utils.logger import get_logger
@@ -20,6 +21,7 @@ from utf.utils.iperf.iperf_utils import print_dict
         3. Raspberry PI4
         4. Access Point(Third Party AP -ASUS)
         5. Sniffer(NUC)
+        6. Radius server installed in NUC
         
     Author: swathi.pathuri
 """
@@ -125,13 +127,16 @@ class cleanup_store_config():
 
     def disconnect(self):
 
+        try:
             logger().info("Initiating disconnect for cleanup")
-            self.wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+            self.wifi_dut.interfaces.wifi.leave()
             time.sleep(5)
             logger().info("cfg disable")
             # Enables the store configuration
             self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
             return True
+        except:
+            logger().info("clean up process failed")
 
 
 
@@ -263,10 +268,11 @@ def test_store_config_open_C19081(wifi_sniffer, wifi_access_point, wifi_dut):
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'],\
+            'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -534,10 +540,11 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
 
             # Validating the power management bit
             packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                             f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                             f'and wlan.sa == {dut_mac_address}'
 
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                      packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                      packet_filter1)['packet_count'],\
+                'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
             logger().info(f"Exception: {str(e)}")
             clean_up = cleanup_store_config(wifi_dut)
@@ -667,10 +674,11 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
             wifi_sniffer.interfaces.capture.stop_capture()
             # Validating the power management bit
             packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                             f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                      packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                             f'and wlan.sa == {dut_mac_address}'
 
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
+                                                                      packet_filter1)['packet_count'], \
+                'Sniffer validation failed for NULL data frame with PM bit 1'
             #wifi_dut.interfaces.wifi.inited = True
 
             logger().info(f"Disabling the radio of AP")
@@ -986,9 +994,11 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {mac_address}'
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),'Sniffer validation failed for NULL data frame with PM bit 1'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
+                                                                  packet_filter1)['packet_count'], \
+            'Sniffer validation failed for NULL data frame with PM bit 1'
         # Disable store configuration
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
 
@@ -1095,7 +1105,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
         #Validating Prob Request
         packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
         time.sleep(120)
-        wifi_dut.interfaces.wifi.associated = False
+        wifi_dut.interfaces.wifi.associated = True
 
         logger().info("stopping the capture")
         #Stop Sniffer
@@ -1124,9 +1134,10 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 
         for i in range(0, len(diff_seq_list)):
             time_diff = probe_packets_time_delta_list[i]
-            logger().info(f"time diff between packets {float(time_diff)}")
+            logger().info(f"time diff between packets {int(float(time_diff))}")
             logger().info(f"diff between seq numbers {diff_seq_list[i]}")
-            is_between = int(float(time_diff)) in range((time_delta * diff_seq_list[i]),((time_delta * diff_seq_list[i]) + 1))
+            logger().info(f"min : {int(time_delta) * diff_seq_list[i]} and max : {(int(time_delta+0.5 * diff_seq_list[i]) + 1)}")
+            is_between = int(float(time_diff)) in range((int(time_delta) * diff_seq_list[i]),(int(time_delta+0.5 * diff_seq_list[i]) + 1))
             if is_between is False:
                 logger().info(is_between)
                 status = is_between
@@ -1138,7 +1149,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 
         logger().info("Initiating disconnect from DUT")
         # Wlan Disconnect
-        wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+        wifi_dut.interfaces.wifi.leave()
 
         logger().info("Disabling auto configuration")
         # Enables the store configuration
@@ -1152,8 +1163,6 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
         clean_up.disconnect()
         raise e
 
-
-@pytest.mark.skip
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1176,7 +1185,7 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
 
     try:
         validation = True
-        time_delta = 4
+        time_delta = 1
         packet_filter2 = 'Probe Request'
         prob_req_obj = FilterPacket()
         testcase = "test_verify_rejoin_func_with_max_retry_50_C19087"
@@ -1229,35 +1238,48 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
         logger().info(f"{result}")
         assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
 
-        for i in range(0, 2):
+        logger().info("==========stopping access point========")
+        wifi_access_point.interfaces.wifi.stop_ap()
+        wifi_dut.interfaces.wifi.associated = False
+        time.sleep(100)
+        logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
+
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_beacons")
+
+        logger().info("stopping the capture")
+        # Stop Sniffer
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Validating beacons
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0008 and wlan.addr == {bssid}'
+
+        logger().info(
+            f"beacons : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']}")
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+            "beacons found even AP is turned OFF"
+
+        for i in range(0, iter_count):
 
             logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
             wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
 
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_probe_req")
 
-            if i==0:
+            logger().info("Resetting DUT instead of de init")
+            # resetting the dut
+            wifi_dut.interfaces.wifi.reset_soft()
+            #time.sleep(2)
+            logger().info("Initializing the DUT")
+            wifi_dut.interfaces.wifi.associated = False
 
-                logger().info("==========stopping access point========")
-                wifi_access_point.interfaces.wifi.stop_ap()
-                wifi_dut.interfaces.wifi.associated = False
-                time.sleep(200)
-
-            else:
-
-                logger().info("Resetting DUT instead of de init")
-                # resetting the dut
-                wifi_dut.interfaces.wifi.reset_soft()
-                time.sleep(200)
+            with pytest.raises(CLITransportException) as ex:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.associated = False
-
-                with pytest.raises(CLITransportException) as ex:
-                    logger().info("Initializing the DUT")
-                    wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=0)
-                    assert ("Error Code : 0x3" or "Error Code : 0x19") in str(ex), "Wrong error code found"
-
+                wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=0)
+                assert ("Error Code : 0x3" or "Error Code : 0x19") in str(ex), "Wrong error code found"
+            time.sleep(150)
             logger().info("stopping the capture")
             #Stop Sniffer
             wifi_sniffer.interfaces.capture.stop_capture()
@@ -1266,8 +1288,34 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
 
             logger().info(f"Validating broadcast probe requests : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num']}")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num'],\
-            "Unable to find the brodcast probe requests"
+
+            logger().info("Validating broadcast probe requests")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+                'packet_count'], \
+                "Unable to find the brodcast probe requests"
+
+            probe_packets_dict = prob_req_obj.delta_between_probe_packet()
+
+            seq_num_list = list(probe_packets_dict.keys())
+
+            logger().info(f'probe request packet sequence numbers list = {seq_num_list}')
+
+            packet_count = len(seq_num_list)
+
+            logger().info(f"packet_count: {packet_count}")
+
+            diff_bw_seq_num = [int(seq_num_list[i + 1]) - int(seq_num_list[i]) for i in range(len(seq_num_list) - 1)]
+            for diff in diff_bw_seq_num:
+                if int(diff) == 1:
+                    logger().info("difference between probe req  seq numbers is 1")
+                    continue
+                else:
+                    packet_count = packet_count + int(diff-1)
+                    logger().info(f"difference between probe req  seq numbers is {diff}")
+            assert packet_count == 50,\
+            f"Unable to find the brodcast probe requests count {packet_count}"
+
+            logger().info(f"packet_count : {packet_count}")
 
         logger().info("Disabling auto configuration")
         # Enables the store configuration
@@ -1379,12 +1427,13 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         logger().info(f"validating power save in sniffer with filter {packet_filter1}")
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'],\
+            'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -1678,9 +1727,9 @@ def test_store_config_AWS_conn_listen_inter_C19105(wifi_sniffer, wifi_dut, wifi_
 
             # Validating the power management bit
             packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                             f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                             f'and wlan.sa == {dut_mac_address}'
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                      packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                      packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
             logger().info(f"Exception: {str(e)}")
             clean_up = cleanup_store_config(wifi_dut)
@@ -1808,10 +1857,10 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point,wifi_client
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -1946,12 +1995,12 @@ def test_wireless_config_5GHZ_C19097(wifi_sniffer, wifi_access_point,wifi_client
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         logger().info(f"validating power save in sniffer with filter {packet_filter1}")
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -2085,10 +2134,10 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point,wifi_clie
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
@@ -2215,10 +2264,301 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point,wifi_clie
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
-                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+                         f'and wlan.sa == {dut_mac_address}'
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1), 'Sniffer validation failed for NULL data frame with PM bit 1'
+                                                                  packet_filter1)['packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+            clean_up.dut_recovery()
+        clean_up.disconnect()
+        raise e
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        #| RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+ #EAP Connection in TLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678',"broadcast_ssid": False})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,\
+                                             net_perf_client, protocol):
+
+    try:
+        testcase = "test_store_config_in_WPA2_EAP_TLS_C19084"
+        validation = True
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        ap_user_name = "\\\"user1\\\""
+        ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+        dut_ssid = wifi_access_point.interfaces.wifi.ssid
+        dut_security = wifi_access_point.interfaces.wifi.security
+
+        logger().info("Setting roam parameters")
+        # enable Roaming
+        wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=60, roaming_hysterisis=4)
+
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+        logger().info(scan_results)
+
+        logger().info("enable rejoin")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+        # test_wifi_join
+        wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+        result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+        # Get IP through DHCP
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+        logger().info(f"Found device ip :{device_ip}")
+
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        logger().info("Enable Auto Configuration")
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+
+
+        logger().info("Initiating wireless de init")
+        # deinit
+        logger().info("Instead of reset need to add  wireless de init")
+        wifi_dut.interfaces.wifi.reset_soft()
+
+        time.sleep(2)
+        # logger().info("Initiating wireless init")
+        wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
+        # wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9)
+        time.sleep(20)
+        wifi_dut.interfaces.wifi.associated = True
+
+        logger().info("getting wireless info")
+        result = wifi_dut.interfaces.wifi.get_wireless_info()
+        assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
+
+        logger().info("Initiating power save")
+        # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+        # DUT to power save in Wifi+bluetooth mode
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+        logger().info("Initiating ping")
+        # Ping to dut from third party device
+        status = ping(device_ip, ping_count)
+        assert status == True, "DUT is not responding to ping request from third party device after store configuration"
+        time.sleep(5)
+        logger().info("Ping successful")
+
+        iperf_tx = Wifi_data_tx(wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol, device_ip)
+        iperf_tx.run_traffic()
+
+        logger().info("Initiating disconnect from DUT")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+
+        logger().info("stopping capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Validating the power management bit
+        packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
+                         f'and wlan.sa == {dut_mac_address}'
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
+                                                                  packet_filter1)['packet_count'], \
+            'Sniffer validation failed for NULL data frame with PM bit 1'
+
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+            clean_up.dut_recovery()
+        clean_up.disconnect()
+        raise e
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        #| RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        #"eap_cert": "wifi-user.pem"
+    }
+)
+ #EAP Connection in TTLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, wifi_dut):
+
+    try:
+        testcase = "test_store_config_in_WPA2_EAP_TTLS_C19098"
+        validation = True
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        ap_user_name = "\\\"user1\\\""
+        ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+        dut_ssid = wifi_access_point.interfaces.wifi.ssid
+        dut_security = wifi_access_point.interfaces.wifi.security
+
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+
+        logger().info("Setting roam parameters")
+        # enable Roaming
+        wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=60, roaming_hysterisis=4)
+
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+        logger().info(scan_results)
+
+        logger().info("enable rejoin")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+        # test_wifi_join
+        wifi_dut.interfaces.wifi.eap_method(eap_method="TTLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+        result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+        # Get IP through DHCP
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+        logger().info(f"Found device ip :{device_ip}")
+
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        logger().info("Enable Auto Configuration")
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+
+        for i in range(0,iter_count):
+            ping_count = 60
+
+            logger().info("Initiating wireless de init")
+            # deinit
+            logger().info("Instead of reset need to add  wireless de init")
+            wifi_dut.interfaces.wifi.reset_soft()
+
+            time.sleep(2)
+            # logger().info("Initiating wireless init")
+            wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
+            # wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9)
+            time.sleep(20)
+            wifi_dut.interfaces.wifi.associated = True
+
+            logger().info("getting wireless info")
+            result = wifi_dut.interfaces.wifi.get_wireless_info()
+            assert wifi_access_point.interfaces.wifi.ssid in result, "AP ssid not found in the get wireless info"
+
+            logger().info("Initiating power save")
+            # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+            # DUT to power save in Wifi+bluetooth mode
+            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+            wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+            logger().info("Initiating ping")
+            # Ping to dut from third party device
+            status = ping(device_ip, ping_count)
+            assert status == True, "DUT is not responding to ping request from third party device after store configuration"
+            time.sleep(5)
+            logger().info("Ping successful")
+
+            logger().info("Initiating disconnect from DUT")
+            wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+
+        logger().info("stopping capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Validating the power management bit
+        packet_filter1 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
+                         f'and wlan.sa == {dut_mac_address}'
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
+                                                                  packet_filter1)['packet_count'], \
+            'Sniffer validation failed for NULL data frame with PM bit 1'
+
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
