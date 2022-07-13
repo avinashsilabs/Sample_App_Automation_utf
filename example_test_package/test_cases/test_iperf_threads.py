@@ -54,7 +54,7 @@ def start_iperf_dut_as_server(wifi_dut, net_perf_client, protocol, device_ip, ho
         wifi_dut.interfaces.wifi.read_from_device(
             obj, net_perf_client.interfaces.net_perf.client_timeout
         )
-    time.sleep(5)
+    time.sleep(2)
     # get and print throughput
     tp = net_perf_client.interfaces.net_perf.process_output(result)
     assert tp is not None
@@ -193,7 +193,6 @@ class WifiJoinThread(ThreadBase):
         start_iperf_dut_as_server(self.wifi_dut, self.net_perf_client, self.protocol, self.device_ip, self.host_ip)
 
 
-
 @pytest.mark.net_perf_client("raspi_iperf")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -245,19 +244,21 @@ def test_coex_ble_wlan_datatransfer(wifi_access_point, wifi_dut, wifi_client, bl
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave
     )
-    ''' Initiating BLE connection(Master) and start data transfer '''
-    ble_obj = BleThreadConnectionDataTransfer(wifi_dut, ble_client)
-    ble_obj.start()
+    # ''' Initiating BLE connection(Master) and start data transfer '''
+    # ble_obj = BleThreadConnectionDataTransfer(wifi_dut, ble_client)
+    # ble_obj.start()
+    #
+    # ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
+    # wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
+    # wlan_obj.start()
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
-    wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
-    wlan_obj.start()
+    # ble_obj.wait_for_exit()
+    # wlan_obj.wait_for_exit()
 
-    ble_obj.wait_for_exit()
-    wlan_obj.wait_for_exit()
+    # result = ThreadBase.call_functions_simultaneously(
+    #     [(start_ble_data_transfer, wifi_dut, ble_client), (start_iperf_dut_as_server, wifi_dut, net_perf_client, protocol, device_ip, host_ip)])
 
-    # start_ble_data_transfer(wifi_dut, ble_client)
-    # start_iperf_dut_as_server(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
+    start_ble_data_transfer(wifi_dut, ble_client)
+    start_iperf_dut_as_server(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
 
-    time.sleep(20)
-    wifi_dut.interfaces.wifi.leave()
+    time.sleep(5)
