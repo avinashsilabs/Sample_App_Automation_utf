@@ -11,11 +11,10 @@ for filename in os.listdir(directory):
         if os.path.isfile(file_path):
             with open(file_path, "r+") as f:
                 rs9116_package_name = sys.argv[1]
-                efr32_package_name = sys.argv[2]
-                flash_rs9116 = sys.argv[3]
-                flash_efr32 = sys.argv[4]
-                chip_version = sys.argv[5]
-                build_location = sys.argv[6]
+                flash_rs9116 = sys.argv[2]
+                flash_efr32 = sys.argv[3]
+                chip_version = sys.argv[4]
+                build_location = sys.argv[5]
 
                 y=yaml.safe_load(f)
 
@@ -28,10 +27,7 @@ for filename in os.listdir(directory):
                 else:
                     del y['firmware']['rs911x']
 
-                if flash_efr32 == 'true':
-                    if efr32_package_name != "Internal.hex":
-                        y['firmware']['efx32'] = efr32_package_name
-                else:
+                if flash_efr32 != 'true':
                     del y['firmware']['efx32']
 
                 y_new = yaml.dump(y, default_flow_style=False, sort_keys=False)
