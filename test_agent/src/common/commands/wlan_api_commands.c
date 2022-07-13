@@ -1056,6 +1056,23 @@ void rsi_cfg_get_command()
 	}
 	free(cfg_get);
 }
+void rsi_wlan_filter_broadcast_command(sl_cli_command_arg_t* arguments)
+{
+   uint16_t beacon_drop_threshold = sl_cli_get_argument_uint16(arguments, 0);
+   uint8_t filter_bcast_in_tim  = sl_cli_get_argument_uint8(arguments, 1);
+   uint8_t filter_bcast_tim_till_next_cmd = sl_cli_get_argument_uint8(arguments, 2);
+   int32_t status = rsi_wlan_filter_broadcast(beacon_drop_threshold ,filter_bcast_in_tim ,filter_bcast_tim_till_next_cmd);
+   print_status(status);
+
+}
+void rsi_wireless_antenna_command(sl_cli_command_arg_t* arguments)
+{
+   uint8_t type = sl_cli_get_argument_uint8(arguments, 0);
+   uint8_t gain_2g  = sl_cli_get_argument_uint8(arguments, 1);
+   uint8_t gain_5g = sl_cli_get_argument_uint8(arguments, 2);
+   int32_t status = rsi_wireless_antenna(type, gain_2g, gain_5g);
+   print_status(status);
+}
 /*******************************************************************************
 *
 *                       IMPLEMENTATION: Private functions
