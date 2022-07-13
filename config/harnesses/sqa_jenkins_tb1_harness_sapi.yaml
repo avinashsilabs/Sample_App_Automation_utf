@@ -302,6 +302,11 @@ devices:
                 type: 'bluetooth.pybluez'
                 shell: 'linux_shell'
 
+    ip_socket_factory:
+        interfaces:
+            socket:
+                type: 'socket.ip_socket_factory'
+
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
     secondary_raspi_bt_client:
@@ -502,7 +507,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'wlan0'
+                interface: 'eth0'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -512,7 +517,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'wlan0'
+                interface: 'eth0'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -775,8 +780,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
+        - 'asus_rt_ax3000_ap'
+        - 'dlink_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -814,6 +819,7 @@ defaults:
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
     multicast_client: 'raspi_multicast'
+    remote_socket_factory: "ip_socket_factory"
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -824,7 +830,7 @@ defaults:
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
-        server_ip: '172.16.0.1'
+        server_ip: '192.168.18.1'
         sniffer_validation: True
 
         # firmware path for http/https otaf
