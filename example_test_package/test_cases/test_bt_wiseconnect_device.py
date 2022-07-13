@@ -12,9 +12,11 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-def test_bluetooth_rs9116(bt_rs911x, wifi_dut, wifi_access_point, logger):
-    # TODO: Update the test to incorporate mentioned UTF-1268 features
-    bt_client_address = bt_rs911x.interfaces.bluetooth.start_smp_adv()
+@pytest.mark.dut("rs9116_sapi_by_serial")
+@pytest.mark.wifi_access_point("raspi_wifi")
+@pytest.mark.bt_client("bt_wiseconnect")
+def test_bluetooth_with_wiseconnect_as_bt_client(bt_client, wifi_dut, wifi_access_point, logger):
+    bt_client_address = bt_client.interfaces.bluetooth.start_smp_adv()
     assert bt_client_address is not None
     logger.info(f"Bt device address: {bt_client_address}")
 
@@ -29,7 +31,7 @@ def test_bluetooth_rs9116(bt_rs911x, wifi_dut, wifi_access_point, logger):
     time.sleep(5)
 
     # disconnecting from DUT
-    # wifi_dut.interfaces.wifi.bt_disconnect(bt_clienti_address, timeout=5)
+    wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address, timeout=5)
 
 
 
