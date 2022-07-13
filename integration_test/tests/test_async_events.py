@@ -11,6 +11,7 @@ pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("raspi_wifi"),
     pytest.mark.start_state("dut", device="reset", wifi="init"),
+    pytest.mark.dut("rs9116_sapi")
 ]
 
 

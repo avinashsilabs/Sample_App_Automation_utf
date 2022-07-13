@@ -7,6 +7,7 @@ from utf.utils.stopwatch import Stopwatch
 from utf.utils.time_measurer import TimeMeasurer
 
 pytestmark = [
+    pytest.mark.dut("rs9116_at"),
     pytest.mark.bt_client("raspi_ble_client"),
     pytest.mark.config(
         "wifi_dut",
@@ -20,7 +21,7 @@ pytestmark = [
     )
 ]
 
-
+@pytest.mark.parametrize("enable_ssp", [True, False])
 def test_bt_hid_dut_as_slave(wifi_dut, bt_client, logger, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(

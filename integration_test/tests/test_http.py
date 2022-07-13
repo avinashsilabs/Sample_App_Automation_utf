@@ -10,13 +10,16 @@ from utf.utils.stopwatch import Stopwatch
 # Mark all tests in this module with 'framework_integration_test'
 pytestmark = [
     pytest.mark.framework_integration_test,
+    pytest.mark.wifi_access_point("raspi_wifi"),
+    pytest.mark.http_server("raspi_lighttpd")
 ]
 
 
-@pytest.mark.wifi_access_point("raspi_wifi")
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize(
-    "index_path", ["", "index_long_crlf.html", "index_long_lf.html"]
+@pytest.mark.parametrize("index_path, method, content", [
+    ("cgi-bin/cgi_example.py", "POST", {"key1": 'value1', "key2": 'value2'}),
+    ("cgi-bin/cgi_example.py", "PUT", {"key1": 'value1', "key2": 'value2'}),
+    ("cgi-bin/cgi_example.py", "GET", None)
+    ]
 )
 def test_http_server_and_linux_client(
     http_server, http_client, wifi_access_point, logger, index_path, method, content
@@ -37,11 +40,9 @@ def test_http_server_and_linux_client(
         | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_at")
-@pytest.mark.wifi_access_point("raspi_wifi")
-@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.parametrize(
-    "index_path", ["", "index_long_crlf.html", "index_long_lf.html"]
+    "index_path", ["index_long_crlf.html", "index_long_lf.html"]
 )
 def test_http_server_and_dut_client(
     http_server, http_dut, wifi_access_point, logger, index_path

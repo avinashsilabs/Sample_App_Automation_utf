@@ -5,6 +5,7 @@ from utf_wiseconnect.utils.rs911x_version import parse_version
 # and use fixtures parameterize_dut and parameterize_access_point
 pytestmark = [
     pytest.mark.framework_integration_test,
+    pytest.mark.dut("rs9116_sapi")
 ]
 
 

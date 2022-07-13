@@ -5,8 +5,12 @@ import time
 
 
 @pytest.mark.parametrize(
-    "capture_filter, capture_filename",
-    [(None, "no_filter"), ("ether host 88:da:1a:e4:ba:44", "mac_filter")],
+    "capture_filter, capture_filename, inspect_during_capture", [
+        (None, "no_filter", False),
+        ("ether host 80:c9:55:34:eb:f4", "mac_filter", False),
+        (None, "no_filter", True),
+        ("ether host 80:c9:55:34:eb:f4", "mac_filter", True),
+    ],
 )
 def test_sniffer_icmp_inspection(
     wifi_sniffer, wifi_access_point, wifi_dut, capture_filter, capture_filename, inspect_during_capture, logger

@@ -11,7 +11,6 @@ from queue import Empty as QueueEmpty
 # and other required markers
 pytestmark = [
     pytest.mark.framework_integration_test,
-    pytest.mark.wifi_access_point("dlink810_ap"),
     pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",

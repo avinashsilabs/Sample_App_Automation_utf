@@ -30,6 +30,8 @@ class HttpRequestThread(ThreadBase):
             time.sleep(0.1)
 
 
+@pytest.mark.dut("rs9116_at")
+@pytest.mark.wifi_access_point("raspi_wifi")
 def test_threading(http_server, wifi_networked_dut, http_dut, wifi_access_point):
     # explicit thread start/stop/wait for exit
     ping_thread = PingThread(wifi_networked_dut)
@@ -45,6 +47,8 @@ def test_threading(http_server, wifi_networked_dut, http_dut, wifi_access_point)
         ping_thread.wait_for_exit()
 
 
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.wifi_access_point("raspi_wifi")
 def test_threading_contextmgr(
     http_server, wifi_networked_dut, http_dut, wifi_access_point
 ):

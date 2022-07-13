@@ -6,16 +6,16 @@ from utf_wiseconnect.devices.rs911x import RS9116FeatureBitMap
 # and use fixtures parameterize_dut and parameterize_access_point
 pytestmark = [
     pytest.mark.framework_integration_test,
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
+        },
+    ),
+    pytest.mark.wifi_access_point("raspi_wifi")
 ]
 
-
-@pytest.mark.wifi_access_point("raspi_wifi")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
-    },
-)
+@pytest.mark.dut("rs9116_sapi")
 def test_power_save(wifi_dut, wifi_networked_dut, logger):
 
     awake = wifi_networked_dut.interfaces.wifi.get_wake_gpio()

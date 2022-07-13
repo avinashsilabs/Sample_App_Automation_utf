@@ -15,7 +15,7 @@ class TestBed:
 DEFAULT_TEST_BEDS = [
     TestBed("UTF_Integration_Test_NB0015129", "../../config/harnesses/integration_test_1", "10.4.1.107"),
     TestBed("UTF_Integration_Test_AustinLab", "../../config/harnesses/integration_test_2", "10.100.124.23"),
-    TestBed("UTF_Integration_Test_hyd-6", "../../config/harnesses/integration_test_3", "10.207.16.86"),
+    TestBed("UTF_Integration_Test_dev_team_hyd_6", "../../config/harnesses/integration_test_3", "10.207.16.86"),
     # TestBed("UTF_Development_NB0015129", "integration_test-dev", "10.4.1.210"),
 ]
 

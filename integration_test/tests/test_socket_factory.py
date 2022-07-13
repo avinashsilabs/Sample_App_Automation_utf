@@ -1,10 +1,17 @@
 import random
 
+import pytest
+
 from utf.utils.thread_base import ThreadBase
 from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
-from utf_wiseconnect.devices.rs911x import DeviceConstants
+from utf_wiseconnect.devices.rs911x import DeviceConstants, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap
 from contextlib import ExitStack
 
+pytestmark = [
+    pytest.mark.framework_integration_test,
+    pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.wifi_access_point("raspi_wifi")
+]
 
 class ServerSocketXferThread(ThreadBase):
     def __init__(self, wifi_dut, dut_socket, server_socket, num_packets, num_bytes):
@@ -54,6 +61,7 @@ def test_socket_factory_tcp_server(
     s1.socket_close_indication(1)
 
 
+@pytest.mark.parametrize("num_sockets", 3)
 def test_multiple_sockets_tcp_server(
     wifi_networked_dut, wifi_access_point, remote_socket_factory, num_sockets, logger
 ):
@@ -130,6 +138,14 @@ class ClientSocketXferThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.close_socket(self.dut_socket)
 
 
+@pytest.mark.parametrize("num_sockets", 1)
+@pytest.mark.config(
+          "wifi_dut",
+          wifi={
+              "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.TCP_IP_TOTAL_SOCKETS(10),
+              "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(10)
+          },
+      )
 def test_multiple_sockets_tcp_client(
     wifi_networked_dut, wifi_access_point, remote_socket_factory, num_sockets, logger
 ):

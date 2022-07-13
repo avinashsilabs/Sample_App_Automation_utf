@@ -7,6 +7,7 @@ from utf.interfaces.wifi import WlanError
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("raspi_wifi"),
+    pytest.mark.dut("rs9116_sapi")
 ]
 
 # TODO: 'associated' device state doesn't work because it does not use the correct access point
@@ -22,6 +23,7 @@ pytestmark = [
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_access_point", wifi=None)
+@pytest.mark.wifi_access_point("dlink810_ap")
 def test_prepare_static_ap(wifi_access_point, logger):
     logger.info(f"Starting tests on {wifi_access_point.name}")
 

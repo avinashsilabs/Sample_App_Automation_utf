@@ -8,6 +8,12 @@ def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
 
+pytestmark = [
+    pytest.mark.framework_integration_test,
+    pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.wifi_access_point("raspi_wifi")
+]
+
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])

@@ -26,7 +26,11 @@ class TestAccessPointConfig:
     def cleanup(cls):
         cls.wifi_access_point_to_clean_up.interfaces.wifi.stop_ap()
 
-
+    @pytest.mark.start_state("wifi_access_point", wifi=None)
+    @pytest.mark.end_state("wifi_access_point", wifi=None)
+    @pytest.mark.wifi_access_point("asus_rt_ax3000_ap")
+    @pytest.mark.wifi_client("raspi_wifi")
+    @pytest.mark.parametrize("security, standard, channel, cipher", [('WPA2', 'n', 6, 'TKIP_AES')])
     def test_wifi_ap_configuration(
         self,
         wifi_client,

@@ -12,6 +12,8 @@ from utf.interfaces.mqtt.client import MqttClientInterface
 # and use fixture parameterize_mqtt_server
 pytestmark = [
     pytest.mark.framework_integration_test,
+    pytest.mark.wifi_access_point("raspi_wifi"),
+    pytest.mark.mqtt_server("raspi_mosquitto")
 ]
 
 
@@ -64,7 +66,7 @@ def test_mqtt_server_and_linux_client(
     assert msgs[0].payload == b"12345"
 
 
-@pytest.mark.dut("rs9116_at")
+@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -149,68 +151,68 @@ def test_mqtt_dut(
     assert len([ev for ev in events if ev.event_type == RS9116AsyncEventType.MQTTMessage]) == 0
 
 
-@pytest.mark.skip
-@pytest.mark.dut("rs9116_sapi")
-@pytest.mark.mqtt_server("raspi_mosquitto")
-@pytest.mark.wifi_access_point("raspi_wifi")
-@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
-    },
-)
-def test_mqtt_sapi(
-    mqtt_server, mqtt_client, wifi_client, wifi_access_point, wifi_dut, mqtt_dut, logger
-):
-    if wifi_client != wifi_access_point:
-        wifi_client.interfaces.wifi.join_ap(wifi_access_point)
-        wifi_client.interfaces.wifi.start_ip()
-
-    # load SSL CA cert if necessary
-    if mqtt_server.interfaces.mqtt.tls_enabled:
-        wifi_dut.interfaces.wifi.set_ssl_certificate(
-            RS9116CertificateType.SSLCACertificate,
-            mqtt_server.interfaces.mqtt.tls_ca_chain,
-        )
-
-    wifi_dut.interfaces.wifi.ping(wifi_dut.interfaces.wifi.ip.gateway)
-
-    # for both dut and another wifi client, connect to the MQTT server
-    client_devices = [mqtt_client, mqtt_dut]
-    for device in client_devices:
-        device.interfaces.mqtt.mqtt_client_connect_to_server(
-            mqtt_server.interfaces.mqtt
-        )
-
-    # allow some time for both clients to connect before sending messages
-    for device in [mqtt_client]:
-        sw = Stopwatch()
-        while sw.elapsed_sec < 5:
-            time.sleep(0.1)
-            if device.interfaces.mqtt.mqtt_client_is_connected:
-                device.interfaces.mqtt.mqtt_client_subscribe("mytesttopic/#")
-                logger.info(f"'{device.name}' is connected to MQTT server")
-                break
-        else:
-            assert (
-                device.interfaces.mqtt.mqtt_client_is_connected
-            ), f"Client '{device.name}' did not connect to MQTT server"
-
-    # publish a message with the dut
-    mqtt_dut.interfaces.mqtt.mqtt_client_publish("mytesttopic/1", "12345".encode())
-
-    for device in [mqtt_client]:
-        # allow some time for both clients to receive all messages
-        sw = Stopwatch()
-        msgs = []
-        while sw.elapsed_sec < 10:
-            time.sleep(0.1)
-            msgs = device.interfaces.mqtt.mqtt_client_get_received_messages()
-            if len(msgs) == 1:
-                break
-
-        assert len(msgs) == 1
-        assert msgs[0].topic == "mytesttopic/1"
-        assert msgs[0].payload == "12345".encode()
+# @pytest.mark.skip
+# @pytest.mark.dut("rs9116_sapi")
+# @pytest.mark.mqtt_server("raspi_mosquitto")
+# @pytest.mark.wifi_access_point("raspi_wifi")
+# @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+# @pytest.mark.config(
+#     "wifi_dut",
+#     wifi={
+#         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+#         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
+#     },
+# )
+# def test_mqtt_sapi(
+#     mqtt_server, mqtt_client, wifi_client, wifi_access_point, wifi_dut, mqtt_dut, logger
+# ):
+#     if wifi_client != wifi_access_point:
+#         wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+#         wifi_client.interfaces.wifi.start_ip()
+#
+#     # load SSL CA cert if necessary
+#     if mqtt_server.interfaces.mqtt.tls_enabled:
+#         wifi_dut.interfaces.wifi.set_ssl_certificate(
+#             RS9116CertificateType.SSLCACertificate,
+#             mqtt_server.interfaces.mqtt.tls_ca_chain,
+#         )
+#
+#     wifi_dut.interfaces.wifi.ping(wifi_dut.interfaces.wifi.ip.gateway)
+#
+#     # for both dut and another wifi client, connect to the MQTT server
+#     client_devices = [mqtt_client, mqtt_dut]
+#     for device in client_devices:
+#         device.interfaces.mqtt.mqtt_client_connect_to_server(
+#             mqtt_server.interfaces.mqtt
+#         )
+#
+#     # allow some time for both clients to connect before sending messages
+#     for device in [mqtt_client]:
+#         sw = Stopwatch()
+#         while sw.elapsed_sec < 5:
+#             time.sleep(0.1)
+#             if device.interfaces.mqtt.mqtt_client_is_connected:
+#                 device.interfaces.mqtt.mqtt_client_subscribe("mytesttopic/#")
+#                 logger.info(f"'{device.name}' is connected to MQTT server")
+#                 break
+#         else:
+#             assert (
+#                 device.interfaces.mqtt.mqtt_client_is_connected
+#             ), f"Client '{device.name}' did not connect to MQTT server"
+#
+#     # publish a message with the dut
+#     mqtt_dut.interfaces.mqtt.mqtt_client_publish("mytesttopic/1", "12345".encode())
+#
+#     for device in [mqtt_client]:
+#         # allow some time for both clients to receive all messages
+#         sw = Stopwatch()
+#         msgs = []
+#         while sw.elapsed_sec < 10:
+#             time.sleep(0.1)
+#             msgs = device.interfaces.mqtt.mqtt_client_get_received_messages()
+#             if len(msgs) == 1:
+#                 break
+#
+#         assert len(msgs) == 1
+#         assert msgs[0].topic == "mytesttopic/1"
+#         assert msgs[0].payload == "12345".encode()
