@@ -79,7 +79,7 @@ def logger():
 def test_DUT_APMode_Trnms_rules_USregion_C19454(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet, static_gateway=static_gateway)
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet, static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info("********* configuring the sniffer with access point channel *********")
@@ -148,7 +148,7 @@ def test_DUT_APMode_Trnms_rules_USregion_C19454(wifi_sniffer, wifi_dut, wifi_cli
 def test_DUT_APMode_Trms_rules_EUregion_C19455(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in EU region *********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -219,7 +219,7 @@ def test_test_DUT_APMode_Trms_rules_JPregion_C19456(wifi_sniffer, wifi_dut, wifi
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in JP region *********")
     logger().info("Changing the validation channel to 13 to accomodate Sniffer Verification")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -288,7 +288,7 @@ def test_test_DUT_APMode_Trms_rules_JPregion_C19456(wifi_sniffer, wifi_dut, wifi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 def test_DUTAP_in_5GHz_variouschannels_C19434(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, channel, protocol):
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -375,7 +375,7 @@ def test_DUTAP_in_5GHz_variouschannels_C19434(wifi_sniffer, net_perf_client, wif
 @pytest.mark.parametrize("channel", [11])
 def test_DUTAP_variousDTIM_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, channel):
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -449,7 +449,7 @@ def test_DUTAP_variousDTIM_C19444(wifi_sniffer, wifi_dut, wifi_client, dtim, cha
 @pytest.mark.parametrize("channel", [11])
 def test_DUTAP_diff_beacon_intvls_C19443(wifi_sniffer, wifi_dut, wifi_client, beacon, channel):
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -521,7 +521,7 @@ def test_DUTAP_diff_beacon_intvls_C19443(wifi_sniffer, wifi_dut, wifi_client, be
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_DUTAP_errorneous_band_config_C19435(wifi_sniffer, wifi_dut, wifi_client):
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     with pytest.raises(AssertionError) as exc_info:
@@ -577,7 +577,7 @@ def test_DUTAP_errorneous_band_config_C19435(wifi_sniffer, wifi_dut, wifi_client
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_DUPAP_multiclient_connect_disconnect_C19432(wifi_sniffer, wifi_dut, wifi_clients, channel):
     logger().info(f'************* Configuring Static IP *************')
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     validation = True
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -666,7 +666,7 @@ def test_DUPAP_multiclient_connect_disconnect_C19432(wifi_sniffer, wifi_dut, wif
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_DUTAP_MaxSTAs_Connectandping_C19430_C19442(wifi_sniffer, wifi_dut, wifi_clients, channel):
     logger().info(f'************* Configuring Static IP *************')
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     validation = True
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -732,7 +732,7 @@ def test_DUTAP_MaxSTAs_Connectandping_C19430_C19442(wifi_sniffer, wifi_dut, wifi
 @pytest.mark.parametrize("channel", [10])
 def test_DUTAP_verify_beacon_format_C19436(wifi_sniffer, wifi_dut, wifi_client, channel):
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -788,7 +788,7 @@ def test_DUTAP_verify_beacon_format_C19436(wifi_sniffer, wifi_dut, wifi_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_DUTAP_TCPTx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -870,7 +870,7 @@ def test_DUTAP_TCPTx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_DUTAP_TCPRx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -960,7 +960,7 @@ def test_DUTAP_TCPRx_C19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_DUTAP_USregion_unsupportedchannel_C19458(wifi_dut, wifi_client):
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     with pytest.raises(WlanError) as exc_info:
@@ -999,7 +999,7 @@ def test_DUTAP_USregion_unsupportedchannel_C19458(wifi_dut, wifi_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_DUTAP_JPregion_unsupportedchannel_C19457(wifi_dut, wifi_client):
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     with pytest.raises(WlanError) as exc_info:
@@ -1038,7 +1038,7 @@ def test_DUTAP_JPregion_unsupportedchannel_C19457(wifi_dut, wifi_client):
 def test_apmode_connectivity_with_wrong_psk_Cli19437(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1093,7 +1093,7 @@ pytest.mark.wifi_client("raspi_wifi")
 def test_DUT_APMode_11d_support_C19448(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1155,7 +1155,7 @@ pytest.mark.wifi_client("raspi_wifi")
 def test_DUT_APMode_store_config_wpa2_C19452(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1246,7 +1246,7 @@ pytest.mark.wifi_client("raspi_wifi")
 def test_DUT_APMode_store_config_C19451(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1341,7 +1341,7 @@ pytest.mark.wifi_client("raspi_wifi")
 def test_DUT_APMode_softreset_aptosta_C19450(wifi_sniffer, wifi_dut, wifi_client, channel, wifi_access_point):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1482,7 +1482,7 @@ def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, chann
     logger().info(" ******* start capturing with Sniffer for sta mode ******* ")
     logger().info("Initiating wireless init")
     wifi_dut.interfaces.wifi.init(oper_mode=6, coex_mode=9)
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_dut.interfaces.wifi.start_ap(channel= channel)
@@ -1535,7 +1535,7 @@ def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, chann
 def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client, channel):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1602,7 +1602,7 @@ def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client
 def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1682,7 +1682,7 @@ def test_DUT_APMode_fixed_datarate_C19441(wifi_sniffer, wifi_dut, wifi_client, c
 def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, protocol, net_perf_client):
     logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, static_ip=static_ip, static_subnet=static_subnet,
+    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
                                       static_gateway=static_gateway)
     logger().info("********* configuring static ip to DUT *********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
