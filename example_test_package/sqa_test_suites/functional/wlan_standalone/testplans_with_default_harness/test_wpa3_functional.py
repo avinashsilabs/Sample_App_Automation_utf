@@ -210,15 +210,10 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -299,15 +294,10 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -388,15 +378,10 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -482,15 +467,10 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -576,15 +556,10 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -665,15 +640,10 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -753,15 +723,10 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -849,14 +814,9 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
     logger().info("ping successful to host")
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(5)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")

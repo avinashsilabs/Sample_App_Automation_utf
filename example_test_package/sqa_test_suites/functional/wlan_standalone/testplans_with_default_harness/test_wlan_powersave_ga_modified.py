@@ -7,7 +7,10 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes
                                             RS9116ExtTCPIPFeatureBitMap,
                                             RS9116SecurityMode,
                                             RS9116OperatingMode,
-                                            RS9116PowerSaveProcedureTypes
+                                            RS9116PowerSaveProcedureTypes,
+                                            DeviceConstants,
+                                            SocketType,
+                                            SocketOptions,
                                             )
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
@@ -16,6 +19,12 @@ from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.stopwatch import Stopwatch
 import time
+from random import randint
+from threading import Thread
+import threading
+import string
+import random
+from utf.utils.time_measurer import TimeMeasurer
 
 """This function runs below test steps for DUT-RS9116
     Step1: 1. Configuration of DUT in 2G mode
@@ -45,6 +54,46 @@ def __print_throughput(iperf_throughput: dict):
         print_dict("##     ", iperf_throughput)
 
 
+class tx_rx:
+    def __init__(self):
+        self.thread_lock = threading.Lock()
+        self.sent_data = 0
+        self.rcv_data = 0
+
+    def receive_data_socket(self, remote_socket, logger, no_of_pkts, data_size, proto_type=0):
+        fail_count = 0
+        if proto_type == 0:
+            remote_socket.interfaces.socket.set_recv_timeout(socket_type=0)
+        else:
+            remote_socket.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
+        for count in range(0, no_of_pkts):
+            if proto_type == 0:
+                data = remote_socket.interfaces.socket.recv_data_tcp(data_size)
+            else:
+                data, address = remote_socket.interfaces.socket.recv_data_udp(data_size)
+            if not isinstance(data, str):
+                fail_count = fail_count + 1
+                if fail_count == 5:
+                    break
+                else:
+                    continue
+            self.rcv_data = self.rcv_data + len(data)
+        logger.info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
+
+    def send_data(self, remote_socket, logger, data_size, test_run_time=300, proto_type=0, server_ip=None,
+                  server_port=None):
+        sw = Stopwatch()
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=data_size))
+        while sw.elapsed_sec < test_run_time:
+            if proto_type == 0:
+                data = remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server_socket=True)
+            else:
+                data = remote_socket.interfaces.socket.send_data_udp(tx_buffer, server_ip, server_port)
+                time.sleep(0.1)
+            self.sent_data = self.sent_data + data
+        logger.info(f"Total bytes sent on socket opened remotely -> {self.sent_data}")
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -59,8 +108,8 @@ def __print_throughput(iperf_throughput: dict):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [1800])
 def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_dut, wifi_access_point, wifi_sniffer,
@@ -70,7 +119,7 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
     iteration = 0
     while sw.elapsed_sec < test_run_time:
         iteration = iteration + 1
-        logger.info(f"#####################################################Iteration count -> {iteration}")
+        logger().info(f"#####################################################Iteration count -> {iteration}")
         validation = True
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
@@ -86,7 +135,7 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         result = wifi_dut.interfaces.wifi.start_ip()
         assert isinstance(
             result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
+        ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         logger().info(f"*****Enable Power save in DUT******")
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -132,8 +181,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -163,7 +212,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode1, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -219,8 +268,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
@@ -257,7 +306,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
@@ -276,7 +325,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
         net_perf_client.interfaces.net_perf.server_port,
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
-        )
+    )
     tp = net_perf_client.interfaces.net_perf.process_output()
     if tp is not None:
         print_dict("## ", tp)
@@ -308,8 +357,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -344,7 +393,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -355,7 +404,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
     status = ping(device_ip, ping_count)
     assert status == 1, "ping to dut is failed..."
     logger().info("ping to dut is successful after power save...")
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -404,8 +454,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
@@ -440,14 +490,15 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
     assert status == 1, "ping dut failed..."
     logger().info("ping to dut is successful...")
     # starting iperf
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
     net_perf_client.interfaces.net_perf.start()
 
     # open socket and send traffic
@@ -457,7 +508,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
         net_perf_client.interfaces.net_perf.server_port,
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
-        )
+    )
     # get and print throughput
     tp = net_perf_client.interfaces.net_perf.process_output()
     if tp is not None:
@@ -490,8 +541,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -523,7 +574,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -534,7 +585,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
     status = ping(device_ip, ping_count)
     assert status == 1, "ping to dut is failed..."
     logger().info("ping to dut is successful after power save...")
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -583,8 +635,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
@@ -620,14 +672,15 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     ping_count = 10
     logger().info("pinging to dut ip")
     status = ping(device_ip, ping_count)
     assert status == 1, "ping to dut failed..."
     logger().info("ping to dut is successful after power save...")
     # starting iperf
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
     net_perf_client.interfaces.net_perf.start()
 
     # open socket and send traffic
@@ -637,7 +690,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
         net_perf_client.interfaces.net_perf.server_port,
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
-        )
+    )
     logger().info("validate NULL data frame with PM bit set to 1")
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {bssid}))'
@@ -664,8 +717,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
@@ -694,7 +747,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
     assert result is not None, "Powersave Command Failed"
     wifi_dut.interfaces.wifi.bt_power_save(
         RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
-        )
+    )
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
     # preparing iperf
@@ -705,7 +758,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
     status = ping(device_ip, ping_count)
     assert status == 1, "ping to dut failed..."
     logger().info("ping to dut is successful after power save...")
-    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol, time_out=300)
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                    time_out=300)
 
     # creating results object for sharing between host and dut
     result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -754,8 +808,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
@@ -826,8 +880,8 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
@@ -897,8 +951,8 @@ def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wi
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "band": 0,
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer):
@@ -953,3 +1007,693 @@ def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi
         'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 0'
     logger().info("DUT sent null data pkt with power save bit enabled to 0 when power save is disabled which is "
                   "expected")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
+        "band": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.parametrize("protocol", ["TCP", "UDP"])
+@pytest.mark.parametrize("number_of_pkts", [1000])
+@pytest.mark.parametrize("test_run_time", [200])
+def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
+                                                          logger, number_of_pkts, protocol, test_run_time):
+    data_size = 1460
+    remote_socket.interfaces.socket.time_limit = 1800
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487')
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"Device mac address: {dut_mac_address}")
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
+    # preparing wifi_dut
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger.info(f"Fetched the device ip address,{device_ip}")
+    logger.info(f"*****Enable  Max Power save in DUT******")
+    # Initiating power save1
+    result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1,
+                                                 RS9116PowerSaveProcedureTypes.MaxPowerSave)
+    assert result is not None, "Powersave Command Failed"
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode1, RS9116PowerSaveProcedureTypes.MaxPowerSave
+    )
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {bssid}')
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    if protocol == "TCP":
+        logger.info("Starting tcp server remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server()
+        # DUT opens tcp client socket
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        logger.info(
+            f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        # tcp socket opened in DUT connects to the tcp server
+        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    else:
+        logger.info("Starting udp socket remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        # Open UDP socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, "socket id received is not matched. Expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    tx_rx_obj = tx_rx()
+    if protocol == "TCP":
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 0), )
+        th_start1 = Thread(target=tx_rx_obj.send_data, args=(remote_socket, logger, data_size, test_run_time, 0), )
+    else:
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 1), )
+        th_start1 = Thread(target=tx_rx_obj.send_data,
+                           args=(remote_socket, logger, data_size, test_run_time, 1, device_ip, local_port), )
+
+    th_start.start()
+    th_start1.start()
+    time.sleep(1)
+    with TimeMeasurer() as t:
+        if protocol == "TCP":
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
+        else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
+                                                                 server_ip=server_ip, server_port=server_port)
+    tx_time = t.duration
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    delta_time = 5
+    time.sleep(test_run_time - tx_time + delta_time)
+    th_start.join(5)
+    th_start1.join(5)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
+    packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
+    logger.info(f"Packet loss {packet_loss}")
+    assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
+
+    result = wifi_dut.interfaces.wifi.close_socket(sock)
+    assert b"success" in result, "unable to close opened tcp socket"
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    logger.info("Successfully closed opened socket in the DUT")
+    logger.info("validate NULL data frame with PM bit set to '1'")
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
+    # Disconnect the AP
+    wifi_dut.interfaces.wifi.leave()
+    logger.info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit set to 1'
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
+        "band": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.skip()
+@pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.parametrize("protocol", ["TCP", "UDP"])
+@pytest.mark.parametrize("number_of_pkts", [1000])
+@pytest.mark.parametrize("test_run_time", [200])
+def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
+                                                             logger, number_of_pkts, protocol, test_run_time):
+    data_size = 1460
+    remote_socket.interfaces.socket.time_limit = 1800
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490')
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"Device mac address: {dut_mac_address}")
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
+    # preparing wifi_dut
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger.info(f"Fetched the device ip address,{device_ip}")
+    logger.info(f"*****Enable  Max Power save in DUT******")
+    # Initiating power save1
+    result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                 RS9116PowerSaveProcedureTypes.MaxPowerSave)
+    assert result is not None, "Powersave Command Failed"
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
+    )
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {bssid}')
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    if protocol == "TCP":
+        logger.info("Starting tcp server remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server()
+        # DUT opens tcp client socket
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        logger.info(
+            f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        # tcp socket opened in DUT connects to the tcp server
+        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    else:
+        logger.info("Starting udp socket remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        # Open UDP socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, "socket id received is not matched. Expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    tx_rx_obj = tx_rx()
+    if protocol == "TCP":
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 0), )
+        th_start1 = Thread(target=tx_rx_obj.send_data, args=(remote_socket, logger, data_size, test_run_time, 0), )
+    else:
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 1), )
+        th_start1 = Thread(target=tx_rx_obj.send_data,
+                           args=(remote_socket, logger, data_size, test_run_time, 1, device_ip, local_port), )
+
+    th_start.start()
+    th_start1.start()
+    time.sleep(1)
+    with TimeMeasurer() as t:
+        if protocol == "TCP":
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
+        else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
+                                                                 server_ip=server_ip, server_port=server_port)
+    tx_time = t.duration
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    delta_time = 5
+    time.sleep(test_run_time - tx_time + delta_time)
+    th_start.join(5)
+    th_start1.join(5)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
+
+    packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
+    logger.info(f"Packet loss {packet_loss}")
+    assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
+
+    result = wifi_dut.interfaces.wifi.close_socket(sock)
+    assert b"success" in result, "unable to close opened tcp socket"
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    logger.info("Successfully closed opened socket in the DUT")
+    logger.info("validate NULL data frame with PM bit set to '1'")
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
+    # Disconnect the AP
+    wifi_dut.interfaces.wifi.leave()
+    logger.info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit set to 1'
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
+        "band": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.parametrize("protocol", ["TCP", "UDP"])
+@pytest.mark.parametrize("number_of_pkts", [1000])
+@pytest.mark.parametrize("test_run_time", [200])
+def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
+                                                             logger, number_of_pkts, protocol, test_run_time):
+    data_size = 1460
+    remote_socket.interfaces.socket.time_limit = 1800
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493')
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"Device mac address: {dut_mac_address}")
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
+    # preparing wifi_dut
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger.info(f"Fetched the device ip address,{device_ip}")
+    logger.info(f"*****Enable  Max Power save in DUT******")
+    # Initiating power save1
+    result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                 RS9116PowerSaveProcedureTypes.MaxPowerSave)
+    assert result is not None, "Powersave Command Failed"
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
+    )
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {bssid}')
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    if protocol == "TCP":
+        logger.info("Starting tcp server remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server()
+        # DUT opens tcp client socket
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        logger.info(
+            f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        # tcp socket opened in DUT connects to the tcp server
+        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    else:
+        logger.info("Starting udp socket remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        # Open UDP socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, "socket id received is not matched. Expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    tx_rx_obj = tx_rx()
+    if protocol == "TCP":
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 0), )
+        th_start1 = Thread(target=tx_rx_obj.send_data, args=(remote_socket, logger, data_size, test_run_time, 0), )
+    else:
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 1), )
+        th_start1 = Thread(target=tx_rx_obj.send_data,
+                           args=(remote_socket, logger, data_size, test_run_time, 1, device_ip, local_port), )
+
+    th_start.start()
+    th_start1.start()
+    time.sleep(1)
+    with TimeMeasurer() as t:
+        if protocol == "TCP":
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
+        else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
+                                                                 server_ip=server_ip, server_port=server_port)
+    tx_time = t.duration
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    delta_time = 5
+    time.sleep(test_run_time - tx_time + delta_time)
+    th_start.join(5)
+    th_start1.join(5)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
+    packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
+    logger.info(f"Packet loss {packet_loss}")
+    assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
+
+    result = wifi_dut.interfaces.wifi.close_socket(sock)
+    assert b"success" in result, "unable to close opened tcp socket"
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    logger.info("Successfully closed opened socket in the DUT")
+    logger.info("validate NULL data frame with PM bit set to '1'")
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
+    # Disconnect the AP
+    wifi_dut.interfaces.wifi.leave()
+    logger.info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit set to 1'
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
+        "band": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.parametrize("protocol", ["TCP", "UDP"])
+@pytest.mark.parametrize("number_of_pkts", [1000])
+@pytest.mark.parametrize("test_run_time", [200])
+def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
+                                                              logger, number_of_pkts, protocol, test_run_time):
+    data_size = 1460
+    remote_socket.interfaces.socket.time_limit = 1800
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494')
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"Device mac address: {dut_mac_address}")
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
+    # preparing wifi_dut
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger.info(f"Fetched the device ip address,{device_ip}")
+    logger.info(f"*****Enable  Max Power save in DUT******")
+    # Initiating power save1
+    result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                 RS9116PowerSaveProcedureTypes.MaxPowerSave)
+    assert result is not None, "Powersave Command Failed"
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
+    )
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {bssid}')
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    if protocol == "TCP":
+        logger.info("Starting tcp server remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server()
+        # DUT opens tcp client socket
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        logger.info(
+            f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        # tcp socket opened in DUT connects to the tcp server
+        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    else:
+        logger.info("Starting udp socket remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        # Open UDP socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, "socket id received is not matched. Expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    tx_rx_obj = tx_rx()
+    if protocol == "TCP":
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 0), )
+        th_start1 = Thread(target=tx_rx_obj.send_data, args=(remote_socket, logger, data_size, test_run_time, 0), )
+    else:
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 1), )
+        th_start1 = Thread(target=tx_rx_obj.send_data,
+                           args=(remote_socket, logger, data_size, test_run_time, 1, device_ip, local_port), )
+
+    th_start.start()
+    th_start1.start()
+    time.sleep(1)
+    with TimeMeasurer() as t:
+        if protocol == "TCP":
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
+        else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
+                                                                 server_ip=server_ip, server_port=server_port)
+    tx_time = t.duration
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    delta_time = 5
+    time.sleep(test_run_time - tx_time + delta_time)
+    th_start.join(5)
+    th_start1.join(5)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
+    packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
+    logger.info(f"Packet loss {packet_loss}")
+    assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
+
+    result = wifi_dut.interfaces.wifi.close_socket(sock)
+    assert b"success" in result, "unable to close opened tcp socket"
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    logger.info("Successfully closed opened socket in the DUT")
+    logger.info("validate NULL data frame with PM bit set to '1'")
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
+    # Disconnect the AP
+    wifi_dut.interfaces.wifi.leave()
+    logger.info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit set to 1'
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.TCP_IP_BI_DIR_ACK_UPDATE,
+        "band": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.parametrize("protocol", ["TCP", "UDP"])
+@pytest.mark.parametrize("number_of_pkts", [1000])
+@pytest.mark.parametrize("test_run_time", [200])
+def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
+                                                              logger, number_of_pkts, protocol, test_run_time):
+    data_size = 1460
+    remote_socket.interfaces.socket.time_limit = 1800
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497')
+    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+    assert result_scan is not None, "No AP found"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"Device mac address: {dut_mac_address}")
+    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    assert result_ap is not None, "Could not connect to the AP"
+    # preparing wifi_dut
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger.info(f"Fetched the device ip address,{device_ip}")
+    logger.info(f"*****Enable  Max Power save in DUT******")
+    # Initiating power save1
+    result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                 RS9116PowerSaveProcedureTypes.MaxPowerSave)
+    assert result is not None, "Powersave Command Failed"
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave
+    )
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {bssid}')
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    if protocol == "TCP":
+        logger.info("Starting tcp server remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server()
+        # DUT opens tcp client socket
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        logger.info(
+            f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        # tcp socket opened in DUT connects to the tcp server
+        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    else:
+        logger.info("Starting udp socket remotely at port number 5001")
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        # Open UDP socket in the DUT
+        sock = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        assert sock == 0, "socket id received is not matched. Expected is 0"
+        logger.info(f"socket id received is {sock} which is expected")
+        local_port = randint(5001, 60000)
+        # Socket binds at (device_ip, 5001) in DUT
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    tx_rx_obj = tx_rx()
+    if protocol == "TCP":
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 0), )
+        th_start1 = Thread(target=tx_rx_obj.send_data, args=(remote_socket, logger, data_size, test_run_time, 0), )
+    else:
+        th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                          args=(remote_socket, logger, number_of_pkts, data_size, 1), )
+        th_start1 = Thread(target=tx_rx_obj.send_data,
+                           args=(remote_socket, logger, data_size, test_run_time, 1, device_ip, local_port), )
+
+    th_start.start()
+    th_start1.start()
+    time.sleep(1)
+    with TimeMeasurer() as t:
+        if protocol == "TCP":
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
+        else:
+            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+            server_port = remote_socket.interfaces.socket.server_port
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
+                                                                 server_ip=server_ip, server_port=server_port)
+    tx_time = t.duration
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    delta_time = 5
+    time.sleep(test_run_time - tx_time + delta_time)
+    th_start.join(5)
+    th_start1.join(5)
+    result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+    bytes_received = int(result.split(b":")[1])
+    logger.info(f"bytes received on socket {sock} -> {bytes_received}")
+    if protocol == "TCP":
+        assert bytes_sent == tx_rx_obj.rcv_data, "Number of bytes sent by DUT and received on remote socket are not " \
+                                                 "matched "
+    else:
+        packet_loss_tx = (((bytes_sent - tx_rx_obj.rcv_data) / bytes_sent) * 100)
+        assert packet_loss_tx < 20, "Packet loss is not in tolerance level while DUT is sending data over UDP"
+    packet_loss = (((tx_rx_obj.sent_data - bytes_received) / tx_rx_obj.sent_data) * 100)
+    logger.info(f"Packet loss {packet_loss}")
+    assert packet_loss < 20, "Packet loss is not in tolerance level while DUT receiving the data"
+
+    result = wifi_dut.interfaces.wifi.close_socket(sock)
+    assert b"success" in result, "unable to close opened tcp socket"
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    logger.info("Successfully closed opened socket in the DUT")
+    logger.info("validate NULL data frame with PM bit set to '1'")
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {bssid}))'
+    # Disconnect the AP
+    wifi_dut.interfaces.wifi.leave()
+    logger.info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info('Validation for NULL packet with pm bit 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit set to 1'
