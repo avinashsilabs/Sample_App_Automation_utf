@@ -4,12 +4,16 @@ import pytest
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, DeviceConstants, \
-    RS9116AsyncEventType, SocketOptions, RS9116PowerSaveProcedureTypes, RS9116CustomFeatureBitMap
+    RS9116AsyncEventType, SocketOptions, RS9116PowerSaveProcedureTypes, RS9116CustomFeatureBitMap, SocketType
 from utf.utils.subprocess_manager import SubprocessManager
 from threading import Thread
 import time
 from random import randint
 from utf.utils.iperf.iperf_utils import ping
+from utf.utils.stopwatch import Stopwatch
+import threading
+import string
+import random
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -45,6 +49,46 @@ pytestmark = [
             }
         )
     ]
+
+
+class tx_rx:
+    def __init__(self):
+        self.thread_lock = threading.Lock()
+        self.sent_data = 0
+        self.rcv_data = 0
+
+    def receive_data_socket(self, remote_socket, logger, no_of_pkts, data_size, proto_type=0):
+        fail_count = 0
+        if proto_type == 0:
+            remote_socket.interfaces.socket.set_recv_timeout(socket_type=0)
+        else:
+            remote_socket.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
+        for count in range(0, no_of_pkts):
+            if proto_type == 0:
+                data = remote_socket.interfaces.socket.recv_data_tcp(data_size)
+            else:
+                data, address = remote_socket.interfaces.socket.recv_data_udp(data_size)
+            if not isinstance(data, str):
+                fail_count = fail_count + 1
+                if fail_count == 5:
+                    break
+                else:
+                    continue
+            self.rcv_data = self.rcv_data + len(data)
+        logger.info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
+
+    def send_data(self, remote_socket, logger, data_size, test_run_time=300, proto_type=0, server_ip=None,
+                  server_port=None):
+        sw = Stopwatch()
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=data_size))
+        while sw.elapsed_sec < test_run_time:
+            if proto_type == 0:
+                data = remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server_socket=True)
+            else:
+                data = remote_socket.interfaces.socket.send_data_udp(tx_buffer, server_ip, server_port)
+                time.sleep(0.1)
+            self.sent_data = self.sent_data + data
+        logger.info(f"Total bytes sent on socket opened remotely -> {self.sent_data}")
 
 
 def ApWirelessOff(wifi_access_point, wait_time, logger):
@@ -134,9 +178,13 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("number_of_pkts", [10000])
 # The test case checks tcp close functionality
-def test_wifi_tcp_close_TC19347(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
+def test_wifi_tcp_close_TC19347(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger, number_of_pkts,
+                                ):
     capture_filename = "test_wifi_tcp_close_TC19347"
+    data_size = 1460
+    remote_socket.interfaces.socket.time_limit = 1800
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -152,13 +200,18 @@ def test_wifi_tcp_close_TC19347(wifi_sniffer, wifi_dut, wifi_access_point, remot
     wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
     # tcp socket opened in DUT connects to the tcp server
     wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
-    logger.info("Sending 50 bytes of data")
-    wifi_dut.interfaces.wifi.send(sock, 50)
-    # DUT closes the tcp socket
+    tx_rx_obj = tx_rx()
+    th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                      args=(remote_socket, logger, number_of_pkts, data_size, 0), daemon=True)
+    th_start.start()
+    bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts)
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    th_start.join(5)
     result = wifi_dut.interfaces.wifi.close_socket(sock)
     assert b"success" in result, "unable to close opened tcp socket"
     remote_socket.interfaces.socket.socket_close_indication(1)
     logger.info("Successfully closed opened socket in the DUT")
+    wifi_dut.interfaces.wifi.leave()
     logger.info("Stop the sniffer")
     wifi_sniffer.interfaces.capture.stop_capture()
     validation = True
@@ -166,14 +219,15 @@ def test_wifi_tcp_close_TC19347(wifi_sniffer, wifi_dut, wifi_access_point, remot
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("test_run_time", [60])
 # The test case checks data receive functionality over tcp socket
-def test_wifi_tcp_data_receive_check_TC19360(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
+def test_wifi_tcp_data_receive_check_TC19360(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger,
+                                             test_run_time):
     capture_filename = "test_wifi_tcp_data_receive_check_TC19360"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -191,15 +245,20 @@ def test_wifi_tcp_data_receive_check_TC19360(wifi_sniffer, wifi_dut, wifi_access
 
     tx_buffer = "12345678901234567890123456789012345678901234567890"
     buffer_length = len(tx_buffer)
-    # send 50 bytes of data from tcp server opened remotely
-    remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
-    # DUT receives data over tcp socket after execution of below api
-    try:
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
-    except:
-        logger.info("resetting the DUT as receive API is a blocking call. SAPI driver is in the blocking mode")
-        wifi_dut.interfaces.wifi.reset()
-        assert 0, "DUT is not able to receive data over TCP socket"
+    sw = Stopwatch()
+    iteration_count = 1
+    while sw.elapsed_sec < test_run_time:
+        logger.info(f"######################Iteration count {iteration_count}######################")
+        # send 50 bytes of data from tcp server opened remotely
+        remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
+        # DUT receives data over tcp socket after execution of below api
+        try:
+            buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
+        except:
+            logger.info("resetting the DUT as receive API is a blocking call. SAPI driver is in the blocking mode")
+            wifi_dut.interfaces.wifi.reset()
+            assert 0, "DUT is not able to receive data over TCP socket"
+        iteration_count = iteration_count + 1
 
     assert buffer_length == buffer_length_rx, "buffer length sent and received is not matched"
     assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
@@ -221,9 +280,11 @@ def test_wifi_tcp_data_receive_check_TC19360(wifi_sniffer, wifi_dut, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("number_of_pkts", [10000])
 # The test case checks udp socket close functionality
-def test_wifi_udp_close_TC19348(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
+def test_wifi_udp_close_TC19348(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger, number_of_pkts):
     capture_filename = "test_wifi_udp_close_TC19348"
+    data_size = 1460
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -231,15 +292,22 @@ def test_wifi_udp_close_TC19348(wifi_sniffer, wifi_dut, wifi_access_point, remot
     logger.info("Starting udp socket remotely at port number 5001")
     remote_socket.interfaces.socket.start_server(socket_type=1)
     # Open UDP socket in the DUT
-    sock = wifi_dut.interfaces.wifi.open_udp_client_socket()
+    sock = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
     assert sock == 0, "socket id received is not matched. Expected is 0"
     logger.info(f"socket id received is {sock} which is expected")
     local_port = randint(5001, 60000)
     # Socket binds at (device_ip, 5001) in DUT
     wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-    logger.info("Sending 50 bytes of data over udp socket")
-    wifi_dut.interfaces.wifi.send_to(sock, 50, remote_socket.interfaces.socket.server_ip,
-                                     remote_socket.interfaces.socket.server_port)
+    tx_rx_obj = tx_rx()
+    th_start = Thread(target=tx_rx_obj.receive_data_socket,
+                      args=(remote_socket, logger, number_of_pkts, data_size, 1), )
+    th_start.start()
+    server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+    server_port = remote_socket.interfaces.socket.server_port
+    bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(sock, data_size, number_of_pkts,
+                                                         server_ip=server_ip, server_port=server_port)
+    logger.info(f"Number of bytes sent by dut {bytes_sent}")
+    th_start.join(5)
     # DUT closes the socket.socket id is mentioned in sock variable
     result = wifi_dut.interfaces.wifi.close_socket(sock)
     assert b"success" in result, "Unable to close the udp socket"
@@ -258,9 +326,10 @@ def test_wifi_udp_close_TC19348(wifi_sniffer, wifi_dut, wifi_access_point, remot
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("test_run_time", [60])
 # The test case checks data receive functionality over udp socket
 @pytest.mark.skip()
-def test_wifi_udp_receive_TC19361(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
+def test_wifi_udp_receive_TC19361(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger,test_run_time):
     capture_filename = "test_wifi_udp_receive_TC19361"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -280,7 +349,7 @@ def test_wifi_udp_receive_TC19361(wifi_sniffer, wifi_dut, wifi_access_point, rem
     # send 50 bytes of data from udp socket opened remotely
     remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
     try:
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length)
+        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length, timeout=50)
         assert buffer_length == buffer_length_rx, "buffer length sent and received is not matched"
         assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
     except:
@@ -306,7 +375,7 @@ def test_wifi_udp_receive_TC19361(wifi_sniffer, wifi_dut, wifi_access_point, rem
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
+def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger):
     capture_filename = "test_wifi_tcp_remote_terminate_TC19362"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -362,7 +431,7 @@ def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_tcp_rejoin_TC19354(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
+def test_wifi_tcp_rejoin_TC19354(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger):
     capture_filename = "test_wifi_tcp_rejoin_TC19354"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
