@@ -3,7 +3,15 @@ import time
 from datetime import datetime, timedelta
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.switch import Switch
-
+from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap,
+                                            RS9116CustomFeatureBitMap,
+                                            RS9116ConfigFeatureBitMap,
+                                            RS9116TCPIPFeatureBitMap,
+                                            RS9116ExtCustomFeatureBitMap,
+                                            RS9116ExtTCPIPFeatureBitMap,
+                                            RS9116CertificateType,
+                                            RS9116SecurityMode, RS9116PowerSaveProcedureTypes, RS9116JoinFeatureBitMap
+                                            )
 import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError, SecurityMode
@@ -661,23 +669,36 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.skip
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
+        "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
     },
 )
+# EAP Connection in TLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_rejoin_eap_tls_c19730(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     ap_user_name = "\\\"user1\\\""
-    ap_password = "\\\"12345678\\\""
+    ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+    dut_ssid = wifi_access_point.interfaces.wifi.ssid
+    dut_security = wifi_access_point.interfaces.wifi.security
     send_bytes = 1000
     validation = True
     global pdu_state
@@ -687,12 +708,15 @@ def test_rejoin_eap_tls_c19730(wifi_sniffer, wifi_access_point, wifi_dut, switch
         switch.interfaces.pdu_switch.turn_on()
         pdu_state = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("scanning for AP")
+    # test_scan
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+    logger().info(scan_results)
+
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    time.sleep(2)
+    # test_wifi_join
     wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
-    time.sleep(20)
     wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-    time.sleep(20)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -701,7 +725,7 @@ def test_rejoin_eap_tls_c19730(wifi_sniffer, wifi_access_point, wifi_dut, switch
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
@@ -780,10 +804,6 @@ def test_rejoin_eap_tls_c19730(wifi_sniffer, wifi_access_point, wifi_dut, switch
         wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.skip
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -794,10 +814,37 @@ def test_rejoin_eap_tls_c19730(wifi_sniffer, wifi_access_point, wifi_dut, switch
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost
     },
 )
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+    }
+)
+# EAP Connection in TTLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_rejoin_eap_ttls_c19731(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     ap_user_name = "\\\"user1\\\""
-    ap_password = "\\\"12345678\\\""
+    ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+    dut_ssid = wifi_access_point.interfaces.wifi.ssid
+    dut_security = wifi_access_point.interfaces.wifi.security
     send_bytes = 1000
     validation = True
     global pdu_state
@@ -806,13 +853,18 @@ def test_rejoin_eap_ttls_c19731(wifi_sniffer, wifi_access_point, wifi_dut, switc
     if pdu_state is False:
         switch.interfaces.pdu_switch.turn_on()
         pdu_state = True
+
+    wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("scanning for AP")
+    # test_scan
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+    logger().info(scan_results)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    time.sleep(2)
+    # test_wifi_join
     wifi_dut.interfaces.wifi.eap_method(eap_method="TTLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
-    time.sleep(20)
     wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-    time.sleep(20)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -822,7 +874,7 @@ def test_rejoin_eap_ttls_c19731(wifi_sniffer, wifi_access_point, wifi_dut, switc
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
@@ -904,35 +956,52 @@ def test_rejoin_eap_ttls_c19731(wifi_sniffer, wifi_access_point, wifi_dut, switc
             time.sleep(60)
         wifi_dut.interfaces.wifi.leave()
 
-@pytest.mark.skip
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
-        "oper_mode": 0,
+    wifi=
+    {
+        "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost
-    },
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+    }
 )
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_rejoin_eap_peap_c19732(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     ap_user_name = "\\\"user1\\\""
-    ap_password = "\\\"12345678\\\""
+    ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+    dut_ssid = wifi_access_point.interfaces.wifi.ssid
+    dut_security = wifi_access_point.interfaces.wifi.security
     send_bytes = 1000
     validation = True
     global pdu_state
 
     '''Verify rejoin functionality in EAP-,PEAP mode'''
+    wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("scanning for AP")
+    # test_scan
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+    logger().info(scan_results)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-    time.sleep(2)
+    # test_wifi_join
     wifi_dut.interfaces.wifi.eap_method(eap_method="PEAP", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
-    time.sleep(20)
-    wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-    time.sleep(20)
+    result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
 
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -942,7 +1011,7 @@ def test_rejoin_eap_peap_c19732(wifi_sniffer, wifi_access_point, wifi_dut, switc
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.MaxPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
