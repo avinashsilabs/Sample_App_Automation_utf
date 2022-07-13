@@ -6,7 +6,6 @@
 #include "sl_cli.h"
 #include "sl_cli_arguments.h"
 #include "utilities.h"
-#include "rsi_os.h"
 #include <string.h>
 
 #define RSI_SNTP_RSP_BUFFER_LENGTH 30
@@ -642,7 +641,6 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             pkt_cnt++;
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
-            rsi_os_task_delay(10);
         }
         measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM: ");
 
@@ -710,7 +708,6 @@ void rsi_recvfrom_iperf_command(sl_cli_command_arg_t* arguments)
             pkt_cnt++;
             if (((tt_end - tt_start) / 1000 > ttl_sec) || receive_completed == 1)
                 break;
-            rsi_os_task_delay(10);
         }
         measure_throughput(total_bytes_tx, tt_start, tt_end, pkt_cnt, "IPERF_RECV_FROM: ");
         //close socket

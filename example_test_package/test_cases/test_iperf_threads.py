@@ -244,21 +244,21 @@ def test_coex_ble_wlan_datatransfer(wifi_access_point, wifi_dut, wifi_client, bl
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave
     )
-    # ''' Initiating BLE connection(Master) and start data transfer '''
-    # ble_obj = BleThreadConnectionDataTransfer(wifi_dut, ble_client)
-    # ble_obj.start()
-    #
-    # ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
-    # wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
-    # wlan_obj.start()
+    ''' Initiating BLE connection(Master) and start data transfer '''
+    ble_obj = BleThreadConnectionDataTransfer(wifi_dut, ble_client)
+    ble_obj.start()
 
-    # ble_obj.wait_for_exit()
-    # wlan_obj.wait_for_exit()
+    ''' Start Iperf traffic DUT as a server and Linux machine as a Client'''
+    wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
+    wlan_obj.start()
+
+    ble_obj.wait_for_exit()
+    wlan_obj.wait_for_exit()
 
     # result = ThreadBase.call_functions_simultaneously(
     #     [(start_ble_data_transfer, wifi_dut, ble_client), (start_iperf_dut_as_server, wifi_dut, net_perf_client, protocol, device_ip, host_ip)])
 
-    start_ble_data_transfer(wifi_dut, ble_client)
-    start_iperf_dut_as_server(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
+    # start_ble_data_transfer(wifi_dut, ble_client)
+    # start_iperf_dut_as_server(wifi_dut, net_perf_client, protocol, device_ip, host_ip)
 
     time.sleep(5)
