@@ -37,9 +37,9 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     # Init power meter module 
     power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
     # set power meter out put channels
-    power_meter.interfaces.power_meter.set_output_channels(["1","2"])
+    power_meter.interfaces.power_meter.set_output_channels_settings([{"channel": "1", "emulation_mode": "Current", "measure_voltage": True, "measure_current": True},{"channel": "2", "emulation_mode": "current", "measure_voltage": True, "measure_current": True}])
     # switching On channels
-    power_meter.interfaces.power_meter.turn_on_channels(["1","2"])
+    #power_meter.interfaces.power_meter.turn_on_channels(["1","2"])
     # start capture power meter datalog/scope
     power_meter.interfaces.power_meter.start_capture()
     
