@@ -158,12 +158,16 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("performing dut reset....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
+    # performs the wifi initialization
     logger().info("Initialising DUT after the reset....")
-    wifi_dut.interfaces.wifi.init()
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -241,12 +245,16 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
+    time.sleep(5)
+    # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing DUT....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching dut version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -325,12 +333,15 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("resetting the DUT after upgrade....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing DUT....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
     time.sleep(10)
 
     logger().info("fetching DUT version after init....")
@@ -408,12 +419,15 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("resetting dut after upgrade....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing dut after reset....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
     time.sleep(10)
 
     logger().info("fetching fw version after init....")
@@ -423,7 +437,7 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="skipped as it is removed from test rail")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -480,17 +494,21 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
     logger().info("Fetching the DUT fw version after upgrade...")
     wifi_dut.interfaces.wifi.version()
 
-    logger().info("resetting dut....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing dut....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason= "skipped as it is removed from test rail")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -547,12 +565,16 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
     logger().info("Fetching the DUT fw version after upgrade...")
     wifi_dut.interfaces.wifi.version()
 
-    logger().info("resetting dut....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing dut....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -626,12 +648,16 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("resetting dut....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing dut....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -640,7 +666,7 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="skipped as it is removed from test rail")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -702,12 +728,16 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
     logger().info("Fetching the DUT fw version after upgrade...")
     wifi_dut.interfaces.wifi.version()
 
-    logger().info("resetting dut....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
-    logger().info("Initializing dut....")
-    wifi_dut.interfaces.wifi.init()
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -780,12 +810,16 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("performing dut reset....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
+    # performs the wifi initialization
     logger().info("Initialising DUT after the reset....")
-    wifi_dut.interfaces.wifi.init()
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -905,12 +939,16 @@ def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wi
         wifi_dut.interfaces.wifi.get_http_otaf_status()
     assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
 
-    logger().info("performing dut reset....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
+    # performs the wifi initialization
     logger().info("Initialising DUT after the reset....")
-    wifi_dut.interfaces.wifi.init()
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -1044,12 +1082,16 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    logger().info("performing dut reset....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    time.sleep(5)
+    # API does soft reset on DUT
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
+    # performs the wifi initialization
     logger().info("Initialising DUT after the reset....")
-    wifi_dut.interfaces.wifi.init()
+    wifi_dut.interfaces.wifi.dut_init()
+    time.sleep(10)
 
     logger().info("fetching the fw version after init....")
     wifi_dut.interfaces.wifi.version()
@@ -1057,7 +1099,6 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
     logger().info("Stop Sniffer capture...")
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
-
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -1171,14 +1212,15 @@ def test_https_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, 
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
+    time.sleep(5)
     # API does soft reset on DUT
-    logger().info("resetting dut after upgrade....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
+    time.sleep(10)
 
     # performs the wifi initialization
-    logger().info("Initializing dut after reset....")
-    wifi_dut.interfaces.wifi.init()
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
     time.sleep(10)
 
     # gets DUT fw version
