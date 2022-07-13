@@ -59,10 +59,10 @@ pipeline {
                                     pushd executor
 
                                     if "%TEST_CONFIG_FILE%"=="" (
-                                        set TEST_CONFIG_FILE=smoke_test_suite.yaml
+                                        set TEST_CONFIG_FILE=integration_tests_2.yaml
                                     )
 
-                                    set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/tests/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
+                                    set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
 
                                     call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
                                     set exitcode=%ERRORLEVEL%

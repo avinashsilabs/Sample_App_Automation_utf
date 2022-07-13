@@ -111,10 +111,10 @@ pipeline {
                                             pushd executor
 
                                             if "%TEST_CONFIG_FILE%"=="" (
-                                                set TEST_CONFIG_FILE=integration_test_config.yaml
+                                                set TEST_CONFIG_FILE=integration_tests_1.yaml
                                             )
 
-                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/tests/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
+                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
                                             if "%ENABLE_COVERAGE%"=="true" (
                                                set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test/tests/.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
                                             )

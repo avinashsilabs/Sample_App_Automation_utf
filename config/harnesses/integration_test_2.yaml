@@ -155,8 +155,7 @@ devices:
                 ip_address: '192.168.10.1'
                 web_ui_port: 80
                 admin_password: 'dlink810l'
-                security: WPA2
-                ssid: "TESTTEST-DLINK"
+                ssid: "TESTTEST-DLINK_2"
                 channel: 1
                 cipher: 'AES'
 
@@ -165,8 +164,7 @@ devices:
             wifi:
                 type: 'wifi.access_points.static'
                 security: WPA2
-                ssid: 'TESTTEST-DLINK'
-                passphrase: 'thisisatestnetwork'
+                ssid: 'TESTTEST-DLINK_2'
                 channel: 1
                 cipher: 'AES'
 
@@ -462,12 +460,11 @@ defaults:
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
-        - 'rs9116_sapi'
         - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap_static'
+    wifi_access_point: 'dlink810_ap'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
@@ -503,7 +500,7 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TEST00000003'
+        ssid: 'TESTTESTTEST_2'
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
@@ -559,6 +556,10 @@ defaults:
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
+
+integration:
+    duts: ["rs9116_sapi", "rs9116_at"]
+    access_points: ["raspi_wifi", "dlink810_ap", "asus_rt_ax3000_ap"]
 
 # default start & end states for devices & interfaces
 start_state:
