@@ -1,4 +1,5 @@
 import os
+import sys
 
 from hwmux_client.hwmux_api import HwMuxApi
 from hwmux_client.model.patched_device_group_serializer_with_device_pk import (
@@ -15,8 +16,10 @@ from hwmux_client.model.location_serializer_write_only import (
 from convert_to_json import DEFAULT_TEST_BEDS, convert_yaml_to_json
 
 
-def main():
-    mux_api = HwMuxApi(user_token=os.environ["HWMUX_TOKEN"])
+def main(token):
+    if token is None:
+        token = os.environ["HWMUX_TOKEN"]
+    mux_api = HwMuxApi(user_token=token)
     test_beds = convert_yaml_to_json(DEFAULT_TEST_BEDS)
     for test_bed in test_beds:
         groups_list = mux_api.groups_api.groups_list(name=test_bed.name)
@@ -48,4 +51,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])

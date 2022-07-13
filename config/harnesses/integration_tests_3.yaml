@@ -19,6 +19,7 @@ devices:
         # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
         # In the case of a 9116 device, the type 'rs911x' should be used
         type: 'rs911x'
+        subtype: 'rs9116'
         src_dir: 'utf_wiseconnect'
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
@@ -88,6 +89,7 @@ devices:
         # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
         # In the case of a 9116 device, the type 'rs911x' should be used
         type: 'rs911x'
+        subtype: 'rs9116'
         src_dir: 'utf_wiseconnect'
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
@@ -136,6 +138,7 @@ devices:
 
     efr32_4180b:
         type: 'efx32'
+        subtype: 'efr32'
         interfaces:
             vcom:
                 type: 'serial'
@@ -147,10 +150,25 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.dlink810'
-                ip_address: '10.4.1.178'
-                web_ui_port: 8080
+#                ip_address: '10.100.124.91'
+#                web_ui_port: 8080
+                ip_address: '192.168.10.1'
+                web_ui_port: 80
                 admin_password: 'dlink810l'
+                security: WPA2
                 ssid: "TESTTEST-DLINK"
+                channel: 1
+                cipher: 'AES'
+
+    dlink810_ap_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'TESTTEST-DLINK'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+                cipher: 'AES'
 
     asus_rt_ax3000_ap:
         interfaces:
@@ -161,7 +179,7 @@ devices:
                 ssh_port: 1022
                 ssid: "TESTTEST-ASUS"
 
-    savage_ap:
+    switched_ap:
         interfaces:
             wifi:
                 type: 'wifi.access_points.static'
@@ -182,7 +200,19 @@ devices:
                 type: 'wifi.access_points.linux'
                 shell: 'linux_shell'
                 interface: 'wlan0'
-                ip_address: "192.168.0.1"
+
+    secondary_raspi_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.100.124.129
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                interface: 'wlan0'
 
     raspi_ble_client:
         interfaces:
@@ -208,9 +238,11 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '10.4.1.153'
-                image: 'utfsilabs/rpi_ubuntu_secondary:09_02_2021'
+                ip_address: '10.100.124.129'
+                image: 'utfsilabs/rpi_ubuntu_secondary'
                 container_name: 'secondary_raspi_bt_client'
+                username: pi
+                password: 'raspberry'
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -311,7 +343,7 @@ devices:
         interfaces:
             mqtt:
                 type: 'mqtt.server.static'
-                hostname: 'mqtt.savage.zone'
+                hostname: 'SLKAUS002.silabs.com'
                 port: 1883
                 username: 'utfsilabs'
                 password: 'TESTTESTTEST'
@@ -351,24 +383,24 @@ devices:
         interfaces:
             http:
                 type: 'http.server.static'
-                hostname: 'reports.savage.zone'
+                hostname: 'letsencrypt.org'
                 port: 443
                 tls_enabled: true
                 tls_ca_chain: 'isrg-root.pem'
 
     airpcap:
         interfaces:
-            local_shell:
+            ssh_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.4.1.153
+                remote: 10.100.124.129
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
-                shell: 'local_shell'
-                interface: 'wlx9848279ff89f'
+                shell: 'ssh_shell'
+                interface: 'wlan1'
 
     python_aws_iot_thing:
         interfaces:
@@ -381,12 +413,23 @@ devices:
                 root_ca: 'AWS-IoT-root-CA.crt'
                 client_cert: 'python-thing-certificate.pem.crt'
 
-    iperf:
+    raspi_iperf:
         interfaces:
             net_perf:
                 type: 'iperf'
                 # to zip all the iperf output files
                 zip_results: 'Y'
+
+    static_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "10.207.18.2"
+                host_username: "test"
+                host_password: "test123"
 
     raspi_ip_socket:
         interfaces:
@@ -395,7 +438,7 @@ devices:
                 ip_version: 0
                 dut_local_socket: 5001
                 destination_socket: 5001
-                server_ip: '192.168.0.1'
+                server_ip: '192.168.100.50'
                 time: 30
                 buffer_length: 1470
                 no_of_pkts: 500
@@ -408,7 +451,6 @@ devices:
                 type: 'socket.ip_socket_factory'
 
 
-
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -418,14 +460,23 @@ defaults:
 
     efx32: 'efr32_4180b'
 
+    # List of devices on test bed, used for loading/upgrading firmware at test case level
+    wiseconnect_duts:
+        - 'rs9116_sapi'
+        - 'efr32_4180b'
+
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap'
+    wifi_access_point: 'dlink810_ap_static'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
     wifi_client: 'raspi_wifi'
+
+    wifi_clients:
+        - 'raspi_wifi'
+        - 'secondary_raspi_client'
 
     ble_client: 'raspi_ble_client'
 
@@ -441,7 +492,7 @@ defaults:
 
     http_client: 'raspi_http_client'
 
-    net_perf_client: 'iperf'
+    net_perf_client: 'raspi_iperf'
 
     remote_socket: 'raspi_ip_socket'
 
@@ -452,7 +503,7 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTESTTEST'
+        ssid: 'TEST00000003'
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
@@ -503,14 +554,11 @@ defaults:
                 port: 1235
                 # bytes, number of bytes we want device to send to server (host) in each iteration
                 data_len: 1472
+        tos_value: '0xC8'
 
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
-
-integration:
-    duts: ["rs9116_sapi", "rs9116_at"]
-    access_points: ["raspi_wifi", "dlink810_ap", "asus_rt_ax3000_ap"]
 
 # default start & end states for devices & interfaces
 start_state:
