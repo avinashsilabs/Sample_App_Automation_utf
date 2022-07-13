@@ -531,6 +531,7 @@ void rsi_bt_get_local_device_address_command(sl_cli_command_arg_t* arguments)
     (void)arguments;
     uint8_t device_address[6] = { 0 };
 
+    printf("\r\n rsi_bt_get_local_address_command invoked \r\n");
     int32_t status = rsi_bt_get_local_device_address(device_address);
     if (status == RSI_SUCCESS) {
         printf("\n%02X:%02X:%02X:%02X:%02X:%02X\n", device_address[5], device_address[4], device_address[3], device_address[2], device_address[1], device_address[0]);
@@ -622,6 +623,7 @@ void rsi_ble_add_service_command(sl_cli_command_arg_t* arguments)
     uuid_t new_uuid                       = { 0 };
     new_uuid.size      = 2;
     new_uuid.val.val16 = uuid;
+    printf("\r\n rsi_ble_add_service_command invoked \r\n");
     print_status(rsi_ble_add_service(new_uuid, &new_serv_resp));
 }
 
