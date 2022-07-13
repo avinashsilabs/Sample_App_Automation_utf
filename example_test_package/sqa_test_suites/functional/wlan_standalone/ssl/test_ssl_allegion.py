@@ -3546,7 +3546,7 @@ def test_socket_select_ssl_asynchronous_TC19192(
         # DUT receives data over tcp socket after execution of below api
         time.sleep(10)
         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-        assert len(events) == 1, "Socket select asynchronous event is not received"
+        assert len(events) != 0, "Socket select asynchronous event is not received"
         logger.info(f"Socket select event received")
         sock_list = []
         for event in events:
