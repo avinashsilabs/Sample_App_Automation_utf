@@ -1,0 +1,22 @@
+id: 5e1e2df0-c972-44b6-bd2c-ae2ea577d542
+name: RS9116 Smoke Tests CI CD System
+description: test_rs9116_smoke_tests_ci_cd_system.py
+test_cases:
+  - test_case_id: 1f8d173cc5a80ded1457580f4445822e07ee1001
+    iterations: 1
+  - test_case_id: c803b2f4f313bc2d1137e06832452a20a63c9558
+    iterations: 1
+  - test_case_id: dd3628326960a2b52f77ec7b8aba37f3d9ed510b
+    iterations: 1
+  - test_case_id: 37c3ed93c444e7eea705e725527b261a330ae242
+    iterations: 1
+  - test_case_id: 9ef79c6f5729b9134f8cca97fb19a25c65c8df93
+    iterations: 1
+  - test_case_id: a22c2c2fefba1480b31e5cd521a0077334f58f6b
+    iterations: 1
+  - test_case_id: 47d03b93e50408717943caae39d6449647c04ea3
+    iterations: 1
+  - test_case_id: 03d13565843310a80d1fbb97cb4f56ebbd864508
+    iterations: 1
+  - test_case_id: 49f05e37b82b0564fe4e5031ffd6ca5c28429240
+    iterations: 1

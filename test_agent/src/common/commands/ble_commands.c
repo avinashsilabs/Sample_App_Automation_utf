@@ -945,6 +945,7 @@ static int32_t rsi_ble_app_get_event(void)
  */
 void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_report)
 {
+    uint8_t count = 0;
 //    if (device_found == 1) {
 //        return;
 //    }
@@ -970,8 +971,21 @@ void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_
             // LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s, dev_addr_type: %s, remote_name: %s\n",
             //     ble_str_conn_bd_addr,
             //     remote_addr_type, remote_name);
-            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s\n",
-                ble_str_conn_bd_addr);
+//            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s\n",
+//                ble_str_conn_bd_addr);
+            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s, dev_addr_type: %d, adv_data_len: %d, rssi:%d, report_type:%d,",
+                ble_str_conn_bd_addr,
+                adv_report->dev_addr_type,
+                adv_report->adv_data_len,
+                adv_report->rssi,
+                adv_report->report_type
+                );
+            LOG_EVENT("adv_data:");
+            for(count = 0; count < RSI_MAX_ADV_REPORT_SIZE; count++)
+            {
+            LOG_EVENT("%d-",adv_report->adv_data[count]);
+            }
+            LOG_EVENT("\n");
             rsi_ble_app_set_event(RSI_APP_EVENT_ADV_REPORT);
         }
     }

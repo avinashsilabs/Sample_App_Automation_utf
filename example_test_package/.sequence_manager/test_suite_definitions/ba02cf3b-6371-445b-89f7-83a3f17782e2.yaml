@@ -1,0 +1,148 @@
+id: ba02cf3b-6371-445b-89f7-83a3f17782e2
+name: HTTP(S)
+description: HTTP and HTTPS
+test_cases:
+  - test_case_id: 06e1487443dddc95895c744cc526025a1b83ed23
+    iterations: 1
+  - test_case_id: 123abdfec9cb40f67238445afdfb2e6ba4bad28e
+    iterations: 1
+  - test_case_id: 60273ee6f304a948648568934665993ef6528f56
+    iterations: 1
+  - test_case_id: ff8b0698ef58f0f7f68360a87843081ca0cffe26
+    iterations: 1
+  - test_case_id: b217a8ecc71d805634c013a10eb86ace998b0a06
+    iterations: 1
+  - test_case_id: a00cdcce566c26c17a0a7a900a33fee3eaba0a46
+    iterations: 1
+  - test_case_id: 64636803c94a2ab7f325c3329468c3c212edf8ab
+    iterations: 1
+  - test_case_id: 3f6158c17d458c37355fb206d4dac1e87e574185
+    iterations: 1
+  - test_case_id: d7bf07ad74b48e2c1697303c575cca885a0373f9
+    iterations: 1
+  - test_case_id: 738ea1ae6da2251d874328d6fad14cfcf329c071
+    iterations: 1
+  - test_case_id: 9e9c5aa3dedff0d2beebb39337b5d17cb555154f
+    iterations: 1
+  - test_case_id: 8f01dd8a2a400c8978f54fa834c027001997113c
+    iterations: 1
+  - test_case_id: 5730198d67de05fba43f6eb4639219ac18f889f7
+    iterations: 1
+  - test_case_id: a7e9655f482c26965b99029ba1f60c243c00a094
+    iterations: 1
+  - test_case_id: 92e24bb46b549e2db749e80cf06057c7923e1b1f
+    iterations: 1
+  - test_case_id: d8cb661ba456542477cd45fa354b747b1f858bb1
+    iterations: 1
+  - test_case_id: 03dbc6fcbe8bd78ae66e2dab9bc2b8b9b1c9c718
+    iterations: 1
+  - test_case_id: 3e6d4ea77024b4bba8f6dbb16fa38a23011fae1e
+    iterations: 1
+  - test_case_id: 68913e767dfa80e18f1608af5f6e8efdb6337f47
+    iterations: 1
+  - test_case_id: fc2cd519c98c2d4892ebf720a1e612c1c9267940
+    iterations: 1
+  - test_case_id: c6af35d229511633eb08399592dfddb33b20f0da
+    iterations: 1
+  - test_case_id: d39025d4e28c32c981cdd2407bc50e0f27ccb0b8
+    iterations: 1
+  - test_case_id: f3f85b00bbb2b9afbe4cbe0b12175cdedcdf7576
+    iterations: 1
+  - test_case_id: 7e2f6d529e7cec86d04619cec7ad88071958f613
+    iterations: 1
+  - test_case_id: 5195b26bb0d795c4b5cea7810a1693a26a22734d
+    iterations: 1
+  - test_case_id: 3e16a76bd02f31deca166eaf62bba0e5afdb19df
+    iterations: 1
+  - test_case_id: c202a8e42c94a8af95b02383518218bef812c93e
+    iterations: 1
+  - test_case_id: 912acd4e8bb940501731d2f31692e43e4af8e922
+    iterations: 1
+  - test_case_id: 1cd2191375969c56b57609f378af80114d529b19
+    iterations: 1
+  - test_case_id: 60417dc1dbbdfdf34d172a2803cea6c082871fe1
+    iterations: 1
+  - test_case_id: 986c9430aba60a09a6bc1d58299297962bf97932
+    iterations: 1
+  - test_case_id: 3a97d165f31519df7c9e9e712bb1dfb20162b7e2
+    iterations: 1
+  - test_case_id: cc8cc6a7bd803921cbafbdb163cc6c7e6fc8481a
+    iterations: 1
+  - test_case_id: c52d1ee6fb930691000d5f42a4ba96005eeedca5
+    iterations: 1
+  - test_case_id: a38c986dea3c649602348022737c44ae9145425e
+    iterations: 1
+  - test_case_id: c4ac936c8e7d86fb36f996c3ee243ca41254817a
+    iterations: 1
+  - test_case_id: 1a0b9b4d39cc471740b4e5a4b79827bd896ca0e6
+    iterations: 1
+  - test_case_id: 8ea2c043a04509b70ff5da1ecb0bacb0e270dedb
+    iterations: 1
+  - test_case_id: b160a65fa23ef9e36327b2527eebcb7745100843
+    iterations: 1
+  - test_case_id: 8403b49fd16afdf9fd714c82af460969e2ce436d
+    iterations: 1
+  - test_case_id: 68084c275de180aabd394962f8769de5a54ab7e0
+    iterations: 1
+  - test_case_id: 12ac234451b11ae9d9cda239577912253073a008
+    iterations: 1
+  - test_case_id: b464e8c236d372f5a706d7fe532429b45b1a26ff
+    iterations: 1
+  - test_case_id: 1e5e4e45a0ba0e26589293616c5362c26737852d
+    iterations: 1
+  - test_case_id: 9e50e607cb55ba1de53233e67e8fdb6cf308bf69
+    iterations: 1
+  - test_case_id: b2ba8c1447857dd7266fee82dd1d1ae0f932aaa4
+    iterations: 1
+  - test_case_id: 7d5fc06243d3e3005303ef876de9b6b354567fdd
+    iterations: 1
+  - test_case_id: 25fe1fcd62266a846becb1c90f584696fbd7311c
+    iterations: 1
+  - test_case_id: 8f8a446edd520aabdb65a68d35a54c6ff58e9fb9
+    iterations: 1
+  - test_case_id: 64b6453f1a5ef94f3f4f55e69c328e9481115ec4
+    iterations: 1
+  - test_case_id: aa2c10372a25f5712bc3177fc2e7302df2334cd1
+    iterations: 1
+  - test_case_id: 1e8756a1f1082dc46acf55982ec6ee5d7bb595b8
+    iterations: 1
+  - test_case_id: a200c697f7ae1137546630231228bbdf7afa2241
+    iterations: 1
+  - test_case_id: d58eefc71096f12bda63fc73bc13cee6c4d99734
+    iterations: 1
+  - test_case_id: 533b149261d9eaf4f17ea3942cd26026b513c2a1
+    iterations: 1
+  - test_case_id: f35a6898305c99912c2ef4938239603c8ce23ca1
+    iterations: 1
+  - test_case_id: f07e65760c18a2f1d2b8aa2288f4805d8baf78d1
+    iterations: 1
+  - test_case_id: 3ef1be49cf5c623544f689669fc40aa0a7c03393
+    iterations: 1
+  - test_case_id: 2e142bec4132301e70da4237763ba0ccf1b89866
+    iterations: 1
+  - test_case_id: 74c4bd5d7c933cdbe709108ad1032828b29db8f7
+    iterations: 1
+  - test_case_id: b7e103601afbee69f0c9f7f0a8df236ab9db83b9
+    iterations: 1
+  - test_case_id: 69d960e64f425445d767ff3f78e661a732a10603
+    iterations: 1
+  - test_case_id: ce1c44066ecf20019bf108b3522e74f210452c32
+    iterations: 1
+  - test_case_id: 1b658b96300aaff371bb24fbb0c5117b4900c630
+    iterations: 1
+  - test_case_id: d5c1672dd97a9e362b900305a6b577b8fda41207
+    iterations: 1
+  - test_case_id: 46241b1fe144339c887f8334cecd6b9a0533044b
+    iterations: 1
+  - test_case_id: 48ee3413528dd440629d85e50ed814e65aeecfc3
+    iterations: 1
+  - test_case_id: 583373425f4fb82a825a99561caf445d583e41a3
+    iterations: 1
+  - test_case_id: c4f55c1c236aebfdcb67e0d2c23f693ceced2a24
+    iterations: 1
+  - test_case_id: de4433f8273c3aff3668d5bf1f847e6378f200a0
+    iterations: 1
+  - test_case_id: e28c390d3e5a938d8c9d68cb9675ba9e720f97e6
+    iterations: 1
+  - test_case_id: b7527c9379cf0feb3e76028c61c570e2dc804a61
+    iterations: 1

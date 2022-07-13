@@ -246,7 +246,10 @@ devices:
                 ssh_port: 1022
                 ssid: "TESTTEST-ASUS"
                 protected_management_frame: 'Disable'
-
+                skip_assertion_failure : True
+                # radius server configuration
+                radius_ip: "192.168.50.176"
+                radius_port: "1812"
     switched_ap:
         interfaces:
             wifi:

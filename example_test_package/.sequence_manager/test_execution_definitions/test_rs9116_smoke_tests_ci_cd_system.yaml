@@ -1,0 +1,216 @@
+root_path: example_test_package
+test_sequence:
+  - id: 1f8d173cc5a80ded1457580f4445822e07ee1001
+    test_case_id: test_version_testcase_id1
+    test_function: test_version_testcase_id1
+    test_id: test_version_testcase_id1::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: c803b2f4f313bc2d1137e06832452a20a63c9558
+    test_case_id: test_version_testcase_id2
+    test_function: test_version_testcase_id2
+    test_id: test_version_testcase_id2::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: dd3628326960a2b52f77ec7b8aba37f3d9ed510b
+    test_case_id: test_wifi_connect_testcase_id6
+    test_function: test_wifi_connect_testcase_id6
+    test_id: test_wifi_connect_testcase_id6::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: 37c3ed93c444e7eea705e725527b261a330ae242
+    test_case_id: test_ble_connect_testcase_id_19
+    test_function: test_ble_connect_testcase_id_19
+    test_id: test_ble_connect_testcase_id_19::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.BLE|RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: 9ef79c6f5729b9134f8cca97fb19a25c65c8df93
+    test_case_id: test_wifi_ble_connect_testcase_id_27
+    test_function: test_wifi_ble_connect_testcase_id_27
+    test_id: test_wifi_ble_connect_testcase_id_27::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: a22c2c2fefba1480b31e5cd521a0077334f58f6b
+    test_case_id: test_throughput_tcp_tx_2_4_channel1
+    test_function: test_throughput_tcp_tx_2_4_channel1
+    test_id: test_throughput_tcp_tx_2_4_channel1::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('net_perf_client',net_perf={'host_role':
+        'S','protocol': 'TCP'})
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: 47d03b93e50408717943caae39d6449647c04ea3
+    test_case_id: test_throughput_udp_rx_2_4_channel1
+    test_function: test_throughput_udp_rx_2_4_channel1
+    test_id: test_throughput_udp_rx_2_4_channel1::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('net_perf_client',net_perf={'host_role':
+        'C','protocol': 'UDP'})
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: 03d13565843310a80d1fbb97cb4f56ebbd864508
+    test_case_id: test_bt_master_ssp_keyboardonly_1
+    test_function: test_bt_master_ssp_keyboardonly
+    test_id: test_bt_master_ssp_keyboardonly_1::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1
+  - id: 49f05e37b82b0564fe4e5031ffd6ca5c28429240
+    test_case_id: test_bt_standard_inquiry_C19983_1
+    test_function: test_bt_standard_inquiry_C19983
+    test_id: test_bt_standard_inquiry_C19983_1::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - smoke_test
+      - sqa_test_suites
+      - test_rs9116_smoke_tests_ci_cd_system
+    iterations: 1

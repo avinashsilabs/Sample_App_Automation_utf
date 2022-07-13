@@ -1432,6 +1432,10 @@ template_contribution:
     - {type: uint8, help: Security}
     - {type: string, help: username}
     - {type: string, help: password}
+    - {type: uint8, help: power level}
+    - {type: uint8, help: join feature bitmap}
+    - {type: uint32, help: listen interval}
+    - {type: uint8, help: data rate}
 - name: cli_command
   priority: 0
   value:
@@ -1769,6 +1773,8 @@ template_contribution:
     - {type: uint32, help: 'data length'}
     - {type: uint32, help: 'number of pkts'}
     - {type: uint32, help: 'time in seconds'}
+    - {type: string, help: server_ip}
+    - {type: uint32, help: server_port}
     
 
 # - name: cli_command
@@ -2159,3 +2165,25 @@ template_contribution:
     name: cfg_get
     handler: rsi_cfg_get_command
     help: Get store configuration profile info
+
+- name: cli_command
+  priority: 0
+  value:
+    name: filter_broadcast
+    handler: rsi_wlan_filter_broadcast_command
+    help: program broadcast packet threshold
+    argument:
+    - {type: uint16, help: beacon_drop}
+    - {type: uint8, help: bcast_in_tim}
+    - {type: uint8, help: bcast_in_tim_next_cmd}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wireless_antenna
+    handler: rsi_wireless_antenna_command
+    help: select the antenna
+    argument:
+    - {type: uint8, help: type}
+    - {type: uint8, help: gain_2g}
+    - {type: uint8, help: gain_5g}

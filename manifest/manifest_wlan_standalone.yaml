@@ -1,0 +1,53 @@
+firmware:
+  rs911x: RS9116W.2.6.0.34.rps
+  efx32: generic_test_agent_without_aws.hex
+
+# List of devices to be reset when needed
+# reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]
+
+firmware_applications:
+    # List of markers for test cases
+    wifitest:
+    # List of devices and their firmware images for this marker
+    - device_type: 'rs911x'
+      device_subtype: 'rs9116'
+      filename: 'RS9116W.2.6.0.34.rps'
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'generic_test_agent_without_aws_powersave3.hex'
+
+    test_concurrent_mode:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'concurrent_test_agent.hex'
+
+    test_multi_gatt_conn:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'multi_gatt_generic_test_agent.hex'
+
+    test_wlan_powersave_mode3_ulp:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'generic_test_agent_without_aws_powersave3.hex'
+
+    test_wlan_powersave_mode1:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'sqa_test_agent_gpio_lp.hex'
+
+    test_wlan_powersave_mode2_lp:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'generic_test_agent_lp_gpio_based_pwr_save.hex'
+
+    test_wlan_powersave_mode3_lp:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'generic_test_agent_lp_msg_based_pwr_save.hex'
+
+    test_ap_ht_caps:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'ap_htcaps_enable.hex'

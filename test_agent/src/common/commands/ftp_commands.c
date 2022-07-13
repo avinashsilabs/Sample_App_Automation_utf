@@ -3,7 +3,7 @@
    Silicon Labs, Inc.
    All rights reserved.
 
-   @file     http_commands.c
+   @file     ftp.c
 
 *******************************************************************************/
 
@@ -41,15 +41,17 @@
 #define LOG_EVENT(...)
 #endif
 
-
-
-
-
+#define FILE_READ_SIZE 1200
+#define DIRECTORY_READ_SIZE 512
+uint8_t file_data[FILE_READ_SIZE] = {0};
 //! This call back is called when file read opertion is in progress
 void rsi_file_read_cb(uint16_t status, uint8_t *data, uint16_t length, uint8_t end_of_file)
 {
+  memset(file_data,'\0',FILE_READ_SIZE);
+  memcpy(file_data,data,length);
 //  int8_t *file_ptr;
-  printf("FTP_RECEIVE_DATA-status:%d,data:%s,length:%d,eof:%d",status,data,length,end_of_file);
+  printf("FTP_RECEIVE_DATA-status:%d,data:%s,length:%d,eof:%d\n",status,file_data,length,end_of_file);
+
 //  file_ptr = file_data_read;
 //  if (status != RSI_SUCCESS) {
 //    //! Error in file read operation
@@ -69,10 +71,13 @@ void rsi_file_read_cb(uint16_t status, uint8_t *data, uint16_t length, uint8_t e
 //  }
 }
 
+uint8_t dir_data[DIRECTORY_READ_SIZE] = {0};
 //! This call back is called when directory list opertion is in progress
 void rsi_directory_list_cb(uint16_t status, uint8_t *data, uint16_t length, uint8_t end_of_list)
 {
- printf("FTP_RECEIVE_DIRECTORY-status:%d,data:%s,length:%d,eof:%d",status,data,length,end_of_list);
+    memset(dir_data,'\0',DIRECTORY_READ_SIZE);
+    memcpy(dir_data,data,length);
+    printf("FTP_RECEIVE_DIRECTORY-status:%d,data:%s,length:%d,eof:%d\n",status,dir_data,length,end_of_list);
 
 }
 
@@ -122,7 +127,7 @@ void rsi_ftp_file_write_content_command(sl_cli_command_arg_t* arguments)
 {
 	uint16_t flags = sl_cli_get_argument_uint16(arguments, 0);
 	char* file_content = sl_cli_get_argument_string(arguments, 1);
-	uint16_t content_length = sl_cli_get_argument_string(arguments, 2);
+	uint16_t content_length = sl_cli_get_argument_uint16(arguments, 2);
 	uint8_t eof = sl_cli_get_argument_uint8(arguments, 3);
 
 	print_status(rsi_ftp_file_write_content(flags,file_content,content_length,eof));

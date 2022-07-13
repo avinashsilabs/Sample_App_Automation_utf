@@ -1,0 +1,72 @@
+id: 718e1924-0f3b-42d6-8935-56dec6e9be5e
+name: AP Mode
+description: AP Mode
+test_cases:
+  - test_case_id: 19605c7d4e85fa65c57453165c02f1df1b196b89
+    iterations: 1
+  - test_case_id: f425f456189cc9f93212b38b76bcf9260ef95c8c
+    iterations: 1
+  - test_case_id: 7974e9d27bd845a9b490a6412b1634ed85701701
+    iterations: 1
+  - test_case_id: c3ee6b29069975c65bbe92e84150ee488598758f
+    iterations: 1
+  - test_case_id: 4b7e1315e22e26a9560700b7ce56ddadfb0a4c4c
+    iterations: 1
+  - test_case_id: 2456831bf6672f2c3e330b4fe5e591fcf72596ef
+    iterations: 1
+  - test_case_id: 2eacc10b4243b7f401077c16df7287200c106a8f
+    iterations: 1
+  - test_case_id: 88e58635e9357939f81b7fe7476042f9fb8ffe00
+    iterations: 1
+  - test_case_id: 770a898ac1b7bb161ba5068dc57b9176e829110d
+    iterations: 1
+  - test_case_id: fe161375a88894500ee7a2de71b50ae5daa4321c
+    iterations: 1
+  - test_case_id: 5cb88bf7bf6148f359b95d9d7392e9f19f2e2b30
+    iterations: 1
+  - test_case_id: cff8703e6eb6ab819f983c55906a5532bdd3a5f3
+    iterations: 1
+  - test_case_id: 871a05f47993818dcd43762ced755959e853b0e9
+    iterations: 1
+  - test_case_id: 33614830ede53207d8ec74008764e56743a26279
+    iterations: 1
+  - test_case_id: 136661e0fffe937123709b88fcd0b142e84e0529
+    iterations: 1
+  - test_case_id: be647cbbab319b579da01bf41c05634e41646773
+    iterations: 1
+  - test_case_id: 4ffd3962da988a99a39379f8c18a2d4563612b63
+    iterations: 1
+  - test_case_id: b11defe4760689e3136bf0ecfcb61bd81df24417
+    iterations: 1
+  - test_case_id: 3f62acb3a44b132c5ccd6b980d26cf8aec718925
+    iterations: 1
+  - test_case_id: 9c511387f58d6ed5d673722ce72a9ca156167ff8
+    iterations: 1
+  - test_case_id: 7c032a25fd78395e6031153c5c6d0dad90eb3b4d
+    iterations: 1
+  - test_case_id: 9b4fa1d214b410413c57c197ec8ca9f4942f0617
+    iterations: 1
+  - test_case_id: 3c7cd0355d70715f035d7c4846709f5caa5a2ea8
+    iterations: 1
+  - test_case_id: c819895d853e3e6790f391bdb9380e08f4d74c50
+    iterations: 1
+  - test_case_id: 66a79b9e59c5a2ef2afedbc190eda99871e97db1
+    iterations: 1
+  - test_case_id: 0f555b09802313b3c089646c0d452ff292bbc630
+    iterations: 1
+  - test_case_id: 329dbd0322a33c727b6350b70b2745a8e7a096b2
+    iterations: 1
+  - test_case_id: 48d7e3eebedb586b7c6a385c2ba3301ae1651342
+    iterations: 1
+  - test_case_id: 802c1831e4cd49856011f6d9da3a5293b3327a3c
+    iterations: 1
+  - test_case_id: c052192a41c6aead4ecdd92853f66c4db202d3e6
+    iterations: 1
+  - test_case_id: 11d7e2ce0cbb9046e5eaa7f45fe0b3658e9e7128
+    iterations: 1
+  - test_case_id: 758c82159d80ba4260fded4745c4638e7d57383c
+    iterations: 1
+  - test_case_id: 36b336d68a2ec239972643050701074486059b12
+    iterations: 1
+  - test_case_id: ea15f2aabe38c1249018f13131c046000d55b8a7
+    iterations: 1

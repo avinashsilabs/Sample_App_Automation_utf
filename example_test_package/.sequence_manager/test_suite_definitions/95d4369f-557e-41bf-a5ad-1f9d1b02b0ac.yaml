@@ -1,0 +1,20 @@
+id: 95d4369f-557e-41bf-a5ad-1f9d1b02b0ac
+name: Garmin
+description: Garmin
+test_cases:
+  - test_case_id: 76689bac37f24b00722caedaea47b68848d9e575
+    iterations: 1
+  - test_case_id: c61e4976f84d4ab578461d89828c4f56f32e7309
+    iterations: 1
+  - test_case_id: cb4ff0eb9db629fa6772e5966ce57998ededcef7
+    iterations: 1
+  - test_case_id: 4e86a8ac2f2ace804d5f2f691204b8e0a38dc879
+    iterations: 1
+  - test_case_id: 87590f6300e08b4f75db71e1a77f5f70800c6e41
+    iterations: 1
+  - test_case_id: fe7793832addd5b7d080a8a35682c51b5fd4068c
+    iterations: 1
+  - test_case_id: d0a15a3fe2e086862b804c614b8dc818eeca7c59
+    iterations: 1
+  - test_case_id: 71b4fd4984464f5c300fca431722380fe55072cb
+    iterations: 1
