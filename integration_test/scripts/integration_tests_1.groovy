@@ -104,6 +104,12 @@ pipeline {
                                             set /p UTF_DOCKER_TARGET= < tmp_host_ip
                                             del tmp_host_ip
 
+                                            if not exist yq.exe (
+                                                curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
+                                            )
+                                            set HARNESS_NAME=__hwmux__-utf_wifi_integration_tests_1.yaml
+                                            type smoke_test_hwmux_group.json  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
+
                                             rd /s /q reports
 
                                             call venv\\scripts\\activate
@@ -119,7 +125,7 @@ pipeline {
                                                set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test/tests/.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
                                             )
 
-                                            call launch_utf_tests.bat --harness integration_test --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%" --docker_flags "-e COVERAGE_FILE=/app/reports/.coverage.integration"
+                                            call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%" --docker_flags "-e COVERAGE_FILE=/app/reports/.coverage.integration"
                                             set exitcode=%ERRORLEVEL%
 
                                             if "%ENABLE_COVERAGE%"=="true" (
