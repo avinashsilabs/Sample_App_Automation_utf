@@ -104,11 +104,13 @@ pipeline {
                                             set /p UTF_DOCKER_TARGET= < tmp_host_ip
                                             del tmp_host_ip
 
-                                            if not exist yq.exe (
-                                                curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
-                                            )
-                                            set HARNESS_NAME=__hwmux__-utf_wifi_integration_tests_1.yaml
-                                            type smoke_test_hwmux_group.json  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
+                                            # if not exist yq.exe (
+                                            #     curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
+                                            # )
+                                            # set HARNESS_NAME=__hwmux__-utf_wifi_integration_tests_1.yaml
+                                            # type smoke_test_hwmux_group.json  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
+
+                                            set HARNESS_NAME=integration_test_1.yaml
 
                                             rd /s /q reports
 

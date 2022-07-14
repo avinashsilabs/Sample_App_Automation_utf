@@ -5,7 +5,7 @@ test_sequence:
 - test_case_id: 'get_ram_dump_full'
   labels: [ 'ram_dump' ]
   test_id: 'get_ram_dump_full::1'
-  test_module: 'test_cases/test_ram_dump.py'
+  test_module: 'test_ram_dump.py'
   test_function: 'test_ram_dump'
   test_params:
   -   name: start_address
@@ -18,7 +18,7 @@ test_sequence:
 - test_case_id: 'get_ram_dump_partial_1'
   labels: [ 'ram_dump' ]
   test_id: 'get_ram_dump_partial_1::1'
-  test_module: 'test_cases/test_ram_dump.py'
+  test_module: 'test_ram_dump.py'
   test_function: 'test_ram_dump'
   test_params:
   -   name: start_address
@@ -31,7 +31,7 @@ test_sequence:
 - test_case_id: 'get_ram_dump_partial_2'
   labels: [ 'ram_dump' ]
   test_id: 'get_ram_dump_partial_2::1'
-  test_module: 'test_cases/test_ram_dump.py'
+  test_module: 'test_ram_dump.py'
   test_function: 'test_ram_dump'
   test_params:
   -   name: start_address
@@ -44,7 +44,7 @@ test_sequence:
 - test_case_id: 'get_ram_dump_partial_3'
   labels: [ 'ram_dump' ]
   test_id: 'get_ram_dump_partial_3::1'
-  test_module: 'test_cases/test_ram_dump.py'
+  test_module: 'test_ram_dump.py'
   test_function: 'test_ram_dump'
   test_params:
   -   name: start_address
@@ -62,7 +62,7 @@ test_sequence:
 - test_case_id: 'test_asus_rt_ax3000_lb_1'
   labels: ['access_point_tests']
   test_id: 'test_asus_rt_ax3000_lb_1::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -84,7 +84,7 @@ test_sequence:
 - test_case_id: 'test_asus_rt_ax3000_lb_2'
   labels: ['access_point_tests']
   test_id: 'test_asus_rt_ax3000_lb_2::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -106,7 +106,7 @@ test_sequence:
 - test_case_id: 'test_asus_rt_ax3000_hb_1'
   labels: ['access_point_tests']
   test_id: 'test_asus_rt_ax3000_hb_1::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -128,7 +128,7 @@ test_sequence:
 - test_case_id: 'test_asus_rt_ax3000_hb_2'
   labels: ['access_point_tests']
   test_id: 'test_asus_rt_ax3000_hb_2::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -154,7 +154,7 @@ test_sequence:
 - test_case_id: 'test_dlink810_lb_1'
   labels: ['access_point_tests', 'dlink810']
   test_id: 'test_dlink810_lb_1::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -176,7 +176,7 @@ test_sequence:
 - test_case_id: 'test_dlink810_lb_2'
   labels: ['access_point_tests', 'dlink810']
   test_id: 'test_dlink810_lb_2::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -198,7 +198,7 @@ test_sequence:
 - test_case_id: 'test_dlink810_hb_1'
   labels: ['access_point_tests', 'dlink810']
   test_id: 'test_dlink810_hb_1::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -220,7 +220,7 @@ test_sequence:
 - test_case_id: 'test_dlink810_hb_2'
   labels: ['access_point_tests', 'dlink810']
   test_id: 'test_dlink810_hb_2::1'
-  test_module: 'test_cases/test_generic_ap.py'
+  test_module: 'test_generic_ap.py'
   test_class: 'TestAccessPointConfig'
   test_function: 'test_wifi_ap_configuration'
   test_params:
@@ -242,7 +242,7 @@ test_sequence:
 - test_case_id: 'test_prepare_static_ap'
   labels: ['access_point_tests', 'dlink810']
   test_id: 'test_prepare_static_ap::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_prepare_static_ap'
   test_markers:
   - pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -255,7 +255,7 @@ test_sequence:
 - test_case_id: 'test_async_rejoin_errors-at_mode'
   labels: ['async_events']
   test_id: 'test_async_rejoin_errors-at_mode::1'
-  test_module: 'test_cases/test_async_events.py'
+  test_module: 'test_async_events.py'
   test_function: 'test_async_rejoin_errors'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -265,7 +265,7 @@ test_sequence:
 - test_case_id: 'test_async_rejoin_errors-sapi_mode'
   labels: ['async_events']
   test_id: 'test_async_rejoin_errors-sapi_mode::1'
-  test_module: 'test_cases/test_async_events.py'
+  test_module: 'test_async_events.py'
   test_function: 'test_async_rejoin_errors'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -275,7 +275,7 @@ test_sequence:
 - test_case_id: 'test_async_rejoin_errors_using_queue-at_mode'
   labels: ['async_events']
   test_id: 'test_async_rejoin_errors_using_queue-at_mode::1'
-  test_module: 'test_cases/test_async_events.py'
+  test_module: 'test_async_events.py'
   test_function: 'test_async_rejoin_errors_using_queue'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -285,7 +285,7 @@ test_sequence:
 - test_case_id: 'test_async_rejoin_errors_using_queue-sapi_mode'
   labels: ['async_events']
   test_id: 'test_async_rejoin_errors_using_queue-sapi_mode::1'
-  test_module: 'test_cases/test_async_events.py'
+  test_module: 'test_async_events.py'
   test_function: 'test_async_rejoin_errors_using_queue'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -295,7 +295,7 @@ test_sequence:
 - test_case_id: 'test_async_rejoin_errors_using_wait_for_event-at_mode'
   labels: ['async_events']
   test_id: 'test_async_rejoin_errors_using_wait_for_event-at_mode::1'
-  test_module: 'test_cases/test_async_events.py'
+  test_module: 'test_async_events.py'
   test_function: 'test_async_rejoin_errors_using_wait_for_event'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -305,7 +305,7 @@ test_sequence:
 - test_case_id: 'test_async_rejoin_errors_using_wait_for_event-sapi_mode'
   labels: ['async_events']
   test_id: 'test_async_rejoin_errors_using_wait_for_event-sapi_mode::1'
-  test_module: 'test_cases/test_async_events.py'
+  test_module: 'test_async_events.py'
   test_function: 'test_async_rejoin_errors_using_wait_for_event'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -319,7 +319,7 @@ test_sequence:
 - test_case_id: 'test_aws_python_client'
   labels: ['aws_iot']
   test_id: 'test_aws_python_client::1'
-  test_module: 'test_cases/test_aws_iot.py'
+  test_module: 'test_aws_iot.py'
   test_function: 'test_python_client'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -328,7 +328,7 @@ test_sequence:
 - test_case_id: 'test_aws_device_shadow'
   labels: ['aws_iot']
   test_id: 'test_aws_device_shadow::1'
-  test_module: 'test_cases/test_aws_iot.py'
+  test_module: 'test_aws_iot.py'
   test_function: 'test_aws_device_shadow'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -355,7 +355,7 @@ test_sequence:
 - test_case_id: 'test_ble_advertisement'
   labels: ['ble']
   test_id: 'test_ble_advertisement::1'
-  test_module: 'test_cases/test_ble.py'
+  test_module: 'test_ble.py'
   test_function: 'test_ble_advertisement'
   test_markers:
   - pytest.mark.wifi_access_point("dlink810_ap_static")
@@ -372,7 +372,7 @@ test_sequence:
 - test_case_id: 'test_ble_scanning'
   labels: ['ble']
   test_id: 'test_ble_scanning::1'
-  test_module: 'test_cases/test_ble.py'
+  test_module: 'test_ble.py'
   test_function: 'test_ble_scanning'
   test_markers:
   - pytest.mark.wifi_access_point("dlink810_ap_static")
@@ -389,7 +389,7 @@ test_sequence:
 - test_case_id: 'test_ble_gatt_server_slave'
   labels: ['ble']
   test_id: 'test_ble_gatt_server_slave::1'
-  test_module: 'test_cases/test_ble.py'
+  test_module: 'test_ble.py'
   test_function: 'test_ble_gatt_server_slave'
   test_markers:
   - pytest.mark.wifi_access_point("dlink810_ap_static")
@@ -406,7 +406,7 @@ test_sequence:
 - test_case_id: 'test_ble_gatt_client_master'
   labels: ['ble']
   test_id: 'test_ble_gatt_client_master::1'
-  test_module: 'test_cases/test_ble.py'
+  test_module: 'test_ble.py'
   test_function: 'test_ble_gatt_client_master'
   test_markers:
   - pytest.mark.wifi_access_point("dlink810_ap_static")
@@ -429,7 +429,7 @@ test_sequence:
 - test_case_id: 'test_bt_hid_dut_as_slave-with-ssp'
   labels: ['bt', 'bt_hid']
   test_id: 'test_bt_hid_dut_as_slave-with-ssp::1'
-  test_module: 'test_cases/test_bt_hid.py'
+  test_module: 'test_bt_hid.py'
   test_function: 'test_bt_hid_dut_as_slave'
   test_params:
   -   name: enable_ssp
@@ -451,7 +451,7 @@ test_sequence:
 - test_case_id: 'test_bt_hid_dut_as_slave-without-ssp'
   labels: ['bt', 'bt_hid']
   test_id: 'test_bt_hid_dut_as_slave-without-ssp::1'
-  test_module: 'test_cases/test_bt_hid.py'
+  test_module: 'test_bt_hid.py'
   test_function: 'test_bt_hid_dut_as_slave'
   test_params:
   -   name: enable_ssp
@@ -473,7 +473,7 @@ test_sequence:
 - test_case_id: 'test_bt_a2dp_dut_as_src'
   labels: ['bt', 'bt_a2dp']
   test_id: 'test_bt_a2dp_dut_as_src::1'
-  test_module: 'test_cases/test_bt_a2dp.py'
+  test_module: 'test_bt_a2dp.py'
   test_function: 'test_bt_a2dp_dut_as_src'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -491,7 +491,7 @@ test_sequence:
 - test_case_id: 'test_bt_avrcp_dut_as_src'
   labels: ['bt', 'bt_a2dp']
   test_id: 'test_bt_avrcp_dut_as_src::1'
-  test_module: 'test_cases/test_bt_a2dp.py'
+  test_module: 'test_bt_a2dp.py'
   test_function: 'test_bt_avrcp_dut_as_src'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -509,7 +509,7 @@ test_sequence:
 - test_case_id: 'test_bt_spp_dut_as_slave-sapi'
   labels: ['bt', 'bt_spp']
   test_id: 'test_bt_spp_dut_as_slave-sapi::1'
-  test_module: 'test_cases/test_bt_spp.py'
+  test_module: 'test_bt_spp.py'
   test_function: 'test_bt_spp_dut_as_slave'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -528,7 +528,7 @@ test_sequence:
 - test_case_id: 'test_bt_spp_dut_as_slave-at'
   labels: ['bt', 'bt_spp']
   test_id: 'test_bt_spp_dut_as_slave-at::1'
-  test_module: 'test_cases/test_bt_spp.py'
+  test_module: 'test_bt_spp.py'
   test_function: 'test_bt_spp_dut_as_slave'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -547,7 +547,7 @@ test_sequence:
 - test_case_id: 'test_bt_spp_dut_as_master-sapi'
   labels: ['bt', 'bt_spp']
   test_id: 'test_bt_spp_dut_as_master-sapi::1'
-  test_module: 'test_cases/test_bt_spp.py'
+  test_module: 'test_bt_spp.py'
   test_function: 'test_bt_spp_dut_as_master'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -566,7 +566,7 @@ test_sequence:
 - test_case_id: 'test_bt_spp_dut_as_master-at'
   labels: ['bt', 'bt_spp']
   test_id: 'test_bt_spp_dut_as_master-at::1'
-  test_module: 'test_cases/test_bt_spp.py'
+  test_module: 'test_bt_spp.py'
   test_function: 'test_bt_spp_dut_as_master'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -588,7 +588,7 @@ test_sequence:
 - test_case_id: 'test_threading'
   labels: ['threading']
   test_id: 'test_threading::1'
-  test_module: 'test_cases/test_threading.py'
+  test_module: 'test_threading.py'
   test_function: 'test_threading'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -597,7 +597,7 @@ test_sequence:
 - test_case_id: 'test_threading_contextmgr'
   labels: ['threading']
   test_id: 'test_threading_contextmgr::1'
-  test_module: 'test_cases/test_threading.py'
+  test_module: 'test_threading.py'
   test_function: 'test_threading_contextmgr'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -610,7 +610,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_linux_client-POST'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client-POST::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_linux_client'
   test_params:
   -   name: index_path
@@ -628,7 +628,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_linux_client-PUT'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client-PUT::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_linux_client'
   test_params:
   -   name: index_path
@@ -646,7 +646,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_linux_client-GET'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client-GET::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_linux_client'
   test_params:
   -   name: index_path
@@ -662,7 +662,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_linux_client-tls'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client-tls::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_linux_client'
   test_params:
   -   name: index_path
@@ -678,7 +678,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_linux_client-static-tls'
   labels: ['http']
   test_id: 'test_http_server_and_linux_client-static-tls::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_linux_client'
   test_params:
   -   name: index_path
@@ -694,7 +694,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_dut_client-at-crlf'
   labels: ['http']
   test_id: 'test_http_server_and_dut_client-at-crlf::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_dut_client'
   test_params:
   - name: index_path
@@ -717,7 +717,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_dut_client-at-lf'
   labels: ['http']
   test_id: 'test_http_server_and_dut_client-at-lf::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_dut_client'
   test_params:
   - name: index_path
@@ -740,7 +740,7 @@ test_sequence:
 - test_case_id: 'test_http_server_and_dut_client-sapi'
   labels: ['http']
   test_id: 'test_http_server_and_dut_client-sapi::1'
-  test_module: 'test_cases/test_http.py'
+  test_module: 'test_http.py'
   test_function: 'test_http_server_and_dut_client'
   test_params:
   -   name: index_path
@@ -768,7 +768,7 @@ test_sequence:
 - test_case_id: 'test_cert_load-at'
   labels: ['ssl']
   test_id: 'test_cert_load-at::1'
-  test_module: 'test_cases/test_ssl_certs.py'
+  test_module: 'test_ssl_certs.py'
   test_function: 'test_cert_load'
   test_params:
   - name: cert_type
@@ -791,7 +791,7 @@ test_sequence:
 - test_case_id: 'test_cert_load-sapi'
   labels: ['ssl']
   test_id: 'test_cert_load-sapi::1'
-  test_module: 'test_cases/test_ssl_certs.py'
+  test_module: 'test_ssl_certs.py'
   test_function: 'test_cert_load'
   test_params:
   - name: cert_type
@@ -817,7 +817,7 @@ test_sequence:
 - test_case_id: 'test_websocket_server_and_linux_client'
   labels: ['websockets']
   test_id: 'test_websocket_server_and_linux_client::1'
-  test_module: 'test_cases/test_websocket.py'
+  test_module: 'test_websocket.py'
   test_function: 'test_websocket_server_and_linux_client'
   test_markers:
   - pytest.mark.wifi_access_point("raspi_wifi")
@@ -831,7 +831,7 @@ test_sequence:
 - test_case_id: 'test_iperf-device_as_tcp_server'
   labels: ['iperf']
   test_id: 'test_iperf-host_as_tcp_server::1'
-  test_module: 'test_cases/test_iperf.py'
+  test_module: 'test_iperf.py'
   test_function: 'test_device_as_server'
   test_params:
   - name: protocol
@@ -845,7 +845,7 @@ test_sequence:
 - test_case_id: 'test_iperf-device_as_udp_server'
   labels: ['iperf']
   test_id: 'test_iperf-device_as_udp_server::1'
-  test_module: 'test_cases/test_iperf.py'
+  test_module: 'test_iperf.py'
   test_function: 'test_device_as_server'
   test_params:
   - name: protocol
@@ -860,7 +860,7 @@ test_sequence:
 - test_case_id: 'test_iperf-host_as_tcp_server'
   labels: ['iperf']
   test_id: 'test_iperf-host_as_tcp_server::1'
-  test_module: 'test_cases/test_iperf.py'
+  test_module: 'test_iperf.py'
   test_function: 'test_host_as_server'
   test_params:
   - name: protocol
@@ -875,7 +875,7 @@ test_sequence:
 - test_case_id: 'test_iperf-host_as_udp_server'
   labels: ['iperf']
   test_id: 'test_iperf-host_as_udp_server::1'
-  test_module: 'test_cases/test_iperf.py'
+  test_module: 'test_iperf.py'
   test_function: 'test_host_as_server'
   test_params:
   - name: protocol
@@ -893,7 +893,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_server_and_linux_client-mosquitto'
   labels: ['mqtt']
   test_id: 'test_mqtt_server_and_linux_client-mosquitto::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_server_and_linux_client'
   test_markers:
   - pytest.mark.wifi_access_point("raspi_wifi")
@@ -902,7 +902,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_server_and_linux_client-mosquitto_auth'
   labels: ['mqtt']
   test_id: 'test_mqtt_server_and_linux_client-mosquitto_auth::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_server_and_linux_client'
   test_markers:
   - pytest.mark.wifi_access_point("raspi_wifi")
@@ -911,7 +911,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_server_and_linux_client-mosquitto_tls'
   labels: ['mqtt']
   test_id: 'test_mqtt_server_and_linux_client-mosquitto_tls::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_server_and_linux_client'
   test_markers:
   - pytest.mark.wifi_access_point("raspi_wifi")
@@ -920,7 +920,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_server_and_linux_client-static'
   labels: ['mqtt']
   test_id: 'test_mqtt_server_and_linux_client-static::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_server_and_linux_client'
   test_markers:
   - pytest.mark.wifi_access_point("dlink810_ap_static")
@@ -930,7 +930,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-mosquitto-at'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-mosquitto-at::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -950,7 +950,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-mosquitto_auth-at'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-mosquitto_auth-at::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -970,7 +970,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-mosquitto_tls-at'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-mosquitto_tls-at::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -990,7 +990,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-static-at'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-static-at::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -1010,7 +1010,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-mosquitto-sapi'
   labels: ['mqtt', 'debug']
   test_id: 'test_mqtt_dut-mosquitto-sapi::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1030,7 +1030,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-mosquitto_auth-sapi'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-mosquitto_auth-sapi::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1050,7 +1050,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-mosquitto_tls-sapi'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-mosquitto_tls-sapi::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1070,7 +1070,7 @@ test_sequence:
 - test_case_id: 'test_mqtt_dut-static-sapi'
   labels: ['mqtt']
   test_id: 'test_mqtt_dut-static-sapi::1'
-  test_module: 'test_cases/test_mqtt.py'
+  test_module: 'test_mqtt.py'
   test_function: 'test_mqtt_dut'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1094,7 +1094,7 @@ test_sequence:
 - test_case_id: 'test_power_save'
   labels: ['powersave']
   test_id: 'test_power_save::1'
-  test_module: 'test_cases/test_powersave.py'
+  test_module: 'test_powersave.py'
   test_function: 'test_power_save'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1111,7 +1111,7 @@ test_sequence:
 #  enabled: False
   labels: ['powersave']
   test_id: 'test_power_save-at::1'
-  test_module: 'test_cases/test_powersave.py'
+  test_module: 'test_powersave.py'
   test_function: 'test_power_save'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -1131,7 +1131,7 @@ test_sequence:
   enabled: False
   labels: ['secondary_raspi']
   test_id: 'test_secondary_raspi_shell::1'
-  test_module: 'test_cases/test_secondary_raspi.py'
+  test_module: 'test_secondary_raspi.py'
   test_function: 'test_secondary_raspi_shell'
   test_markers:
   - pytest.mark.bt_client("secondary_raspi_bt_client")
@@ -1140,7 +1140,7 @@ test_sequence:
   enabled: False
   labels: ['secondary_raspi']
   test_id: 'test_secondary_raspi_bt::1'
-  test_module: 'test_cases/test_secondary_raspi.py'
+  test_module: 'test_secondary_raspi.py'
   test_function: 'test_secondary_raspi_bt'
   test_markers:
   - pytest.mark.bt_client("secondary_raspi_bt_client")
@@ -1152,7 +1152,7 @@ test_sequence:
 - test_case_id: 'test_sniffer-nofilter'
   labels: ['sniffer']
   test_id: 'test_sniffer-nofilter::1'
-  test_module: 'test_cases/test_sniffer.py'
+  test_module: 'test_sniffer.py'
   test_function: 'test_sniffer_icmp_inspection'
   test_params:
   - name: capture_filter
@@ -1166,7 +1166,7 @@ test_sequence:
 - test_case_id: 'test_sniffer-macfilter'
   labels: ['sniffer']
   test_id: 'test_sniffer-macfilter::1'
-  test_module: 'test_cases/test_sniffer.py'
+  test_module: 'test_sniffer.py'
   test_function: 'test_sniffer_icmp_inspection'
   test_params:
   - name: capture_filter
@@ -1180,7 +1180,7 @@ test_sequence:
 - test_case_id: 'test_sniffer-nofilter-inspectduringcapture'
   labels: ['sniffer']
   test_id: 'test_sniffer-nofilter-inspectduringcapture::1'
-  test_module: 'test_cases/test_sniffer.py'
+  test_module: 'test_sniffer.py'
   test_function: 'test_sniffer_icmp_inspection'
   test_params:
   - name: capture_filter
@@ -1194,7 +1194,7 @@ test_sequence:
 - test_case_id: 'test_sniffer-macfilter-inspectduringcapture'
   labels: ['sniffer']
   test_id: 'test_sniffer-macfilter-inspectduringcapture::1'
-  test_module: 'test_cases/test_sniffer.py'
+  test_module: 'test_sniffer.py'
   test_function: 'test_sniffer_icmp_inspection'
   test_params:
   - name: capture_filter
@@ -1212,7 +1212,7 @@ test_sequence:
 - test_case_id: 'test_socket-sapi'
   labels: ['socket']
   test_id: 'test_socket-sapi::1'
-  test_module: 'test_cases/test_socket.py'
+  test_module: 'test_socket.py'
   test_function: 'test_socket_basic'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1221,7 +1221,7 @@ test_sequence:
 - test_case_id: 'test_socket_factory_tcp_server_1'
   labels: ['socket_factory']
   test_id: 'test_socket_factory_tcp_server_1::1'
-  test_module: 'test_cases/test_socket_factory.py'
+  test_module: 'test_socket_factory.py'
   test_function: 'test_socket_factory_tcp_server'
   test_markers:
   - pytest.mark.wifi_access_point("raspi_wifi")
@@ -1230,7 +1230,7 @@ test_sequence:
 - test_case_id: 'test_multiple_sockets_tcp_server_1'
   labels: ['socket_factory']
   test_id: 'test_multiple_sockets_tcp_server_1::1'
-  test_module: 'test_cases/test_socket_factory.py'
+  test_module: 'test_socket_factory.py'
   test_function: 'test_multiple_sockets_tcp_server'
   test_params:
   - name: num_sockets
@@ -1242,7 +1242,7 @@ test_sequence:
 - test_case_id: 'test_multiple_sockets_tcp_client_1'
   labels: ['socket_factory']
   test_id: 'test_multiple_sockets_tcp_client_1::1'
-  test_module: 'test_cases/test_socket_factory.py'
+  test_module: 'test_socket_factory.py'
   test_function: 'test_multiple_sockets_tcp_client'
   test_params:
   - name: num_sockets
@@ -1267,7 +1267,7 @@ test_sequence:
 - test_case_id: 'test_version-sapi'
   labels: ['version']
   test_id: 'test_version-sapi::1'
-  test_module: 'test_cases/test_version.py'
+  test_module: 'test_version.py'
   test_function: 'test_version'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1275,7 +1275,7 @@ test_sequence:
 - test_case_id: 'test_version-at'
   labels: ['version']
   test_id: 'test_version-at::1'
-  test_module: 'test_cases/test_version.py'
+  test_module: 'test_version.py'
   test_function: 'test_version'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -1287,7 +1287,7 @@ test_sequence:
 - test_case_id: 'test_wifi_dhcp-sapi'
   labels: ['wifi']
   test_id: 'test_wifi_dhcp-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_wifi_dhcp'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1296,7 +1296,7 @@ test_sequence:
 - test_case_id: 'test_wifi_dhcp-at'
   labels: ['wifi']
   test_id: 'test_wifi_dhcp-at::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_wifi_dhcp'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -1305,7 +1305,7 @@ test_sequence:
 - test_case_id: 'test_wifi_ping-sapi'
   labels: ['wifi']
   test_id: 'test_wifi_ping-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_wifi_ping'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1314,7 +1314,7 @@ test_sequence:
 - test_case_id: 'test_wifi_ping-at'
   labels: ['wifi']
   test_id: 'test_wifi_ping-at::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_wifi_ping'
   test_markers:
   - pytest.mark.dut("rs9116_at")
@@ -1323,7 +1323,7 @@ test_sequence:
 - test_case_id: 'test_wifi_leave-sapi'
   labels: ['wifi']
   test_id: 'test_wifi_leave-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_wifi_leave'
   test_markers:
   - pytest.mark.dut("rs9116_sapi")
@@ -1332,7 +1332,7 @@ test_sequence:
 - test_case_id: 'test_wifi_leave-at'
   labels: ['wifi']
   test_id: 'test_wifi_leave-at::1'
-  test_module: 'test_cases/test_wifi.py'
+  test_module: 'test_wifi.py'
   test_function: 'test_wifi_leave'
   test_markers:
   - pytest.mark.dut("rs9116_at")
