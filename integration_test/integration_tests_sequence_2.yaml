@@ -1,0 +1,12 @@
+root_path: 'integration_test/tests'
+label_filter: []
+test_sequence:
+
+- test_case_id: 'test_wifi_ping-sapi'
+  labels: [ 'wifi' ]
+  test_id: 'test_wifi_ping-sapi::1'
+  test_module: 'test_cases/test_wifi.py'
+  test_function: 'test_wifi_ping'
+  test_markers:
+    - pytest.mark.dut("rs9116_sapi")
+    - pytest.mark.wifi_access_point("raspi_wifi")

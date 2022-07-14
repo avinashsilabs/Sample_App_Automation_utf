@@ -59,7 +59,7 @@ pipeline {
                                     pushd executor
 
                                     if "%TEST_CONFIG_FILE%"=="" (
-                                        set TEST_CONFIG_FILE=integration_tests_2.yaml
+                                        set TEST_CONFIG_FILE=integration_tests_sequence_1.yaml
                                     )
 
                                     set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
