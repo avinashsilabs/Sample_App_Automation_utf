@@ -1008,6 +1008,152 @@ test_cases:
     enabled: true
     labels:
       - socket
+  - id: 128d35122fece5b3771930c847f3d3c77ef24810
+    test_case_id: test_socket[0]
+    test_function: test_socket
+    test_id: test_socket[0]::1
+    test_module: test_socket.py
+    test_markers: []
+    test_params:
+      - name: iteration
+        value: 0
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: false
+    labels:
+      - socket
+  - id: c3b619dfd720cda9186fc9d2a278236acbba1ce1
+    test_case_id: test_socket[1]
+    test_function: test_socket
+    test_id: test_socket[1]::1
+    test_module: test_socket.py
+    test_markers: []
+    test_params:
+      - name: iteration
+        value: 1
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: false
+    labels:
+      - socket
+  - id: b4a5a26abbcce46b1684d33a5b9f102c25abf4a3
+    test_case_id: test_socket[2]
+    test_function: test_socket
+    test_id: test_socket[2]::1
+    test_module: test_socket.py
+    test_markers: []
+    test_params:
+      - name: iteration
+        value: 2
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: false
+    labels:
+      - socket
+  - id: 70e840409777d9c342864f575439bad7c8898973
+    test_case_id: test_socket[3]
+    test_function: test_socket
+    test_id: test_socket[3]::1
+    test_module: test_socket.py
+    test_markers: []
+    test_params:
+      - name: iteration
+        value: 3
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: false
+    labels:
+      - socket
+  - id: e63a8be12655cb52621b25f7ef124cfd7869d90e
+    test_case_id: test_socket[4]
+    test_function: test_socket
+    test_id: test_socket[4]::1
+    test_module: test_socket.py
+    test_markers: []
+    test_params:
+      - name: iteration
+        value: 4
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: false
+    labels:
+      - socket
+  - id: f6b98fd2938fd8e8523b850328a48c60d2fafde8
+    test_case_id: test_socket[5]
+    test_function: test_socket
+    test_id: test_socket[5]::1
+    test_module: test_socket.py
+    test_markers: []
+    test_params:
+      - name: iteration
+        value: 5
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: false
+    labels:
+      - socket
+  - id: 1e476a4cd7d7054fb9a05169dc3c97b222f611b1
+    test_case_id: test_socket_factory_tcp_server
+    test_function: test_socket_factory_tcp_server
+    test_id: test_socket_factory_tcp_server::1
+    test_module: test_socket_factory.py
+    test_markers: []
+    test_params: []
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: true
+    labels:
+      - socket_factory
+  - id: 4bba8a63f346c2fee648de321f7b75ab9651214c
+    test_case_id: test_multiple_sockets_tcp_server[3]
+    test_function: test_multiple_sockets_tcp_server
+    test_id: test_multiple_sockets_tcp_server[3]::1
+    test_module: test_socket_factory.py
+    test_markers: []
+    test_params:
+      - name: num_sockets
+        value: 3
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: true
+    labels:
+      - socket_factory
+  - id: b850c0a2159d58fa33f8878dc1e2db9a7a29ae5a
+    test_case_id: test_multiple_sockets_tcp_client[1]
+    test_function: test_multiple_sockets_tcp_client
+    test_id: test_multiple_sockets_tcp_client[1]::1
+    test_module: test_socket_factory.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|16777216|4194304|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|32768|8192})
+    test_params:
+      - name: num_sockets
+        value: 1
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: true
+    labels:
+      - socket_factory
   - id: 9c3f17c90ca4c042a7c8c26891e343285eaaf2ad
     test_case_id: >-
       test_cert_load[RS9116CertificateType.SSLCACertificate-ca-cert-with-crlf.pem]
@@ -1149,99 +1295,3 @@ test_cases:
     enabled: true
     labels:
       - wifi
-  - id: 128d35122fece5b3771930c847f3d3c77ef24810
-    test_case_id: test_socket[0]
-    test_function: test_socket
-    test_id: test_socket[0]::1
-    test_module: test_socket.py
-    test_markers: []
-    test_params:
-      - name: iteration
-        value: 0
-    test_class: null
-    description: null
-    library_name: null
-    version: 0
-    enabled: false
-    labels:
-      - socket
-  - id: c3b619dfd720cda9186fc9d2a278236acbba1ce1
-    test_case_id: test_socket[1]
-    test_function: test_socket
-    test_id: test_socket[1]::1
-    test_module: test_socket.py
-    test_markers: []
-    test_params:
-      - name: iteration
-        value: 1
-    test_class: null
-    description: null
-    library_name: null
-    version: 0
-    enabled: false
-    labels:
-      - socket
-  - id: b4a5a26abbcce46b1684d33a5b9f102c25abf4a3
-    test_case_id: test_socket[2]
-    test_function: test_socket
-    test_id: test_socket[2]::1
-    test_module: test_socket.py
-    test_markers: []
-    test_params:
-      - name: iteration
-        value: 2
-    test_class: null
-    description: null
-    library_name: null
-    version: 0
-    enabled: false
-    labels:
-      - socket
-  - id: 70e840409777d9c342864f575439bad7c8898973
-    test_case_id: test_socket[3]
-    test_function: test_socket
-    test_id: test_socket[3]::1
-    test_module: test_socket.py
-    test_markers: []
-    test_params:
-      - name: iteration
-        value: 3
-    test_class: null
-    description: null
-    library_name: null
-    version: 0
-    enabled: false
-    labels:
-      - socket
-  - id: e63a8be12655cb52621b25f7ef124cfd7869d90e
-    test_case_id: test_socket[4]
-    test_function: test_socket
-    test_id: test_socket[4]::1
-    test_module: test_socket.py
-    test_markers: []
-    test_params:
-      - name: iteration
-        value: 4
-    test_class: null
-    description: null
-    library_name: null
-    version: 0
-    enabled: false
-    labels:
-      - socket
-  - id: f6b98fd2938fd8e8523b850328a48c60d2fafde8
-    test_case_id: test_socket[5]
-    test_function: test_socket
-    test_id: test_socket[5]::1
-    test_module: test_socket.py
-    test_markers: []
-    test_params:
-      - name: iteration
-        value: 5
-    test_class: null
-    description: null
-    library_name: null
-    version: 0
-    enabled: false
-    labels:
-      - socket
