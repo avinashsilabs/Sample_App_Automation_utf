@@ -1,11 +1,11 @@
 test_cases:
-  - id: a38e4e830750daa3016713deb567115c93657ec5
+  - id: c7551d8fa70328caa25f080be971163f8ce47de4
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]
     test_function: test_wifi_ap_configuration_lb
     test_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]::1
-    test_module: test_asus_rt_ax3000.py
+    test_module: test_cases/test_asus_rt_ax3000.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -25,13 +25,14 @@ test_cases:
     enabled: true
     labels:
       - asus_rt_ax3000
-  - id: 459bbf5defd9642034ee9fd9d9ce9161b90605f6
+      - cases
+  - id: eb6dd944cdcaba91db377f39dfd39e2f52af7232
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]
     test_function: test_wifi_ap_configuration_lb
     test_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]::1
-    test_module: test_asus_rt_ax3000.py
+    test_module: test_cases/test_asus_rt_ax3000.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -51,13 +52,14 @@ test_cases:
     enabled: true
     labels:
       - asus_rt_ax3000
-  - id: 23abb95e4416ea6600b86727bbeb9e613e8ef714
+      - cases
+  - id: 45db4dcf3f771c75637ef81c25210a16f64bdcba
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.ax|n|b|g-Channel.Automatic2p4G-Cipher.AES]
     test_function: test_wifi_ap_configuration_lb
     test_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.ax|n|b|g-Channel.Automatic2p4G-Cipher.AES]::1
-    test_module: test_asus_rt_ax3000.py
+    test_module: test_cases/test_asus_rt_ax3000.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -77,13 +79,14 @@ test_cases:
     enabled: true
     labels:
       - asus_rt_ax3000
-  - id: 3b699c325f6557e29e4116d6582a8d13e711a267
+      - cases
+  - id: e935e0a66151d00603b2ffbd0461e165a739b63d
     test_case_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-36-Cipher.AES]
     test_function: test_wifi_ap_configuration_hb
     test_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-36-Cipher.AES]::1
-    test_module: test_asus_rt_ax3000.py
+    test_module: test_cases/test_asus_rt_ax3000.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -103,13 +106,14 @@ test_cases:
     enabled: true
     labels:
       - asus_rt_ax3000
-  - id: 657100ba17768e702625d376ae65df9b7e6c48d3
+      - cases
+  - id: 981832e799b906f45d15e98ae1639276e6456c42
     test_case_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-153-Cipher.AES]
     test_function: test_wifi_ap_configuration_hb
     test_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-153-Cipher.AES]::1
-    test_module: test_asus_rt_ax3000.py
+    test_module: test_cases/test_asus_rt_ax3000.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -129,13 +133,14 @@ test_cases:
     enabled: true
     labels:
       - asus_rt_ax3000
-  - id: 8b40094ad8203411256095884e1be0174ae12a30
+      - cases
+  - id: e0306c78308b994174de66ae0ad5cc7cb19ad26f
     test_case_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ax|ac|a|n-Channel.Automatic5G-Cipher.AES]
     test_function: test_wifi_ap_configuration_hb
     test_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ax|ac|a|n-Channel.Automatic5G-Cipher.AES]::1
-    test_module: test_asus_rt_ax3000.py
+    test_module: test_cases/test_asus_rt_ax3000.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -155,11 +160,12 @@ test_cases:
     enabled: true
     labels:
       - asus_rt_ax3000
-  - id: 8f920ba5af522b83bc41e32529fba00b932d76c3
+      - cases
+  - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
     test_case_id: test_async_rejoin_errors
     test_function: test_async_rejoin_errors
     test_id: test_async_rejoin_errors::1
-    test_module: test_async_events.py
+    test_module: test_cases/test_async_events.py
     test_markers: []
     test_params: []
     test_class: null
@@ -169,11 +175,12 @@ test_cases:
     enabled: true
     labels:
       - async_events
-  - id: 2ad94e8342cf90ab19fc3ecdb814d72ad82cb72f
+      - cases
+  - id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
     test_case_id: test_async_rejoin_errors_using_queue
     test_function: test_async_rejoin_errors_using_queue
     test_id: test_async_rejoin_errors_using_queue::1
-    test_module: test_async_events.py
+    test_module: test_cases/test_async_events.py
     test_markers: []
     test_params: []
     test_class: null
@@ -183,11 +190,12 @@ test_cases:
     enabled: true
     labels:
       - async_events
-  - id: b1ea556599a62416183d71f25f3c34506e2ec5d8
+      - cases
+  - id: 3581ce42cb4036c0f2923f47dcf1d1ea7fe6b5dd
     test_case_id: test_async_rejoin_errors_using_wait_for_event
     test_function: test_async_rejoin_errors_using_wait_for_event
     test_id: test_async_rejoin_errors_using_wait_for_event::1
-    test_module: test_async_events.py
+    test_module: test_cases/test_async_events.py
     test_markers: []
     test_params: []
     test_class: null
@@ -197,11 +205,12 @@ test_cases:
     enabled: true
     labels:
       - async_events
-  - id: bae6d903eab17f206546fbd3eb09e246e8ea2591
+      - cases
+  - id: 0c0f092834509c8ab0cdd496992905ef605459fd
     test_case_id: test_python_client
     test_function: test_python_client
     test_id: test_python_client::1
-    test_module: test_aws_iot.py
+    test_module: test_cases/test_aws_iot.py
     test_markers: []
     test_params: []
     test_class: null
@@ -211,11 +220,12 @@ test_cases:
     enabled: true
     labels:
       - aws_iot
-  - id: ae27a3c4b3c13fdba6d186d266f16a5b1a221ac4
+      - cases
+  - id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
     test_case_id: test_aws_device_shadow
     test_function: test_aws_device_shadow
     test_id: test_aws_device_shadow::1
-    test_module: test_aws_iot.py
+    test_module: test_cases/test_aws_iot.py
     test_markers: []
     test_params: []
     test_class: null
@@ -225,11 +235,12 @@ test_cases:
     enabled: true
     labels:
       - aws_iot
-  - id: c56105310485e694cc9563209cf2875373a8dca0
+      - cases
+  - id: e18641a09ddbfd25433f28f31204c0218adddd47
     test_case_id: test_aws_iot_client
     test_function: test_aws_iot_client
     test_id: test_aws_iot_client::1
-    test_module: test_aws_iot.py
+    test_module: test_cases/test_aws_iot.py
     test_markers: []
     test_params: []
     test_class: null
@@ -239,11 +250,12 @@ test_cases:
     enabled: true
     labels:
       - aws_iot
-  - id: 74281bd667ffe7fb000cfebbe61d6d2aa1a220f6
+      - cases
+  - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_case_id: test_ble_advertisement
     test_function: test_ble_advertisement
     test_id: test_ble_advertisement::1
-    test_module: test_ble.py
+    test_module: test_cases/test_ble.py
     test_markers: []
     test_params: []
     test_class: null
@@ -253,11 +265,12 @@ test_cases:
     enabled: true
     labels:
       - ble
-  - id: 50ad4375272c97cfcb3252bccc94fd617be2eaf4
+      - cases
+  - id: f6f77eea2d9c2b7d4b13459d53a3e4fc23022db0
     test_case_id: test_ble_scanning
     test_function: test_ble_scanning
     test_id: test_ble_scanning::1
-    test_module: test_ble.py
+    test_module: test_cases/test_ble.py
     test_markers: []
     test_params: []
     test_class: null
@@ -267,11 +280,12 @@ test_cases:
     enabled: true
     labels:
       - ble
-  - id: eede9d73162e98cf3efb131b89bc2d2f30d09f83
+      - cases
+  - id: 25745669c19bf515f8becbcaa88ee70b0aa404c0
     test_case_id: test_ble_gatt_server_slave
     test_function: test_ble_gatt_server_slave
     test_id: test_ble_gatt_server_slave::1
-    test_module: test_ble.py
+    test_module: test_cases/test_ble.py
     test_markers: []
     test_params: []
     test_class: null
@@ -281,11 +295,12 @@ test_cases:
     enabled: true
     labels:
       - ble
-  - id: 884beec368530b72b54f386fa8dd798ecedaa095
+      - cases
+  - id: a94aa1b958e402d8e1a5e51093d69f4fb02bf582
     test_case_id: test_ble_gatt_client_master
     test_function: test_ble_gatt_client_master
     test_id: test_ble_gatt_client_master::1
-    test_module: test_ble.py
+    test_module: test_cases/test_ble.py
     test_markers:
       - pytest.mark.firmware_app('test_multi_gatt_conn',)
     test_params: []
@@ -296,11 +311,12 @@ test_cases:
     enabled: true
     labels:
       - ble
-  - id: 578ba15fb807061266ecb513599afd0529606fd3
+      - cases
+  - id: 8853c4b63fd3c3d7d364feca5d882785e9b13961
     test_case_id: test_bt_a2dp_dut_as_src
     test_function: test_bt_a2dp_dut_as_src
     test_id: test_bt_a2dp_dut_as_src::1
-    test_module: test_bt_a2dp.py
+    test_module: test_cases/test_bt_a2dp.py
     test_markers:
       - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
     test_params: []
@@ -311,11 +327,12 @@ test_cases:
     enabled: true
     labels:
       - bt_a2dp
-  - id: 6fbd501d70eaa784b1d171aab9daf0174aeb4ddb
+      - cases
+  - id: bcd131694368ebfa14b7591d2d57c335cb7a1576
     test_case_id: test_bt_avrcp_dut_as_src
     test_function: test_bt_avrcp_dut_as_src
     test_id: test_bt_avrcp_dut_as_src::1
-    test_module: test_bt_a2dp.py
+    test_module: test_cases/test_bt_a2dp.py
     test_markers:
       - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
     test_params: []
@@ -326,11 +343,12 @@ test_cases:
     enabled: true
     labels:
       - bt_a2dp
-  - id: a10c201406af3904c611d0bab4c6882d8179fb55
+      - cases
+  - id: 14ff158744d0d70ba65a57797509bec4ceff8b42
     test_case_id: test_bt_hid_dut_as_slave[True]
     test_function: test_bt_hid_dut_as_slave
     test_id: test_bt_hid_dut_as_slave[True]::1
-    test_module: test_bt_hid.py
+    test_module: test_cases/test_bt_hid.py
     test_markers: []
     test_params:
       - name: enable_ssp
@@ -342,11 +360,12 @@ test_cases:
     enabled: true
     labels:
       - bt_hid
-  - id: 0f1a4bf6f75d317d0e80d5566fd4f106ad6bfbf9
+      - cases
+  - id: c0b8dafa3e28f0c69b446fe793d32cc7bd1d60c0
     test_case_id: test_bt_hid_dut_as_slave[False]
     test_function: test_bt_hid_dut_as_slave
     test_id: test_bt_hid_dut_as_slave[False]::1
-    test_module: test_bt_hid.py
+    test_module: test_cases/test_bt_hid.py
     test_markers: []
     test_params:
       - name: enable_ssp
@@ -358,11 +377,12 @@ test_cases:
     enabled: true
     labels:
       - bt_hid
-  - id: ef44528bd3eb3544571660de93074bd10eaf5f7f
+      - cases
+  - id: 7d91abc71974424f4476da49a2aef75fc8631225
     test_case_id: test_bt_spp_dut_as_slave
     test_function: test_bt_spp_dut_as_slave
     test_id: test_bt_spp_dut_as_slave::1
-    test_module: test_bt_spp.py
+    test_module: test_cases/test_bt_spp.py
     test_markers: []
     test_params: []
     test_class: null
@@ -372,11 +392,12 @@ test_cases:
     enabled: true
     labels:
       - bt_spp
-  - id: 9004d131f9bc72a4df4e2c8bba9cfb58ba270ead
+      - cases
+  - id: f565f38f8b55baa281415df4bfaff60ff78a4311
     test_case_id: test_bt_spp_dut_as_master
     test_function: test_bt_spp_dut_as_master
     test_id: test_bt_spp_dut_as_master::1
-    test_module: test_bt_spp.py
+    test_module: test_cases/test_bt_spp.py
     test_markers: []
     test_params: []
     test_class: null
@@ -386,13 +407,14 @@ test_cases:
     enabled: true
     labels:
       - bt_spp
-  - id: a0ff9871fa5ccfb4957939a98d29ba1254cc052e
+      - cases
+  - id: be5a4ff6e87ca1469a76f5fcc8baa60d3f9c3b79
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]_1
     test_function: test_wifi_ap_configuration_lb
     test_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]::1
-    test_module: test_dlink810.py
+    test_module: test_cases/test_dlink810.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -411,14 +433,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - dlink810
-  - id: 9d1aaefb03bfe56d0f0b64082929975c82cd721c
+  - id: a8ebefcb0b2cfe7649472fe349bf8fa467b7d9ea
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]_1
     test_function: test_wifi_ap_configuration_lb
     test_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]::1
-    test_module: test_dlink810.py
+    test_module: test_cases/test_dlink810.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -437,14 +460,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - dlink810
-  - id: 085857cc24f4935c82db449bf173e51a140f98d4
+  - id: dda8b4ca848ddadec2007dd191e542cb0ddc7e53
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.g-Channel.Automatic2p4G-Cipher.AES]
     test_function: test_wifi_ap_configuration_lb
     test_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.g-Channel.Automatic2p4G-Cipher.AES]::1
-    test_module: test_dlink810.py
+    test_module: test_cases/test_dlink810.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -463,14 +487,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - dlink810
-  - id: f294bd0c77fa2d7fbac8ab315a21124539531376
+  - id: cb26cf9e580e54a7c8a92de72fd2088f50449db0
     test_case_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.n-36-Cipher.TKIP_AES]
     test_function: test_wifi_ap_configuration_hb
     test_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.n-36-Cipher.TKIP_AES]::1
-    test_module: test_dlink810.py
+    test_module: test_cases/test_dlink810.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -489,14 +514,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - dlink810
-  - id: d3bb6f1863f6a7917cb2c8097f392866f821db1f
+  - id: 3598731f2f6e6e317ffd78995bc28f4b75abdbb6
     test_case_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-153-Cipher.AES]
     test_function: test_wifi_ap_configuration_hb
     test_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-153-Cipher.AES]::1
-    test_module: test_dlink810.py
+    test_module: test_cases/test_dlink810.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -515,14 +541,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - dlink810
-  - id: 9dae8290b12666e0962c2238da2bb1eda17bd92b
+  - id: 56fe09924e542e2ad1a399a37cc55e49d67ccf82
     test_case_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-Channel.Automatic5G-Cipher.AES]
     test_function: test_wifi_ap_configuration_hb
     test_id: >-
       test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-Channel.Automatic5G-Cipher.AES]::1
-    test_module: test_dlink810.py
+    test_module: test_cases/test_dlink810.py
     test_markers:
       - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_access_point',wifi='default')
@@ -541,12 +568,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - dlink810
-  - id: cd369abd2a08743514cf7b01f3676875678f25c4
+  - id: 3b64f38f5e2a92c1c18ab7a048f39396875c27ff
     test_case_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]
     test_function: test_wifi_ap_configuration
     test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_generic_ap.py
+    test_module: test_cases/test_generic_ap.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
@@ -567,12 +595,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - generic_ap
-  - id: 959429870a3ff0b1e6a8cd872c1e9a3304195449
+  - id: c2351d8a0a01883540b6606e765005a170cac80b
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-POST-content0]
     test_function: test_http_server_and_linux_client
     test_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-POST-content0]::1
-    test_module: test_http.py
+    test_module: test_cases/test_http.py
     test_markers: []
     test_params:
       - name: index_path
@@ -589,12 +618,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - http
-  - id: 4e77a655b79dd1da7d8c09cecfe6183650c591a8
+  - id: ba60c41e56cdb747f708e4a72763d0c7e4ccef45
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-PUT-content1]
     test_function: test_http_server_and_linux_client
     test_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-PUT-content1]::1
-    test_module: test_http.py
+    test_module: test_cases/test_http.py
     test_markers: []
     test_params:
       - name: index_path
@@ -611,12 +641,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - http
-  - id: 1d68ffa06441fcff97d710d1ba83757d9d20d175
+  - id: e032cfa53c846df7bc336e92edc56112f9a206e1
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-GET-None]
     test_function: test_http_server_and_linux_client
     test_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-GET-None]::1
-    test_module: test_http.py
+    test_module: test_cases/test_http.py
     test_markers: []
     test_params:
       - name: index_path
@@ -631,12 +662,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - http
-  - id: 0c4b291b32fd6665e9b010cc544b08843925c529
+  - id: 8242af35187720ad234954fc436910e6247179b3
     test_case_id: test_http_server_and_dut_client[index_long_crlf.html]
     test_function: test_http_server_and_dut_client
     test_id: test_http_server_and_dut_client[index_long_crlf.html]::1
-    test_module: test_http.py
+    test_module: test_cases/test_http.py
     test_markers:
       - pytest.mark.dut('rs9116_sapi',)
       - >-
@@ -651,12 +683,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - http
-  - id: 19d6586a812dcd89792f036171c15987a6779a86
+  - id: 19cd774cf468552990550bda9d13b24733fc41bd
     test_case_id: test_http_server_and_dut_client[index_long_lf.html]
     test_function: test_http_server_and_dut_client
     test_id: test_http_server_and_dut_client[index_long_lf.html]::1
-    test_module: test_http.py
+    test_module: test_cases/test_http.py
     test_markers:
       - pytest.mark.dut('rs9116_sapi',)
       - >-
@@ -671,12 +704,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - http
-  - id: 72c82b44f99fc36a38ca2c787529a3bf1868057f
+  - id: ede54b7e9780d3ddbdb18bce398a9b4a40eccd55
     test_case_id: test_device_as_server[TCP]
     test_function: test_device_as_server
     test_id: test_device_as_server[TCP]::1
-    test_module: test_iperf.py
+    test_module: test_cases/test_iperf.py
     test_markers:
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
     test_params:
@@ -688,12 +722,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - iperf
-  - id: fa35d44fcb9a6ce06e8ed3815f0d42842b980ba1
+  - id: 55f357e3f7e970e8494bcafc29f1f6ca76087a69
     test_case_id: test_device_as_server[UDP]
     test_function: test_device_as_server
     test_id: test_device_as_server[UDP]::1
-    test_module: test_iperf.py
+    test_module: test_cases/test_iperf.py
     test_markers:
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
     test_params:
@@ -705,12 +740,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - iperf
-  - id: 4a4506d8558beaaeb19573b7d88a7fced58547db
+  - id: 7bc6d9ff17c4706dead6edcf6e70bf53995f7e91
     test_case_id: test_host_as_server[TCP]
     test_function: test_host_as_server
     test_id: test_host_as_server[TCP]::1
-    test_module: test_iperf.py
+    test_module: test_cases/test_iperf.py
     test_markers:
       - >-
         pytest.mark.config('net_perf_client',net_perf={'host_role':
@@ -724,12 +760,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - iperf
-  - id: 8353f90e14aa1860d85e68a210c52e9ee3ec86cc
+  - id: 01c7f11755924f279931013fe4faed543cf481c6
     test_case_id: test_host_as_server[UDP]
     test_function: test_host_as_server
     test_id: test_host_as_server[UDP]::1
-    test_module: test_iperf.py
+    test_module: test_cases/test_iperf.py
     test_markers:
       - >-
         pytest.mark.config('net_perf_client',net_perf={'host_role':
@@ -743,12 +780,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - iperf
-  - id: f4ba04e71a00bf5367457687061e8814216c7b41
+  - id: 8ffed8663496f7c25b70eb5a575873face87492f
     test_case_id: test_keyboard
     test_function: test_keyboard
     test_id: test_keyboard::1
-    test_module: test_keyboard.py
+    test_module: test_cases/test_keyboard.py
     test_markers: []
     test_params: []
     test_class: null
@@ -757,12 +795,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - keyboard
-  - id: 30cd20bfc5e6bfca9806a6e1ac0e434b18483b70
+  - id: ddb02204ed8117e7d5efdb9abc4db2284c85cbc3
     test_case_id: test_mqtt_server_and_linux_client
     test_function: test_mqtt_server_and_linux_client
     test_id: test_mqtt_server_and_linux_client::1
-    test_module: test_mqtt.py
+    test_module: test_cases/test_mqtt.py
     test_markers: []
     test_params: []
     test_class: null
@@ -771,12 +810,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - mqtt
-  - id: 945f88a98548ad08ac69880dbba42bc2397a631a
+  - id: ce5f6b8141173d5bc06d722f46ec2558efa63999
     test_case_id: test_mqtt_dut
     test_function: test_mqtt_dut
     test_id: test_mqtt_dut::1
-    test_module: test_mqtt.py
+    test_module: test_cases/test_mqtt.py
     test_markers:
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -790,12 +830,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - mqtt
-  - id: 7b402c182fdff35946798e5d0ee48e1f540e5046
+  - id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
     test_case_id: test_power_save
     test_function: test_power_save
     test_id: test_power_save::1
-    test_module: test_powersave.py
+    test_module: test_cases/test_powersave.py
     test_markers:
       - pytest.mark.dut('rs9116_sapi',)
     test_params: []
@@ -805,12 +846,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - powersave
-  - id: 9ce8ba100aadfd218fd22a1acd2e6157cbc8e10b
+  - id: 9c388ac2885b02da53705d6c58f6f31c8dea73a6
     test_case_id: test_ram_dump[0-65]
     test_function: test_ram_dump
     test_id: test_ram_dump[0-65]::1
-    test_module: test_ram_dump.py
+    test_module: test_cases/test_ram_dump.py
     test_markers: []
     test_params:
       - name: start_address
@@ -823,12 +865,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - ram_dump
-  - id: b7f1e2c07ff657809b12532d5430960415c2c288
+  - id: 0fa45c2a4f8b9986864795b890978d80bee5a286
     test_case_id: test_ram_dump[0-127]
     test_function: test_ram_dump
     test_id: test_ram_dump[0-127]::1
-    test_module: test_ram_dump.py
+    test_module: test_cases/test_ram_dump.py
     test_markers: []
     test_params:
       - name: start_address
@@ -841,12 +884,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - ram_dump
-  - id: 2d5994e960cb3bee268e91ebf00c58bf9827a500
+  - id: f46b5b8a09b7c35041084f1c9c4bc2d1f5a222fa
     test_case_id: test_ram_dump[37-3457]
     test_function: test_ram_dump
     test_id: test_ram_dump[37-3457]::1
-    test_module: test_ram_dump.py
+    test_module: test_cases/test_ram_dump.py
     test_markers: []
     test_params:
       - name: start_address
@@ -859,12 +903,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - ram_dump
-  - id: d39b259756190196e41e1e931436b72e29eeb110
+  - id: 3e108771e1b7204cdbc2f5d356d447f895ee4ef4
     test_case_id: test_ram_dump[60000-65535]
     test_function: test_ram_dump
     test_id: test_ram_dump[60000-65535]::1
-    test_module: test_ram_dump.py
+    test_module: test_cases/test_ram_dump.py
     test_markers: []
     test_params:
       - name: start_address
@@ -877,12 +922,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - ram_dump
-  - id: b30293b52b8498f29fc7d9e87e2d6845b8ed8b60
+  - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
     test_case_id: test_secondary_raspi_shell
     test_function: test_secondary_raspi_shell
     test_id: test_secondary_raspi_shell::1
-    test_module: test_secondary_raspi.py
+    test_module: test_cases/test_secondary_raspi.py
     test_markers:
       - pytest.mark.bt_client('secondary_raspi_bt_client',)
     test_params: []
@@ -892,12 +938,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - secondary_raspi
-  - id: 9d9d3cca147cdac945229e92633e940117f099ba
+  - id: b86234b56ad9257ad9c9e69ae20829e11e7ef18a
     test_case_id: test_secondary_raspi_bt
     test_function: test_secondary_raspi_bt
     test_id: test_secondary_raspi_bt::1
-    test_module: test_secondary_raspi.py
+    test_module: test_cases/test_secondary_raspi.py
     test_markers:
       - pytest.mark.bt_client('secondary_raspi_bt_client',)
     test_params: []
@@ -907,12 +954,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - secondary_raspi
-  - id: 25f163843a246fc707f1eb82e72c66bde87c335a
+  - id: d0413e2060109b0feefbbc0884e89b119bca0da8
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-False]
     test_function: test_sniffer_icmp_inspection
     test_id: test_sniffer_icmp_inspection[None-no_filter-False]::1
-    test_module: test_sniffer.py
+    test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
@@ -927,8 +975,9 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - sniffer
-  - id: 32cf38ecb5d3f2a2394eae9796df40e67ea41013
+  - id: 896d7086f646f98be413f613d261f9e746c86321
     test_case_id: >-
       test_sniffer_icmp_inspection[ether host
       80:c9:55:34:eb:f4-mac_filter-False]
@@ -936,7 +985,7 @@ test_cases:
     test_id: >-
       test_sniffer_icmp_inspection[ether host
       80:c9:55:34:eb:f4-mac_filter-False]::1
-    test_module: test_sniffer.py
+    test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
@@ -951,12 +1000,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - sniffer
-  - id: 8cc724d85c7bc6b1c0dc57b549a0d2480e20cdd4
+  - id: 61f7ae813bc4830583d7d766f8b34b62deca64d4
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-True]
     test_function: test_sniffer_icmp_inspection
     test_id: test_sniffer_icmp_inspection[None-no_filter-True]::1
-    test_module: test_sniffer.py
+    test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
@@ -971,14 +1021,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - sniffer
-  - id: 3ff348f38e9a2154dbc4c626657399b91f7a2c03
+  - id: 8910431429830321dbef3dec2281b954a7c0e654
     test_case_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-True]
     test_function: test_sniffer_icmp_inspection
     test_id: >-
       test_sniffer_icmp_inspection[ether host
       80:c9:55:34:eb:f4-mac_filter-True]::1
-    test_module: test_sniffer.py
+    test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
@@ -993,12 +1044,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - sniffer
-  - id: 98810ab6218992d81e25684eaae6d2be9d07cc8e
+  - id: ec502278ec2f7fd76e913868331fa8fe852523bd
     test_case_id: test_socket_basic
     test_function: test_socket_basic
     test_id: test_socket_basic::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params: []
     test_class: null
@@ -1007,12 +1059,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - socket
-  - id: 128d35122fece5b3771930c847f3d3c77ef24810
+  - id: 3acc8ce70b445439560c885519f65faab3bb1d68
     test_case_id: test_socket[0]
     test_function: test_socket
     test_id: test_socket[0]::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params:
       - name: iteration
@@ -1023,12 +1076,13 @@ test_cases:
     version: 0
     enabled: false
     labels:
+      - cases
       - socket
-  - id: c3b619dfd720cda9186fc9d2a278236acbba1ce1
+  - id: 25dc4610911962e44f0b6a4e688cf74f32909c68
     test_case_id: test_socket[1]
     test_function: test_socket
     test_id: test_socket[1]::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params:
       - name: iteration
@@ -1039,12 +1093,13 @@ test_cases:
     version: 0
     enabled: false
     labels:
+      - cases
       - socket
-  - id: b4a5a26abbcce46b1684d33a5b9f102c25abf4a3
+  - id: 6410046946825da257eb5a3eeaf01825f270b591
     test_case_id: test_socket[2]
     test_function: test_socket
     test_id: test_socket[2]::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params:
       - name: iteration
@@ -1055,12 +1110,13 @@ test_cases:
     version: 0
     enabled: false
     labels:
+      - cases
       - socket
-  - id: 70e840409777d9c342864f575439bad7c8898973
+  - id: 1f79363c87edd49e056b7e6843047c8c4034f1c9
     test_case_id: test_socket[3]
     test_function: test_socket
     test_id: test_socket[3]::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params:
       - name: iteration
@@ -1071,12 +1127,13 @@ test_cases:
     version: 0
     enabled: false
     labels:
+      - cases
       - socket
-  - id: e63a8be12655cb52621b25f7ef124cfd7869d90e
+  - id: 4bd0e7fb4672ab350cd4ab30ef4fab621828828f
     test_case_id: test_socket[4]
     test_function: test_socket
     test_id: test_socket[4]::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params:
       - name: iteration
@@ -1087,12 +1144,13 @@ test_cases:
     version: 0
     enabled: false
     labels:
+      - cases
       - socket
-  - id: f6b98fd2938fd8e8523b850328a48c60d2fafde8
+  - id: 5c0fb801fe555fce6a7dda7f3b16f0bc96190a2b
     test_case_id: test_socket[5]
     test_function: test_socket
     test_id: test_socket[5]::1
-    test_module: test_socket.py
+    test_module: test_cases/test_socket.py
     test_markers: []
     test_params:
       - name: iteration
@@ -1103,12 +1161,13 @@ test_cases:
     version: 0
     enabled: false
     labels:
+      - cases
       - socket
-  - id: 1e476a4cd7d7054fb9a05169dc3c97b222f611b1
+  - id: f9ac7b90be9fd12186de271c539cdbf319eaf866
     test_case_id: test_socket_factory_tcp_server
     test_function: test_socket_factory_tcp_server
     test_id: test_socket_factory_tcp_server::1
-    test_module: test_socket_factory.py
+    test_module: test_cases/test_socket_factory.py
     test_markers: []
     test_params: []
     test_class: null
@@ -1117,12 +1176,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - socket_factory
-  - id: 4bba8a63f346c2fee648de321f7b75ab9651214c
+  - id: 7ababbe792d9b11615a79062ede0928dfffb75dd
     test_case_id: test_multiple_sockets_tcp_server[3]
     test_function: test_multiple_sockets_tcp_server
     test_id: test_multiple_sockets_tcp_server[3]::1
-    test_module: test_socket_factory.py
+    test_module: test_cases/test_socket_factory.py
     test_markers: []
     test_params:
       - name: num_sockets
@@ -1133,12 +1193,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - socket_factory
-  - id: b850c0a2159d58fa33f8878dc1e2db9a7a29ae5a
+  - id: 681ec660f8dc60022e98a3db72b2d2dd02e82079
     test_case_id: test_multiple_sockets_tcp_client[1]
     test_function: test_multiple_sockets_tcp_client
     test_id: test_multiple_sockets_tcp_client[1]::1
-    test_module: test_socket_factory.py
+    test_module: test_cases/test_socket_factory.py
     test_markers:
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -1153,14 +1214,15 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - socket_factory
-  - id: 9c3f17c90ca4c042a7c8c26891e343285eaaf2ad
+  - id: 2284a298be459553462ee40132a605b788e0e3c3
     test_case_id: >-
       test_cert_load[RS9116CertificateType.SSLCACertificate-ca-cert-with-crlf.pem]
     test_function: test_cert_load
     test_id: >-
       test_cert_load[RS9116CertificateType.SSLCACertificate-ca-cert-with-crlf.pem]::1
-    test_module: test_ssl_certs.py
+    test_module: test_cases/test_ssl_certs.py
     test_markers: []
     test_params:
       - name: cert_type
@@ -1173,12 +1235,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - ssl_certs
-  - id: 4b0bf9c9d4c12aeec385f404336846e915c494ba
+  - id: bf700f89cdc14806fb0033122c55c8f4b43c57a2
     test_case_id: test_threading
     test_function: test_threading
     test_id: test_threading::1
-    test_module: test_threading.py
+    test_module: test_cases/test_threading.py
     test_markers:
       - pytest.mark.wifi_access_point('raspi_wifi',)
       - pytest.mark.dut('rs9116_at',)
@@ -1189,12 +1252,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - threading
-  - id: 6bdd964df5bb5ec9caf512715532ef81465ce73a
+  - id: 50ed1a6948f44767dacb6275e18db2fc1c973910
     test_case_id: test_threading_contextmgr
     test_function: test_threading_contextmgr
     test_id: test_threading_contextmgr::1
-    test_module: test_threading.py
+    test_module: test_cases/test_threading.py
     test_markers:
       - pytest.mark.wifi_access_point('raspi_wifi',)
       - pytest.mark.dut('rs9116_sapi',)
@@ -1205,12 +1269,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - threading
-  - id: 565ab12de496db26dcd928e6bfb6e85a1f92ace7
+  - id: fb1256f2a3b05820535277be1343c17a4f6740b2
     test_case_id: test_version
     test_function: test_version
     test_id: test_version::1
-    test_module: test_version.py
+    test_module: test_cases/test_version.py
     test_markers: []
     test_params: []
     test_class: null
@@ -1219,12 +1284,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - version
-  - id: c31f41a21dfa36af4dcbb1c787a08203427cbda0
+  - id: 40a1fec3f61d75d9333daa4a6975d321a107dbef
     test_case_id: test_websocket_server_and_linux_client
     test_function: test_websocket_server_and_linux_client
     test_id: test_websocket_server_and_linux_client::1
-    test_module: test_websocket.py
+    test_module: test_cases/test_websocket.py
     test_markers:
       - pytest.mark.http_server('raspi_lighttpd',)
       - pytest.mark.wifi_access_point('raspi_wifi',)
@@ -1235,12 +1301,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - websocket
-  - id: b154362f779711f6ee6a8f51fc62753f7e4ad527
+  - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
     test_case_id: test_prepare_static_ap
     test_function: test_prepare_static_ap
     test_id: test_prepare_static_ap::1
-    test_module: test_wifi.py
+    test_module: test_cases/test_wifi.py
     test_markers:
       - pytest.mark.wifi_access_point('dlink810_ap',)
       - pytest.mark.end_state('wifi_access_point',wifi=None)
@@ -1252,12 +1319,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - wifi
-  - id: 64589790b60777e52d7d1dc704e434e3cc3c4403
+  - id: 9bf2a1951ec733ba23a7ad9cfe6a565a32776a8e
     test_case_id: test_wifi_dhcp
     test_function: test_wifi_dhcp
     test_id: test_wifi_dhcp::1
-    test_module: test_wifi.py
+    test_module: test_cases/test_wifi.py
     test_markers: []
     test_params: []
     test_class: null
@@ -1266,12 +1334,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - wifi
-  - id: 8d771444359589bf0294134b7fd71f6291140131
+  - id: d4b6ecc9c54f925fc20357dbddb9682cccb5cc64
     test_case_id: test_wifi_ping
     test_function: test_wifi_ping
     test_id: test_wifi_ping::1
-    test_module: test_wifi.py
+    test_module: test_cases/test_wifi.py
     test_markers: []
     test_params: []
     test_class: null
@@ -1280,12 +1349,13 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - wifi
-  - id: 0745bfdfac02961bbcd04fe65c78ed154d060414
+  - id: ce44d558066a25b6e15f93509d003595ad536bee
     test_case_id: test_wifi_leave
     test_function: test_wifi_leave
     test_id: test_wifi_leave::1
-    test_module: test_wifi.py
+    test_module: test_cases/test_wifi.py
     test_markers: []
     test_params: []
     test_class: null
@@ -1294,4 +1364,5 @@ test_cases:
     version: 0
     enabled: true
     labels:
+      - cases
       - wifi
