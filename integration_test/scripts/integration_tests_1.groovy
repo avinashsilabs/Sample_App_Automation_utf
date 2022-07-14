@@ -22,59 +22,59 @@ pipeline {
     stages {
         stage('Run Unit Tests and Integration Tests in Parallel') {
             parallel {
-                stage('Unit Test Setup and Execution') {
-                    agent {
-                        docker {
-                            label 'Docker_Linux'
-                            image 'joesavage71/utf_unit_test'
-                        }
-                    }
-                    stages {
-                        stage("Env Setup") {
-                            steps {
-                                dir('utf_core') {
-                                    sh """
-                                       if [ ! -d venv ]; then
-                                            python3 -m venv venv
-                                       fi
-                                       . venv/bin/activate
-                                       pip3 install wheel
-                                       pip3 install -r unittest-requirements.txt
-                                    """
-                                }
-                            }
-                        }
-                        stage("Run Tests") {
-                            environment {
-                                TEST_RESULTS_DIR = 'unit_tests/test_results'
-                                HARNESS_NAME = 'unit_test'
-                            }
-                            steps {
-                                dir('utf_core') {
-                                    sh(label: "Run Pytest", script: '''
-                                        . venv/bin/activate
-                                        if [ -d ${TEST_RESULTS_DIR} ]; then
-                                            rm -rf ${TEST_RESULTS_DIR}
-                                        fi
-                                        mkdir -p ${TEST_RESULTS_DIR}
-                                        set +e
-                                        export COVERAGE_FILE=.coverage.unit
-                                        export PYTHONPATH=${PWD}/src
-                                        python -m pytest unit_tests --junitxml=${TEST_RESULTS_DIR}/junit_report_unit.xml --cov-branch --cov=utf --cov-config=unit_tests/.coveragerc
-                                        exitcode=$?
-                                        flake8 . > flake8.txt
-                                        exit $exitcode
-                                    ''')
-                                    archiveArtifacts artifacts: 'flake8.txt,.coverage.unit'
-                                    archiveArtifacts artifacts: "${TEST_RESULTS_DIR}/junit_report_*.xml"
-                                    junit allowEmptyResults: false, testResults: "${TEST_RESULTS_DIR}/junit_report_*.xml"
-                                    stash includes: '.coverage.unit', name: 'unit_test_coverage_data'
-                                    stash includes: 'flake8.txt', name: 'flake8_report'
-                                }
-                            }
-                        }
-                    }
-                }
+//                 stage('Unit Test Setup and Execution') {
+//                     agent {
+//                         docker {
+//                             label 'Docker_Linux'
+//                             image 'joesavage71/utf_unit_test'
+//                         }
+//                     }
+//                     stages {
+//                         stage("Env Setup") {
+//                             steps {
+//                                 dir('utf_core') {
+//                                     sh """
+//                                        if [ ! -d venv ]; then
+//                                             python3 -m venv venv
+//                                        fi
+//                                        . venv/bin/activate
+//                                        pip3 install wheel
+//                                        pip3 install -r unittest-requirements.txt
+//                                     """
+//                                 }
+//                             }
+//                         }
+//                         stage("Run Tests") {
+//                             environment {
+//                                 TEST_RESULTS_DIR = 'unit_tests/test_results'
+//                                 HARNESS_NAME = 'unit_test'
+//                             }
+//                             steps {
+//                                 dir('utf_core') {
+//                                     sh(label: "Run Pytest", script: '''
+//                                         . venv/bin/activate
+//                                         if [ -d ${TEST_RESULTS_DIR} ]; then
+//                                             rm -rf ${TEST_RESULTS_DIR}
+//                                         fi
+//                                         mkdir -p ${TEST_RESULTS_DIR}
+//                                         set +e
+//                                         export COVERAGE_FILE=.coverage.unit
+//                                         export PYTHONPATH=${PWD}/src
+//                                         python -m pytest unit_tests --junitxml=${TEST_RESULTS_DIR}/junit_report_unit.xml --cov-branch --cov=utf --cov-config=unit_tests/.coveragerc
+//                                         exitcode=$?
+//                                         flake8 . > flake8.txt
+//                                         exit $exitcode
+//                                     ''')
+//                                     archiveArtifacts artifacts: 'flake8.txt,.coverage.unit'
+//                                     archiveArtifacts artifacts: "${TEST_RESULTS_DIR}/junit_report_*.xml"
+//                                     junit allowEmptyResults: false, testResults: "${TEST_RESULTS_DIR}/junit_report_*.xml"
+//                                     stash includes: '.coverage.unit', name: 'unit_test_coverage_data'
+//                                     stash includes: 'flake8.txt', name: 'flake8_report'
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
                 stage('Integration Test Setup and Execution') {
                     agent {
                         label 'NB0015129'
