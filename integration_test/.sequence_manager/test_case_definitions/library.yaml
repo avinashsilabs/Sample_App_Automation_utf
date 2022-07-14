@@ -175,8 +175,9 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
       - pytest.mark.dut('rs9116_sapi',)
+      - pytest.mark.start_state('wifi_dut_module',wifi=['reset','init'])
+      - pytest.mark.start_state('wifi_dut',wifi='init')
     test_params: []
     test_class: null
     description: null
@@ -194,8 +195,8 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
       - pytest.mark.dut('rs9116_sapi',)
+      - pytest.mark.start_state('wifi_dut_module',wifi=['reset','init'])
     test_params: []
     test_class: null
     description: null
@@ -213,8 +214,8 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
       - pytest.mark.dut('rs9116_sapi',)
+      - pytest.mark.start_state('wifi_dut_module',wifi=['reset','init'])
     test_params: []
     test_class: null
     description: null

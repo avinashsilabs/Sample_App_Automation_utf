@@ -1,4 +1,4 @@
-root_path: 'integration_test/tests'
+root_path: 'integration_test'
 label_filter: []
 test_sequence:
 
