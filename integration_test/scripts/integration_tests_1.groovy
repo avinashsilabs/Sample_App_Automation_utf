@@ -75,13 +75,17 @@ pipeline {
 //                         }
 //                     }
 //                 }
-                stage('Integration Test Setup and Execution') {
+                stage('Run integration tests set 1') {
                     agent {
                         label 'NB0015129'
                     }
                     environment {
                         UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
                         PYTHON3 = "t:\\python_3_9_2_x64\\python.exe"
+                        HWMUX_GROUP_LABEL = "utf_integration_test"
+                        HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_1_hwmux_group.json"
+                        HARNESS_NAME= "__hwmux__integration_tests_1.yaml"
+                        TEST_CONFIG_FILE = "integration_tests_sequence_1.yaml"
                     }
                     stages {
                         stage('Setup Environment') {
@@ -96,29 +100,32 @@ pipeline {
                         }
                         stage('Run Integration Tests') {
                             steps {
-                                hwmuxReserveAnyGroupFromLabel('utf_integration_test', null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
+                                hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
                                     timeout(time: 120, unit: 'MINUTES') {
-                                        writeFile(file: 'integration_test_hwmux_group.json', text: env.HWMUX_GROUP_JSON)
+                                        writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
                                         bat(label: "Run UTF Launcher", script: """
-                                            type integration_test_hwmux_group.json | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
+                                            type %HWMUX_GROUP_JSON_FILE_NAME% | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
                                             set /p UTF_DOCKER_TARGET= < tmp_host_ip
                                             del tmp_host_ip
 
-                                            set HARNESS_NAME=integration_test_1.yaml
+                                            if not exist yq.exe (
+                                                curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
+                                            )
+                                            type %HWMUX_GROUP_JSON_FILE_NAME%  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
 
                                             rd /s /q reports
 
                                             call venv\\scripts\\activate
-                                            copy utf_core\\unit_tests\\.coveragerc integration_test\\tests\\.coveragerc
+                                            copy utf_core\\unit_tests\\.coveragerc integration_test\\.coveragerc
                                             pushd executor
 
                                             if "%TEST_CONFIG_FILE%"=="" (
                                                 set TEST_CONFIG_FILE=integration_tests_sequence_1.yaml
                                             )
 
-                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest.yaml integration_test/tests"
+                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
                                             if "%ENABLE_COVERAGE%"=="true" (
-                                               set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test/tests/.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
+                                               set "PYTEST_COMMAND=coverage run --branch --rcfile=integration_test/.coveragerc --source=utf -m %PYTEST_COMMAND% | tee /app/reports/pytest-log.txt"
                                             )
 
                                             call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%" --docker_flags "-e COVERAGE_FILE=/app/reports/.coverage.integration"
@@ -132,8 +139,8 @@ pipeline {
                                             ping -n 15 %UTF_DOCKER_TARGET%
                                             exit /b %exitcode%
                                         """)
-                                        dir('integration_test/tests') {
-                                            archiveArtifacts artifacts: "integration_test_config.yaml"
+                                        dir('integration_test') {
+                                            archiveArtifacts artifacts: "%TEST_CONFIG_FILE%"
                                         }
                                         script {
                                             if (env.ENABLE_COVERAGE == "true") {

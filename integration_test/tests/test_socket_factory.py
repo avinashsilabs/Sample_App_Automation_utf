@@ -61,7 +61,7 @@ def test_socket_factory_tcp_server(
     s1.socket_close_indication(1)
 
 
-@pytest.mark.parametrize("num_sockets", 3)
+@pytest.mark.parametrize("num_sockets", [3])
 def test_multiple_sockets_tcp_server(
     wifi_networked_dut, wifi_access_point, remote_socket_factory, num_sockets, logger
 ):
@@ -138,7 +138,7 @@ class ClientSocketXferThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.close_socket(self.dut_socket)
 
 
-@pytest.mark.parametrize("num_sockets", 1)
+@pytest.mark.parametrize("num_sockets", [1])
 @pytest.mark.config(
           "wifi_dut",
           wifi={
