@@ -17,13 +17,13 @@ test_sequence:
       - name: standard
         value: 'n'
       - name: channel
-        value: '1'
+        value: 1
       - name: cipher
         value: TKIP_AES
     test_class: TestAccessPointConfig
     description: null
     library_name: ''
-    version: 1
+    version: 2
     enabled: true
     labels:
       - cases
@@ -46,15 +46,15 @@ test_sequence:
       - name: security
         value: WPA2
       - name: standard
-        value: 11bgn
+        value: 11
       - name: channel
-        value: '6'
+        value: 6
       - name: cipher
         value: AES
     test_class: TestAccessPointConfig
     description: null
     library_name: ''
-    version: 2
+    version: 3
     enabled: true
     labels:
       - cases
@@ -79,13 +79,13 @@ test_sequence:
       - name: standard
         value: 'n'
       - name: channel
-        value: '36'
+        value: 36
       - name: cipher
         value: AES
     test_class: TestAccessPointConfig
     description: null
     library_name: ''
-    version: 3
+    version: 4
     enabled: true
     labels:
       - cases
@@ -110,13 +110,13 @@ test_sequence:
       - name: standard
         value: nac
       - name: channel
-        value: '153'
+        value: 153
       - name: cipher
         value: AES
     test_class: TestAccessPointConfig
     description: null
     library_name: ''
-    version: 4
+    version: 5
     enabled: true
     labels:
       - cases
