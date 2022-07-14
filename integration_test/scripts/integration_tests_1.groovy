@@ -140,7 +140,7 @@ pipeline {
                                             exit /b %exitcode%
                                         """)
                                         dir('integration_test') {
-                                            archiveArtifacts artifacts: "%TEST_CONFIG_FILE%"
+                                            archiveArtifacts artifacts: env.TEST_CONFIG_FILE
                                         }
                                         script {
                                             if (env.ENABLE_COVERAGE == "true") {
