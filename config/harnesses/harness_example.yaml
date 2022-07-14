@@ -25,7 +25,7 @@ devices:
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
             cli_transport: 'uart'
-            #gpio_transport: 'gpio_uart'
+            gpio_transport: 'gpio_uart'
 
         # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
         interfaces:
