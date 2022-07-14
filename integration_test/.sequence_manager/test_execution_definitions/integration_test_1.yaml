@@ -1,0 +1,126 @@
+root_path: integration_test
+test_sequence:
+  - id: c3106ffb-208c-4380-a422-31c399bacc9e
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-n-6-TKIP_AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-n-6-TKIP_AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 'n'
+      - name: channel
+        value: '6'
+      - name: cipher
+        value: TKIP_AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 5
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
+  - id: f3eaefed-bdcf-420f-8257-d632652111e1
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-11bgn-6-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-11bgn-6-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 11bgn
+      - name: channel
+        value: '6'
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 5
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
+  - id: 78bea853-6a22-4fc2-b09c-858b2eadb347
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-nac-36-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-nac-36-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: nac
+      - name: channel
+        value: '36'
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 5
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
+  - id: f055740d-4419-4541-a087-5f2b88f7e128
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-anac-153-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-anac-153-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: anac
+      - name: channel
+        value: '153'
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 5
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1

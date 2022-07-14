@@ -1,12 +1,126 @@
-root_path: 'integration_test'
-label_filter: []
+root_path: integration_test
 test_sequence:
-
-- test_case_id: 'test_wifi_ping-sapi'
-  labels: [ 'wifi' ]
-  test_id: 'test_wifi_ping-sapi::1'
-  test_module: 'test_cases/test_wifi.py'
-  test_function: 'test_wifi_ping'
-  test_markers:
-    - pytest.mark.dut("rs9116_sapi")
-    - pytest.mark.wifi_access_point("raspi_wifi")
+  - id: 82eb20f1-e6c9-4182-80fa-6b218e0ee7ff
+    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-6-TKIP_AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-6-TKIP_AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('dlink810_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 'n'
+      - name: channel
+        value: '1'
+      - name: cipher
+        value: TKIP_AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - dlink810
+    iterations: 1
+  - id: 15f0966f-bcef-419b-b479-7f6476ff9740
+    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-11bgn-6-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-dlink810_ap[WPA2-11bgn-6-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('dlink810_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 11bgn
+      - name: channel
+        value: '6'
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 2
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - dlink810
+    iterations: 1
+  - id: 90d4593e-0edd-4a4d-b437-e890e4dc12e8
+    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-36-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-36-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('dlink810_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 'n'
+      - name: channel
+        value: '36'
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 3
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - dlink810
+    iterations: 1
+  - id: d9e3aec4-f7f5-4663-99c2-4ad313c5f7ae
+    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-nac-153-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-dlink810_ap[WPA2-nac-153-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('dlink810_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: nac
+      - name: channel
+        value: '153'
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 4
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - dlink810
+    iterations: 1

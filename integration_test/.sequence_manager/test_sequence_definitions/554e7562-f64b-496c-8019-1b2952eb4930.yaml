@@ -1,0 +1,6 @@
+id: 554e7562-f64b-496c-8019-1b2952eb4930
+name: integration_test_2
+description: integration_test_2
+test_suite_infos:
+  - test_suite_id: e3aedb2e-98fd-4d8a-9a99-543306ad59b0
+    iterations: 1

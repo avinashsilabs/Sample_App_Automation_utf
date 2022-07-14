@@ -1,0 +1,6 @@
+id: 9b45a0b6-0040-43de-986e-6e6a06a5816c
+name: integration_test_1
+description: integration_test_2.yaml
+test_suite_infos:
+  - test_suite_id: 0ff25722-8512-482e-b633-a6331406bc9e
+    iterations: 1

@@ -1,0 +1,12 @@
+id: c8d3054e-df9e-4bb0-b43d-2ae318b8ad12
+name: ram_dump
+description: ram_dump
+test_cases:
+  - test_case_id: 9c388ac2885b02da53705d6c58f6f31c8dea73a6
+    iterations: 1
+  - test_case_id: 0fa45c2a4f8b9986864795b890978d80bee5a286
+    iterations: 1
+  - test_case_id: f46b5b8a09b7c35041084f1c9c4bc2d1f5a222fa
+    iterations: 1
+  - test_case_id: 3e108771e1b7204cdbc2f5d356d447f895ee4ef4
+    iterations: 1
