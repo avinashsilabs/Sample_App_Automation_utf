@@ -46,7 +46,7 @@ test_sequence:
       - name: security
         value: WPA2
       - name: standard
-        value: 11
+        value: 11bgn
       - name: channel
         value: 6
       - name: cipher
@@ -54,7 +54,7 @@ test_sequence:
     test_class: TestAccessPointConfig
     description: null
     library_name: ''
-    version: 6
+    version: 8
     enabled: true
     labels:
       - cases
