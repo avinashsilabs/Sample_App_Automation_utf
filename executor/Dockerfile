@@ -59,8 +59,9 @@ ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
 # Set TESTS_DIR to match the source directory of the test cases
 ENV TESTS_DIR=example_test_package
 
-# Copy tests, config, firmware and startup script
-COPY $TESTS_DIR/ ./$TESTS_DIR/
+# Copy tests, integration tests, config, firmware and startup script
+COPY $TESTS_DIR/ ./$TESTS_DIR/ 
+COPY integration_test/ ./integration_test/
 COPY config/ ./config/
 COPY manifest/ ./manifest/
 COPY executor/docker_startup.sh .

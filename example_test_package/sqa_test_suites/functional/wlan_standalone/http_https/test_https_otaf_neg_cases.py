@@ -11,10 +11,8 @@ from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
 
-
 def logger():
     return get_logger(__name__)
-
 
 """
     setup requirement:
@@ -32,7 +30,6 @@ def logger():
 
     Author: Ravinemali  
 """
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -70,7 +67,6 @@ def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_
         logger().info("performing fw upgrade on dut....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.rps")
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -110,7 +106,6 @@ def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -148,7 +143,6 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
         logger().info("performing fw upgrade on dut....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -208,14 +202,15 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
         time.sleep(10)
     assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
+    # API does soft reset on DUT
+    time.sleep(5)
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit()
     time.sleep(10)
-    logger().info("resetting dut....")
-    wifi_dut.interfaces.wifi.reset_soft()
-    time.sleep(60)
 
-    logger().info("Initializing dut...")
-    wifi_dut.interfaces.wifi.init()
-    time.sleep(10)
+    # performs the wifi initialization
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.dut_init()
 
     logger().info("Fetching the DUT version...")
     wifi_dut.interfaces.wifi.version()

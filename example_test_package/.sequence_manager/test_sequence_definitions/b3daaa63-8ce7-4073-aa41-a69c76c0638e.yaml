@@ -1,0 +1,6 @@
+id: b3daaa63-8ce7-4073-aa41-a69c76c0638e
+name: RS9116 Smoke Tests CI CD System
+description: RS9116 Smoke Tests CI CD System
+test_suite_infos:
+  - test_suite_id: 5e1e2df0-c972-44b6-bd2c-ae2ea577d542
+    iterations: 1

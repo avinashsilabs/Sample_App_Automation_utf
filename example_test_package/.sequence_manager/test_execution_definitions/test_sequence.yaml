@@ -1,0 +1,28 @@
+root_path: example_test_package
+test_sequence:
+  - id: 47d03b93e50408717943caae39d6449647c04ea3
+    test_case_id: test_throughput_udp_rx_2_4_channel1
+    test_function: test_throughput_udp_rx_2_4_channel1
+    test_id: test_throughput_udp_rx_2_4_channel1::1
+    test_module: sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - >-
+        pytest.mark.config('net_perf_client',net_perf={'host_role':
+        'C','protocol': 'UDP'})
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - rs9116_smoke_tests_ci_cd_system
+      - smoke_test
+      - sqa_test_suites
+    iterations: 1
