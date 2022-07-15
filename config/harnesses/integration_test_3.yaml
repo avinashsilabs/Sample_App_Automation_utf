@@ -464,7 +464,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap_static'
+    wifi_access_point: 'raspi_wifi'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client

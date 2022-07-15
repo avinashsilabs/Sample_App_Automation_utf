@@ -2,19 +2,19 @@ id: 574b2525-611f-41dd-bf28-37bd0724b301
 name: wifi
 description: ''
 test_cases:
-  - test_case_id: 7f89c1ad-89bc-45bb-acc1-6f1d8d5afc52
-    iterations: 1
   - test_case_id: ce44d558066a25b6e15f93509d003595ad536bee
-    iterations: 1
-  - test_case_id: 03ce2e64-989d-4f88-acc9-e5e2f2872a45
     iterations: 1
   - test_case_id: d4b6ecc9c54f925fc20357dbddb9682cccb5cc64
     iterations: 1
-  - test_case_id: 2076d5f6-6bfb-4135-9c69-89894ac0d707
-    iterations: 1
   - test_case_id: 9bf2a1951ec733ba23a7ad9cfe6a565a32776a8e
     iterations: 1
-  - test_case_id: bab53521-8a3c-4d94-8ebe-97eebda95afa
-    iterations: 1
   - test_case_id: fb1256f2a3b05820535277be1343c17a4f6740b2
+    iterations: 1
+  - test_case_id: e1c8f48a-8b73-4a4b-9978-32dc2ac1db09
+    iterations: 1
+  - test_case_id: 425ee425-9177-48d1-8a1b-6aac79f9f113
+    iterations: 1
+  - test_case_id: 8d6fad5d-1cb6-4efa-9bc1-b8fde5f7ded7
+    iterations: 1
+  - test_case_id: cc409444-de36-4faa-b27f-90d24cdff3ff
     iterations: 1

@@ -427,7 +427,7 @@
          "wiseconnect_duts": [
             "efr32_4180b"
          ],
-         "wifi_access_point": "dlink810_ap_static",
+         "wifi_access_point": "raspi_wifi",
          "wifi_client": "raspi_wifi",
          "wifi_clients": [
             "raspi_wifi",
