@@ -1,0 +1,8 @@
+id: cc61a3c2-26fb-4989-b799-b4fec78b54be
+name: async_rejoin_errors_using_queue
+description: ''
+test_cases:
+  - test_case_id: 2c8d1ec9-b6e2-4a4d-87e8-3b9af27ae1f6
+    iterations: 1
+  - test_case_id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
+    iterations: 1

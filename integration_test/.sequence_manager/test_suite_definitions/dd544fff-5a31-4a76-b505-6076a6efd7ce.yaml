@@ -1,0 +1,8 @@
+id: dd544fff-5a31-4a76-b505-6076a6efd7ce
+name: async_rejoin_errors
+description: ''
+test_cases:
+  - test_case_id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
+    iterations: 1
+  - test_case_id: 736141e8-bd39-4557-8540-d8bc71324ee1
+    iterations: 1

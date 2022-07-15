@@ -1,0 +1,10 @@
+id: 3d769d38-49bd-4ee0-a671-e5743df8bc0d
+name: aws_iot
+description: ''
+test_cases:
+  - test_case_id: 0c0f092834509c8ab0cdd496992905ef605459fd
+    iterations: 1
+  - test_case_id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
+    iterations: 1
+  - test_case_id: e18641a09ddbfd25433f28f31204c0218adddd47
+    iterations: 1

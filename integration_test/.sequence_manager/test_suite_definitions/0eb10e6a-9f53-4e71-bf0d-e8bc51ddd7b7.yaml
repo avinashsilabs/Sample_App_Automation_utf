@@ -1,0 +1,6 @@
+id: 0eb10e6a-9f53-4e71-bf0d-e8bc51ddd7b7
+name: power_save
+description: ''
+test_cases:
+  - test_case_id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
+    iterations: 1

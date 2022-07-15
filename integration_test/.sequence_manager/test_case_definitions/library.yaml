@@ -1,4 +1,257 @@
 test_cases:
+  - id: ddb02204ed8117e7d5efdb9abc4db2284c85cbc3
+    test_case_id: test_mqtt_server_and_linux_client
+    test_function: test_mqtt_server_and_linux_client
+    test_id: test_mqtt_server_and_linux_client::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 83154b2d-28f3-486f-84f5-df94507cb5e6
+    test_case_id: test_mqtt_server_and_linux_client-mosquito_tls
+    test_function: test_mqtt_server_and_linux_client
+    test_id: test_mqtt_server_and_linux_client::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 2
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: c7c9580b-79b1-4677-8053-4e3c4c5d7b2b
+    test_case_id: test_mqtt_server_and_linux_client-mosquito_auth
+    test_function: test_mqtt_server_and_linux_client
+    test_id: test_mqtt_server_and_linux_client::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto_auth',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 3
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 626ec90d-4cac-41d0-aa3a-0a2e724fa66b
+    test_case_id: test_mqtt_server_and_linux_client-static_mqtt_broker
+    test_function: test_mqtt_server_and_linux_client
+    test_id: test_mqtt_server_and_linux_client::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.mqtt_server('static_mqtt_broker',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 5
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: ce5f6b8141173d5bc06d722f46ec2558efa63999
+    test_case_id: test_mqtt_dut
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: ba69230a-a3ea-4aad-b9de-f46c0ca551e3
+    test_case_id: test_mqtt_dut-raspi_mosquitto_auth
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto_auth',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 2
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 780d979b-3b79-4853-a2db-324ccc3e21a5
+    test_case_id: test_mqtt_dut-raspi_mosquitto_tls
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 2
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 932fe79d-d9b0-470b-92eb-55796ae6110e
+    test_case_id: test_mqtt_dut-static_mqtt_broker
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.mqtt_server('static_mqtt_broker',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 3
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 5c3b33ee-1783-48a7-b108-5632668aa48c
+    test_case_id: test_mqtt_dut-at
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 279fa301-6937-41dc-a966-44931823a982
+    test_case_id: test_mqtt_dut-at-raspi_mosquitto_auth
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto_auth',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 2
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: f38ecd5d-7c8b-4cda-9e01-2c0a67c96e34
+    test_case_id: test_mqtt_dut-at-raspi_mosquitto_tls
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 3
+    enabled: true
+    labels:
+      - cases
+      - mqtt
+  - id: 4243e063-7bc5-4e1e-bcac-b93523a24eb9
+    test_case_id: test_mqtt_dut-at-static_mqtt_broker
+    test_function: test_mqtt_dut
+    test_id: test_mqtt_dut::1
+    test_module: test_cases/test_mqtt.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.mqtt_server('static_mqtt_broker',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 4
+    enabled: true
+    labels:
+      - cases
+      - mqtt
   - id: c7551d8fa70328caa25f080be971163f8ce47de4
     test_case_id: >-
       test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]
@@ -167,442 +420,6 @@ test_cases:
     labels:
       - asus_rt_ax3000
       - cases
-  - id: be5a4ff6e87ca1469a76f5fcc8baa60d3f9c3b79
-    test_case_id: >-
-      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]_1
-    test_function: test_wifi_ap_configuration_lb
-    test_id: >-
-      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]::1
-    test_module: test_cases/test_dlink810.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_access_point',wifi='default')
-    test_params:
-      - name: security
-        value: 4
-      - name: standard
-        value: 4
-      - name: channel
-        value: 1
-      - name: cipher
-        value: 4
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 0
-    enabled: false
-    labels:
-      - cases
-      - dlink810
-  - id: a8ebefcb0b2cfe7649472fe349bf8fa467b7d9ea
-    test_case_id: >-
-      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]_1
-    test_function: test_wifi_ap_configuration_lb
-    test_id: >-
-      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]::1
-    test_module: test_cases/test_dlink810.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_access_point',wifi='default')
-    test_params:
-      - name: security
-        value: 4
-      - name: standard
-        value: 7
-      - name: channel
-        value: 6
-      - name: cipher
-        value: 3
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 0
-    enabled: false
-    labels:
-      - cases
-      - dlink810
-  - id: dda8b4ca848ddadec2007dd191e542cb0ddc7e53
-    test_case_id: >-
-      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.g-Channel.Automatic2p4G-Cipher.AES]
-    test_function: test_wifi_ap_configuration_lb
-    test_id: >-
-      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.g-Channel.Automatic2p4G-Cipher.AES]::1
-    test_module: test_cases/test_dlink810.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_access_point',wifi='default')
-    test_params:
-      - name: security
-        value: 4
-      - name: standard
-        value: 1
-      - name: channel
-        value: 0
-      - name: cipher
-        value: 3
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 0
-    enabled: false
-    labels:
-      - cases
-      - dlink810
-  - id: cb26cf9e580e54a7c8a92de72fd2088f50449db0
-    test_case_id: >-
-      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.n-36-Cipher.TKIP_AES]
-    test_function: test_wifi_ap_configuration_hb
-    test_id: >-
-      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.n-36-Cipher.TKIP_AES]::1
-    test_module: test_cases/test_dlink810.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_access_point',wifi='default')
-    test_params:
-      - name: security
-        value: 4
-      - name: standard
-        value: 4
-      - name: channel
-        value: 36
-      - name: cipher
-        value: 4
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 0
-    enabled: false
-    labels:
-      - cases
-      - dlink810
-  - id: 3598731f2f6e6e317ffd78995bc28f4b75abdbb6
-    test_case_id: >-
-      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-153-Cipher.AES]
-    test_function: test_wifi_ap_configuration_hb
-    test_id: >-
-      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-153-Cipher.AES]::1
-    test_module: test_cases/test_dlink810.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_access_point',wifi='default')
-    test_params:
-      - name: security
-        value: 4
-      - name: standard
-        value: 20
-      - name: channel
-        value: 153
-      - name: cipher
-        value: 3
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 0
-    enabled: false
-    labels:
-      - cases
-      - dlink810
-  - id: 56fe09924e542e2ad1a399a37cc55e49d67ccf82
-    test_case_id: >-
-      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-Channel.Automatic5G-Cipher.AES]
-    test_function: test_wifi_ap_configuration_hb
-    test_id: >-
-      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-Channel.Automatic5G-Cipher.AES]::1
-    test_module: test_cases/test_dlink810.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_access_point',wifi='default')
-    test_params:
-      - name: security
-        value: 4
-      - name: standard
-        value: 28
-      - name: channel
-        value: 30
-      - name: cipher
-        value: 3
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 0
-    enabled: false
-    labels:
-      - cases
-      - dlink810
-  - id: 3b64f38f5e2a92c1c18ab7a048f39396875c27ff
-    test_case_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: 'n'
-      - name: channel
-        value: 6
-      - name: cipher
-        value: TKIP_AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 1
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-  - id: 82eb20f1-e6c9-4182-80fa-6b218e0ee7ff
-    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-6-TKIP_AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('dlink810_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: 'n'
-      - name: channel
-        value: 1
-      - name: cipher
-        value: TKIP_AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 3
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - dlink810
-  - id: 15f0966f-bcef-419b-b479-7f6476ff9740
-    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-11bgn-6-AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('dlink810_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: 11bgn
-      - name: channel
-        value: 6
-      - name: cipher
-        value: AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 4
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - dlink810
-  - id: 90d4593e-0edd-4a4d-b437-e890e4dc12e8
-    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-36-AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('dlink810_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: 'n'
-      - name: channel
-        value: 36
-      - name: cipher
-        value: AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 4
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - dlink810
-  - id: d9e3aec4-f7f5-4663-99c2-4ad313c5f7ae
-    test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-nac-153-AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('dlink810_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: nac
-      - name: channel
-        value: 153
-      - name: cipher
-        value: AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 5
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - dlink810
-  - id: c3106ffb-208c-4380-a422-31c399bacc9e
-    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-n-6-TKIP_AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: 'n'
-      - name: channel
-        value: 6
-      - name: cipher
-        value: TKIP_AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 6
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - asus_rt_ax3000
-  - id: f3eaefed-bdcf-420f-8257-d632652111e1
-    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-11bgn-6-AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: 11bgn
-      - name: channel
-        value: 6
-      - name: cipher
-        value: AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 8
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - asus_rt_ax3000
-  - id: 78bea853-6a22-4fc2-b09c-858b2eadb347
-    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-nac-36-AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: nac
-      - name: channel
-        value: 36
-      - name: cipher
-        value: AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 6
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - asus_rt_ax3000
-  - id: f055740d-4419-4541-a087-5f2b88f7e128
-    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-anac-153-AES]
-    test_function: test_wifi_ap_configuration
-    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
-    test_module: test_cases/test_generic_ap.py
-    test_markers:
-      - pytest.mark.usefixtures('class_teardown',)
-      - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi=None)
-    test_params:
-      - name: security
-        value: WPA2
-      - name: standard
-        value: anac
-      - name: channel
-        value: 153
-      - name: cipher
-        value: AES
-    test_class: TestAccessPointConfig
-    description: null
-    library_name: ''
-    version: 6
-    enabled: true
-    labels:
-      - cases
-      - generic_ap
-      - Custom
-      - asus_rt_ax3000
   - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
     test_case_id: test_async_rejoin_errors
     test_function: test_async_rejoin_errors
@@ -672,6 +489,7 @@ test_cases:
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
         RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
     test_params: []
     test_class: null
     description: null
@@ -693,6 +511,7 @@ test_cases:
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
         RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
     test_params: []
     test_class: null
     description: null
@@ -936,6 +755,202 @@ test_cases:
     labels:
       - bt_spp
       - cases
+  - id: be5a4ff6e87ca1469a76f5fcc8baa60d3f9c3b79
+    test_case_id: >-
+      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]_1
+    test_function: test_wifi_ap_configuration_lb
+    test_id: >-
+      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]::1
+    test_module: test_cases/test_dlink810.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='default')
+    test_params:
+      - name: security
+        value: 4
+      - name: standard
+        value: 4
+      - name: channel
+        value: 1
+      - name: cipher
+        value: 4
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: false
+    labels:
+      - cases
+      - dlink810
+  - id: a8ebefcb0b2cfe7649472fe349bf8fa467b7d9ea
+    test_case_id: >-
+      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]_1
+    test_function: test_wifi_ap_configuration_lb
+    test_id: >-
+      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n|b|g-6-Cipher.AES]::1
+    test_module: test_cases/test_dlink810.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='default')
+    test_params:
+      - name: security
+        value: 4
+      - name: standard
+        value: 7
+      - name: channel
+        value: 6
+      - name: cipher
+        value: 3
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: false
+    labels:
+      - cases
+      - dlink810
+  - id: dda8b4ca848ddadec2007dd191e542cb0ddc7e53
+    test_case_id: >-
+      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.g-Channel.Automatic2p4G-Cipher.AES]
+    test_function: test_wifi_ap_configuration_lb
+    test_id: >-
+      test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.g-Channel.Automatic2p4G-Cipher.AES]::1
+    test_module: test_cases/test_dlink810.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='default')
+    test_params:
+      - name: security
+        value: 4
+      - name: standard
+        value: 1
+      - name: channel
+        value: 0
+      - name: cipher
+        value: 3
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: false
+    labels:
+      - cases
+      - dlink810
+  - id: cb26cf9e580e54a7c8a92de72fd2088f50449db0
+    test_case_id: >-
+      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.n-36-Cipher.TKIP_AES]
+    test_function: test_wifi_ap_configuration_hb
+    test_id: >-
+      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.n-36-Cipher.TKIP_AES]::1
+    test_module: test_cases/test_dlink810.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='default')
+    test_params:
+      - name: security
+        value: 4
+      - name: standard
+        value: 4
+      - name: channel
+        value: 36
+      - name: cipher
+        value: 4
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: false
+    labels:
+      - cases
+      - dlink810
+  - id: 3598731f2f6e6e317ffd78995bc28f4b75abdbb6
+    test_case_id: >-
+      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-153-Cipher.AES]
+    test_function: test_wifi_ap_configuration_hb
+    test_id: >-
+      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|n-153-Cipher.AES]::1
+    test_module: test_cases/test_dlink810.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='default')
+    test_params:
+      - name: security
+        value: 4
+      - name: standard
+        value: 20
+      - name: channel
+        value: 153
+      - name: cipher
+        value: 3
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: false
+    labels:
+      - cases
+      - dlink810
+  - id: 56fe09924e542e2ad1a399a37cc55e49d67ccf82
+    test_case_id: >-
+      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-Channel.Automatic5G-Cipher.AES]
+    test_function: test_wifi_ap_configuration_hb
+    test_id: >-
+      test_wifi_ap_configuration_hb[SecurityMode.WPA2-Standard.ac|a|n-Channel.Automatic5G-Cipher.AES]::1
+    test_module: test_cases/test_dlink810.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.end_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='default')
+    test_params:
+      - name: security
+        value: 4
+      - name: standard
+        value: 28
+      - name: channel
+        value: 30
+      - name: cipher
+        value: 3
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: false
+    labels:
+      - cases
+      - dlink810
+  - id: 3b64f38f5e2a92c1c18ab7a048f39396875c27ff
+    test_case_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration[WPA2-n-6-TKIP_AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 'n'
+      - name: channel
+        value: 6
+      - name: cipher
+        value: TKIP_AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
   - id: c2351d8a0a01883540b6606e765005a170cac80b
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-POST-content0]
     test_function: test_http_server_and_linux_client
@@ -1012,6 +1027,53 @@ test_cases:
     labels:
       - cases
       - http
+  - id: 07546eb3-9a79-4a1d-8b24-8eb509058a09
+    test_case_id: test_http_server_and_linux_client[index_long_lf.html-GET-None]
+    test_function: test_http_server_and_linux_client
+    test_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-GET-None]::1
+    test_module: test_cases/test_http.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.http_server('raspi_lighttpd_tls',)
+    test_params:
+      - name: index_path
+        value: index_long_lf.html
+      - name: method
+        value: GET
+      - name: content
+        value: null
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - cases
+      - http
+  - id: e63ea760-48e7-4f37-9d81-cb74f6e34d4d
+    test_case_id: test_http_server_and_linux_client[-GET-None]
+    test_function: test_http_server_and_linux_client
+    test_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-GET-None]::1
+    test_module: test_cases/test_http.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.http_server('static_http',)
+    test_params:
+      - name: method
+        value: GET
+      - name: content
+        value: null
+      - name: index_path
+        value: ''
+    test_class: null
+    description: null
+    library_name: ''
+    version: 7
+    enabled: true
+    labels:
+      - cases
+      - http
   - id: 8242af35187720ad234954fc436910e6247179b3
     test_case_id: test_http_server_and_dut_client[index_long_crlf.html]
     test_function: test_http_server_and_dut_client
@@ -1036,6 +1098,30 @@ test_cases:
     labels:
       - cases
       - http
+  - id: 30fdf2fe-6fed-4502-a867-5eeed15e2c90
+    test_case_id: test_http_server_and_dut_client[index_long_crlf.html]-at
+    test_function: test_http_server_and_dut_client
+    test_id: test_http_server_and_dut_client[index_long_crlf.html]::1
+    test_module: test_cases/test_http.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.http_server('raspi_lighttpd',)
+      - pytest.mark.dut('rs9116_at',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client})
+    test_params:
+      - name: index_path
+        value: index_long_crlf.html
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - cases
+      - http
   - id: 19cd774cf468552990550bda9d13b24733fc41bd
     test_case_id: test_http_server_and_dut_client[index_long_lf.html]
     test_function: test_http_server_and_dut_client
@@ -1056,6 +1142,30 @@ test_cases:
     description: null
     library_name: ''
     version: 0
+    enabled: true
+    labels:
+      - cases
+      - http
+  - id: f64bd88a-77ea-4d43-aa87-70654322e109
+    test_case_id: test_http_server_and_dut_client[index_long_lf.html]-at
+    test_function: test_http_server_and_dut_client
+    test_id: test_http_server_and_dut_client[index_long_lf.html]::1
+    test_module: test_cases/test_http.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.http_server('raspi_lighttpd',)
+      - pytest.mark.dut('rs9116_at',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client})
+    test_params:
+      - name: index_path
+        value: index_long_lf.html
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
     enabled: true
     labels:
       - cases
@@ -1163,47 +1273,6 @@ test_cases:
     labels:
       - cases
       - keyboard
-  - id: ddb02204ed8117e7d5efdb9abc4db2284c85cbc3
-    test_case_id: test_mqtt_server_and_linux_client
-    test_function: test_mqtt_server_and_linux_client
-    test_id: test_mqtt_server_and_linux_client::1
-    test_module: test_cases/test_mqtt.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.mqtt_server('raspi_mosquitto',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - mqtt
-  - id: ce5f6b8141173d5bc06d722f46ec2558efa63999
-    test_case_id: test_mqtt_dut
-    test_function: test_mqtt_dut
-    test_id: test_mqtt_dut::1
-    test_module: test_cases/test_mqtt.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.mqtt_server('raspi_mosquitto',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
-      - pytest.mark.dut('rs9116_sapi',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - mqtt
   - id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
     test_case_id: test_power_save
     test_function: test_power_save
@@ -1366,19 +1435,19 @@ test_cases:
     labels:
       - cases
       - sniffer
-  - id: 896d7086f646f98be413f613d261f9e746c86321
+  - id: 1981b7a96bdeee129b6692b75e5fe1f94641352c
     test_case_id: >-
       test_sniffer_icmp_inspection[ether host
-      80:c9:55:34:eb:f4-mac_filter-False]
+      88:da:1a:e4:ba:44-mac_filter-False]
     test_function: test_sniffer_icmp_inspection
     test_id: >-
       test_sniffer_icmp_inspection[ether host
-      80:c9:55:34:eb:f4-mac_filter-False]::1
+      88:da:1a:e4:ba:44-mac_filter-False]::1
     test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
-        value: ether host 80:c9:55:34:eb:f4
+        value: ether host 88:da:1a:e4:ba:44
       - name: capture_filename
         value: mac_filter
       - name: inspect_during_capture
@@ -1412,17 +1481,17 @@ test_cases:
     labels:
       - cases
       - sniffer
-  - id: 8910431429830321dbef3dec2281b954a7c0e654
-    test_case_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-True]
+  - id: 0b49b1dfb2f2cd2d074569ecb872e0bc93c562b6
+    test_case_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-True]
     test_function: test_sniffer_icmp_inspection
     test_id: >-
       test_sniffer_icmp_inspection[ether host
-      80:c9:55:34:eb:f4-mac_filter-True]::1
+      88:da:1a:e4:ba:44-mac_filter-True]::1
     test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
-        value: ether host 80:c9:55:34:eb:f4
+        value: ether host 88:da:1a:e4:ba:44
       - name: capture_filename
         value: mac_filter
       - name: inspect_during_capture

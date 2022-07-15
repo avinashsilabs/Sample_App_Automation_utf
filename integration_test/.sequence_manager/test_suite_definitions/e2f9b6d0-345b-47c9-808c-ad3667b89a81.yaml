@@ -1,0 +1,12 @@
+id: e2f9b6d0-345b-47c9-808c-ad3667b89a81
+name: mqtt_server
+description: ''
+test_cases:
+  - test_case_id: ddb02204ed8117e7d5efdb9abc4db2284c85cbc3
+    iterations: 1
+  - test_case_id: 83154b2d-28f3-486f-84f5-df94507cb5e6
+    iterations: 1
+  - test_case_id: c7c9580b-79b1-4677-8053-4e3c4c5d7b2b
+    iterations: 1
+  - test_case_id: 626ec90d-4cac-41d0-aa3a-0a2e724fa66b
+    iterations: 1

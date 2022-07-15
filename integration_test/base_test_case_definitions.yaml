@@ -222,6 +222,7 @@ test_cases:
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
+  - pytest.mark.firmware_app('test_aws',)
   test_params: []
   test_class: null
   description: null
@@ -241,6 +242,7 @@ test_cases:
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
+  - pytest.mark.firmware_app('test_aws',)
   test_params: []
   test_class: null
   description: null
@@ -1066,15 +1068,15 @@ test_cases:
   labels:
   - cases
   - sniffer
-- id: 896d7086f646f98be413f613d261f9e746c86321
-  test_case_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-False]
+- id: 1981b7a96bdeee129b6692b75e5fe1f94641352c
+  test_case_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-False]
   test_function: test_sniffer_icmp_inspection
-  test_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-False]::1
+  test_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-False]::1
   test_module: test_cases/test_sniffer.py
   test_markers: []
   test_params:
   - name: capture_filter
-    value: ether host 80:c9:55:34:eb:f4
+    value: ether host 88:da:1a:e4:ba:44
   - name: capture_filename
     value: mac_filter
   - name: inspect_during_capture
@@ -1108,15 +1110,15 @@ test_cases:
   labels:
   - cases
   - sniffer
-- id: 8910431429830321dbef3dec2281b954a7c0e654
-  test_case_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-True]
+- id: 0b49b1dfb2f2cd2d074569ecb872e0bc93c562b6
+  test_case_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-True]
   test_function: test_sniffer_icmp_inspection
-  test_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-True]::1
+  test_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-True]::1
   test_module: test_cases/test_sniffer.py
   test_markers: []
   test_params:
   - name: capture_filter
-    value: ether host 80:c9:55:34:eb:f4
+    value: ether host 88:da:1a:e4:ba:44
   - name: capture_filename
     value: mac_filter
   - name: inspect_during_capture
