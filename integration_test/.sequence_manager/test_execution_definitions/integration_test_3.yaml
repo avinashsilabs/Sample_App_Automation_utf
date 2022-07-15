@@ -102,9 +102,7 @@ test_sequence:
       - pytest.mark.wifi_access_point('raspi_wifi',)
       - pytest.mark.start_state('dut',device='reset',wifi='init')
       - pytest.mark.dut('rs9116_sapi',)
-    test_params:
-      - name: ''
-        value: ''
+    test_params: []
     test_class: null
     description: null
     library_name: ''

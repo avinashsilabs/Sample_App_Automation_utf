@@ -736,12 +736,12 @@ test_sequence:
       - pytest.mark.framework_integration_test()
       - pytest.mark.http_server('static_http',)
     test_params:
+      - name: index_path
+        value: ''
       - name: method
         value: GET
       - name: content
         value: null
-      - name: index_path
-        value: ''
     test_class: null
     description: null
     library_name: ''
