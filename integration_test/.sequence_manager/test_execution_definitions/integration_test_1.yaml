@@ -1,5 +1,129 @@
 root_path: integration_test
 test_sequence:
+  - id: c3106ffb-208c-4380-a422-31c399bacc9e
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-n-6-TKIP_AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-n-6-TKIP_AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 'n'
+      - name: channel
+        value: 6
+      - name: cipher
+        value: TKIP_AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 6
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
+  - id: f3eaefed-bdcf-420f-8257-d632652111e1
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-11bgn-6-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-11bgn-6-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: 11bgn
+      - name: channel
+        value: 6
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 8
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
+  - id: 78bea853-6a22-4fc2-b09c-858b2eadb347
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-nac-36-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-nac-36-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: nac
+      - name: channel
+        value: 36
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 6
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
+  - id: f055740d-4419-4541-a087-5f2b88f7e128
+    test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-anac-153-AES]
+    test_function: test_wifi_ap_configuration
+    test_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-anac-153-AES]::1
+    test_module: test_cases/test_generic_ap.py
+    test_markers:
+      - pytest.mark.usefixtures('class_teardown',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.wifi_access_point('asus_rt_ax3000_ap',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi=None)
+    test_params:
+      - name: security
+        value: WPA2
+      - name: standard
+        value: anac
+      - name: channel
+        value: 153
+      - name: cipher
+        value: AES
+    test_class: TestAccessPointConfig
+    description: null
+    library_name: ''
+    version: 6
+    enabled: true
+    labels:
+      - cases
+      - generic_ap
+      - Custom
+      - asus_rt_ax3000
+    iterations: 1
   - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
     test_case_id: test_prepare_static_ap
     test_function: test_prepare_static_ap
@@ -41,6 +165,26 @@ test_sequence:
       - async_events
       - cases
     iterations: 1
+  - id: 0cd76af4-2e83-40a7-abdd-3a08ee7e86dd
+    test_case_id: test_async_rejoin_errors-at
+    test_function: test_async_rejoin_errors
+    test_id: test_async_rejoin_errors-at::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
   - id: 0c0f092834509c8ab0cdd496992905ef605459fd
     test_case_id: test_python_client
     test_function: test_python_client
@@ -53,7 +197,6 @@ test_sequence:
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
         RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-      - pytest.mark.firmware_app('test_aws',)
     test_params: []
     test_class: null
     description: null
@@ -76,7 +219,6 @@ test_sequence:
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
         RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-      - pytest.mark.firmware_app('test_aws',)
     test_params: []
     test_class: null
     description: null
@@ -131,6 +273,32 @@ test_sequence:
       - cases
       - sniffer
     iterations: 1
+  - id: 896d7086f646f98be413f613d261f9e746c86321
+    test_case_id: >-
+      test_sniffer_icmp_inspection[ether host
+      80:c9:55:34:eb:f4-mac_filter-False]
+    test_function: test_sniffer_icmp_inspection
+    test_id: >-
+      test_sniffer_icmp_inspection[ether host
+      80:c9:55:34:eb:f4-mac_filter-False]::1
+    test_module: test_cases/test_sniffer.py
+    test_markers: []
+    test_params:
+      - name: capture_filter
+        value: ether host 80:c9:55:34:eb:f4
+      - name: capture_filename
+        value: mac_filter
+      - name: inspect_during_capture
+        value: false
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - sniffer
+    iterations: 1
   - id: 61f7ae813bc4830583d7d766f8b34b62deca64d4
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-True]
     test_function: test_sniffer_icmp_inspection
@@ -142,6 +310,30 @@ test_sequence:
         value: null
       - name: capture_filename
         value: no_filter
+      - name: inspect_during_capture
+        value: true
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - sniffer
+    iterations: 1
+  - id: 8910431429830321dbef3dec2281b954a7c0e654
+    test_case_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-True]
+    test_function: test_sniffer_icmp_inspection
+    test_id: >-
+      test_sniffer_icmp_inspection[ether host
+      80:c9:55:34:eb:f4-mac_filter-True]::1
+    test_module: test_cases/test_sniffer.py
+    test_markers: []
+    test_params:
+      - name: capture_filter
+        value: ether host 80:c9:55:34:eb:f4
+      - name: capture_filename
+        value: mac_filter
       - name: inspect_during_capture
         value: true
     test_class: null

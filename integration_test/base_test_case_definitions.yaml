@@ -842,7 +842,7 @@ test_cases:
   - pytest.mark.dut('rs9116_sapi',)
   - pytest.mark.wifi_access_point('raspi_wifi',)
   - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S'',''tos_value'':
-    ''IperfTrafficType.Video''})'
+    IperfTrafficType.Video})'
   test_params:
   - name: protocol
     value: UDP
