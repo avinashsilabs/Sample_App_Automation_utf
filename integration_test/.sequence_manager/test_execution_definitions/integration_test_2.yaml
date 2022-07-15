@@ -150,3 +150,39 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+  - id: bf700f89cdc14806fb0033122c55c8f4b43c57a2
+    test_case_id: test_threading
+    test_function: test_threading
+    test_id: test_threading::1
+    test_module: test_cases/test_threading.py
+    test_markers:
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - threading
+    iterations: 1
+  - id: 50ed1a6948f44767dacb6275e18db2fc1c973910
+    test_case_id: test_threading_contextmgr
+    test_function: test_threading_contextmgr
+    test_id: test_threading_contextmgr::1
+    test_module: test_cases/test_threading.py
+    test_markers:
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - threading
+    iterations: 1

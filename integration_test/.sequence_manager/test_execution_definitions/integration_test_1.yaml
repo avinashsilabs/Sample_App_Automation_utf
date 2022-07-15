@@ -547,9 +547,9 @@ test_sequence:
       - name: method
         value: GET
       - name: content
-        value: ' '
+        value: null
       - name: index_path
-        value: ' '
+        value: ''
     test_class: null
     description: null
     library_name: ''
