@@ -247,7 +247,7 @@ def test_sntp_unicast_TC19015(
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 600)])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(30, 600)])
 def test_sntp_keepalive_TC19016(
         wifi_sniffer, wifi_dut, wifi_access_point, keep_alive_time, idle_time, logger
         ):
