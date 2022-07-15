@@ -651,15 +651,11 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-            keysight_N6705_power_analyzer:
-                type: 'power_meter.keysight_N6705'
-                instrument_lan_ip_address: '10.207.21.140'
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
                 power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
                 file_transfer_service: 'wcf_file_transfer_service'
-                power_meter_instrument: 'keysight_N6705_power_analyzer'
-                power_meter_visa_address: 'TCPIP0::10.207.21.140::5025::SOCKET'
+                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
     
     keysight_benchvue_power_analyzer_win_wcf:
@@ -672,15 +668,11 @@ devices:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
-            keysight_N6705_power_analyzer:
-                type: 'power_meter.keysight_N6705'
-                instrument_lan_ip_address: '10.207.21.140'
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
                 power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
                 file_transfer_service: 'wcf_file_transfer_service'
-                power_meter_instrument: 'keysight_N6705_power_analyzer'
-                power_meter_visa_address: 'TCPIP0::10.207.21.140::5025::SOCKET'
+                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
 
     python_aws_iot_thing:
