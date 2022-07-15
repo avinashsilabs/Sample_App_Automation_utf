@@ -651,12 +651,6 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-            power_meter:
-                type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
-                power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
-                file_transfer_service: 'wcf_file_transfer_service'
-                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
-                window_state: 'Show'
     
     keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
@@ -826,7 +820,7 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116_sapi'
+    dut: 'rs9116'
 
     efx32: 'efr32_4180b'
 
