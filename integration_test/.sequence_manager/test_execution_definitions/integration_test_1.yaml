@@ -124,27 +124,6 @@ test_sequence:
       - Custom
       - asus_rt_ax3000
     iterations: 1
-  - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
-    test_case_id: test_prepare_static_ap
-    test_function: test_prepare_static_ap
-    test_id: test_prepare_static_ap::1
-    test_module: test_cases/test_wifi.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('dlink810_ap',)
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - wifi
-    iterations: 1
   - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
     test_case_id: test_async_rejoin_errors
     test_function: test_async_rejoin_errors
@@ -197,6 +176,7 @@ test_sequence:
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
         RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
     test_params: []
     test_class: null
     description: null
@@ -219,6 +199,7 @@ test_sequence:
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
         RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
         RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
     test_params: []
     test_class: null
     description: null
@@ -352,7 +333,6 @@ test_sequence:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -850,4 +830,26 @@ test_sequence:
     labels:
       - cases
       - http
+    iterations: 1
+  - id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
+    test_case_id: test_power_save
+    test_function: test_power_save
+    test_id: test_power_save::1
+    test_module: test_cases/test_powersave.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Default|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity|RS9116FeatureBitMap.OpenMode})
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - powersave
     iterations: 1

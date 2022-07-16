@@ -10,11 +10,7 @@ test_suite_infos:
     iterations: 1
   - test_suite_id: 574b2525-611f-41dd-bf28-37bd0724b301
     iterations: 1
-  - test_suite_id: 542e6d3b-c3c4-4a83-ac75-132d2c7e6273
-    iterations: 1
   - test_suite_id: a9ec5092-896e-4c18-a1c8-2fbb26f114d8
     iterations: 1
   - test_suite_id: ffb7a0df-dcf3-4dcf-a652-90d5044c81ca
-    iterations: 1
-  - test_suite_id: 0eb10e6a-9f53-4e71-bf0d-e8bc51ddd7b7
     iterations: 1

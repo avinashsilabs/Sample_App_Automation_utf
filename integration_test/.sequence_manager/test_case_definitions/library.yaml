@@ -1228,72 +1228,6 @@ test_cases:
       - async_events
       - cases
     iterations: 1
-  - id: 0c0f092834509c8ab0cdd496992905ef605459fd
-    test_case_id: test_python_client
-    test_function: test_python_client
-    test_id: test_python_client::1
-    test_module: test_cases/test_aws_iot.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - aws_iot
-      - cases
-    iterations: 1
-  - id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
-    test_case_id: test_aws_device_shadow
-    test_function: test_aws_device_shadow
-    test_id: test_aws_device_shadow::1
-    test_module: test_cases/test_aws_iot.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - aws_iot
-      - cases
-    iterations: 1
-  - id: e18641a09ddbfd25433f28f31204c0218adddd47
-    test_case_id: test_aws_iot_client
-    test_function: test_aws_iot_client
-    test_id: test_aws_iot_client::1
-    test_module: test_cases/test_aws_iot.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - aws_iot
-      - cases
-    iterations: 1
   - id: d0413e2060109b0feefbbc0884e89b119bca0da8
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-False]
     test_function: test_sniffer_icmp_inspection
@@ -1395,7 +1329,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2465,4 +2398,69 @@ test_cases:
     labels:
       - cases
       - socket
+  - id: 0c0f092834509c8ab0cdd496992905ef605459fd
+    test_case_id: test_python_client
+    test_function: test_python_client
+    test_id: test_python_client::1
+    test_module: test_cases/test_aws_iot.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: true
+    labels:
+      - aws_iot
+      - cases
+  - id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
+    test_case_id: test_aws_device_shadow
+    test_function: test_aws_device_shadow
+    test_id: test_aws_device_shadow::1
+    test_module: test_cases/test_aws_iot.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: true
+    labels:
+      - aws_iot
+      - cases
+  - id: e18641a09ddbfd25433f28f31204c0218adddd47
+    test_case_id: test_aws_iot_client
+    test_function: test_aws_iot_client
+    test_id: test_aws_iot_client::1
+    test_module: test_cases/test_aws_iot.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+    test_params: []
+    test_class: null
+    description: null
+    library_name: null
+    version: 0
+    enabled: true
+    labels:
+      - aws_iot
+      - cases
 name: ''

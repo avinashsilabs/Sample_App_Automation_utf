@@ -10,7 +10,7 @@ import socket
 
 pytestmark = [
     pytest.mark.framework_integration_test,
-    pytest.mark.wifi_access_point("switched_ap"),
+    # pytest.mark.wifi_access_point("switched_ap"),
     pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",

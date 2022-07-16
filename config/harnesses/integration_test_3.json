@@ -422,7 +422,7 @@
          }
       },
       "defaults": {
-         "dut": "rs9116_at",
+         "dut": "rs9116_sapi",
          "efx32": "efr32_4180b",
          "wiseconnect_duts": [
             "efr32_4180b"

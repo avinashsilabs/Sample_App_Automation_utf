@@ -422,12 +422,12 @@
          }
       },
       "defaults": {
-         "dut": "rs9116_at",
+         "dut": "rs9116_sapi",
          "efx32": "efr32_4180b",
          "wiseconnect_duts": [
             "efr32_4180b"
          ],
-         "wifi_access_point": "dlink810_ap_static",
+         "wifi_access_point": "asus_rt_ax3000_ap",
          "wifi_client": "raspi_wifi",
          "wifi_clients": [
             "raspi_wifi",
