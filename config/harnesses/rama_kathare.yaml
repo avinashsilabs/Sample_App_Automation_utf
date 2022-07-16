@@ -712,6 +712,8 @@ defaults:
     #ssl_server: 'raspi_ssl_server_static'
     #ssl_client: 'raspi_ssl_client'
 
+    aws_iot_client: 'python_aws_iot_thing'
+
     wiseconnect_web: 'wiseconnect_web'
 
     net_perf_client: 'raspi_iperf'

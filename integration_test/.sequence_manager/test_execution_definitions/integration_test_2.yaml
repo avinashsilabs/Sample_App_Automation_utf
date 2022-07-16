@@ -124,46 +124,6 @@ test_sequence:
       - Custom
       - dlink810
     iterations: 1
-  - id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
-    test_case_id: test_async_rejoin_errors_using_queue
-    test_function: test_async_rejoin_errors_using_queue
-    test_id: test_async_rejoin_errors_using_queue::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_sapi',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
-  - id: 5eedc652-9c78-4768-ae8b-5e3fb246990a
-    test_case_id: test_async_rejoin_errors_using_queue-at
-    test_function: test_async_rejoin_errors_using_queue
-    test_id: test_async_rejoin_errors_using_queue-at::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_at',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 1
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
   - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
     test_case_id: test_secondary_raspi_shell
     test_function: test_secondary_raspi_shell
@@ -362,4 +322,124 @@ test_sequence:
     labels:
       - cases
       - ssl_certs
+    iterations: 1
+  - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
+    test_case_id: test_async_rejoin_errors
+    test_function: test_async_rejoin_errors
+    test_id: test_async_rejoin_errors::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 0cd76af4-2e83-40a7-abdd-3a08ee7e86dd
+    test_case_id: test_async_rejoin_errors-at
+    test_function: test_async_rejoin_errors
+    test_id: test_async_rejoin_errors-at::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
+    test_case_id: test_async_rejoin_errors_using_queue
+    test_function: test_async_rejoin_errors_using_queue
+    test_id: test_async_rejoin_errors_using_queue::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 5eedc652-9c78-4768-ae8b-5e3fb246990a
+    test_case_id: test_async_rejoin_errors_using_queue-at
+    test_function: test_async_rejoin_errors_using_queue
+    test_id: test_async_rejoin_errors_using_queue-at::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 3581ce42cb4036c0f2923f47dcf1d1ea7fe6b5dd
+    test_case_id: test_async_rejoin_errors_using_wait_for_event
+    test_function: test_async_rejoin_errors_using_wait_for_event
+    test_id: test_async_rejoin_errors_using_wait_for_event::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 0291c0d5-393f-46a8-ba7c-fa12e41158bf
+    test_case_id: test_async_rejoin_errors_using_wait_for_event-at
+    test_function: test_async_rejoin_errors_using_wait_for_event
+    test_id: test_async_rejoin_errors_using_wait_for_event-at::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - async_events
+      - cases
     iterations: 1

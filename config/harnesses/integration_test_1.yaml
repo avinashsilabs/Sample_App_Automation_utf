@@ -493,6 +493,8 @@ defaults:
 
     remote_socket_factory: "ip_socket_factory"
 
+    aws_iot_client: 'python_aws_iot_thing'
+
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200

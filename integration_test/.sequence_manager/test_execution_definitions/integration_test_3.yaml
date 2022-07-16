@@ -92,46 +92,6 @@ test_sequence:
       - cases
       - ram_dump
     iterations: 1
-  - id: 3581ce42cb4036c0f2923f47dcf1d1ea7fe6b5dd
-    test_case_id: test_async_rejoin_errors_using_wait_for_event
-    test_function: test_async_rejoin_errors_using_wait_for_event
-    test_id: test_async_rejoin_errors_using_wait_for_event::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_sapi',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
-  - id: 0291c0d5-393f-46a8-ba7c-fa12e41158bf
-    test_case_id: test_async_rejoin_errors_using_wait_for_event-at
-    test_function: test_async_rejoin_errors_using_wait_for_event
-    test_id: test_async_rejoin_errors_using_wait_for_event-at::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_at',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 1
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
   - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_case_id: test_ble_advertisement
     test_function: test_ble_advertisement
@@ -217,52 +177,6 @@ test_sequence:
       - ble
       - cases
     iterations: 1
-  - id: 8853c4b63fd3c3d7d364feca5d882785e9b13961
-    test_case_id: test_bt_a2dp_dut_as_src
-    test_function: test_bt_a2dp_dut_as_src
-    test_id: test_bt_a2dp_dut_as_src::1
-    test_module: test_cases/test_bt_a2dp.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'bt_features':
-        RS9116BTFeatureBitMap.Default|RS9116BTFeatureBitMap.BLEFeatureBitmapValid|RS9116BTFeatureBitMap.RFTypeSelection|RS9116BTFeatureBitMap.A2DPSourceRoleEnable|RS9116BTFeatureBitMap.A2DPProfileEnable})
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - bt_a2dp
-      - cases
-    iterations: 1
-  - id: bcd131694368ebfa14b7591d2d57c335cb7a1576
-    test_case_id: test_bt_avrcp_dut_as_src
-    test_function: test_bt_avrcp_dut_as_src
-    test_id: test_bt_avrcp_dut_as_src::1
-    test_module: test_cases/test_bt_a2dp.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'bt_features':
-        RS9116BTFeatureBitMap.Default|RS9116BTFeatureBitMap.BLEFeatureBitmapValid|RS9116BTFeatureBitMap.RFTypeSelection|RS9116BTFeatureBitMap.A2DPSourceRoleEnable|RS9116BTFeatureBitMap.A2DPProfileEnable})
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - bt_a2dp
-      - cases
-    iterations: 1
   - id: 14ff158744d0d70ba65a57797509bec4ceff8b42
     test_case_id: test_bt_hid_dut_as_slave[True]
     test_function: test_bt_hid_dut_as_slave
@@ -311,18 +225,19 @@ test_sequence:
       - bt_hid
       - cases
     iterations: 1
-  - id: 7d91abc71974424f4476da49a2aef75fc8631225
-    test_case_id: test_bt_spp_dut_as_slave
-    test_function: test_bt_spp_dut_as_slave
-    test_id: test_bt_spp_dut_as_slave::1
-    test_module: test_cases/test_bt_spp.py
+  - id: 8853c4b63fd3c3d7d364feca5d882785e9b13961
+    test_case_id: test_bt_a2dp_dut_as_src
+    test_function: test_bt_a2dp_dut_as_src
+    test_id: test_bt_a2dp_dut_as_src::1
+    test_module: test_cases/test_bt_a2dp.py
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower})
+        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'bt_features':
+        RS9116BTFeatureBitMap.Default|RS9116BTFeatureBitMap.BLEFeatureBitmapValid|RS9116BTFeatureBitMap.RFTypeSelection|RS9116BTFeatureBitMap.A2DPSourceRoleEnable|RS9116BTFeatureBitMap.A2DPProfileEnable})
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
     test_params: []
     test_class: null
     description: null
@@ -330,13 +245,36 @@ test_sequence:
     version: 0
     enabled: true
     labels:
-      - bt_spp
+      - bt_a2dp
       - cases
     iterations: 1
-  - id: f565f38f8b55baa281415df4bfaff60ff78a4311
-    test_case_id: test_bt_spp_dut_as_master
-    test_function: test_bt_spp_dut_as_master
-    test_id: test_bt_spp_dut_as_master::1
+  - id: bcd131694368ebfa14b7591d2d57c335cb7a1576
+    test_case_id: test_bt_avrcp_dut_as_src
+    test_function: test_bt_avrcp_dut_as_src
+    test_id: test_bt_avrcp_dut_as_src::1
+    test_module: test_cases/test_bt_a2dp.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'bt_features':
+        RS9116BTFeatureBitMap.Default|RS9116BTFeatureBitMap.BLEFeatureBitmapValid|RS9116BTFeatureBitMap.RFTypeSelection|RS9116BTFeatureBitMap.A2DPSourceRoleEnable|RS9116BTFeatureBitMap.A2DPProfileEnable})
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - bt_a2dp
+      - cases
+    iterations: 1
+  - id: 7d91abc71974424f4476da49a2aef75fc8631225
+    test_case_id: test_bt_spp_dut_as_slave
+    test_function: test_bt_spp_dut_as_slave
+    test_id: test_bt_spp_dut_as_slave::1
     test_module: test_cases/test_bt_spp.py
     test_markers:
       - pytest.mark.framework_integration_test()
@@ -372,6 +310,28 @@ test_sequence:
     description: null
     library_name: ''
     version: 1
+    enabled: true
+    labels:
+      - bt_spp
+      - cases
+    iterations: 1
+  - id: f565f38f8b55baa281415df4bfaff60ff78a4311
+    test_case_id: test_bt_spp_dut_as_master
+    test_function: test_bt_spp_dut_as_master
+    test_id: test_bt_spp_dut_as_master::1
+    test_module: test_cases/test_bt_spp.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower})
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
     enabled: true
     labels:
       - bt_spp

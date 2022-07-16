@@ -1,12 +1,17 @@
 root_path: integration_test
 test_sequence:
-  - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
-    test_case_id: test_secondary_raspi_shell
-    test_function: test_secondary_raspi_shell
-    test_id: test_secondary_raspi_shell::1
-    test_module: test_cases/test_secondary_raspi.py
+  - id: e18641a09ddbfd25433f28f31204c0218adddd47
+    test_case_id: test_aws_iot_client
+    test_function: test_aws_iot_client
+    test_id: test_aws_iot_client::1
+    test_module: test_cases/test_aws_iot.py
     test_markers:
-      - pytest.mark.bt_client('secondary_raspi_bt_client',)
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
     test_params: []
     test_class: null
     description: null
@@ -14,23 +19,6 @@ test_sequence:
     version: 0
     enabled: true
     labels:
+      - aws_iot
       - cases
-      - secondary_raspi
-    iterations: 1
-  - id: b86234b56ad9257ad9c9e69ae20829e11e7ef18a
-    test_case_id: test_secondary_raspi_bt
-    test_function: test_secondary_raspi_bt
-    test_id: test_secondary_raspi_bt::1
-    test_module: test_cases/test_secondary_raspi.py
-    test_markers:
-      - pytest.mark.bt_client('secondary_raspi_bt_client',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - secondary_raspi
     iterations: 1

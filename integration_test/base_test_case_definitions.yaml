@@ -1138,7 +1138,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
@@ -1158,7 +1157,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
@@ -1180,7 +1178,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
@@ -1202,7 +1199,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
@@ -1224,7 +1220,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
@@ -1246,7 +1241,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'
@@ -1268,7 +1262,6 @@ test_cases:
   test_module: test_cases/test_socket.py
   test_markers:
   - pytest.mark.framework_integration_test()
-  - pytest.mark.wifi_access_point('switched_ap',)
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
     RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})'

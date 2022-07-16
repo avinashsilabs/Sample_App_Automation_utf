@@ -51,4 +51,7 @@ def main(token):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    token = None
+    if len(sys.argv) > 1:
+        token = sys.argv[1]
+    main(token)
