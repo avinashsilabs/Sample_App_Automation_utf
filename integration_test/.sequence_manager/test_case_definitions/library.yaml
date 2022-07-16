@@ -1281,7 +1281,7 @@ test_cases:
       test_sniffer_icmp_inspection[ether host
       88:da:1a:e4:ba:44-mac_filter-False]::1
     test_module: test_cases/test_sniffer.py
-    test_markers: [ ]
+    test_markers: []
     test_params:
       - name: capture_filter
         value: ether host 88:da:1a:e4:ba:44
@@ -1304,7 +1304,7 @@ test_cases:
       test_sniffer_icmp_inspection[ether host
       88:da:1a:e4:ba:44-mac_filter-True]::1
     test_module: test_cases/test_sniffer.py
-    test_markers: [ ]
+    test_markers: []
     test_params:
       - name: capture_filter
         value: ether host 88:da:1a:e4:ba:44

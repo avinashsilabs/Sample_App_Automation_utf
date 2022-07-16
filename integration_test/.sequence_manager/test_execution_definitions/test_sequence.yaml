@@ -1,17 +1,18 @@
 root_path: integration_test
 test_sequence:
-  - id: e18641a09ddbfd25433f28f31204c0218adddd47
-    test_case_id: test_aws_iot_client
-    test_function: test_aws_iot_client
-    test_id: test_aws_iot_client::1
-    test_module: test_cases/test_aws_iot.py
+  - id: 8853c4b63fd3c3d7d364feca5d882785e9b13961
+    test_case_id: test_bt_a2dp_dut_as_src
+    test_function: test_bt_a2dp_dut_as_src
+    test_id: test_bt_a2dp_dut_as_src::1
+    test_module: test_cases/test_bt_a2dp.py
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.dut('rs9116_sapi',)
       - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.Bluetooth|RS9116CoexMode.WLAN,'bt_features':
+        RS9116BTFeatureBitMap.Default|RS9116BTFeatureBitMap.BLEFeatureBitmapValid|RS9116BTFeatureBitMap.RFTypeSelection|RS9116BTFeatureBitMap.A2DPSourceRoleEnable|RS9116BTFeatureBitMap.A2DPProfileEnable})
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated','bt_disconnect'])
     test_params: []
     test_class: null
     description: null
@@ -19,6 +20,6 @@ test_sequence:
     version: 0
     enabled: true
     labels:
-      - aws_iot
+      - bt_a2dp
       - cases
     iterations: 1
