@@ -18,7 +18,3 @@ test_suite_infos:
     iterations: 1
   - test_suite_id: dd544fff-5a31-4a76-b505-6076a6efd7ce
     iterations: 1
-  - test_suite_id: cc61a3c2-26fb-4989-b799-b4fec78b54be
-    iterations: 1
-  - test_suite_id: 1174f3f9-6982-4f67-a7b4-57807c05ddbe
-    iterations: 1
