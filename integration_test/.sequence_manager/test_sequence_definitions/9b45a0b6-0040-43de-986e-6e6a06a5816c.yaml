@@ -6,6 +6,8 @@ test_suite_infos:
     iterations: 1
   - test_suite_id: ceb3e60e-d8a1-424d-a3d8-7bdeffbae97c
     iterations: 1
+  - test_suite_id: cf202f21-2982-4ea5-8d1c-93b62f756da5
+    iterations: 1
   - test_suite_id: 3d769d38-49bd-4ee0-a671-e5743df8bc0d
     iterations: 1
   - test_suite_id: 9b1246bd-56d3-4ca9-872d-47b4473aac8c
