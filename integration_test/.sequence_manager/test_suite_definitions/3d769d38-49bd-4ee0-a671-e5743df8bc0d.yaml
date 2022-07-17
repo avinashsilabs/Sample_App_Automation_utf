@@ -6,5 +6,3 @@ test_cases:
     iterations: 1
   - test_case_id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
     iterations: 1
-  - test_case_id: e18641a09ddbfd25433f28f31204c0218adddd47
-    iterations: 1

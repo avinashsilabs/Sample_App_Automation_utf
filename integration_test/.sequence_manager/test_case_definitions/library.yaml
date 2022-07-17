@@ -130,6 +130,86 @@ test_cases:
       - async_events
       - cases
     iterations: 1
+  - id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
+    test_case_id: test_async_rejoin_errors_using_queue
+    test_function: test_async_rejoin_errors_using_queue
+    test_id: test_async_rejoin_errors_using_queue::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 5eedc652-9c78-4768-ae8b-5e3fb246990a
+    test_case_id: test_async_rejoin_errors_using_queue-at
+    test_function: test_async_rejoin_errors_using_queue
+    test_id: test_async_rejoin_errors_using_queue-at::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
+    test_case_id: test_async_rejoin_errors
+    test_function: test_async_rejoin_errors
+    test_id: test_async_rejoin_errors::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
+  - id: 0cd76af4-2e83-40a7-abdd-3a08ee7e86dd
+    test_case_id: test_async_rejoin_errors-at
+    test_function: test_async_rejoin_errors
+    test_id: test_async_rejoin_errors-at::1
+    test_module: test_cases/test_async_events.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+      - pytest.mark.start_state('dut',device='reset',wifi='init')
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - async_events
+      - cases
+    iterations: 1
   - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_case_id: test_ble_advertisement
     test_function: test_ble_advertisement
@@ -628,20 +708,18 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
     test_params:
       - name: protocol
         value: TCP
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: true
     labels:
       - cases
       - iperf
-    iterations: 1
   - id: 55f357e3f7e970e8494bcafc29f1f6ca76087a69
     test_case_id: test_device_as_server[UDP]
     test_function: test_device_as_server
@@ -650,20 +728,18 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
     test_params:
       - name: protocol
         value: UDP
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: true
     labels:
       - cases
       - iperf
-    iterations: 1
   - id: 7bc6d9ff17c4706dead6edcf6e70bf53995f7e91
     test_case_id: test_host_as_server[TCP]
     test_function: test_host_as_server
@@ -672,7 +748,6 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
       - >-
         pytest.mark.config('net_perf_client',net_perf={'host_role':
         'S','tos_value': IperfTrafficType.Video})
@@ -681,13 +756,12 @@ test_cases:
         value: TCP
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: true
     labels:
       - cases
       - iperf
-    iterations: 1
   - id: 01c7f11755924f279931013fe4faed543cf481c6
     test_case_id: test_host_as_server[UDP]
     test_function: test_host_as_server
@@ -696,7 +770,6 @@ test_cases:
     test_markers:
       - pytest.mark.framework_integration_test()
       - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
       - >-
         pytest.mark.config('net_perf_client',net_perf={'host_role':
         'S','tos_value': IperfTrafficType.Video})
@@ -705,13 +778,12 @@ test_cases:
         value: UDP
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: true
     labels:
       - cases
       - iperf
-    iterations: 1
   - id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
     test_case_id: test_power_save
     test_function: test_power_save
@@ -857,46 +929,6 @@ test_cases:
       - generic_ap
       - Custom
       - dlink810
-    iterations: 1
-  - id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
-    test_case_id: test_async_rejoin_errors_using_queue
-    test_function: test_async_rejoin_errors_using_queue
-    test_id: test_async_rejoin_errors_using_queue::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_sapi',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
-  - id: 5eedc652-9c78-4768-ae8b-5e3fb246990a
-    test_case_id: test_async_rejoin_errors_using_queue-at
-    test_function: test_async_rejoin_errors_using_queue
-    test_id: test_async_rejoin_errors_using_queue-at::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_at',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 1
-    enabled: true
-    labels:
-      - async_events
-      - cases
     iterations: 1
   - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
     test_case_id: test_secondary_raspi_shell
@@ -1188,112 +1220,6 @@ test_cases:
       - cases
       - wifi
     iterations: 1
-  - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
-    test_case_id: test_async_rejoin_errors
-    test_function: test_async_rejoin_errors
-    test_id: test_async_rejoin_errors::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_sapi',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
-  - id: 0cd76af4-2e83-40a7-abdd-3a08ee7e86dd
-    test_case_id: test_async_rejoin_errors-at
-    test_function: test_async_rejoin_errors
-    test_id: test_async_rejoin_errors-at::1
-    test_module: test_cases/test_async_events.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - pytest.mark.start_state('dut',device='reset',wifi='init')
-      - pytest.mark.dut('rs9116_at',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 1
-    enabled: true
-    labels:
-      - async_events
-      - cases
-    iterations: 1
-  - id: 0c0f092834509c8ab0cdd496992905ef605459fd
-    test_case_id: test_python_client
-    test_function: test_python_client
-    test_id: test_python_client::1
-    test_module: test_cases/test_aws_iot.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - aws_iot
-      - cases
-    iterations: 1
-  - id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
-    test_case_id: test_aws_device_shadow
-    test_function: test_aws_device_shadow
-    test_id: test_aws_device_shadow::1
-    test_module: test_cases/test_aws_iot.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - aws_iot
-      - cases
-    iterations: 1
-  - id: e18641a09ddbfd25433f28f31204c0218adddd47
-    test_case_id: test_aws_iot_client
-    test_function: test_aws_iot_client
-    test_id: test_aws_iot_client::1
-    test_module: test_cases/test_aws_iot.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
-        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - aws_iot
-      - cases
-    iterations: 1
   - id: d0413e2060109b0feefbbc0884e89b119bca0da8
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-False]
     test_function: test_sniffer_icmp_inspection
@@ -1305,32 +1231,6 @@ test_cases:
         value: null
       - name: capture_filename
         value: no_filter
-      - name: inspect_during_capture
-        value: false
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - sniffer
-    iterations: 1
-  - id: 896d7086f646f98be413f613d261f9e746c86321
-    test_case_id: >-
-      test_sniffer_icmp_inspection[ether host
-      80:c9:55:34:eb:f4-mac_filter-False]
-    test_function: test_sniffer_icmp_inspection
-    test_id: >-
-      test_sniffer_icmp_inspection[ether host
-      80:c9:55:34:eb:f4-mac_filter-False]::1
-    test_module: test_cases/test_sniffer.py
-    test_markers: []
-    test_params:
-      - name: capture_filter
-        value: ether host 80:c9:55:34:eb:f4
-      - name: capture_filename
-        value: mac_filter
       - name: inspect_during_capture
         value: false
     test_class: null
@@ -1364,17 +1264,42 @@ test_cases:
       - cases
       - sniffer
     iterations: 1
-  - id: 8910431429830321dbef3dec2281b954a7c0e654
-    test_case_id: test_sniffer_icmp_inspection[ether host 80:c9:55:34:eb:f4-mac_filter-True]
+  - id: 1981b7a96bdeee129b6692b75e5fe1f94641352c
+    test_case_id: >-
+      test_sniffer_icmp_inspection[ether host
+      88:da:1a:e4:ba:44-mac_filter-False]
     test_function: test_sniffer_icmp_inspection
     test_id: >-
       test_sniffer_icmp_inspection[ether host
-      80:c9:55:34:eb:f4-mac_filter-True]::1
+      88:da:1a:e4:ba:44-mac_filter-False]::1
     test_module: test_cases/test_sniffer.py
     test_markers: []
     test_params:
       - name: capture_filter
-        value: ether host 80:c9:55:34:eb:f4
+        value: ether host 88:da:1a:e4:ba:44
+      - name: capture_filename
+        value: mac_filter
+      - name: inspect_during_capture
+        value: false
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - sniffer
+  - id: 0b49b1dfb2f2cd2d074569ecb872e0bc93c562b6
+    test_case_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-True]
+    test_function: test_sniffer_icmp_inspection
+    test_id: >-
+      test_sniffer_icmp_inspection[ether host
+      88:da:1a:e4:ba:44-mac_filter-True]::1
+    test_module: test_cases/test_sniffer.py
+    test_markers: []
+    test_params:
+      - name: capture_filter
+        value: ether host 88:da:1a:e4:ba:44
       - name: capture_filename
         value: mac_filter
       - name: inspect_during_capture
@@ -1387,7 +1312,6 @@ test_cases:
     labels:
       - cases
       - sniffer
-    iterations: 1
   - id: ec502278ec2f7fd76e913868331fa8fe852523bd
     test_case_id: test_socket_basic
     test_function: test_socket_basic
@@ -1395,7 +1319,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2273,54 +2196,6 @@ test_cases:
     labels:
       - cases
       - keyboard
-  - id: 1981b7a96bdeee129b6692b75e5fe1f94641352c
-    test_case_id: >-
-      test_sniffer_icmp_inspection[ether host
-      88:da:1a:e4:ba:44-mac_filter-False]
-    test_function: test_sniffer_icmp_inspection
-    test_id: >-
-      test_sniffer_icmp_inspection[ether host
-      88:da:1a:e4:ba:44-mac_filter-False]::1
-    test_module: test_cases/test_sniffer.py
-    test_markers: []
-    test_params:
-      - name: capture_filter
-        value: ether host 88:da:1a:e4:ba:44
-      - name: capture_filename
-        value: mac_filter
-      - name: inspect_during_capture
-        value: false
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - sniffer
-  - id: 0b49b1dfb2f2cd2d074569ecb872e0bc93c562b6
-    test_case_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-True]
-    test_function: test_sniffer_icmp_inspection
-    test_id: >-
-      test_sniffer_icmp_inspection[ether host
-      88:da:1a:e4:ba:44-mac_filter-True]::1
-    test_module: test_cases/test_sniffer.py
-    test_markers: []
-    test_params:
-      - name: capture_filter
-        value: ether host 88:da:1a:e4:ba:44
-      - name: capture_filename
-        value: mac_filter
-      - name: inspect_during_capture
-        value: true
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - sniffer
   - id: 3acc8ce70b445439560c885519f65faab3bb1d68
     test_case_id: test_socket[0]
     test_function: test_socket
@@ -2328,7 +2203,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2339,7 +2213,7 @@ test_cases:
         value: 0
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: false
     labels:
@@ -2352,7 +2226,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2363,7 +2236,7 @@ test_cases:
         value: 1
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: false
     labels:
@@ -2376,7 +2249,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2387,7 +2259,7 @@ test_cases:
         value: 2
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: false
     labels:
@@ -2400,7 +2272,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2411,7 +2282,7 @@ test_cases:
         value: 3
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: false
     labels:
@@ -2424,7 +2295,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2435,7 +2305,7 @@ test_cases:
         value: 4
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: false
     labels:
@@ -2448,7 +2318,6 @@ test_cases:
     test_module: test_cases/test_socket.py
     test_markers:
       - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('switched_ap',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'tcpip_features':
@@ -2459,10 +2328,75 @@ test_cases:
         value: 5
     test_class: null
     description: null
-    library_name: ''
+    library_name: null
     version: 0
     enabled: false
     labels:
       - cases
       - socket
+  - id: 0c0f092834509c8ab0cdd496992905ef605459fd
+    test_case_id: test_python_client
+    test_function: test_python_client
+    test_id: test_python_client::1
+    test_module: test_cases/test_aws_iot.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - aws_iot
+      - cases
+  - id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
+    test_case_id: test_aws_device_shadow
+    test_function: test_aws_device_shadow
+    test_id: test_aws_device_shadow::1
+    test_module: test_cases/test_aws_iot.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+      - pytest.mark.firmware_app('test_aws',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - aws_iot
+      - cases
+  - id: e18641a09ddbfd25433f28f31204c0218adddd47
+    test_case_id: test_aws_iot_client
+    test_function: test_aws_iot_client
+    test_id: test_aws_iot_client::1
+    test_module: test_cases/test_aws_iot.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.SSLCertBypass})
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - aws_iot
+      - cases
 name: ''

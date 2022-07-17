@@ -1,8 +1,0 @@
-id: 1174f3f9-6982-4f67-a7b4-57807c05ddbe
-name: async_rejoin_errors_using_wait_for_event
-description: ''
-test_cases:
-  - test_case_id: 3581ce42cb4036c0f2923f47dcf1d1ea7fe6b5dd
-    iterations: 1
-  - test_case_id: 0291c0d5-393f-46a8-ba7c-fa12e41158bf
-    iterations: 1
