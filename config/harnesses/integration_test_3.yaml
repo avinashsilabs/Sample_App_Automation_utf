@@ -150,11 +150,9 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.dlink810'
-#                ip_address: '10.100.124.91'
-#                web_ui_port: 8080
-                ip_address: '192.168.10.1'
-                web_ui_port: 80
-                admin_password: 'dlink810l'
+                ip_address: '10.207.16.95'
+                web_ui_port: 8080
+                admin_password: 'bhuvgycft'
                 ssid: "TESTTEST-DLINK_3"
                 channel: 1
                 cipher: 'AES'
@@ -165,6 +163,7 @@ devices:
                 type: 'wifi.access_points.static'
                 security: WPA2
                 ssid: 'TESTTEST-DLINK_3'
+                passphrase: 'thisisatestnetwork'
                 channel: 1
                 cipher: 'AES'
 
@@ -203,7 +202,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.100.124.129
+                remote: 192.168.14.3
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -236,7 +235,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '10.100.124.129'
+                ip_address: '192.168.14.3'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 container_name: 'secondary_raspi_bt_client'
                 username: pi
@@ -293,7 +292,37 @@ devices:
                             interface: 'wlan0'
             defaults: { }
 
+    secondary_raspi_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.14.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
 
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
         interfaces:
             linux_shell:
@@ -390,7 +419,7 @@ devices:
         interfaces:
             ssh_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.100.124.129
+                remote: 192.168.14.3
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -454,12 +483,13 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116_at'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
+        - 'rs9116_sapi'
         - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
@@ -494,6 +524,8 @@ defaults:
     remote_socket: 'raspi_ip_socket'
 
     remote_socket_factory: "ip_socket_factory"
+
+    aws_iot_client: 'python_aws_iot_thing'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:

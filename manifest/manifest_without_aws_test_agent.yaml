@@ -17,6 +17,11 @@ firmware_applications:
       device_subtype: 'efr32'
       filename: 'generic_test_agent_without_aws.hex'
 
+    test_aws:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'aws_test_agent.hex'
+
     test_concurrent_mode:
     - device_type: 'efx32'
       device_subtype: 'efr32'

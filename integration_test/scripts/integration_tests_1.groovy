@@ -85,7 +85,7 @@ pipeline {
                         HWMUX_GROUP_LABEL = "utf_integration_test"
                         HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_1_hwmux_group.json"
                         HARNESS_NAME= "__hwmux__integration_tests_1.yaml"
-                        TEST_CONFIG_FILE = "integration_tests_sequence_1.yaml"
+                        TEST_CONFIG_FILE = ".sequence_manager/test_execution_definitions/integration_test_1.yaml"
                     }
                     stages {
                         stage('Setup Environment') {

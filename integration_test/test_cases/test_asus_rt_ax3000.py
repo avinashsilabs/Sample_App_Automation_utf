@@ -33,6 +33,7 @@ class TestAccessPointConfig:
     def cleanup(cls):
         cls.wifi_access_point_to_clean_up.interfaces.wifi.stop_ap()
 
+    @pytest.mark.skip
     @pytest.mark.start_state("wifi_access_point", wifi="default")
     @pytest.mark.end_state("wifi_access_point", wifi="ap_enabled")
     @pytest.mark.parametrize(
@@ -68,6 +69,7 @@ class TestAccessPointConfig:
             logger.error(str(e))
             raise
 
+    @pytest.mark.skip
     @pytest.mark.start_state("wifi_access_point", wifi="default")
     @pytest.mark.end_state("wifi_access_point", wifi="ap_enabled")
     @pytest.mark.parametrize(
