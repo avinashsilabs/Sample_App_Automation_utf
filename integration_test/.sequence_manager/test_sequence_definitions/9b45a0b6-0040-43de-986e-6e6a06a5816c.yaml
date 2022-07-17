@@ -4,6 +4,8 @@ description: integration_test_2.yaml
 test_suite_infos:
   - test_suite_id: 0ff25722-8512-482e-b633-a6331406bc9e
     iterations: 1
+  - test_suite_id: ceb3e60e-d8a1-424d-a3d8-7bdeffbae97c
+    iterations: 1
   - test_suite_id: 3d769d38-49bd-4ee0-a671-e5743df8bc0d
     iterations: 1
   - test_suite_id: 9b1246bd-56d3-4ca9-872d-47b4473aac8c

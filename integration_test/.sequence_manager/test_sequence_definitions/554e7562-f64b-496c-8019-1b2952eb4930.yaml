@@ -4,6 +4,8 @@ description: integration_test_2
 test_suite_infos:
   - test_suite_id: e3aedb2e-98fd-4d8a-9a99-543306ad59b0
     iterations: 1
+  - test_suite_id: ceb3e60e-d8a1-424d-a3d8-7bdeffbae97c
+    iterations: 1
   - test_suite_id: 164fd6e3-2e6a-4c97-8cfc-5afe783df8be
     iterations: 1
   - test_suite_id: e2f9b6d0-345b-47c9-808c-ad3667b89a81

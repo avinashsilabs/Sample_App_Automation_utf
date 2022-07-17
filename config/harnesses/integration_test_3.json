@@ -94,6 +94,7 @@
                   "type": "wifi.access_points.static",
                   "security": "WPA2",
                   "ssid": "TESTTEST-DLINK_3",
+                  "passphrase": "thisisatestnetwork",
                   "channel": 1,
                   "cipher": "AES"
                }

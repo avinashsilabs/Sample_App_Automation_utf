@@ -94,6 +94,7 @@
                   "type": "wifi.access_points.static",
                   "security": "WPA2",
                   "ssid": "TESTTEST-DLINK_1",
+                  "passphrase": "thisisatestnetwork",
                   "channel": 1,
                   "cipher": "AES"
                }
@@ -428,7 +429,7 @@
             "rs9116_sapi",
             "efr32_4180b"
          ],
-         "wifi_access_point": "asus_rt_ax3000_ap",
+         "wifi_access_point": "dlink810_ap_static",
          "wifi_client": "raspi_wifi",
          "wifi_clients": [
             "raspi_wifi",

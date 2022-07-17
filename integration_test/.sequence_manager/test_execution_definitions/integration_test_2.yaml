@@ -124,6 +124,27 @@ test_sequence:
       - Custom
       - dlink810
     iterations: 1
+  - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
+    test_case_id: test_prepare_static_ap
+    test_function: test_prepare_static_ap
+    test_id: test_prepare_static_ap::1
+    test_module: test_cases/test_wifi.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('dlink810_ap',)
+      - pytest.mark.dut('rs9116_sapi',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - wifi
+    iterations: 1
   - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
     test_case_id: test_secondary_raspi_shell
     test_function: test_secondary_raspi_shell
