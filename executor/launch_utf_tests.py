@@ -3,7 +3,7 @@ from abc import ABC
 import click
 from typing import Tuple, Iterable
 import os
-from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption
+from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption, UtfExecutorTypes
 from utf.utils.executor.docker_manager import DockerManager, DockerImage
 from utf.utils.executor.local_executor import LocalExecutor
 
@@ -34,7 +34,7 @@ class AppUtfLauncher(UtfLauncher, ABC):
         UtfLauncher.__init__(self, **kwargs)
 
     def get_executor_types(self) -> dict:
-        return {"local": LocalExecutor, "docker": DockerExecutor}
+        return {UtfExecutorTypes.local: LocalExecutor, UtfExecutorTypes.docker: DockerExecutor}
 
     def get_params_defaults(self) -> dict:
         return {
