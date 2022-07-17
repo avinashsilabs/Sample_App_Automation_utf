@@ -3,7 +3,7 @@ from abc import ABC
 import click
 from typing import Tuple, Iterable
 import os
-from utf.executor.launch_utf_tests import UtfLaunchTests, UtfLaunchCommander, UtfLaunchCommandOptionKeys
+from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption
 from utf.utils.executor.docker_manager import DockerManager, DockerImage
 from utf.utils.executor.local_executor import LocalExecutor
 
@@ -29,42 +29,27 @@ def get_git_branch(path=None):
     return branch.strip().decode('utf-8')
 
 
-class LauncherTests(UtfLaunchTests, ABC):
+class AppUtfLauncher(UtfLauncher, ABC):
     def __init__(self, **kwargs):
-        UtfLaunchTests.__init__(self, **kwargs)
+        UtfLauncher.__init__(self, **kwargs)
 
     def get_executor_types(self) -> dict:
         return {"local": LocalExecutor, "docker": DockerExecutor}
 
-    def get_custom_params(self) -> dict:
+    def get_params_defaults(self) -> dict:
         return {
-            UtfLaunchCommandOptionKeys.docker_flags: " -e MILESTONE=" + get_git_branch()
+            UtfLauncherCmdOption.workspace_root: WORKSPACE_ROOT,
+            UtfLauncherCmdOption.reports_dir:  os.path.join(WORKSPACE_ROOT, "reports"),
+            UtfLauncherCmdOption.container_name: "railtest",
+            UtfLauncherCmdOption.docker_image_tag: "railtest:latest",
+            UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
+            UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch()
         }
 
 
-class UtfAppLaunchCommander(UtfLaunchCommander, ABC):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def get_docker_file_path(self) -> str:
-        return DOCKERFILE_PATH
-
-    def get_docker_image_tag(self) -> str:
-        return "railtest:latest"
-
-    def get_container_name(self) -> str:
-        return "railtest_1"
-
-    def get_reports_dir(self) -> str:
-        return os.path.join(WORKSPACE_ROOT, "reports")
-
-    def get_workspace_root(self) -> str:
-        return WORKSPACE_ROOT
-
-
-@click.command(cls=UtfAppLaunchCommander)
+@click.command(cls=UtfLaunchCommander)
 def main(**kwargs):
-    launcher = LauncherTests(**kwargs)
+    launcher = AppUtfLauncher(**kwargs)
     launcher.execute()
 
 
