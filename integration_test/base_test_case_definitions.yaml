@@ -776,7 +776,6 @@ test_cases:
   test_markers:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
-  - pytest.mark.wifi_access_point('raspi_wifi',)
   - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
   test_params:
   - name: protocol
@@ -797,7 +796,6 @@ test_cases:
   test_markers:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
-  - pytest.mark.wifi_access_point('raspi_wifi',)
   - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
   test_params:
   - name: protocol
@@ -818,7 +816,6 @@ test_cases:
   test_markers:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
-  - pytest.mark.wifi_access_point('raspi_wifi',)
   - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S'',''tos_value'':
     IperfTrafficType.Video})'
   test_params:
@@ -840,7 +837,6 @@ test_cases:
   test_markers:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
-  - pytest.mark.wifi_access_point('raspi_wifi',)
   - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S'',''tos_value'':
     IperfTrafficType.Video})'
   test_params:

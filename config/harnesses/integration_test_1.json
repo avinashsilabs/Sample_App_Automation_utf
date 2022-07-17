@@ -425,6 +425,7 @@
          "dut": "rs9116_sapi",
          "efx32": "efr32_4180b",
          "wiseconnect_duts": [
+            "rs9116_sapi",
             "efr32_4180b"
          ],
          "wifi_access_point": "asus_rt_ax3000_ap",

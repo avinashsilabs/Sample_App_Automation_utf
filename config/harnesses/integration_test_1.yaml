@@ -458,6 +458,7 @@ defaults:
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
+        - 'rs9116_sapi'
         - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture

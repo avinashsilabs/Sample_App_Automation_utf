@@ -92,6 +92,46 @@ test_sequence:
       - cases
       - ram_dump
     iterations: 1
+  - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
+    test_case_id: test_prepare_static_ap
+    test_function: test_prepare_static_ap
+    test_id: test_prepare_static_ap::1
+    test_module: test_cases/test_wifi.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('dlink810_ap',)
+      - pytest.mark.dut('rs9116_sapi',)
+      - pytest.mark.end_state('wifi_access_point',wifi=None)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - wifi
+    iterations: 1
+  - id: 40a1fec3f61d75d9333daa4a6975d321a107dbef
+    test_case_id: test_websocket_server_and_linux_client
+    test_function: test_websocket_server_and_linux_client
+    test_id: test_websocket_server_and_linux_client::1
+    test_module: test_cases/test_websocket.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.http_server('raspi_lighttpd',)
+      - pytest.mark.wifi_access_point('raspi_wifi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - websocket
+    iterations: 1
   - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_case_id: test_ble_advertisement
     test_function: test_ble_advertisement
@@ -359,6 +399,94 @@ test_sequence:
       - bt_spp
       - cases
     iterations: 1
+  - id: ede54b7e9780d3ddbdb18bce398a9b4a40eccd55
+    test_case_id: test_device_as_server[TCP]
+    test_function: test_device_as_server
+    test_id: test_device_as_server[TCP]::1
+    test_module: test_cases/test_iperf.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: protocol
+        value: TCP
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - iperf
+    iterations: 1
+  - id: 55f357e3f7e970e8494bcafc29f1f6ca76087a69
+    test_case_id: test_device_as_server[UDP]
+    test_function: test_device_as_server
+    test_id: test_device_as_server[UDP]::1
+    test_module: test_cases/test_iperf.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: protocol
+        value: UDP
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - iperf
+    iterations: 1
+  - id: 7bc6d9ff17c4706dead6edcf6e70bf53995f7e91
+    test_case_id: test_host_as_server[TCP]
+    test_function: test_host_as_server
+    test_id: test_host_as_server[TCP]::1
+    test_module: test_cases/test_iperf.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('net_perf_client',net_perf={'host_role':
+        'S','tos_value': IperfTrafficType.Video})
+    test_params:
+      - name: protocol
+        value: TCP
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - iperf
+    iterations: 1
+  - id: 01c7f11755924f279931013fe4faed543cf481c6
+    test_case_id: test_host_as_server[UDP]
+    test_function: test_host_as_server
+    test_id: test_host_as_server[UDP]::1
+    test_module: test_cases/test_iperf.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('net_perf_client',net_perf={'host_role':
+        'S','tos_value': IperfTrafficType.Video})
+    test_params:
+      - name: protocol
+        value: UDP
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - iperf
+    iterations: 1
   - id: ce44d558066a25b6e15f93509d003595ad536bee
     test_case_id: test_wifi_leave
     test_function: test_wifi_leave
@@ -508,115 +636,4 @@ test_sequence:
     labels:
       - cases
       - version
-    iterations: 1
-  - id: 40a1fec3f61d75d9333daa4a6975d321a107dbef
-    test_case_id: test_websocket_server_and_linux_client
-    test_function: test_websocket_server_and_linux_client
-    test_id: test_websocket_server_and_linux_client::1
-    test_module: test_cases/test_websocket.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.http_server('raspi_lighttpd',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - websocket
-    iterations: 1
-  - id: ede54b7e9780d3ddbdb18bce398a9b4a40eccd55
-    test_case_id: test_device_as_server[TCP]
-    test_function: test_device_as_server
-    test_id: test_device_as_server[TCP]::1
-    test_module: test_cases/test_iperf.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
-    test_params:
-      - name: protocol
-        value: TCP
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - iperf
-    iterations: 1
-  - id: 55f357e3f7e970e8494bcafc29f1f6ca76087a69
-    test_case_id: test_device_as_server[UDP]
-    test_function: test_device_as_server
-    test_id: test_device_as_server[UDP]::1
-    test_module: test_cases/test_iperf.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
-    test_params:
-      - name: protocol
-        value: UDP
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - iperf
-    iterations: 1
-  - id: 7bc6d9ff17c4706dead6edcf6e70bf53995f7e91
-    test_case_id: test_host_as_server[TCP]
-    test_function: test_host_as_server
-    test_id: test_host_as_server[TCP]::1
-    test_module: test_cases/test_iperf.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - >-
-        pytest.mark.config('net_perf_client',net_perf={'host_role':
-        'S','tos_value': IperfTrafficType.Video})
-    test_params:
-      - name: protocol
-        value: TCP
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - iperf
-    iterations: 1
-  - id: 01c7f11755924f279931013fe4faed543cf481c6
-    test_case_id: test_host_as_server[UDP]
-    test_function: test_host_as_server
-    test_id: test_host_as_server[UDP]::1
-    test_module: test_cases/test_iperf.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.wifi_access_point('raspi_wifi',)
-      - >-
-        pytest.mark.config('net_perf_client',net_perf={'host_role':
-        'S','tos_value': IperfTrafficType.Video})
-    test_params:
-      - name: protocol
-        value: UDP
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - iperf
     iterations: 1

@@ -10,8 +10,7 @@ def __print_throughput(iperf_throughput: dict):
 
 pytestmark = [
     pytest.mark.framework_integration_test,
-    pytest.mark.dut("rs9116_sapi"),
-    pytest.mark.wifi_access_point("raspi_wifi")
+    pytest.mark.dut("rs9116_sapi")
 ]
 
 

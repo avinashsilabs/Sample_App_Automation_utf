@@ -425,6 +425,7 @@
          "dut": "rs9116_sapi",
          "efx32": "efr32_4180b",
          "wiseconnect_duts": [
+            "rs9116_sapi",
             "efr32_4180b"
          ],
          "wifi_access_point": "dlink810_ap",
@@ -443,6 +444,7 @@
          "net_perf_client": "raspi_iperf",
          "remote_socket": "raspi_ip_socket",
          "remote_socket_factory": "ip_socket_factory",
+         "aws_iot_client": "python_aws_iot_thing",
          "serial": {
             "baud": 115200
          },
