@@ -40,8 +40,8 @@ class AppUtfLauncher(UtfLauncher, ABC):
         return {
             UtfLauncherCmdOption.workspace_root: WORKSPACE_ROOT,
             UtfLauncherCmdOption.reports_dir:  os.path.join(WORKSPACE_ROOT, "reports"),
-            UtfLauncherCmdOption.container_name: "railtest",
-            UtfLauncherCmdOption.docker_image_tag: "railtest:latest",
+            UtfLauncherCmdOption.container_name: "wifitest_1",
+            UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
             UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch()
         }
