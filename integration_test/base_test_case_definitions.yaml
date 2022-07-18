@@ -1497,3 +1497,20 @@ test_cases:
   labels:
   - cases
   - wifi
+- id: 70f25f4d06b813c94adc190a28155640f4c1e6ea
+  test_case_id: test_wifi_client_leave
+  test_function: test_wifi_client_leave
+  test_id: test_wifi_client_leave::1
+  test_module: test_cases/test_wifi_client.py
+  test_markers:
+  - pytest.mark.framework_integration_test()
+  - pytest.mark.dut('rs9116_sapi',)
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - cases
+  - wifi_client
