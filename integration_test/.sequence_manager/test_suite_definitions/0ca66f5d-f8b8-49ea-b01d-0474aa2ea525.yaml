@@ -1,0 +1,6 @@
+id: 0ca66f5d-f8b8-49ea-b01d-0474aa2ea525
+name: test_wifi_client_leave
+description: ''
+test_cases:
+  - test_case_id: 70f25f4d06b813c94adc190a28155640f4c1e6ea
+    iterations: '10'
