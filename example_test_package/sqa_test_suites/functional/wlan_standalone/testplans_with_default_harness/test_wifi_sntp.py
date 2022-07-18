@@ -70,7 +70,7 @@ def get_ntp_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layer
 
 
 def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
-    ping_count = 10
+    ping_count = 60
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
     # configure interface for the channel of the access point
@@ -383,7 +383,7 @@ def test_sntp_ludp_coexit_TC19017(
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xBB23, f"DUT sent wrong error code. expected is {0xBB23}"
-    logger.info(f"DUT sent error code-> {exc_info.value.error_code} when trying to open SNTP client, but already a "
+    logger.info(f"DUT sent error code-> {hex(exc_info.value.error_code)} when trying to open SNTP client, but already a "
                 f"socket is opened "
                 f"at port number 123")
     validation = True
