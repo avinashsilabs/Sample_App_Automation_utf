@@ -198,8 +198,8 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: 'F6E49FCE'
-                switch: 'pdu_switch'
-            pdu_switch:
+                pdu_switch: 'dli_pdu_switch'
+            dli_pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
                 hostname: '192.168.1.4'
