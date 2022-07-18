@@ -122,7 +122,7 @@ devices:
 
   static_ap_with_switch:
       interfaces:
-          switch:
+          mock_pdu_switch:
               type: 'mocks.generic_mock'
           wifi:
               type: 'wifi.access_points.static'
@@ -130,7 +130,7 @@ devices:
               ssid: 'static_ssid'
               security: WPA2
               channel: 7
-              switch: 'switch'
+              pdu_switch: 'mock_pdu_switch'
               turn_on_delay: 59
 
   mock_bt_device:
