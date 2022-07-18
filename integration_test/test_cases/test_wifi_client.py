@@ -10,12 +10,13 @@ pytestmark = [
 
 def test_wifi_join_ap(wifi_access_point, wifi_client, logger):
     wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+    assert wifi_client.interfaces.wifi.client_associated, "WiFi client could not join AP"
     assert (
             wifi_client.interfaces.wifi.ping(
                 server_ip=wifi_client.interfaces.wifi.client_gateway_ip
             )
-            < 0.3
-    )
+            < 2
+    ), "Ping failed"
 
 
 @pytest.mark.config(
@@ -24,9 +25,10 @@ def test_wifi_join_ap(wifi_access_point, wifi_client, logger):
 )
 def test_wifi_join_dut_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
+    assert wifi_client.interfaces.wifi.client_associated, "WiFi client could not join DUT AP"
     assert (
         wifi_client.interfaces.wifi.ping(
             server_ip=wifi_client.interfaces.wifi.client_gateway_ip
         )
-        < 0.3
-    )
+        < 2
+    ), "Ping failed"
