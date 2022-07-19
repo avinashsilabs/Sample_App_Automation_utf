@@ -1,24 +1,12 @@
 import subprocess
-from abc import ABC
 import click
-from typing import Tuple, Iterable
 import os
 from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption, UtfExecutorTypes
-from utf.utils.executor.docker_manager import DockerManager, DockerImage
+from utf.utils.executor.docker_manager import DockerManager
 from utf.utils.executor.local_executor import LocalExecutor
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-
-
-class DockerExecutor(DockerManager):
-    def _internal_build_image(self) -> Tuple[DockerImage, Iterable[dict]]:
-        image, logs = self.docker_client.images.build(
-            path=WORKSPACE_ROOT,
-            tag=self.docker_image_tag,
-            dockerfile=DOCKERFILE_PATH,
-        )
-        return image, logs
 
 
 def get_git_branch(path=None):
@@ -29,12 +17,9 @@ def get_git_branch(path=None):
     return branch.strip().decode('utf-8')
 
 
-class AppUtfLauncher(UtfLauncher, ABC):
+class AppUtfLauncher(UtfLauncher):
     def __init__(self, **kwargs):
         UtfLauncher.__init__(self, **kwargs)
-
-    def get_executor_types(self) -> dict:
-        return {UtfExecutorTypes.local: LocalExecutor, UtfExecutorTypes.docker: DockerExecutor}
 
     def get_params_defaults(self) -> dict:
         return {

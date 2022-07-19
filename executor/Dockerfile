@@ -65,6 +65,7 @@ COPY integration_test/ ./integration_test/
 COPY config/ ./config/
 COPY manifest/ ./manifest/
 COPY executor/docker_startup.sh .
+COPY utf_core/src/utf/executor/docker_startup_core.sh .
 ENV MANIFEST_FILE=/app/manifest/manifest.yaml
 
-CMD ["./docker_startup.sh"]
+CMD ["./docker_startup_core.sh"]
