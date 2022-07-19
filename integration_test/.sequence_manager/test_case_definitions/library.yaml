@@ -2436,4 +2436,44 @@ test_cases:
     labels:
       - aws_iot
       - cases
+  - id: 80be8a95af7ca0bd442c0db315d2a42ce273914d
+    test_case_id: test_mqtt_dut_thread
+    test_function: test_mqtt_dut_thread
+    test_id: test_mqtt_dut_thread::1
+    test_module: test_cases/test_mqtt_thread.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - mqtt_thread
+  - id: 24c3823b-1a82-4632-8233-a98bf342ccbc
+    test_case_id: test_mqtt_dut_thread-at
+    test_function: test_mqtt_dut_thread
+    test_id: test_mqtt_dut_thread::1
+    test_module: test_cases/test_mqtt_thread.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - cases
+      - mqtt_thread
 name: ''
