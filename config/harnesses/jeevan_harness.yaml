@@ -164,7 +164,7 @@ devices:
                 type: 'bluetooth'
                 src_dir: 'utf_wiseconnect'
 
-    #EFR32 configuration
+    #EFR32 configuration 
     efr32_4180b:
         type: 'efx32'
         subtype: 'efr32'
