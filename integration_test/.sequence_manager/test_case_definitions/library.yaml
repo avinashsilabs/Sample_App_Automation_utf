@@ -654,6 +654,43 @@ test_cases:
       - cases
       - ssl_certs
     iterations: 1
+  - id: f89ac1469a9c708c978858f8ac2f9dee427470d1
+    test_case_id: test_wifi_join_dut_ap
+    test_function: test_wifi_join_dut_ap
+    test_id: test_wifi_join_dut_ap::1
+    test_module: test_cases/test_wifi_client.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint})
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - wifi_client
+  - id: e3e247fb76cbe8965f7b5bc0f33829fd18e8015c
+    test_case_id: test_wifi_join_ap
+    test_function: test_wifi_join_ap
+    test_id: test_wifi_join_ap::1
+    test_module: test_cases/test_wifi_client.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - wifi_client
   - id: 47379509-9206-47fb-ab28-1877aaf92d1b
     test_case_id: >-
       test_cert_load[RS9116CertificateType.SSLCACertificate-ca-cert-with-crlf.pem]-at
@@ -714,7 +751,7 @@ test_cases:
         value: TCP
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: true
     labels:
@@ -734,7 +771,7 @@ test_cases:
         value: UDP
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: true
     labels:
@@ -756,7 +793,7 @@ test_cases:
         value: TCP
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: true
     labels:
@@ -778,7 +815,7 @@ test_cases:
         value: UDP
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: true
     labels:
@@ -2213,7 +2250,7 @@ test_cases:
         value: 0
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: false
     labels:
@@ -2236,7 +2273,7 @@ test_cases:
         value: 1
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: false
     labels:
@@ -2259,7 +2296,7 @@ test_cases:
         value: 2
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: false
     labels:
@@ -2282,7 +2319,7 @@ test_cases:
         value: 3
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: false
     labels:
@@ -2305,7 +2342,7 @@ test_cases:
         value: 4
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: false
     labels:
@@ -2328,7 +2365,7 @@ test_cases:
         value: 5
     test_class: null
     description: null
-    library_name: null
+    library_name: ''
     version: 0
     enabled: false
     labels:
