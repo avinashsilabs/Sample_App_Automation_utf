@@ -193,6 +193,129 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    rs9116_sapi_by_serial:
+
+        # The 'type' attribute is optional.  If it is present, the device will be created via a
+        # create_device() function located in the corresponding python module under the 'devices'
+        # folder.
+        # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
+        # In the case of a 9116 device, the type 'rs911x' should be used
+        type: 'rs911x'
+        subtype: 'rs9116'
+        src_dir: 'utf_wiseconnect'
+        commander_options: '--serialno 000440233028'
+        # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+
+            # Like the top level device names, the interface names are also arbitrary, but must be unique for a
+            # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440233028'
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+                serial_number: '000440233028'
+
+            wifi:
+                # the wifi interface type for the 9116 must be either
+                # 'cli.rs_at_commands' or 'cli.rs_sapi_commands'
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
+
+
+        bt_wiseconnect:
+            type: 'efx32'
+            subtype: 'efx32'
+            commander_options: '--serialno 000440257606'
+            defaults:
+                cli_transport: 'serial'
+                gpio_transport: 'serial'
+            # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+            interfaces:
+                serial:
+                    # The type attribute is mandatory and specifies the module within the interfaces folder
+                    # used to create the interface object
+                    type: 'serial'
+
+                    # Other attributes are specific to the interface type; some may be optional or mandatory
+                    # For a serial uart device connected via USB, you can enable autodetection of the port
+                    # by specifying the vid and pid of the device.
+                    # In the below example, the vid and pid represent the USB connection to the WSTK
+                    port: 'auto'
+                    vid: 0x1366
+                    pid: 0x0105
+                    serial_number: '000440257606'
+                #   Secondary - 000440257606, Primary - 000440233028
+                bluetooth:
+                    type: 'bluetooth'
+                    src_dir: 'utf_wiseconnect'
+
+    bt_wiseconnect:
+        type: 'efx32'
+        subtype: 'efx32'
+        commander_options: '--serialno 000440257606'
+        defaults:
+            cli_transport: 'serial'
+            gpio_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440257606'
+            #                Secondary - 000440257606, Primary - 000440233028
+            bluetooth:
+                type: 'bluetooth'
+                src_dir: 'utf_wiseconnect'
+
+    efr32_4180b_by_serial:
+        type: 'efx32'
+        subtype: 'efr32'
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440233028'
+
     #EFR32 configuration
     efr32_4180b:
         type: 'efx32'
