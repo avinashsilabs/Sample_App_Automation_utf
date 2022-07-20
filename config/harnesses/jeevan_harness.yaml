@@ -137,13 +137,13 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
-    bt_rs9116_sapi:
+    bt_wiseconnect:
         type: 'efx32'
         subtype: 'efx32'
         commander_options: '--serialno 000440257606'
         defaults:
+            rs_command_instance: 'rs_cmd_instance'
             cli_transport: 'serial'
-            gpio_transport: 'serial'
         # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
         interfaces:
             serial:
@@ -162,6 +162,9 @@ devices:
 #                Secondary - 000440257606, Primary - 000440233028
             bluetooth:
                 type: 'bluetooth'
+                src_dir: 'utf_wiseconnect'
+            rs_cmd_instance:
+                type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
     #EFR32 configuration 
@@ -208,6 +211,28 @@ devices:
                 supports: 'wifi_ap'
                 channel: 1
 
+    dlink_ap_static:
+        interfaces:
+            wifi:
+                # The 'wifi.access_points.dlink810' device type
+                # represents a D-Link DIR-810L.
+                # The test system will communicate with the device via the ip address specified below
+                # to configure the device with the desired settings
+                type: 'wifi.access_points.static'
+                ssid: 'Dlink-10-207-18-11'
+                passphrase: 'thisisatestnetwo11'
+                security: WPA2
+                channel: 1
+
+    binatone_static_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'binatone_dt910w'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+                cipher: 'AES'
 
     # This represents another access point configuration.
     asus_rt_ax3000_ap:
@@ -761,7 +786,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'raspi_wifi'
+    wifi_access_point: 'dlink_ap_static'
 
     # To connect the multiple access points
     wifi_access_points:
