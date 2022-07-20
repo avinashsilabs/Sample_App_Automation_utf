@@ -11,7 +11,6 @@ from utf.utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
-
 """
     setup requirement:
         1. DUT(RS9116)
@@ -104,12 +103,15 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
                 time_duration = (async_timestamp - start_time) / 1000000000
                 logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-            logger().info("resetting the DUT after upgrade....")
-            wifi_dut.interfaces.wifi.reset_soft()
-            time.sleep(60)
+            time.sleep(5)
+            # API does soft reset on DUT
+            logger().info("resetting DUT....")
+            wifi_dut.interfaces.wifi.wireless_deinit()
+            time.sleep(10)
 
-            logger().info("Initializing DUT....")
-            wifi_dut.interfaces.wifi.init()
+            # performs the wifi initialization
+            logger().info("Initialising DUT after the reset....")
+            wifi_dut.interfaces.wifi.dut_init()
             time.sleep(10)
 
             logger().info("fetching DUT version after init....")
@@ -175,12 +177,16 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
                 wifi_dut.interfaces.wifi.get_http_otaf_status()
             assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
 
-            logger().info("performing dut reset....")
-            wifi_dut.interfaces.wifi.reset_soft()
-            time.sleep(60)
+            time.sleep(5)
+            # API does soft reset on DUT
+            logger().info("resetting DUT....")
+            wifi_dut.interfaces.wifi.wireless_deinit()
+            time.sleep(10)
 
+            # performs the wifi initialization
             logger().info("Initialising DUT after the reset....")
-            wifi_dut.interfaces.wifi.init()
+            wifi_dut.interfaces.wifi.dut_init()
+            time.sleep(10)
 
             logger().info("fetching the fw version after init....")
             wifi_dut.interfaces.wifi.version()
@@ -249,13 +255,15 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
                 wifi_dut.interfaces.wifi.get_http_otaf_status()
             assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
+            time.sleep(5)
+            # API does soft reset on DUT
+            logger().info("resetting DUT....")
+            wifi_dut.interfaces.wifi.wireless_deinit()
             time.sleep(10)
-            logger().info("resetting dut....")
-            wifi_dut.interfaces.wifi.reset_soft()
-            time.sleep(60)
 
-            logger().info("Initializing dut...")
-            wifi_dut.interfaces.wifi.init()
+            # performs the wifi initialization
+            logger().info("Initialising DUT after the reset....")
+            wifi_dut.interfaces.wifi.dut_init()
             time.sleep(10)
 
             logger().info("Fetching the DUT version...")

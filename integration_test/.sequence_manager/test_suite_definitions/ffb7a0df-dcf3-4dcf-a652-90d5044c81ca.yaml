@@ -1,0 +1,12 @@
+id: ffb7a0df-dcf3-4dcf-a652-90d5044c81ca
+name: iperf
+description: ''
+test_cases:
+  - test_case_id: ede54b7e9780d3ddbdb18bce398a9b4a40eccd55
+    iterations: 1
+  - test_case_id: 55f357e3f7e970e8494bcafc29f1f6ca76087a69
+    iterations: 1
+  - test_case_id: 7bc6d9ff17c4706dead6edcf6e70bf53995f7e91
+    iterations: 1
+  - test_case_id: 01c7f11755924f279931013fe4faed543cf481c6
+    iterations: 1

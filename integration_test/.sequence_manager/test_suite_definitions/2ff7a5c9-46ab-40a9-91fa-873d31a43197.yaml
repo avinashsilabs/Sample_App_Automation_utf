@@ -1,0 +1,20 @@
+id: 2ff7a5c9-46ab-40a9-91fa-873d31a43197
+name: mqtt_dut
+description: ''
+test_cases:
+  - test_case_id: ce5f6b8141173d5bc06d722f46ec2558efa63999
+    iterations: 1
+  - test_case_id: ba69230a-a3ea-4aad-b9de-f46c0ca551e3
+    iterations: 1
+  - test_case_id: 780d979b-3b79-4853-a2db-324ccc3e21a5
+    iterations: 1
+  - test_case_id: 932fe79d-d9b0-470b-92eb-55796ae6110e
+    iterations: 1
+  - test_case_id: 5c3b33ee-1783-48a7-b108-5632668aa48c
+    iterations: 1
+  - test_case_id: 279fa301-6937-41dc-a966-44931823a982
+    iterations: 1
+  - test_case_id: f38ecd5d-7c8b-4cda-9e01-2c0a67c96e34
+    iterations: 1
+  - test_case_id: 4243e063-7bc5-4e1e-bcac-b93523a24eb9
+    iterations: 1

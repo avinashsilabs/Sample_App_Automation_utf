@@ -1,0 +1,6 @@
+id: ceb3e60e-d8a1-424d-a3d8-7bdeffbae97c
+name: prepare_static_ap
+description: ''
+test_cases:
+  - test_case_id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
+    iterations: 1

@@ -158,10 +158,9 @@ devices:
                 # is a statically configured access point, assumed
                 # to be set up ahead of time with the settings below
                 type: 'wifi.access_points.static'
-                security: WPA2
-                ssid: 'MACHANI'
-                passphrase: ''
-                channel: 11
+                security: WPA
+                ssid: 'Codecom123'
+                passphrase: 'thisisatestnework'
 
 
     # This represents another access point configuration.
@@ -173,14 +172,14 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '10.207.18.16'
-                web_ui_port: 4040
+                ip_address: '192.168.0.1'
+                web_ui_port: 80
                 admin_password: '12345678'
                 security: WPA
                 ssid: 'Dlink-10-207-18-11'
                 passphrase: 'thisisatestnetwo11'
                 supports: 'wifi_ap'
-                channel: 11
+                channel: 1
 
 
     # This represents another access point configuration.
@@ -198,19 +197,19 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.static'
-                ssid: "Savage-Test"
+                ssid: "abdul123"
                 security: 'WPA2'
                 channel: 11
-                passphrase: 'F6E49FCE'
+                passphrase: '12345678'
                 switch: 'pdu_switch'
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '192.168.1.4'
+                hostname: '10.207.18.112'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 1
+                outlet: 8
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -233,8 +232,8 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                #interface: 'wlan0'
-                interface: 'eth0'
+                interface: 'wlan0'
+                #interface: 'eth0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -243,7 +242,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.15
+                remote: 192.168.0.152
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -255,7 +254,7 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
-                ip_address: '10.207.18.15'
+                ip_address: '192.168.0.152'
 
     raspi_ble_client:
         interfaces:
@@ -304,6 +303,11 @@ devices:
                 type: 'bluetooth.pybluez'
                 shell: 'linux_shell'
 
+    ip_socket_factory:
+        interfaces:
+            socket:
+                type: 'socket.ip_socket_factory'
+
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
     secondary_raspi_bt_client:
@@ -315,7 +319,7 @@ devices:
                 ip_address: '192.168.1.142'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
-                password: ',lpmkonji'
+                password: 'raspberry'
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -372,7 +376,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.1.154'
+                ip_address: '192.168.1.154'       #configure secondary Rpi rd_1 IP address
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -504,7 +508,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'eth0'
+                interface: 'wlan0'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -514,16 +518,31 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'eth0'
+                interface: 'wlan0'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    raspi_lighttpd_tls_dut:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 443
+                interface: 'eth0'
+                tls_enabled: true
+                tls_key: 'server-key.pem'
+                tls_certificate: 'server-cert.pem'
+                tls_ca_chain: 'ca-cert.pem'
+
     raspi_http_client:
         interfaces:
             http:
                 type: 'http.client.requests_client'
+                disable_certificate_verification: True
 
     static_http:
         interfaces:
@@ -560,7 +579,7 @@ devices:
                 username: 'test'
                 password: 'test123'
 
-    keysight_power_analyzer_instrument:
+    keysight_power_analyzer:
         interfaces:
             power_meter:
                 type: 'power_meter.keysight_N6705'
@@ -586,11 +605,11 @@ devices:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
-                timeout: 1
+                timeout: 120000
             wcf_file_transfer_service: 
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
-                timeout: 1
+                timeout: 120000
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
                 power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
@@ -686,6 +705,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_iperf:
         interfaces:
@@ -702,7 +722,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "192.168.1.5"
+                host_ip: "192.168.0.152"
                 host_username: "pi"
                 host_password: "raspberry"
 
@@ -759,7 +779,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'static_ap'
+    wifi_access_point: 'switched_ap'
 
     # To connect the multiple access points
     wifi_access_points:
@@ -802,6 +822,9 @@ defaults:
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
     multicast_client: 'raspi_multicast'
+    remote_socket_factory: "ip_socket_factory"
+
+    switch: 'switched_ap'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -818,6 +841,13 @@ defaults:
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
 
+        pll_mode: 0
+        rf_type: 1
+        wireless_mode: 0
+        enable_ppp: 0
+        afe_type: 1
+        features_enable: 0
+
     wiseconnect_web: 'wiseconnect_web'
 
     net_perf_client: 'raspi_iperf'
@@ -830,6 +860,8 @@ defaults:
         ssid: 'TESTTESTTEST'
         passphrase: 'thisisatestnetwork'
         channel: 1
+        capture_screenshot: false
+        screenshot_file_name: 'wiseconnect_screenshot'
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
@@ -844,14 +876,20 @@ defaults:
         db_value: 2
         att_enable: true
 
+    sntp_server:
+        server_ip: '10.8.4.11'
+
     aws_iot:
-        hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
+        hostname: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
         port: 8883
         client_id: "Python-Thing"
         thing_name: "Python-Thing"
-        certfile: "python-thing-certificate.pem.crt"
-        keyfile: "python-thing-private.pem.key"
-        cafile: "AWS-IoT-root-CA.crt"
+        certfile: "client-certificate.crt"
+        keyfile: "private-key.key"
+        cafile: "start_field.pem"
+
+    aws_server:
+        domain_name: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
 
     ftp_server: 'raspi_ftp_server'
 
@@ -907,8 +945,8 @@ defaults:
         scope_scope_save_as: 'UTF_Scope_'
         scope_trigger_mode: 'Auto'
         scope_trigger_source: 'ScopeRunButton'
-        log_file_path: "C:\\UTF\utf_windows_service\\Logs\\"
-    
+        log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
+
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
