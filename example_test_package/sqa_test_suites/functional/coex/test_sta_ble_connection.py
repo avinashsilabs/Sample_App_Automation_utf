@@ -535,71 +535,70 @@ def test_threading_selective_channels_2_4_C20208(wifi_dut, wifi_access_point, wi
      scan_obj.wait_for_exit()
      ble_obj.wait_for_exit()
 
-#
-# pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#
-#     @  "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-#         "tcpip_features":  RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.Default
-#         | RS9116TCPIPFeatureBitMap.SSL,
-#         "custom_features": RS9116CustomFeatureBitMap.Default,
-#         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-#         "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
-#         "band": 0
-#     }
-# )
-# @pytest.mark.dut("rs9116_sapi")
-# @pytest.mark.http_server("raspi_lighttpd")
-# @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
-# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# def test_threading_httpgetfunctionality_ble_C20339(wifi_dut, wifi_access_point, http_server, index_path, wifi_sniffer, ble_client):
-#     ble_mode = "ble_slave"
-#     httpget_obj = httpgetThread(wifi_dut, wifi_access_point, http_server,  index_path, wifi_sniffer)
-#     ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
-#     ble_obj.start()
-#     httpget_obj.start()
-#     ble_obj.wait_for_exit()
-#     httpget_obj.wait_for_exit()
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-#         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-#         | RS9116TCPIPFeatureBitMap.SSL
-#         | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-#         | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-#         "custom_features": RS9116CustomFeatureBitMap.Default,
-#         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-#         "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
-#         "band": 0
-#     }
-# )
-# @pytest.mark.dut("rs9116_sapi")
-# @pytest.mark.http_server("raspi_lighttpd")
-# @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
-# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# def test_threading_httppostfunctionality_ble_C20236(wifi_dut, wifi_access_point, http_server, index_path, wifi_sniffer, ble_client):
-#     ble_mode = "ble_slave"
-#     httppost_obj = httppostThread(wifi_dut, wifi_access_point, http_server,  index_path, wifi_sniffer)
-#     ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
-#     ble_obj.start()
-#     httppost_obj.start()
-#     ble_obj.wait_for_exit()
-#     httppost_obj.wait_for_exit()
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features":  RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "band": 0
+    }
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_threading_httpgetfunctionality_ble_C20339(wifi_dut, wifi_access_point, http_server, index_path, wifi_sniffer, ble_client):
+    ble_mode = "ble_slave"
+    httpget_obj = httpgetThread(wifi_dut, wifi_access_point, http_server,  index_path, wifi_sniffer)
+    ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
+    ble_obj.start()
+    httpget_obj.start()
+    ble_obj.wait_for_exit()
+    httpget_obj.wait_for_exit()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+        | RS9116TCPIPFeatureBitMap.SSL
+        | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+        | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "band": 0
+    }
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_threading_httppostfunctionality_ble_C20236(wifi_dut, wifi_access_point, http_server, index_path, wifi_sniffer, ble_client):
+    ble_mode = "ble_slave"
+    httppost_obj = httppostThread(wifi_dut, wifi_access_point, http_server,  index_path, wifi_sniffer)
+    ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
+    ble_obj.start()
+    httppost_obj.start()
+    ble_obj.wait_for_exit()
+    httppost_obj.wait_for_exit()
 
 @pytest.mark.config(
      "wifi_dut",
