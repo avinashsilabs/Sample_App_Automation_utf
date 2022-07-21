@@ -1569,102 +1569,94 @@ void rsi_bt_get_services_command(sl_cli_command_arg_t *arguments){
     int32_t status = rsi_bt_get_services_async((uint8_t *)remote_bond_dev_addr, &bt_resp_query_services);
     print_status(status);
 }
+
 void rsi_bt_per_tx_command(sl_cli_command_arg_t *arguments){
 
-rsi_bt_tx_per_params_t bt_per_tx;
+    rsi_bt_tx_per_params_t bt_per_tx;
 
-bt_per_tx.cmd_id = sl_cli_get_argument_uint8(arguments, 0);
-bt_per_tx.transmit_enable = sl_cli_get_argument_uint8(arguments, 1);
-char* address = sl_cli_get_argument_string(arguments, 2);
-for (int i=0; i<6; i++) {
-        int val;
-        sscanf(address + 3 * i, "%02X", &val);
-        bt_per_tx.device_Addr[i] = (uint8_t)val;
-}
-char* temp = sl_cli_get_argument_string(arguments, 3);
-for(int i = 0;i<2;i++){
-        int val;
-        sscanf(temp + 3 * i, "%02X", &val);
-        bt_per_tx.pkt_len[i] = (uint8_t)val;
+    bt_per_tx.cmd_id = sl_cli_get_argument_uint8(arguments, 0);
+    bt_per_tx.transmit_enable = sl_cli_get_argument_uint8(arguments, 1);
+    char* address = sl_cli_get_argument_string(arguments, 2);
+    for (int i=0; i<6; i++) {
+            int val;
+            sscanf(address + 3 * i, "%02X", &val);
+            bt_per_tx.device_Addr[i] = (uint8_t)val;
+    }
+    rsi_uint16_to_2bytes(bt_per_tx.pkt_len, sl_cli_get_argument_uint16(arguments, 3));
+    char* tmp = sl_cli_get_argument_string(arguments, 4);
 
-}
-bt_per_tx.pkt_type = sl_cli_get_argument_uint8(arguments, 4);
-bt_per_tx.br_edr_mode = sl_cli_get_argument_uint8(arguments, 5);
-bt_per_tx.rx_chnl_in = sl_cli_get_argument_uint8(arguments, 6);
-bt_per_tx.tx_chnl_in = sl_cli_get_argument_uint8(arguments, 7);
-bt_per_tx.link_type = sl_cli_get_argument_uint8(arguments, 8);
-bt_per_tx.scrambler_seed = sl_cli_get_argument_uint8(arguments, 9);
-bt_per_tx.hopping_type = sl_cli_get_argument_uint8(arguments, 10);
-bt_per_tx.ant_sel = sl_cli_get_argument_uint8(arguments, 11);
-bt_per_tx.pll_mode = sl_cli_get_argument_uint8(arguments, 12);
-bt_per_tx.rf_type = sl_cli_get_argument_uint8(arguments, 13);
-bt_per_tx.rf_chain = sl_cli_get_argument_uint8(arguments, 14);
-bt_per_tx.payload_type = sl_cli_get_argument_uint8(arguments, 15);
-bt_per_tx.tx_power = sl_cli_get_argument_uint8(arguments, 16);
-bt_per_tx.transmit_mode = sl_cli_get_argument_uint8(arguments, 17);
-bt_per_tx.inter_pkt_gap = sl_cli_get_argument_uint8(arguments, 18);
-char* num_packets = sl_cli_get_argument_string(arguments, 19);
-for(int i = 0; i<4 ;i++){
-        int val;
-        sscanf(temp + 3 * i, "%02X", &val);
-        bt_per_tx.no_of_packets[i] = (uint8_t)val;
-}
-int32_t status = rsi_bt_per_tx((uint32_t *)&bt_per_tx);
-print_status(status);
+    sscanf(tmp, "%03d", &bt_per_tx.pkt_type);
+    sscanf(tmp+4, "%03d", &bt_per_tx.br_edr_mode);
+    sscanf(tmp+8, "%03d", &bt_per_tx.rx_chnl_in);
+    sscanf(tmp+12, "%03d", &bt_per_tx.tx_chnl_in);
+    sscanf(tmp+16, "%03d", &bt_per_tx.link_type);
+    char* tmp1 = sl_cli_get_argument_string(arguments, 5);
+    sscanf(tmp1, "%03d", &bt_per_tx.scrambler_seed);
+    sscanf(tmp1+4, "%03d", &bt_per_tx.hopping_type);
+    sscanf(tmp1+4, "%03d", &bt_per_tx.ant_sel);
+    sscanf(tmp1+4, "%03d", &bt_per_tx.pll_mode);
+    sscanf(tmp1+4, "%03d", &bt_per_tx.rf_type);
+
+    bt_per_tx.rf_chain = sl_cli_get_argument_uint8(arguments, 6);
+    bt_per_tx.payload_type = sl_cli_get_argument_uint8(arguments, 7);
+    bt_per_tx.tx_power = sl_cli_get_argument_uint8(arguments, 8);
+    bt_per_tx.transmit_mode = sl_cli_get_argument_uint8(arguments, 9);
+    bt_per_tx.inter_pkt_gap = sl_cli_get_argument_uint8(arguments, 10);
+    rsi_uint32_to_4bytes(bt_per_tx.no_of_packets, sl_cli_get_argument_uint32(arguments, 11));
+
+    int32_t status = rsi_bt_per_tx((uint32_t *)&bt_per_tx);
+    print_status(status);
 }
 
 void rsi_bt_per_rx_command(sl_cli_command_arg_t *arguments){
 
-rsi_bt_rx_per_params_t bt_per_rx;
+    rsi_bt_rx_per_params_t bt_per_rx;
+    bt_per_rx.cmd_id = sl_cli_get_argument_uint8(arguments, 0);
+    bt_per_rx.receive_enable = sl_cli_get_argument_uint8(arguments, 1);
+    char* address = sl_cli_get_argument_string(arguments, 2);
+     for (int i=0; i<6; i++) {
+            int val;
+            sscanf(address + 3 * i, "%02X", &val);
+            bt_per_rx.device_Addr[i] = (uint8_t)val;
+        }
+    rsi_uint16_to_2bytes(bt_per_rx.pkt_len, sl_cli_get_argument_uint16(arguments, 3));
+    bt_per_rx.pkt_type = sl_cli_get_argument_uint8(arguments, 4);
+    bt_per_rx.br_edr_mode = sl_cli_get_argument_uint8(arguments, 5);
+    bt_per_rx.rx_chnl_in = sl_cli_get_argument_uint8(arguments, 6);
+    bt_per_rx.tx_chnl_in = sl_cli_get_argument_uint8(arguments, 7);
+    bt_per_rx.link_type = sl_cli_get_argument_uint8(arguments, 8);
+    bt_per_rx.scrambler_seed = sl_cli_get_argument_uint8(arguments, 9);
+    bt_per_rx.hopping_type = sl_cli_get_argument_uint8(arguments, 10);
 
-bt_per_rx.cmd_id = sl_cli_get_argument_uint8(arguments, 0);
-bt_per_rx.receive_enable = sl_cli_get_argument_uint8(arguments, 1);
-char* address = sl_cli_get_argument_string(arguments, 2);
- for (int i=0; i<6; i++) {
-        int val;
-        sscanf(address + 3 * i, "%02X", &val);
-        bt_per_rx.device_Addr[i] = (uint8_t)val;
-    }
-char* temp = sl_cli_get_argument_string(arguments, 3);
-for(int i = 0;i<2;i++){
-        int val;
-        sscanf(temp + 3 * i, "%02X", &val);
-        bt_per_rx.pkt_len[i] = (uint8_t)val;
+    char* tmp = sl_cli_get_argument_string(arguments, 11);
 
-   }
-bt_per_rx.pkt_type = sl_cli_get_argument_uint8(arguments, 4);
-bt_per_rx.br_edr_mode = sl_cli_get_argument_uint8(arguments, 5);
-bt_per_rx.rx_chnl_in = sl_cli_get_argument_uint8(arguments, 6);
-bt_per_rx.tx_chnl_in = sl_cli_get_argument_uint8(arguments, 7);
-bt_per_rx.link_type = sl_cli_get_argument_uint8(arguments, 8);
-bt_per_rx.scrambler_seed = sl_cli_get_argument_uint8(arguments, 9);
-bt_per_rx.hopping_type = sl_cli_get_argument_uint8(arguments, 10);
-bt_per_rx.ant_sel = sl_cli_get_argument_uint8(arguments, 11);
-bt_per_rx.pll_mode = sl_cli_get_argument_uint8(arguments, 12);
-bt_per_rx.rf_type = sl_cli_get_argument_uint8(arguments, 13);
-bt_per_rx.rf_chain = sl_cli_get_argument_uint8(arguments, 14);
-bt_per_rx.loop_back_mode = sl_cli_get_argument_uint8(arguments, 15);
+    sscanf(tmp, "%03d", &bt_per_rx.ant_sel);
+    sscanf(tmp+4, "%03d", &bt_per_rx.pll_mode);
+    sscanf(tmp+8, "%03d", &bt_per_rx.rf_type);
+    sscanf(tmp+12, "%03d", &bt_per_rx.rf_chain);
+    sscanf(tmp+16, "%03d", &bt_per_rx.loop_back_mode);
 
-int32_t status = rsi_bt_per_rx((uint32_t *)&bt_per_rx);
-print_status(status);
+    int32_t status = rsi_bt_per_rx((uint32_t *)&bt_per_rx);
+    print_status(status);
 }
 
 void rsi_bt_per_stats_command(sl_cli_command_arg_t *arguments){
-
-  uint8_t cmd_type = sl_cli_get_argument_uint8(arguments, 0);
-  rsi_bt_per_stats_t temp;
-  temp.crc_fail_cnt = sl_cli_get_argument_uint16(arguments, 1);
-  temp.crc_pass_cnt = sl_cli_get_argument_uint16(arguments,2);
-  temp.tx_abort_cnt = sl_cli_get_argument_uint16(arguments, 3);
-  temp.rx_drop_cnt = sl_cli_get_argument_uint16(arguments, 4);
-  temp.rx_cca_idle_cnt = sl_cli_get_argument_uint16(arguments, 5);
-  temp.rx_start_idle_cnt = sl_cli_get_argument_uint16(arguments, 6);
-  temp.rx_abrt_cnt = sl_cli_get_argument_uint16(arguments, 7);
-  temp.tx_dones = sl_cli_get_argument_uint16(arguments, 8);
-  temp.rssi = sl_cli_get_argument_int8(arguments, 9);
-  temp.id_pkts_rcvd = sl_cli_get_argument_int8(arguments, 10);
-  int32_t status = rsi_bt_per_stats(cmd_type, &temp);
-  print_status(status);
+    uint8_t cmd_type = sl_cli_get_argument_uint8(arguments, 0);
+    rsi_bt_per_stats_t bt_rcv_stats;
+    int32_t status = rsi_bt_per_stats(cmd_type, &bt_rcv_stats);
+    printf("crc_fail_count:%d,crc_pass_cnt:%d,tx_abort_cnt:%d,rx_drop_cnt:%d,rx_cca_idle_cnt:%d,rx_start_idle_cnt:%d\
+    rx_abrt_cnt:%d,tx_dones:%d,rssi:%d,id_pkts_rcvd:%d\
+    \n",bt_rcv_stats.crc_fail_cnt,\
+    bt_rcv_stats.crc_pass_cnt,\
+    bt_rcv_stats.tx_abort_cnt,\
+    bt_rcv_stats.rx_drop_cnt,\
+    bt_rcv_stats.rx_cca_idle_cnt,\
+    bt_rcv_stats.rx_start_idle_cnt,\
+    bt_rcv_stats.rx_abrt_cnt,\
+    bt_rcv_stats.tx_dones,\
+    bt_rcv_stats.rssi,\
+    bt_rcv_stats.id_pkts_rcvd);
+    print_status(status);
 }
 
 /*********** END OF HANDLERS *******************/
