@@ -2186,3 +2186,45 @@ template_contribution:
     help: request the local device for bt per operation
     argument:
     - {type: uint8, help: cmd_type}
+
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_per_tx
+    handler: rsi_ble_per_tx_command
+    help: configure the per transmit parameters
+    argument:
+    - {type: uint8, help: cmd_ix}
+    - {type: uint8, help: transmit_enable}
+    - {type: uint32, help: access_addr}
+    - {type: uint8, help: phy_rate}
+    - {type: string, help: Multiple arguments bundled together}
+    - {type: string, help: Multiple arguments bundled together}
+    - {type: uint16, help: pkt_len}
+    - {type: uint8, help: payload_type}
+    - {type: uint8, help: tx_power}
+    - {type: uint8, help: transmit_mode}
+    - {type: uint8, help: inter_pkt_gap}
+    - {type: uint32, help: num_pkts}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ble_per_rx
+    handler: rsi_ble_per_rx_command
+    help: configure the per receive parameters
+    argument:
+    - {type: uint8, help: cmd_ix}
+    - {type: uint8, help: receive_enable}
+    - {type: uint32, help: access_addr}
+    - {type: uint8, help: phy_rate}
+    - {type: string, help: Multiple arguments bundled together}
+    - {type: uint8, help: ant_sel}
+    - {type: uint8, help: pll_mode}
+    - {type: uint8, help: rf_type}
+    - {type: uint8, help: rf_chain}
+    - {type: uint8, help: ext_data_len_indication}
+    - {type: uint8, help: loop_back_mode}
+    - {type: uint8, help: duty_cycling_en}
+
