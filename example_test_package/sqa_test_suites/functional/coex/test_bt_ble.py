@@ -9,7 +9,6 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116CustomFeatureBitMap, \
     RS9116BTFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ConfigFeatureBitMap
 from utf.interfaces.bluetooth import BLEDeviceState
-from utf.interfaces.bluetooth.bluetooth_interface import (BTRole, BTProfile, BTEvents, )
 
 
 def logger():
@@ -56,7 +55,8 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         logger().info("Initiating power save on DUT")
         if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
             wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-            wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            assert enable_bt_ps, "failed to enable bt power save"
             logger().info("DUT is on power save mode")
 
         # Send data from bt_client to dut
@@ -93,7 +93,8 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         logger().info("Initiating power save on DUT")
         if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
             wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-            wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            assert enable_bt_ps, "failed to enable bt power save"
 
         logger().info("Setting DUT as bt_master....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
@@ -116,7 +117,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             logger().info(f"DUT Initiating bt connection with SLAVE device, this can take some time....")
             wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=120)
-            assert addr == bt_dut_address
+            assert addr == bt_dut_address, f"BT DUT Address not found"
         logger().info(f"DUT: '{bt_dut_address}' Successfully connected to bt_client: '{bt_client_address}'")
 
         # Send data from bt_client to dut
@@ -222,23 +223,13 @@ def ble_disconnect(wifi_dut, ble_client_address):
 
 
 def check_connection_status(wifi_dut):
-    # logger().info("Checking connection status of BT")
-    # events = wifi_dut.interfaces.wifi.get_async_events()
-    # disconnect_events = [event for event in events if event.event_type == BTEvents.RSIBT_SPPDISCONNECTED]
-    # count_disconnect = set()
-    # if len(count_disconnect):
-    #     count_disconnect.add(str(disconnect_events[0]))
-    #     logger().info("Disconnect Events:{count_disconnect}")
-    #     assert False, "DUT is disconnected from BT"
-    # logger().info("DUT is not disconnected from BT")
-
     rsi_bt_on_spp_disconnect = False
     rsi_bt_on_disconn_event = False
     events = wifi_dut.interfaces.wifi.get_async_events()
     logger().info(f"printing the events '{events}'")
     if len(events):
         for event in events:
-            logger().info(f"*********printing the event type ************{event.event_type}")
+            logger().info(f"printing the event type {event.event_type}")
             if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_SPP_DISCONN:
                 rsi_bt_on_spp_disconnect = True
             if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_DISCONNECTED:
@@ -291,7 +282,6 @@ def connect_disconnect_bt(wifi_dut, bt_client, bt_address, bt_dut_address, iter_
 
 
 # Verify BT_BLE functionality when BT and BLE in SLAVE mode
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -369,7 +359,6 @@ def test_bt_ble_connection_with_bt_ble_as_master_C19994(wifi_dut, bt_client, ble
 
 # Verify BT_BLE functionality when BT in SLAVE mode, BLE in DUAL_ROLE
 # Minimum three raspberry pi required for the test connection
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -402,7 +391,8 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble
     logger().info("Initiating power save on DUT")
     if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        assert enable_bt_ps, "failed to enable bt power save"
 
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
@@ -418,7 +408,6 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble
 
 
 # Verify connection stability of RSI_BT and RSI_BLE with remote devices
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -457,7 +446,6 @@ def test_bt_ble_connection_stability_C19996(wifi_dut, bt_client, ble_client):
     check_connection_status(wifi_dut)
 
 
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -505,9 +493,7 @@ def test_BT_SPP_Tx_Rx_BLE_connectivity_C19997(wifi_dut, bt_client, ble_client):
     logger().info("Successfully pinged to DUT from bt_client")
 
 
-#######################################NEXT5########################################
 # Verify the DUAL_MODE functionality if BT_BLE while all the devices are connected and data transfer is in progress
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -546,7 +532,6 @@ def test_bt_ble_connection_with_dual_mode_functionality_C19998(wifi_dut, bt_clie
     ble_disconnect(wifi_dut, ble_address)
 
 # BT connect and disconnect while BLE is in connection
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -587,7 +572,6 @@ def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(wifi_dut, bt_clie
 
 
 # Verify BLE connect and disconnect multiple times while BT are connected with remote devices and data transfer is in progress
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -627,7 +611,6 @@ def test_bt_ble_connection_with_ble_connect_disconnect_C20000(wifi_dut, bt_clien
 
 
 # Verify Power save 2 functionality of DUT when configured in STA_BT_BLE mode. Check if connectivity and data transfer is functional.
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -658,9 +641,8 @@ def test_bt_ble_connection_with_powersave_mode2_C20001(wifi_dut, bt_client, ble_
 
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
     # Initiating power save2
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    result = wifi_dut.interfaces.wifi.power_save(2, 0)
-    assert result is not None
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(3)
 
     logger().info("Checking connection status of BT, BLE")
@@ -702,7 +684,8 @@ def test_dual_role_functionality_of_BLE_BT_in_connection_C20002(wifi_dut, bt_cli
     logger().info("Initiating power save on DUT")
     if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        assert enable_bt_ps, "failed to enable bt power save"
 
     ble_mode = "ble_master"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
