@@ -28,7 +28,8 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.container_name: "wifitest_1",
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
-            UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch()
+            UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch(),
+            UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu:02_28_2022",
         }
 
 
