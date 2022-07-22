@@ -418,6 +418,7 @@ def test_wifi_https_server_erase_cert_TC19237(wifi_sniffer, wifi_dut, wifi_acces
 def test_wifi_http_server_timeout_TC19239(remote_socket_factory, wifi_sniffer, wifi_dut, wifi_access_point, http_server,
                                           http_client, logger, timeout):
     bssid = wifi_access_point.interfaces.wifi.bssid
+    bssid = bssid.strip()
     logger.info(f'AP BSSID = {bssid}')
     capture_filename = "test_wifi_http_server_timeout_TC19239"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -440,24 +441,17 @@ def test_wifi_http_server_timeout_TC19239(remote_socket_factory, wifi_sniffer, w
 
         assert 0, (f"TCP packets are not captured or one of the 4-way handshake pkts are not captured in the "
                    f"sniffer file")
-    logger.info(f"tcp pkt list {tcp_pkt_list}")
-    for count in tcp_pkt_list:
-        logger.info(f"actual tcp payload {count[0]}")
-        logger.info("##############################################")
-        logger.info(f"mac address of the  {count[1]}")
-        logger.info("##############################################")
-        logger.info(f"timestmp         {count[2]}")
-        logger.info("##############################################")
-
     conn_syn_pkt = 0
     conn_fin_pkt = 0
+    bssid = bssid.lower()
     for count in tcp_pkt_list:
         if (count[1] == bssid) and ("Syn: Set" in count[0]):
-            connection_est_time = count[2]
+            connection_est_time = float(count[2])
             conn_syn_pkt = 1
         if (count[1] == dut_mac_address) and ("Fin: Set" in count[0]):
-            connection_close_time = count[2]
+            connection_close_time = float(count[2])
             conn_fin_pkt = 1
+
     assert conn_syn_pkt == 1, f"TCP SYN-PKT is not received from remote http client or pkt is not captured in sniffer"
     assert conn_fin_pkt == 1, f"TCP FYN-ACK-PKT is not sent by DUT or the pkt is not captured in sniffer"
 
@@ -524,7 +518,8 @@ def test_wifi_http_server_handle_multiple_clients_TC19240(remote_socket_factory,
         with open(webpage, "w") as recv:
             recv.write(resp_content.decode())
     except:
-        logger.info("DUT is not responding to http get request initiated by remote device which is expected")
+        logger.info("DUT is not responding to second http get request initiated by remote device when first "
+                    "http-request at DUT is pending, which is expected behavior")
     time.sleep(100)
     count = count + 1
     logger.info(f"Sending http get request from third party client to DUT {count + 1} time")
