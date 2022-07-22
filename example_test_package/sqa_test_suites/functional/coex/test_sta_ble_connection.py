@@ -17,7 +17,7 @@ from utf_wiseconnect.devices.rs911x import (
     SocketType,
     Cipher,
     DeviceConstants,
-    RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap
+    RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap, RS9116PowerSaveProcedureTypes
 )
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.thread_base import ThreadBase
@@ -115,7 +115,7 @@ class BleThread_connection(ThreadBase):
               logger().info(f"connect")
               self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
               logger().info(f"fetching the connection status after 60 secs of sleep")
-              time.sleep(60)
+              time.sleep(100)
               logger().info(f"Get the state of the dut")
               state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
               state_int = int(state) if state.isdigit() else -1
@@ -141,6 +141,12 @@ class ScanThread(ThreadBase):
         self.select_channel_all = select_channel_all
 
     def run(self):
+        logger().info("Setting DUT in wlan power save...")
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8,
+                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+        logger().info("Setting DUT in bt power save...")
+        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
         logger().info(f"thread for scan functionality")
         channel_bitmap_2_4 = 0
         channel_bitmap_5 = 0
@@ -173,14 +179,6 @@ class ScanThread(ThreadBase):
                 logger().info(f"Fetches the DUT mac address")
                 dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
                 logger().info(f"Device mac address: {dut_mac_address}")
-                logger().info("Setting DUT in wlan power save...")
-                self.wifi_dut.interfaces.wifi.power_save(
-                        RS9116PowerSaveModes.PowerSaveMode8, 1
-                    )
-                logger().info("Setting DUT in bt power save...")
-                self.wifi_dut.interfaces.wifi.bt_power_save(
-                        RS9116PowerSaveModes.PowerSaveMode8, 1
-                    )
                 logger().info(
                         f"enables the scan in DUT with the given channel bitmap value"
                     )
@@ -458,6 +456,12 @@ class WifiDeeppowersave(ThreadBase):
 
 
     def run(self):
+        logger().info("Setting DUT in wlan power save...")
+        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8,
+                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+        logger().info("Setting DUT in bt power save...")
+        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
         validation = True
 
         logger().info("configuring the Sniffer with the channel")
@@ -468,12 +472,7 @@ class WifiDeeppowersave(ThreadBase):
         logger().info(f"use the corresponding hex file when using gpio and msg based")
         logger().info(f"this thread is used for wifi join")
         with TimeMeasurer() as t:
-          logger().info("enabling wifi power save")
-          enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(8, 1)
-          assert enable_wifi_ps, 'failed to enable'
-          logger().info("enabling bt power save")
-          enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(8, 1)
-          assert enable_bt_ps, 'failed to enable'
+
           logger().info(f"Scan for the AP's")
           ap_mac = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=self.wifi_access_point.interfaces.wifi.channel)
           ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
@@ -521,6 +520,7 @@ class WifiDeeppowersave(ThreadBase):
  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_selective_channels_2_4_C20208(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
      select_channel_all = False
@@ -529,12 +529,14 @@ def test_threading_selective_channels_2_4_C20208(wifi_dut, wifi_access_point, wi
      ble_mode = "ble_slave"
      scan_obj = ScanThread(wifi_dut, wifi_access_point, wifi_sniffer, channel_2_4_list, channel_5_list, select_channel_all)
      ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
-     ble_obj.start()
      scan_obj.start()
-     ble_obj.wait_for_exit()
+     time.sleep(1)
+     ble_obj.start()
      scan_obj.wait_for_exit()
+     ble_obj.wait_for_exit()
 
-@pytest.mark.config(
+
+pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -615,12 +617,14 @@ def test_threading_httppostfunctionality_ble_C20236(wifi_dut, wifi_access_point,
  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_threading_sta_deeppowersave_ble_C20274(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     wifidp_obj = WifiDeeppowersave(wifi_dut, wifi_access_point, wifi_sniffer)
     ble_obj = BleThread_connection(wifi_dut, ble_client, ble_mode)
-    ble_obj.start()
     wifidp_obj.start()
-    ble_obj.wait_for_exit()
+    time.sleep(1)
+    ble_obj.start()
     wifidp_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
