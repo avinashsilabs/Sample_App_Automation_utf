@@ -2169,3 +2169,17 @@ template_contribution:
     argument:
     - {type: uint8, help: config threshold value}
     - {type: uint16, help: rsi threshold value}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit

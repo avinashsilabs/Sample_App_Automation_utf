@@ -2187,3 +2187,17 @@ template_contribution:
     - {type: uint8, help: type}
     - {type: uint8, help: gain_2g}
     - {type: uint8, help: gain_5g}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit

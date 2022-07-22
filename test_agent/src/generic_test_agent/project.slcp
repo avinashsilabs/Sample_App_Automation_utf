@@ -2302,3 +2302,17 @@ template_contribution:
     - {type: uint8, help: ext_data_len_indication}
     - {type: uint8, help: loop_back_mode}
     - {type: uint8, help: duty_cycling_en}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit
