@@ -339,6 +339,16 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
                 dest_addr=bt_dut_address
             )
 
+            logger().info("enabling power save after bt connection...")
+            if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
+                bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
+                bt_dut.interfaces.bluetooth.power_save(
+                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+                )
+                bt_dut.interfaces.bluetooth.bt_power_save(
+                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+                )
+
             logger().info("disconnecting bt host....")
             bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
 
@@ -366,18 +376,6 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert not connected, "expected connection failure in non connectable mode but dut is able to connect"
             logger().info("Expected connection failure in non connectable mode")
-            logger().info("closing bt socket...")
-            bt_server_socket.close()
-
-        logger().info("enabling power save after bt connection...")
-        if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
-            bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
-            bt_dut.interfaces.bluetooth.power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-            )
-            bt_dut.interfaces.bluetooth.bt_power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-            )
 
         status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
         logger().info(f"connectable state is:{status}")
