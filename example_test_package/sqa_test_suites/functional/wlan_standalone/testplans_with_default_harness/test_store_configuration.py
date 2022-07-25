@@ -1139,8 +1139,11 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
             time_diff = probe_packets_time_delta_list[i]
             logger().info(f"time diff between packets {int(float(time_diff))}")
             logger().info(f"diff between seq numbers {diff_seq_list[i]}")
-            logger().info(f"min : {int(time_delta) * diff_seq_list[i]} and max : {(int(time_delta+0.2 * diff_seq_list[i]) + 1)}")
-            is_between = int(float(time_diff)) in range((int(time_delta) * diff_seq_list[i]),(int(time_delta+0.2 * diff_seq_list[i]) + 1))
+            logger().info(f"min : {int(time_delta) * diff_seq_list[i]} and max : "
+                          f"{((int(time_delta)+0.2) * (diff_seq_list[i]))}")
+
+            is_between =int(float(time_diff)) in range(int((int(time_delta) * diff_seq_list[i])-1),
+                                                        int((int(time_delta)+0.2) * diff_seq_list[i])+1)
             if is_between is False:
                 logger().info(is_between)
                 status = is_between
