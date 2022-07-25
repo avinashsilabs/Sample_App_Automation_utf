@@ -976,11 +976,13 @@ def test_https_post_functionality_port10_C19227_case1(wifi_sniffer, http_server,
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps,"failed to enable wifi power save"
 
     logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps,"failed to enable bt power save"
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
@@ -1055,11 +1057,13 @@ def test_https_post_functionality_port200_C19227_case2(wifi_sniffer, http_server
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps,"failed to enable wifi power save"
 
     logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps,"failed to enable bt power save"
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
@@ -1134,11 +1138,13 @@ def test_https_post_functionality_port2000_C19227_case3(wifi_sniffer, http_serve
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps,"failed to enable wifi power save"
 
     logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps,"failed to enable bt power save"
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
@@ -1213,11 +1219,13 @@ def test_https_post_functionality_port20000_C19227_case4(wifi_sniffer, http_serv
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps,"failed to enable wifi power save"
 
     logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps,"failed to enable bt power save"
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
@@ -1292,11 +1300,13 @@ def test_https_post_functionality_port443_C19227_case5(wifi_sniffer, http_server
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps,"failed to enable wifi power save"
 
     logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps,"failed to enable bt power save"
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
