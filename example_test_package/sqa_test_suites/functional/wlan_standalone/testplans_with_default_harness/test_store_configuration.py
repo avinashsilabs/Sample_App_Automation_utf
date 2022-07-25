@@ -10,6 +10,9 @@ from utf.utils.logger import get_logger
 # from utf.interfaces.wifi import WlanError
 from utf.interfaces.cli import CLITransportException
 from utf.utils.iperf.iperf_utils import print_dict
+from utf.interfaces.wifi import WlanError
+from utf.utils import mac_address_to_string
+
 
 
 """
@@ -153,7 +156,7 @@ class wifi_join():
                 self.wifi_dut.interfaces.wifi.associated = False
                 logger().info("joining to the AP")
                 # DUT connects to AP after join_ap API is executed
-                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,timeout=40)
                 return True
             except Exception as e:
                 if "Error code: 0x2" in str(e):
@@ -2304,6 +2307,7 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point,wifi_clie
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678',"broadcast_ssid": False})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -2372,7 +2376,7 @@ def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wi
 
         time.sleep(2)
         # logger().info("Initiating wireless init")
-        wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
+        wifi_dut.interfaces.wifi.wireless_init(oper_mode=2, coex_mode=9)
         # wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9)
         time.sleep(20)
         wifi_dut.interfaces.wifi.associated = True
@@ -2451,6 +2455,7 @@ def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wi
  #EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, wifi_dut):
 
@@ -2519,7 +2524,7 @@ def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, w
 
             time.sleep(2)
             # logger().info("Initiating wireless init")
-            wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
+            wifi_dut.interfaces.wifi.wireless_init(oper_mode=2, coex_mode=9)
             # wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9)
             time.sleep(20)
             wifi_dut.interfaces.wifi.associated = True
@@ -2558,6 +2563,360 @@ def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, w
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
                                                                   packet_filter1)['packet_count'], \
             'Sniffer validation failed for NULL data frame with PM bit 1'
+
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+            clean_up.dut_recovery()
+        clean_up.disconnect()
+        raise e
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        #| RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        #"eap_cert": "wifi-user.pem"
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+ #EAP Connection in TTLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point, wifi_dut):
+
+    try:
+        testcase = "test_store_config_error_handling_TTLS_C19083"
+        validation = True
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        ap_user_name = "\\\"user1\\\""
+        ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
+        dut_ssid = wifi_access_point.interfaces.wifi.ssid
+        dut_security = wifi_access_point.interfaces.wifi.security
+
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+
+        logger().info("Setting roam parameters")
+        # enable Roaming
+        wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=60, roaming_hysterisis=4)
+
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
+        logger().info(scan_results)
+
+        logger().info("enable rejoin")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+        # test_wifi_join
+        wifi_dut.interfaces.wifi.eap_method(eap_method="TTLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"", private_key="\"\"")
+        result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
+        # Get IP through DHCP
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+        logger().info(f"Found device ip :{device_ip}")
+
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        logger().info("Enable Auto Configuration")
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+
+        wifi_access_point.interfaces.wifi.start_ap(passphrase="test123")
+
+        for i in range(0,iter_count):
+
+            logger().info("Initiating wireless de init")
+            # deinit
+            logger().info("Instead of reset need to add  wireless de init")
+            wifi_dut.interfaces.wifi.reset_soft()
+
+            time.sleep(2)
+            with pytest.raises(CLITransportException) as ex:
+                logger().info("Initializing the DUT")
+                wifi_dut.interfaces.wifi.wireless_init(oper_mode=2, coex_mode=9, retries=0)
+                assert ("Error Code : 0x48" or "Error Code : 0x49" or "Error Code : 0x8") in str(ex), "Wrong error code found"
+            time.sleep(20)
+            wifi_dut.interfaces.wifi.associated = False
+
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+
+        logger().info("stopping capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+            clean_up.dut_recovery()
+        clean_up.disconnect()
+        raise e
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+        | RS9116FeatureBitMap.OpenMode,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.TriggerAutoConfiguration,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        #"first_time_retry": 0,
+        }
+    )
+@pytest.mark.dut("rs9116")
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
+@pytest.mark.end_state("wifi_dut",
+                      wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+
+def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point, wifi_dut):
+
+    try:
+        testcase = "test_store_config_custom_feat_bit_20_C19091"
+        validation = True
+
+        wifi_dut.interfaces.wifi.reset_mode = "hard"
+        wifi_dut.interfaces.wifi.reset()
+        wifi_dut.interfaces.wifi.init()
+
+        logger().info("joining to the AP")
+        # DUT connects to AP after join_ap API is executed
+        join_obj = wifi_join(wifi_dut, wifi_access_point)
+        assert join_obj.join_to_ap(), "Join failed"
+
+        logger().info("Getting the IP")
+        # DUT gets ipaddress through DHCP process after start_ip API is executed
+        ip_address = wifi_dut.interfaces.wifi.start_ip()
+        # The below api parses DUTs IP address
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
+        logger().info(f"Found device ip : {device_ip}")
+
+        bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {bssid}")
+
+        logger().info("Getting the DUT mac")
+        dut_mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        # Ping to dut from third party device
+        status = ping(device_ip, ping_count)
+        assert status == True, "DUT is not responding to ping request from third party device before store configuration"
+
+        logger().info("Enable Auto Configuration")
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+
+
+        for i in range(0,iter_count):
+
+            logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
+
+            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}")
+
+            logger().info("Initiating wireless de init")
+
+            wifi_dut.interfaces.wifi.reset_mode = "soft"
+            #deinit
+            logger().info("Instead of reset need to add  wireless de init")
+            wifi_dut.interfaces.wifi.reset_soft()
+            #wifi_dut.interfaces.wifi.wireless_deinit()
+            time.sleep(2)
+
+            wifi_dut.interfaces.wifi.chip_init()
+            time.sleep(10)
+
+            logger().info("stopping the capture")
+            # Stop Sniffer
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+            packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) or (eapol) or (wlan.fc.type_subtype == 0x000b)'\
+                             f'or (wlan.fc.type_subtype == 0x0004)) and (wlan.addr == {dut_mac_address})'
+
+            logger().info(
+                f"join packets : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']}")
+            assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+                 'Join procedure should not start until auto trigger enabled'
+
+            wifi_dut.interfaces.wifi.config_auto_tigger()
+
+            time.sleep(30)
+            wifi_dut.interfaces.wifi.associated = True
+
+            logger().info("Initiating ping")
+            # Ping to dut from third party device
+            status = ping(device_ip, ping_count)
+            assert status == True, "DUT is not responding to ping request from third party device after store configuration"
+            time.sleep(5)
+            logger().info("Ping successful")
+
+            logger().info("Initiating disconnect from DUT")
+            wifi_dut.interfaces.wifi.leave()
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+            clean_up.dut_recovery()
+        clean_up.disconnect()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
+        | RS9116FeatureBitMap.OpenMode,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.TriggerAutoConfiguration,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        #"first_time_retry": 0,
+        }
+    )
+@pytest.mark.dut("rs9116")
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
+@pytest.mark.end_state("wifi_dut",
+                      wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+
+def test_store_config_custom_feat_bit_20_C19092(wifi_sniffer, wifi_access_point, wifi_dut):
+
+    try:
+        testcase = "test_store_config_custom_feat_bit_20_C19092"
+        validation = True
+        logger().info("joining to the AP")
+        wifi_dut.interfaces.wifi.reset_mode = "hard"
+        wifi_dut.interfaces.wifi.reset()
+        wifi_dut.interfaces.wifi.init()
+        # DUT connects to AP after join_ap API is executed
+        join_obj = wifi_join(wifi_dut, wifi_access_point)
+        assert join_obj.join_to_ap(), "Join failed"
+
+        logger().info("Getting the IP")
+        # DUT gets ipaddress through DHCP process after start_ip API is executed
+        ip_address = wifi_dut.interfaces.wifi.start_ip()
+        # The below api parses DUTs IP address
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
+        logger().info(f"Found device ip : {device_ip}")
+
+        bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {bssid}")
+
+        logger().info("Getting the DUT mac")
+        dut_mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        # Ping to dut from third party device
+        status = ping(device_ip, ping_count)
+        assert status == True, "DUT is not responding to ping request from third party device before store configuration"
+
+        logger().info("Enable Auto Configuration")
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+
+        logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
+
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}")
+
+        logger().info("Initiating wireless de init")
+        #deinit
+        logger().info("Instead of reset need to add  wireless de init")
+        wifi_dut.interfaces.wifi.reset_mode = "soft"
+        wifi_dut.interfaces.wifi.reset_soft()
+        time.sleep(2)
+
+        logger().info("stopping the capture")
+        # Stop Sniffer
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) or (eapol) or (wlan.fc.type_subtype == 0x000b)'\
+                         f'or (wlan.fc.type_subtype == 0x0004)) and (wlan.addr == {dut_mac_address})'
+
+        logger().info(
+            f"join packets : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']}")
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+             'Join procedure should not start until auto trigger enabled'
+
+        wifi_dut.interfaces.wifi.associated = False
+
+        wifi_dut.interfaces.wifi.init()
+
+        logger().info("joining to the AP")
+        # DUT connects to AP after join_ap API is executed
+        join_obj = wifi_join(wifi_dut, wifi_access_point)
+        assert join_obj.join_to_ap(), "Join failed"
+
+        logger().info("Initiating disconnect from DUT")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
