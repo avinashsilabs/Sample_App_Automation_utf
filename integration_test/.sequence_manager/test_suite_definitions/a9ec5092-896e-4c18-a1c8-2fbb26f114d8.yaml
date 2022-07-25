@@ -1,0 +1,6 @@
+id: a9ec5092-896e-4c18-a1c8-2fbb26f114d8
+name: websocket
+description: ''
+test_cases:
+  - test_case_id: 40a1fec3f61d75d9333daa4a6975d321a107dbef
+    iterations: 1

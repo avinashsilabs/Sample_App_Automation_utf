@@ -27,7 +27,7 @@ pipeline {
                 HWMUX_GROUP_LABEL = "utf_wifi_integration_smoke_test"
                 HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_2_hwmux_group.json"
                 HARNESS_NAME= "__hwmux__integration_tests_2.yaml"
-                TEST_CONFIG_FILE = "integration_tests_sequence_2.yaml"
+                TEST_CONFIG_FILE = ".sequence_manager/test_execution_definitions/integration_test_2.yaml"
             }
             stages {
                 stage('Setup Environment') {
