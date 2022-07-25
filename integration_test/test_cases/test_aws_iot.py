@@ -27,7 +27,8 @@ pytestmark = [
     ),
 ]
 
-def test_python_client(wifi_access_point, aws_iot_dut):
+@pytest.mark.firmware_app("test_aws")
+def test_python_client(firmware_loader, wifi_access_point, aws_iot_dut):
     topic_1 = "sdk/test/Python"
     topic_2 = "sdk/test/java"
     aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
@@ -49,7 +50,8 @@ def test_python_client(wifi_access_point, aws_iot_dut):
     aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
 
 
-def test_aws_device_shadow(wifi_access_point, aws_iot_dut):
+@pytest.mark.firmware_app("test_aws")
+def test_aws_device_shadow(firmware_loader, wifi_access_point, aws_iot_dut):
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
     time.sleep(2)
     shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[

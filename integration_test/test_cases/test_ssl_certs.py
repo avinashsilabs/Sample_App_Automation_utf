@@ -25,7 +25,8 @@ pytestmark = [
     (RS9116CertificateType.SSLCACertificate, 'ca-cert-with-crlf.pem')
 ])
 def test_cert_load(wifi_dut, cert_type, cert_filename):
+    cert_type_val = cert_type if type(cert_type) == int else eval(cert_type)
     wifi_dut.interfaces.wifi.set_ssl_certificate(
-        eval(cert_type),
+        cert_type_val,
         os.path.join(get_tls_certificate_dir(), cert_filename),
     )

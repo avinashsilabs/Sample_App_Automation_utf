@@ -59,42 +59,6 @@ def logger():
 """
 
 
-class IopTcpIpSockets:
-    def open_socket(self, wifi_dut, dut_ip) -> int:
-        tcp_socket_id = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        if isinstance(tcp_socket_id, int):
-            logger().info(f"Socket open successfully : {tcp_socket_id}")
-        else:
-            logger().error(f"Unable to open socket id: {tcp_socket_id}")
-            raise RuntimeError(tcp_socket_id)
-
-        time.sleep(2)
-        bind_response = wifi_dut.interfaces.wifi.bind(tcp_socket_id, dut_ip)
-        if bind_response.decode().split(">")[1].replace("'", '').strip() == 'success':
-            logger().info(f"Bind socket successfully: {bind_response}")
-        else:
-            logger().error(f"Unable to bind socket: {bind_response}")
-            raise RuntimeError(bind_response)
-        return tcp_socket_id
-
-    def connect_socket(self, wifi_dut, tcp_socket_id: int):
-        retry_limit: int = 2
-        connect_status = False
-        for retry in range(1, retry_limit):
-            connect_response = wifi_dut.interfaces.wifi.connect(tcp_socket_id)
-            logger().info(f"Connect response : {connect_response}")
-            if connect_response.decode() == '':
-                logger().info(f"Unable to connect socket: {connect_response} in {retry} try")
-                if retry < retry_limit:
-                    pass
-            elif connect_response.decode().split(">")[1].strip() == 'success':
-                logger().info(f"Socket connected successfully in {retry} try")
-                connect_status = True
-                break
-            logger().info(f"Socket connected with server in: {retry + 1} time")
-        return connect_status
-
-
 class FilterPacket:
     def get_association_id(self):
         # This function will parse the pacap file and find & return the association id
@@ -158,7 +122,7 @@ class FilterPacket:
                     sniffer_dict[frame_num] = 'PS-Poll'
                 if packet_filter_data.strip() == line.strip():
                     sniffer_dict[frame_num] = 'Data'
-        logger().info("---------Printing sniffer parse dictionary------------\n")
+        # logger().info("---------Printing sniffer parse dictionary------------\n")
         # logger().info(sniffer_dict)
         return sniffer_dict
 
@@ -313,17 +277,18 @@ class FilterPacket:
                 sniffer_dict[frame_num] = 'Qos Data'
 
         filter_file.close()
-        logger().info("---------Printing sniffer parse dictionary------------\n")
-        logger().info(sniffer_dict)
+        # logger().info("---------Printing sniffer parse dictionary------------\n")
+        # logger().info(sniffer_dict)
         return sniffer_dict
 
-    def validate_packet_for_dtim_beacon(self, sniffer_dict, dtim_wake_up):
+    def validate_packet_for_dtim_beacon(self, sniffer_dict, dtim_count):
         dtim1_status = False
         dtim0_status = False
         dtim_beacon_status = False
         ps_poll_status = False
         data_status = False
         status = {'wake_up_validation': True, 'sequence': False}
+        dtim_wake_neg = []
         data_key = 0
         ps_poll_key = 0
         dtim1_key = 0
@@ -342,14 +307,20 @@ class FilterPacket:
                 if (int(key) == int(dtim1_key) + 1) and (dtim1_status is True):
                     dtim0_key = key
                     dtim0_status = True
-                    if counter < dtim_wake_up:
-                        counter = counter + 1
+                    counter = counter + 1
 
             # Note-> DTIM beacon means DTIM count = 0 & association id = 0x01
-            if (value == 'DTIM_Beacon') and (key == dtim0_key + 'A') and (counter == dtim_wake_up):
+            if (value == 'DTIM_Beacon') and (key == dtim0_key + 'A') and (counter == dtim_count):
                 dtim_beacon_key = key
                 dtim_beacon_status = True
                 match_key = dtim_beacon_key.split('A')[0]
+                logger().info(dtim_beacon_key)
+                counter = 0
+            elif (value == 'DTIM_Beacon') and (key == dtim0_key + 'A') and (counter != dtim_count):
+                counter = 0
+                logger().info(key)
+                logger().info('Unable to wake up at specified DTIM interval')
+                dtim_wake_neg.append(key)
 
             if value == 'PS-Poll':
                 if int(key) == int(match_key) + 1:
@@ -382,12 +353,6 @@ class FilterPacket:
                 logger().info(f'Beacon+DTIM1 = {dtim1_key}, Beacon+DTIM0 = {dtim0_key}')
                 dtim1_status = False
                 dtim0_status = False
-                # if counter < 5:
-                #     logger().info(f'Beacon+DTIM1 = {dtim1_key}, Beacon+DTIM0 = {dtim0_key}')
-                #     dtim1_status = False
-                #     dtim0_status = False
-                # else:
-                #     pass
 
             if (dtim_beacon_status is True) and (ps_poll_status is True) and (data_status is True):
                 logger().info(f'DTIM Beacon = {dtim_beacon_key}, PS-Poll = {ps_poll_key}, Qos Data = {data_key}\n\n')
@@ -396,7 +361,10 @@ class FilterPacket:
                 data_status = False
                 counter = 0
                 status['sequence'] = True
-        if status:
+
+        status['dtim_wakeup_packet_list'] = dtim_wake_neg
+        logger().info(f'\n\n {status}')
+        if status['sequence']:
             logger().info("------------------Expected packet sequence found--------------")
             return status
         else:
@@ -425,7 +393,7 @@ class FilterPacket:
                 sniffer_dict[frame_num] = 'PS-Poll'
             if packet_filter_data.strip() == line.strip():
                 sniffer_dict[frame_num] = 'Data'
-        logger().info("---------Printing sniffer parse dictionary------------\n")
+        # logger().info("---------Printing sniffer parse dictionary------------\n")
         filter_file.close()
         return sniffer_dict
 
@@ -879,7 +847,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     assoc_obj = FilterPacket()
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
-    dtim_wake_up = 5
+    dtim_skip = 5
     ping_count = 50
 
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
@@ -893,7 +861,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C40150')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=4)
+                                                  number_of_dtim_skip=dtim_skip-1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -963,8 +931,17 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_wake_up)
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_skip)
     assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
+
+    if len(status['dtim_wakeup_packet_list']):
+        logger().info(f'\n\n STA wake up in another DTIM interval, expected is {dtim_skip}th DTIM beacon')
+        logger().info('\n\n Please check the wakeup DTIM interval list........\n')
+        logger().info(status['dtim_wakeup_packet_list'])
+        assert False
+    else:
+        logger().info(f'STA wake up as expected {dtim_skip} DTIM beacon interval')
+        assert True
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_more_data()
@@ -1394,7 +1371,7 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    dtim_wake_up = 4
+    dtim_skip = 4
     dtim_beacon_obj = FilterPacket()
     assoc_obj = FilterPacket()
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
@@ -1413,7 +1390,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=3)
+                                                  number_of_dtim_skip=dtim_skip-1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1474,8 +1451,17 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
     logger().info('-----------Validation for 4th DTIM beacon sequence----------------\n\n')
-    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_wake_up)
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_skip)
     assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
+
+    if len(status['dtim_wakeup_packet_list']):
+        logger().info(f'\n\n STA wake up in another DTIM interval, expected is {dtim_skip}th DTIM beacon')
+        logger().info('\n\n Please check the wakeup DTIM interval list........\n')
+        logger().info(status['dtim_wakeup_packet_list'])
+        assert False
+    else:
+        logger().info(f'STA wake up as expected {dtim_skip} DTIM beacon interval')
+        assert True
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_more_data()
@@ -1899,7 +1885,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
 )
 def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
-    dtim_wake_up = 5
+    dtim_skip = 5
     dtim_beacon_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
     ping_count = 50
@@ -1916,7 +1902,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='dtim_powersave3_C40164')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=4)
+                                                  number_of_dtim_skip=dtim_skip-1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1970,8 +1956,17 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
     logger().info('-----------Validation for 5th DTIM beacon sequence----------------\n\n')
-    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_wake_up)
+    status = dtim_beacon_obj.validate_packet_for_dtim_beacon(sniffer_dict, dtim_skip)
     assert all(status.values()), 'No sequence found for sniffer packets 5th DTIM beacon-> Ps-Poll-> Data'
+
+    if len(status['dtim_wakeup_packet_list']):
+        logger().info(f'\n\n STA wake up in another DTIM interval, expected is {dtim_skip}th DTIM beacon')
+        logger().info('\n\n Please check the wakeup DTIM interval list........\n')
+        logger().info(status['dtim_wakeup_packet_list'])
+        assert False
+    else:
+        logger().info(f'STA wake up as expected {dtim_skip}th DTIM beacon interval')
+        assert True
 
     logger().info('-----------Parse the sniffer packet and store in dictionary for more data bit----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_more_data()

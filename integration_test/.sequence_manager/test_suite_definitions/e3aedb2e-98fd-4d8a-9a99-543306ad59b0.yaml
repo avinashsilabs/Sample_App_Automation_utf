@@ -1,0 +1,12 @@
+id: e3aedb2e-98fd-4d8a-9a99-543306ad59b0
+name: dlink810_ap
+description: ''
+test_cases:
+  - test_case_id: 82eb20f1-e6c9-4182-80fa-6b218e0ee7ff
+    iterations: 1
+  - test_case_id: 15f0966f-bcef-419b-b479-7f6476ff9740
+    iterations: 1
+  - test_case_id: 90d4593e-0edd-4a4d-b437-e890e4dc12e8
+    iterations: 1
+  - test_case_id: d9e3aec4-f7f5-4663-99c2-4ad313c5f7ae
+    iterations: 1
