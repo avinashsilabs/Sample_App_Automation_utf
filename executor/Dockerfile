@@ -10,6 +10,7 @@ USER root
 RUN apt update
 RUN useradd -p $(openssl passwd -1 ftpuser) ftpuser
 RUN sudo apt install -y vsftpd
+RUN sudo apt-get install freeradius  -y
 USER dockerUser
 
 #################################################
