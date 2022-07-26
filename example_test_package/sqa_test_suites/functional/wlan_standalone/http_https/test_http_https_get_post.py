@@ -922,3 +922,63 @@ def test_http_get_func_host_name_with_udp_C19216(http_server, wifi_dut, http_cli
     logger().info(content)
     logger().info(f"******************* iteration {count} completed ********************* ")
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+                          | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ca_cert": "ca-chain.cert.pem"
+    }
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_http_get_with_no_httpserver_enabled_C19210(http_server, http_client, wifi_dut, wifi_access_point, index_path):
+    logger().info("scan for the devices")
+    scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
+    assert scan_results, "scan failure, No ap found"
+
+    # Joins the access point with given ssid and the passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("start dhcp in dut")
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    # Enables the wifi power save in dut
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    http_server.interfaces.http.stop_server()
+    http_server.interfaces.http.tls_enabled = False
+    http_server.interfaces.http.start_server()
+    http_server.interfaces.http.tls_enabled = True
+
+    logger().info("fetching https data using get method")
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
+    assert exc_info.value.error_code == 0xBBD2, "observed wrong error code expected is 0xBBD2"
