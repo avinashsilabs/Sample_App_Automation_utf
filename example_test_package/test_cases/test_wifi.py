@@ -19,7 +19,8 @@ pytestmark = [
                                                        TestResultsModelAttrs.test_creation_date: '2022-06-06',
                                                        TestResultsModelAttrs.module_name: 'wifi',
                                                        TestResultsModelAttrs.test_description: 'module desc',
-                                                       TestResultsModelAttrs.iot_req_id: 'UTF-1194',
+                                                       TestResultsModelAttrs.iot_req_id: 'IOTREQ-1194',
+                                                       TestResultsModelAttrs.tool_chain: 'tool_chain',
                                                        TestResultsModelAttrs.engineer_name: 'Hidayathulla'})
 ]
 
