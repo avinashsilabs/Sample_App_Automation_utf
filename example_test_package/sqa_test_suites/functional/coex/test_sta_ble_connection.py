@@ -172,23 +172,26 @@ class ScanThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.start_capture(
                         capture_file='sta scan + ble connection as a slave_selective_channels_2_4'
                     )
-                self.wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
-                                                 scan_interval=4,
-                                                 beacon_missedcount=40,
-                                                 first_time_retry=0)
+                # self.wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
+                #                                  scan_interval=4,
+                #                                  beacon_missedcount=40,
+                #                                  first_time_retry=0)
                 logger().info(f"Fetches the DUT mac address")
                 dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
                 logger().info(f"Device mac address: {dut_mac_address}")
                 logger().info(
                         f"enables the scan in DUT with the given channel bitmap value"
                     )
-                ap_mac = self.wifi_dut.interfaces.wifi.scan_selective_channel(
+                with TimeMeasurer() as t:
+                  ap_mac = self.wifi_dut.interfaces.wifi.scan_selective_channel(
                         channel=0,
                         ssid=None,
                         scan_bitmap_2_4=channel_bitmap_2_4,
                         scan_feature=scan_feature_extend,
-                    )
-                logger().info(ap_mac)
+                     )
+                  logger().info(ap_mac)
+                logger().info(f"Scan in {t.duration} seconds")
+                assert (t.duration < 0.6)
                 assert len(ap_mac) >= 1
                 channel_selected = 0
                 for count in ap_mac:
@@ -515,6 +518,10 @@ class WifiDeeppowersave(ThreadBase):
          "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
          "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
          "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+         "rejoin_max_retry": 0,
+         "scan_interval": 4,
+         "beacon_missed_count": 40,
+         "first_time_retry": 0,
          "band": 0,
      },
  )
