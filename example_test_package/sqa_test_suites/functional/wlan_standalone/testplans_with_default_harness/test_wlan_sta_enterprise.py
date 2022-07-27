@@ -118,7 +118,7 @@ class sniffer_validation_process:
                 f"Validating EAP failure frame in sniffer"
             )
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)[
-                'packet_count'], 'Unable to find EAP faliure frames sent from AP in sniffer '
+                'packet_count'], 'Unable to find EAP failure frames sent from AP in sniffer '
 
 
         if self.conn_status:
@@ -139,7 +139,7 @@ class sniffer_validation_process:
 
 
             logger().info(
-                f"Validating EAP frames in sniffer"
+                f"Validating EAP frames for the method EAP {self.eap_type} in sniffer"
             )
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8)[
                 'packet_count'], 'Unable to find EAP frames sent from AP in sniffer '
@@ -170,13 +170,9 @@ class sniffer_validation_process:
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
@@ -273,13 +269,10 @@ def test_connectivity_in_WPA2_EAP_TLS_C19018(wifi_sniffer, wifi_dut, wifi_access
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
+        | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
@@ -373,13 +366,10 @@ def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_acces
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
+        | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
@@ -474,13 +464,10 @@ def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_acc
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
+        | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
@@ -554,14 +541,11 @@ def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022(wifi_sniffer, wifi_dut
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode
+        "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
         | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
@@ -637,14 +621,11 @@ def test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023(wifi_sniffer, w
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode
+        "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
         | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
@@ -773,11 +754,9 @@ def test_connectivity_with_WPA2_EAP_with_valid_and_expired_cert_TLS_C19025(wifi_
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
+        | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
         | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
@@ -850,13 +829,10 @@ def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
+        | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.TLS_V1,
         "band": 0,
@@ -941,13 +917,13 @@ def test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027(wifi_sniffer, wifi_access_poi
     verify_sniffer.verify_sniffer_validation()
 
     # Validating the EAP failure frames
-    packet_filter9 = f'eap || tls.record.version == 0x0301'
+    packet_filter9 = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} and eap and tls.record.version == 0x0301'
 
     logger().info(
         f"Validating EAP frames TLS version in sniffer"
     )
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)[
-        'packet_count'], 'Unable to find EAP frames with TLS version 0 sent'
+        'packet_count'], 'Unable to find EAP frames with TLS version 1.0 sent'
 
 
 @pytest.mark.config(
@@ -959,14 +935,10 @@ def test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027(wifi_sniffer, wifi_access_poi
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints
         | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
