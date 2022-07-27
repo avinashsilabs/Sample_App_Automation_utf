@@ -315,6 +315,7 @@ def test_bt_ble_connection_with_bt_ble_as_slave_C19993(wifi_dut, bt_client, ble_
     logger().info(f"ble_dut_address: '{ble_dut_address}'")
 
     logger().info("Checking connection status of BT, BLE")
+    time.sleep(60)
     check_connection_status(wifi_dut)
 
     logger().info("Initiating BT reset on DUT")
@@ -352,6 +353,7 @@ def test_bt_ble_connection_with_bt_ble_as_master_C19994(wifi_dut, bt_client, ble
     ble_master_slave(wifi_dut, ble_client, ble_mode)
 
     logger().info("Checking connection status of BT, BLE")
+    time.sleep(60)
     check_connection_status(wifi_dut)
 
     wifi_dut.interfaces.wifi.bt_deinit()
@@ -404,6 +406,7 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble
     ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address)
 
     logger().info("Checking connection status of BT, BLE")
+    time.sleep(60)
     check_connection_status(wifi_dut)
 
 
@@ -475,6 +478,9 @@ def test_BT_SPP_Tx_Rx_BLE_connectivity_C19997(wifi_dut, bt_client, ble_client):
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"ble_address: '{ble_address}'")
 
+    time.sleep(60)
+    check_connection_status(wifi_dut)
+
     send_text = text_generator()
 
     # Send data from dut to bt_client
@@ -522,7 +528,8 @@ def test_bt_ble_connection_with_dual_mode_functionality_C19998(wifi_dut, bt_clie
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
-    logger().info("Checking connection status of BT, BLE,")
+    logger().info("Checking connection status of BT, BLE")
+    time.sleep(60)
     check_connection_status(wifi_dut)
 
     logger().info("Initiating BT disconnection on DUT")
@@ -559,6 +566,10 @@ def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(wifi_dut, bt_clie
     ble_mode = "ble_master"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
+
+    logger().info("Checking connection status of BT, BLE,")
+    time.sleep(60)
+    check_connection_status(wifi_dut)
 
     logger().info("Pinging to DUT from bt_client")
     assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address, count=10)
@@ -599,6 +610,10 @@ def test_bt_ble_connection_with_ble_connect_disconnect_C20000(wifi_dut, bt_clien
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
+
+    logger().info("Checking connection status of BT, BLE")
+    time.sleep(60)
+    check_connection_status(wifi_dut)
 
     logger().info("Initiating BLE connection and disconnection for 5 iterations")
     connect_disconnect_ble(wifi_dut, ble_client, ble_address, iter_count=5)
@@ -696,4 +711,5 @@ def test_dual_role_functionality_of_BLE_BT_in_connection_C20002(wifi_dut, bt_cli
     ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address)
 
     logger().info("Checking connection status of BT, BLE")
+    time.sleep(60)
     check_connection_status(wifi_dut)
