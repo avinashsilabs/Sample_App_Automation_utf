@@ -19,7 +19,7 @@ from utf.interfaces.cli import CLITransportException
 
 
 
-ping_count = 10
+ping_count = 60
 iter_count = 5
 
 def logger():
