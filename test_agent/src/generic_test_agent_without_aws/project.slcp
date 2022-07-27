@@ -2241,3 +2241,16 @@ template_contribution:
     name: wlan_radio_deinit
     handler: rsi_wlan_radio_deinit_command
     help: wifi radio deinit
+
+- name: cli_command
+  priority: 0
+  value:
+    name: bt_sniff_mode
+    handler: rsi_bt_sniff_mode_command
+    help: To set bt sniff mode
+    argument:
+    - {type: string, help: remote bd address }
+    - {type: uint16, help: sniff max interval}
+    - {type: uint16, help: sniff min interval}
+    - {type: uint16, help: sniff attempt}
+    - {type: uint16, help: sniff tout}
