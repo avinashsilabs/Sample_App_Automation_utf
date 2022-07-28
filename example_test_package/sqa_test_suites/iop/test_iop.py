@@ -81,6 +81,7 @@ class IopTcpIpSockets:
         return connect_status
 
 
+@pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -198,7 +199,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
         logger().info(f"Total execution time of test case = {exact_execution_time}")
     wifi_networked_dut_with_sniffer.interfaces.wifi.leave()
 
-
+@pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -316,143 +317,146 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
         exact_execution_time = end_time - start_time
         logger().info(f"Total execution time of test case = {exact_execution_time}")
 
-# Feature enhancement to be done..
-# pytestmark = [
-#     pytest.mark.framework_integration_test,
-#     pytest.mark.wifi_access_point("static_ap"),
-#     pytest.mark.dut("rs9116_sapi"),
-#     pytest.mark.config(
-#         "wifi_dut",
-#         wifi={
-#             "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-#             | RS9116TCPIPFeatureBitMap.SSL
-#             | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-#             | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-#             # Note that SSL cert bypass is required to avoid SSL handshake error.
-#             # It is unclear if this is a bug in the AWS SAPI network wrapper
-#             # or in the 9116 firmware
-#             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.SSLCertBypass,
-#             "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
-#                 OpenMode | RS9116FeatureBitMap.PSKSecurity,
-#             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
-#                 EnahanceMaxPsp,
-#             "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
-#         },
-#     ),
-# ]
-# @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
-#     topic_1 = "IOP_AWS_Shadow"
-#
-#     """ Start time for long duration and send messages """
-#     end_time = datetime.now() + timedelta(hours=12)
-#     start_time = datetime.now()
-#     try:
-#         wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
-#         aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
-#         time.sleep(2)
-#
-#         """Applying Max power save """
-#         logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-#         wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
-#
-#         shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-#             RS9116AsyncEventType.AWSIoTMQTTMessage
-#         ]
-#         time.sleep(2)
-#         aws_iot_dut.interfaces.aws_iot.aws_iot_subscribe(topic_1, 0)
-#         time.sleep(4)
-#         while 1:
-#             if datetime.now() >= end_time:
-#                 aws_iot_dut.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
-#                 time.sleep(2)
-#                 aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
-#                 break
-#             aws_iot_dut.interfaces.aws_iot.aws_iot_publish(
-#                 topic_1, '{"message": "Message from RS9611"}', 0
-#             )
-#             shadow_update_accepted_event_queue.get(timeout=10)
-#             time.sleep(55)
-#
-#     except (QueueEmpty, Empty):
-#         assert False, "Did not receive an expected shadow update accepted event"
-#     finally:
-#         end_time = datetime.now()
-#         exact_execution_time = end_time - start_time
-#         logger().info(f"Total execution time of test case = {exact_execution_time}")
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#         logger().info("Stop Sniffer finally")
-#
-#
-# pytestmark = [
-#     pytest.mark.framework_integration_test,
-#     pytest.mark.wifi_access_point("static_ap"),
-#     pytest.mark.dut("rs9116_sapi"),
-#     pytest.mark.config(
-#         "wifi_dut",
-#         wifi={
-#             "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-#             | RS9116TCPIPFeatureBitMap.SSL
-#             | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-#             | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-#             # Note that SSL cert bypass is required to avoid SSL handshake error.
-#             # It is unclear if this is a bug in the AWS SAPI network wrapper
-#             # or in the 9116 firmware
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#         "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
-#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-#         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
-#         },
-#     ),
-# ]
-# @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
-#     topic_1 = "IOP_AWS_Shadow"
-#
-#     """ Start time for long duration and send messages """
-#     end_time = datetime.now() + timedelta(hours=12)
-#     start_time = datetime.now()
-#     try:
-#         wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
-#         aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
-#         time.sleep(2)
-#
-#         """Applying Max power save """
-#         logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-#         wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
-#         wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
-#             power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-#         )
-#
-#         shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-#             RS9116AsyncEventType.AWSIoTMQTTMessage
-#         ]
-#         time.sleep(2)
-#         aws_iot_dut.interfaces.aws_iot.aws_iot_subscribe(topic_1, 0)
-#         time.sleep(4)
-#         while 1:
-#             if datetime.now() >= end_time:
-#                 aws_iot_dut.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
-#                 time.sleep(2)
-#                 aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
-#                 break
-#             aws_iot_dut.interfaces.aws_iot.aws_iot_publish(
-#                 topic_1, '{"message": "Message from RS9611"}', 0
-#             )
-#             shadow_update_accepted_event_queue.get(timeout=10)
-#             time.sleep(55)
-#
-#     except (QueueEmpty, Empty):
-#         assert False, "Did not receive an expected shadow update accepted event"
-#     finally:
-#         end_time = datetime.now()
-#         exact_execution_time = end_time - start_time
-#         logger().info(f"Total execution time of test case = {exact_execution_time}")
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#         logger().info("Stop Sniffer finally")
+
+#Feature enhancement to be done..
+pytestmark = [
+    pytest.mark.framework_integration_test,
+    pytest.mark.wifi_access_point("static_ap"),
+    pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+            | RS9116TCPIPFeatureBitMap.SSL
+            | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+            | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+            # Note that SSL cert bypass is required to avoid SSL handshake error.
+            # It is unclear if this is a bug in the AWS SAPI network wrapper
+            # or in the 9116 firmware
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.SSLCertBypass,
+            "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
+                OpenMode | RS9116FeatureBitMap.PSKSecurity,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+                EnahanceMaxPsp,
+            "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        },
+    ),
+]
+@pytest.mark.skip
+@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+    topic_1 = "IOP_AWS_Shadow"
+
+    """ Start time for long duration and send messages """
+    end_time = datetime.now() + timedelta(hours=12)
+    start_time = datetime.now()
+    try:
+        wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+        aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
+        time.sleep(2)
+
+        """Applying Max power save """
+        logger().info(f"*****Enable Enhanced Max Power save in DUT******")
+        wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
+
+        shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+            RS9116AsyncEventType.AWSIoTMQTTMessage
+        ]
+        time.sleep(2)
+        aws_iot_dut.interfaces.aws_iot.aws_iot_subscribe(topic_1, 0)
+        time.sleep(4)
+        while 1:
+            if datetime.now() >= end_time:
+                aws_iot_dut.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
+                time.sleep(2)
+                aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
+                break
+            aws_iot_dut.interfaces.aws_iot.aws_iot_publish(
+                topic_1, '{"message": "Message from RS9611"}', 0
+            )
+            shadow_update_accepted_event_queue.get(timeout=10)
+            time.sleep(55)
+
+    except (QueueEmpty, Empty):
+        assert False, "Did not receive an expected shadow update accepted event"
+    finally:
+        end_time = datetime.now()
+        exact_execution_time = end_time - start_time
+        logger().info(f"Total execution time of test case = {exact_execution_time}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+
+
+pytestmark = [
+    pytest.mark.framework_integration_test,
+    pytest.mark.wifi_access_point("static_ap"),
+    pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+            | RS9116TCPIPFeatureBitMap.SSL
+            | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+            | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+            # Note that SSL cert bypass is required to avoid SSL handshake error.
+            # It is unclear if this is a bug in the AWS SAPI network wrapper
+            # or in the 9116 firmware
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        },
+    ),
+]
+@pytest.mark.skip
+@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+    topic_1 = "IOP_AWS_Shadow"
+
+    """ Start time for long duration and send messages """
+    end_time = datetime.now() + timedelta(hours=12)
+    start_time = datetime.now()
+    try:
+        wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+        aws_iot_dut.interfaces.aws_iot.aws_iot_connect()
+        time.sleep(2)
+
+        """Applying Max power save """
+        logger().info(f"*****Enable Enhanced Max Power save in DUT******")
+        wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
+        wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
+            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+        )
+
+        shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+            RS9116AsyncEventType.AWSIoTMQTTMessage
+        ]
+        time.sleep(2)
+        aws_iot_dut.interfaces.aws_iot.aws_iot_subscribe(topic_1, 0)
+        time.sleep(4)
+        while 1:
+            if datetime.now() >= end_time:
+                aws_iot_dut.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
+                time.sleep(2)
+                aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
+                break
+            aws_iot_dut.interfaces.aws_iot.aws_iot_publish(
+                topic_1, '{"message": "Message from RS9611"}', 0
+            )
+            shadow_update_accepted_event_queue.get(timeout=10)
+            time.sleep(55)
+
+    except (QueueEmpty, Empty):
+        assert False, "Did not receive an expected shadow update accepted event"
+    finally:
+        end_time = datetime.now()
+        exact_execution_time = end_time - start_time
+        logger().info(f"Total execution time of test case = {exact_execution_time}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
 
 
 pytestmark = [
