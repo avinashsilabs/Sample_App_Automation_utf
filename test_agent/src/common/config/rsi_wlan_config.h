@@ -137,6 +137,18 @@ extern uint8_t g_enable_ppp;
 extern uint8_t g_afe_type;
 extern uint32_t g_features_enable;
 
+//globals for rsi_socket_config() apis, referenced in #defined below
+extern uint8_t g_total_sockets;
+extern uint8_t g_total_tcp_sockets;
+extern uint8_t g_total_udp_sockets;
+extern uint8_t g_tcp_tx_only_sockets;
+extern uint8_t g_tcp_rx_only_sockets;
+extern uint8_t g_udp_tx_only_sockets;
+extern uint8_t g_udp_rx_only_sockets;
+extern uint8_t g_tcp_rx_high_perfornamce_sockets;
+extern uint8_t g_tcp_rx_window_size_cap;
+extern uint8_t g_tcp_rx_window_div_factor;
+
 // Enable feature
 #define RSI_ENABLE 1
 // Disable feature
@@ -763,5 +775,17 @@ extern uint32_t g_features_enable;
 #define RSI_WMM_PS_UAPSD_BITMAP 15
 
 #define TX_WAIT_TIME  g_tx_wait_time
+
+#define TOTAL_SOCKETS g_total_sockets
+#define TOTAL_TCP_SOCKETS g_total_tcp_sockets
+#define TOTAL_UDP_SOCKETS g_total_udp_sockets
+#define TCP_TX_ONLY_SOCKETS g_tcp_tx_only_sockets
+#define TCP_RX_ONLY_SOCKETS g_tcp_rx_only_sockets
+#define UDP_TX_ONLY_SOCKETS g_udp_tx_only_sockets
+#define UDP_RX_ONLY_SOCKETS g_udp_rx_only_sockets
+#define TCP_RX_HIGH_PERFORMANCE_SOCKETS g_tcp_rx_high_perfornamce_sockets
+#define TCP_RX_WINDOW_SIZE_CAP   g_tcp_rx_window_size_cap
+#define TCP_RX_WINDOW_DIV_FACTOR   g_tcp_rx_window_div_factor
+
 
 

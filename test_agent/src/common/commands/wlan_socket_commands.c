@@ -21,6 +21,18 @@ rsi_fd_set except_fds;
 //global variable used in async_socket_select function
 uint8_t socket_select_response = 0;
 
+//global variable used in rsi_socket_config_command() function
+uint8_t g_total_sockets = 0;
+uint8_t g_total_tcp_sockets = 0;
+uint8_t g_total_udp_sockets = 0;
+uint8_t g_tcp_tx_only_sockets = 0;
+uint8_t g_tcp_rx_only_sockets = 0;
+uint8_t g_udp_tx_only_sockets = 0;
+uint8_t g_udp_rx_only_sockets = 0;
+uint8_t g_tcp_rx_high_perfornamce_sockets = 0;
+uint8_t g_tcp_rx_window_size_cap = 0;
+uint8_t g_tcp_rx_window_div_factor = 0;
+
 extern int read_variable(uint32_t nvm_key, uint8_t* buffer, size_t* length);
 extern uint8_t remote_terminate;
 
@@ -1468,3 +1480,316 @@ void rsi_web_socket_close_command(sl_cli_command_arg_t* arguments)
 	uint32_t socket_id = sl_cli_get_argument_uint32(arguments, 0);
 	print_status(rsi_web_socket_close(socket_id));
 }
+
+void rsi_socket_config_command(sl_cli_command_arg_t* arguments)
+{
+    uint8_t g_total_sockets = sl_cli_get_argument_int8(arguments, 0);
+    uint8_t g_total_tcp_sockets = sl_cli_get_argument_int8(arguments, 1);
+    uint8_t g_total_udp_sockets = sl_cli_get_argument_int8(arguments, 2);
+    uint8_t g_tcp_tx_only_sockets = sl_cli_get_argument_int8(arguments, 3);
+    uint8_t g_tcp_rx_only_sockets = sl_cli_get_argument_int8(arguments, 4);
+    uint8_t g_udp_tx_only_sockets = sl_cli_get_argument_int8(arguments, 5);
+    uint8_t g_udp_rx_only_sockets = sl_cli_get_argument_int8(arguments, 6);
+    uint8_t g_tcp_rx_high_perfornamce_sockets = sl_cli_get_argument_int8(arguments, 7);
+    uint8_t g_tcp_rx_window_size_cap = sl_cli_get_argument_int8(arguments, 8);
+    uint8_t g_tcp_rx_window_div_factor = sl_cli_get_argument_int8(arguments, 9);
+    uint32_t status = rsi_socket_config();
+    print_status(status);
+}
+
+#if HTTP_DOWNLOAD_ENABLE
+#define HTTPS_PORT                            443
+#define WIFI_DOWNLOAD_SIZE_MAX                4096
+#define MAX_HOSTNAME_SIZE                      200
+uint8_t txBufferRedpine[WIFI_DOWNLOAD_SIZE_MAX];
+uint8_t rxBufferRedpine[WIFI_DOWNLOAD_SIZE_MAX];
+uint32_t socketCloseStatus;
+#define WIFI_PLATFORM_STATUS_SOCKET_INVALID  0xAAA4
+
+#define WIFI_PLATFORM_STATUS_SOCKET_CLOSE_FAILURE 0xAAA5
+
+#define  WIFI_PLATFORM_STATUS_FAILURE  0xAAA1
+#define WIFI_PLATFORM_STATUS_SUCCESS 0
+#define WIFI_PLATFORM_STATUS_SOCKET_WRITE_FAILURE 0xAAA2
+#define WIFI_PLATFORM_STATUS_SOCKET_READ_FAILURE  0xAAA3
+#define RSI_HIGH_PERFORMANCE_SOCKET 1
+uint32_t wifiPlatformNetsCloseRedpine(int32_t skt)
+{
+    int16_t status = -1;
+    uint32_t returnStatus;
+    returnStatus = WIFI_PLATFORM_STATUS_SUCCESS;
+    if (skt < 0)
+    {
+        returnStatus = WIFI_PLATFORM_STATUS_SOCKET_INVALID;
+    }
+    else
+    {
+        status = rsi_shutdown(skt, 0);
+        if(status < 0)
+        {
+            returnStatus = WIFI_PLATFORM_STATUS_SOCKET_CLOSE_FAILURE;
+        }
+    }
+
+    return returnStatus;
+}
+
+uint32_t wifiPlatformNetReadRedpine(int32_t skt, void *buffer, int32_t numBytes,
+                                                int32_t *bytesRead)
+{
+    int32_t  status = -1;
+	uint32_t returnStatus;
+    returnStatus = WIFI_PLATFORM_STATUS_SUCCESS;
+    *bytesRead = 0;
+    if (skt < 0)
+    {
+       returnStatus = WIFI_PLATFORM_STATUS_SOCKET_INVALID;
+    }
+    else
+    {
+        status = rsi_recv(skt, buffer, numBytes, 0);
+        if( status <= 0 )
+        {
+			status = rsi_wlan_get_status();
+			printf("rsi_recv failed with status-> %X\n",status);
+			rsi_shutdown(skt, 0);
+        }
+        else
+        {
+            *bytesRead = status;
+			returnStatus =0;
+        }
+    }
+    return returnStatus;
+}
+
+uint32_t wifiPlatformNetWriteRedpine(int32_t skt, const int8_t *buffer, int32_t numBytes,
+                                          int32_t flags, int32_t *bytesSent)
+{
+    int32_t status = -1;
+    uint32_t returnStatus = WIFI_PLATFORM_STATUS_SUCCESS;
+
+    if(bytesSent != NULL)
+    {
+        *bytesSent = 0;
+    }
+    if (skt < 0)
+    {
+       returnStatus = WIFI_PLATFORM_STATUS_SOCKET_INVALID;
+    }
+    else
+    {
+        status = rsi_send(skt, buffer, numBytes, flags);
+        if( status < 0 )
+        {
+			status = rsi_wlan_get_status();
+			printf("rsi_send failed with status-> %X\n",status);
+            rsi_shutdown(skt, 0);
+            returnStatus = WIFI_PLATFORM_STATUS_SOCKET_WRITE_FAILURE;
+        }
+        else
+        {
+            if(bytesSent != NULL)
+            {
+                *bytesSent = status;
+            }
+        }
+    }
+    return returnStatus;
+}
+
+
+uint32_t  wifiGetFirmwareImage(char *URL,uint8_t client_socket)
+{
+    uint32_t  status = WIFI_PLATFORM_STATUS_SUCCESS;
+    char *ptr = NULL;
+    char *ptrEnd = NULL;
+    char hostName[MAX_HOSTNAME_SIZE] = {0};
+    uint8_t *ptrDelim = 0;
+    uint8_t delim[] = {0x0D,0x0A,0x0D,0x0A};
+    int32_t skt = client_socket;
+    uint32_t bytesLength = 0;
+    uint32_t bytesRead = 0;
+    uint32_t bytesToRead = 0;
+    uint32_t bytesReadSum = 0;
+    uint32_t length = 0;
+    uint32_t remaining = 0;
+    uint32_t blockNum = 0;
+    bool fwStreamAck = true;
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        ptr = strstr((char *)URL,"://");
+        if(ptr == NULL)
+        {
+            status = WIFI_PLATFORM_STATUS_FAILURE;
+        }
+        else
+        {
+            ptr += 3;
+            ptrEnd = strstr(ptr,"/");
+            if(ptrEnd == NULL)
+            {
+                status = WIFI_PLATFORM_STATUS_FAILURE;
+            }
+            else
+            {
+                if (ptrEnd - ptr < MAX_HOSTNAME_SIZE)
+                {
+                    memcpy(hostName, ptr, ptrEnd - ptr);
+										memset(txBufferRedpine, 0, sizeof(txBufferRedpine));
+                    length = snprintf((char *)txBufferRedpine, sizeof(txBufferRedpine),
+                                   "GET %s HTTP/1.1\r\n"
+                                   "Host: %s\r\n"
+                                   "Cache-Control: no-cache\r\n\r\n",
+                                   ptrEnd,hostName);
+
+                    if(length >= sizeof(txBufferRedpine))
+                    {
+                        status = WIFI_PLATFORM_STATUS_FAILURE;
+                    }
+                }
+                else
+                {
+                    status = WIFI_PLATFORM_STATUS_FAILURE;
+                }
+            }
+        }
+    }
+
+
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        status = wifiPlatformNetWriteRedpine(skt, (int8_t *) txBufferRedpine, length, 0, &bytesLength);
+    }
+
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        memset(rxBufferRedpine, 0, sizeof(rxBufferRedpine));
+        ptrDelim = rxBufferRedpine;
+        while((ptrDelim - rxBufferRedpine) < WIFI_DOWNLOAD_SIZE_MAX)
+        {
+			status = wifiPlatformNetReadRedpine(skt, (void *)ptrDelim, 1, &bytesLength);
+
+            if(status != WIFI_PLATFORM_STATUS_SUCCESS || bytesLength < 1)
+            {
+                status = WIFI_PLATFORM_STATUS_FAILURE;
+                break;
+            }
+            if(memcmp((ptrDelim - 3), delim, 4) == 0)
+            {
+                break;
+            }
+            ptrDelim++;
+        }
+    }
+
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        ptr = strstr((const char *)rxBufferRedpine,"Content-Length:");
+        if(ptr == NULL)
+        {
+            status = WIFI_PLATFORM_STATUS_FAILURE;
+        }
+    }
+
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        length = 0;
+        length = atoi(ptr+sizeof("Content-Length:"));
+        if(length <= 0)
+        {
+            status = WIFI_PLATFORM_STATUS_FAILURE;
+        }
+        else
+        {
+            printf("Firmware size to download = %d \n",length);
+            remaining = length;
+        }
+    }
+
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        while (remaining)
+        {
+            bytesRead = 0;
+            bytesToRead = remaining > WIFI_DOWNLOAD_SIZE_MAX ? WIFI_DOWNLOAD_SIZE_MAX
+                          : remaining;
+            while (bytesToRead)
+            {
+				status = wifiPlatformNetReadRedpine(skt, (void *)(rxBufferRedpine+bytesRead), bytesToRead,
+                                     &bytesLength);
+                if(bytesLength > 0)
+                {
+                    bytesRead += bytesLength;
+                    bytesToRead -= bytesLength;
+                }
+                else
+                {
+                    bytesRead = 0;
+                    remaining = 0;
+                    status = WIFI_PLATFORM_STATUS_SOCKET_READ_FAILURE;
+                    break;
+                }
+            }
+            if(bytesToRead)
+            {
+                printf("Failed downloading block %d \n",blockNum);
+                break;
+            }
+            else
+            {
+                remaining -= bytesRead;
+                bytesReadSum += bytesRead;
+
+                if(remaining == 0)
+                {
+                    for(bytesRead = (bytesReadSum % WIFI_DOWNLOAD_SIZE_MAX);
+                        bytesRead < WIFI_DOWNLOAD_SIZE_MAX; bytesRead++)
+                    {
+                        rxBufferRedpine[bytesRead] = 0xFF;
+                    }
+                }
+
+                if(fwStreamAck)
+                {
+                    printf("Successfully wrote block %d \n",blockNum);
+                }
+                else
+                {
+                    printf("Failed writing block %d to flash \n",blockNum);
+                }
+                blockNum++;
+            }
+        }
+        printf("Total bytes read %d\n", bytesReadSum);
+    }
+
+    if (status == WIFI_PLATFORM_STATUS_SUCCESS)
+    {
+        if (bytesReadSum != length)
+        {
+            status = WIFI_PLATFORM_STATUS_FAILURE;
+        }
+    }
+
+    if(skt >= 0)
+    {
+         socketCloseStatus = wifiPlatformNetsCloseRedpine(skt);
+
+        if (socketCloseStatus != WIFI_PLATFORM_STATUS_SUCCESS)
+        {
+            printf("socket close failure\n");
+        }
+    }
+    return status;
+}
+
+void rsi_get_firmware_image_command(sl_cli_command_arg_t* arguments)
+{
+    uint32_t status = 0;
+	char* url = sl_cli_get_argument_string(arguments, 0);
+	uint8_t sock_id = sl_cli_get_argument_int8(arguments, 1);
+	status = wifiGetFirmwareImage(url,sock_id);
+	print_status(status);
+}
+#endif
