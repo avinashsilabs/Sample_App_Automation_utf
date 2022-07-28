@@ -145,6 +145,7 @@ template_contribution:
     - {type: string, help: 'server_name'}
     - {type: uint16, help: 'server_port'}
     - {type: string, help: 'client_id'}
+    - {type: uint8, help: 'clean session'}
 - name: cli_command
   priority: 0
   value: 
@@ -2162,3 +2163,21 @@ template_contribution:
     - {type: uint16, help: tx_dones}
     - {type: int8, help: rssi}
     - {type: int8, help: id_pkts_rcvd}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: socket_config
+    handler: rsi_socket_config_command
+    help: Set socket related information
+    argument:
+    - {type: uint8, help: total_sockets}
+    - {type: uint8, help: total_tcp_sockets}
+    - {type: uint8, help: total_udp_sockets}
+    - {type: uint8, help: tcp_tx_only_sockets}
+    - {type: uint8, help: tcp_rx_only_sockets}
+    - {type: uint8, help: udp_tx_only_sockets}
+    - {type: uint8, help: udp_rx_only_sockets}
+    - {type: uint8, help: tcp_rx_high_performance_sockets}
+    - {type: uint8, help: tcp_rx_window_size_cap}
+    - {type: uint8, help: tcp_rx_window_div_factor}
