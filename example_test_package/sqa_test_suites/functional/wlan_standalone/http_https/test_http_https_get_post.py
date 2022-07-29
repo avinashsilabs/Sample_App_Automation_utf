@@ -1428,18 +1428,18 @@ pytest.mark.config(
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_http_post_func_with_multi_abort_C19228(wifi_sniffer, http_server, wifi_dut,http_client, wifi_access_point, index_path):
+def test_http_post_func_with_http_abort_C19228(wifi_sniffer, http_server, wifi_dut,http_client, wifi_access_point, index_path):
 
     validation = True
-    ping_count1 = 120
+    ping_count1 = 10
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_post_func_with_http_abort_C19228')
+    time.sleep(2)
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     for count in range(0, iter_count):
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_post_func_with_multi_abort_C19228')
-        time.sleep(2)
 
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
@@ -1453,12 +1453,6 @@ def test_http_post_func_with_multi_abort_C19228(wifi_sniffer, http_server, wifi_
             result, wifi_dut.interfaces.wifi.IPConfig
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-        logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
-        status = ping(device_ip, ping_count)
-        assert status == 1, "DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
 
         # Enables the wifi power save in dut
         enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -1495,9 +1489,10 @@ def test_http_post_func_with_multi_abort_C19228(wifi_sniffer, http_server, wifi_
 
         logger().info(f"DUT going to leave")
         wifi_dut.interfaces.wifi.leave()
-        logger().info("Sniffer going to stop")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Sniffer validation for power save packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+        time.sleep(3)
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
     logger().info(f"******************* iteration {count} completed ********************* ")
 
