@@ -388,7 +388,7 @@ def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
     assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
-    assert exc_info.value.error_code == 0xD1, f"DUT sent wrong error code expected is 0xD2"
+    assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
     logger.info(f"DUT sent error code {exc_info.value.error_code} when third-party tcp client is connected to it,"
                 f"But not starting "
                 f"ssl-handshake which is expected")
