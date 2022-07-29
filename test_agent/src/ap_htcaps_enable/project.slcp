@@ -2023,3 +2023,10 @@ template_contribution:
     name: wlan_radio_deinit
     handler: rsi_wlan_radio_deinit_command
     help: wifi radio deinit
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_abort
+    handler: rsi_http_abort_command
+    help: Abort http connection

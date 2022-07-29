@@ -2272,3 +2272,10 @@ template_contribution:
     - {type: uint8, help: tcp_rx_high_performance_sockets}
     - {type: uint8, help: tcp_rx_window_size_cap}
     - {type: uint8, help: tcp_rx_window_div_factor}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_abort
+    handler: rsi_http_abort_command
+    help: Abort http connection

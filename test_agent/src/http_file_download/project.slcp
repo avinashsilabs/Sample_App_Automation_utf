@@ -2232,3 +2232,10 @@ template_contribution:
     argument:
     - {type: string, help: url}
     - {type: uint8, help: socket_id}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_abort
+    handler: rsi_http_abort_command
+    help: Abort http connection
