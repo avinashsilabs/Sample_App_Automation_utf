@@ -1147,7 +1147,7 @@ def test_aws_connection_when_client_id_is_null_C19558(wifi_sniffer, wifi_access_
 
     logger.info("Initiating aws connect")
     with pytest.raises(Exception) as exc_info:
-        wifi_dut.interfaces.wifi.aws_iot_connect(client_id='', clean_session=True, load_cert=False)
+        wifi_dut.interfaces.wifi.aws_iot_connect(client_id='', clean_session=1, load_cert=False)
     err = 'Incorrect number of arguments'
     assert err in str(exc_info.value), "Expected error not received"
     logger.info(f"aws_iot_connect failed with error: '{err}',which is expected")
