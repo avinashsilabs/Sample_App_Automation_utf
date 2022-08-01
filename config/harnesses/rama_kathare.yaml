@@ -156,22 +156,16 @@ devices:
                 ssid: "TESTTEST-DLINK_3"
                 channel: 1
                 cipher: 'AES'
-                # radius server configuration
-                # radius_ip: "192.168.14.2"
-                # radius_port: "1812"
 
     dlink810_ap_static:
         interfaces:
             wifi:
                 type: 'wifi.access_points.static'
-                security: 'WPAEnterprise'
+                security: 'WPA2'
                 ssid: 'TESTTEST-DLINK_3'
                 passphrase: 'thisisatestnetwork'
                 channel: 1
                 cipher: 'AES'
-                #radius server configuration
-                radius_ip: "192.168.14.2"
-                radius_port: "1812"
 
     asus_rt_ax3000_ap:
         interfaces:
