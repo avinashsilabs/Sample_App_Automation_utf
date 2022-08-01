@@ -52,7 +52,40 @@ from random import randint
 def get_socket_id(sock_fd):
     return int(math.log2(sock_fd))
 
+class FilterPacket:
+    def get_beacon_interval(self):
+        packet_filter = "Beacon Interval:"
+        beacon_interval_ap = None
+        count = 0
 
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+        for x in line:
+            count = count + 1
+            if packet_filter in x:
+                beacon_interval_ap = float(x.split(":")[1].split("[Seconds]")[0].strip())
+                beacon_interval_ap = int(beacon_interval_ap * 1000)
+                beacon_interval_ap = beacon_interval_ap - (beacon_interval_ap % 100)
+                print(f'Beacon Interval = {beacon_interval_ap}')
+                break
+        filter_file.close()
+        return beacon_interval_ap
+
+    def get_dtim_period(self):
+        packet_filter = "DTIM period"
+        dtim_period_ap = None
+        count = 0
+
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+        for x in line:
+            count = count + 1
+            if packet_filter in x:
+                dtim_period_ap = int(x.split(":")[1].strip())
+                print(f'DTIM Period = {dtim_period_ap}')
+                break
+        filter_file.close()
+        return dtim_period_ap
 
 def get_ntp_list(wifi_sniffer, decryption_key: str, print_layers: list, mode=0) -> Dict[str, int]:
     ntp_capture_list = []
@@ -2559,14 +2592,42 @@ def test_ssl_three_sockets_socket_select_tx_rx_data_testcase_TC19166(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
 def test_query_wireless_stats_TC19175(wifi_sniffer, wifi_dut, wifi_access_point, logger):
     listen_interval = 700
+    beacon_interval_obj = FilterPacket()
+    dtim_period_obj = FilterPacket()
+    validation = True
+    packet_filter3 = "    Type/Subtype: Beacon (0x0008)"
     capture_filename = "test_query_wireless_stats_TC19175"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
     operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
-    beacon_interval_ap = wifi_access_point.interfaces.wifi.beacon_interval
-    dtim_period_ap = wifi_access_point.interfaces.wifi.dtim
+    logger.info("****************Beacon Filter******************")
+    packet_filter = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008)'
+    wifi_sniffer.interfaces.capture.stop_capture()
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
+        'packet_count']
+
+    beacon_interval_ap = beacon_interval_obj.get_beacon_interval()
+    if beacon_interval_ap is None:
+        logger.info(f'Unable to find Beacon Interval={beacon_interval_ap}')
+        assert False
+    else:
+        logger.info(f'\n\n *** Beacon Interval ={beacon_interval_ap} *** \n')
+
+    packet_filter4 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_ap})'
+
+    dtim_period_ap = dtim_period_obj.get_dtim_period()
+    if dtim_period_ap is None:
+        logger.info(f'Unable to find DTIM Period={dtim_period_ap}')
+        assert False
+    else:
+        logger.info(f'\n\n *** DTIM Period ={dtim_period_ap} *** \n')
+
+    packet_filter5 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.dtim.period == {dtim_period_ap})'
+
     logger.info(f"Access point Beacon interval -> {beacon_interval_ap},  DTIM period-> {dtim_period_ap}")
+
+    logger.info(f"DUT Beacon interval -> {beacon_interval},  DTIM period-> {dtim_period}")
 
     assert operating_mode == 0, "Operating mode is not matching, expected is 0"
 
@@ -2577,8 +2638,11 @@ def test_query_wireless_stats_TC19175(wifi_sniffer, wifi_dut, wifi_access_point,
                                           f"interval of connected AP is not matched, e" \
                                           f"expected is {dtim_period_ap}. But observed {dtim_period} "
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
+    connection = f'(wlan.addr == {dut_mac_address}) and (wlan.addr == {wifi_access_point.interfaces.wifi.bssid}) and (eapol)'
+    connection_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, connection)
+    assert connection_count, "Association Packets are not captured in the sniffer"
+    logger.info(f"Association Packets packets are captured in the sniffer")
+
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
@@ -2605,6 +2669,10 @@ def test_query_wireless_stats_TC19175(wifi_sniffer, wifi_dut, wifi_access_point,
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
 def test_query_wireless_stats_after_rejoin_TC19177(wifi_sniffer, wifi_dut, wifi_access_point, logger):
     listen_interval = 700
+    beacon_interval_obj = FilterPacket()
+    dtim_period_obj = FilterPacket()
+    validation = True
+    packet_filter3 = "    Type/Subtype: Beacon (0x0008)"
     capture_filename = "test_query_wireless_stats_after_rejoin_TC19177"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
@@ -2614,10 +2682,33 @@ def test_query_wireless_stats_after_rejoin_TC19177(wifi_sniffer, wifi_dut, wifi_
     ApWirelessOff(wifi_access_point, wait_time, logger)
 
     operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
-    beacon_interval_ap = wifi_access_point.interfaces.wifi.beacon_interval
-    dtim_period_ap = wifi_access_point.interfaces.wifi.dtim
+    logger.info("****************Beacon Filter******************")
+    packet_filter = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008)'
+    wifi_sniffer.interfaces.capture.stop_capture()
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
+        'packet_count']
+
+    beacon_interval_ap = beacon_interval_obj.get_beacon_interval()
+    if beacon_interval_ap is None:
+        logger.info(f'Unable to find Beacon Interval={beacon_interval_ap}')
+        assert False
+    else:
+        logger.info(f'\n\n *** Beacon Interval ={beacon_interval_ap} *** \n')
+
+    packet_filter4 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_ap})'
+
+    dtim_period_ap = dtim_period_obj.get_dtim_period()
+    if dtim_period_ap is None:
+        logger.info(f'Unable to find DTIM Period={dtim_period_ap}')
+        assert False
+    else:
+        logger.info(f'\n\n *** DTIM Period ={dtim_period_ap} *** \n')
+
+    packet_filter5 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.dtim.period == {dtim_period_ap})'
+
     logger.info(f"Access point Beacon interval -> {beacon_interval_ap},  DTIM period-> {dtim_period_ap}")
 
+    logger.info(f"DUT Beacon interval -> {beacon_interval},  DTIM period-> {dtim_period}")
     assert operating_mode == 0, "Operating mode is not matching, expected is 0"
 
     assert beacon_interval == beacon_interval_ap, f"AP beacon interval received in wlan stats and actual beacon " \
@@ -3455,7 +3546,7 @@ def test_socket_select_ssl_asynchronous_TC19192(
         # DUT receives data over tcp socket after execution of below api
         time.sleep(10)
         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-        assert len(events) == 1, "Socket select asynchronous event is not received"
+        assert len(events) != 0, "Socket select asynchronous event is not received"
         logger.info(f"Socket select event received")
         sock_list = []
         for event in events:

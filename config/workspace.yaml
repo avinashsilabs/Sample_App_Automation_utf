@@ -1,5 +1,7 @@
 # the directory containing the test sources
 tests_dir: example_test_package
+#for Integration tests
+#tests_dir: integration_test
 
 # the directory containing the firmware manifest
 manifest_dir: manifest
@@ -15,7 +17,12 @@ utf_extension_dirs:
 test_executor_script: executor/launch_utf_tests.py
 
 # The group label for HWMux integration
+#For all devices in Hyderbad
 hwmux_group_name: Hyderabad
+#For utf dev team's devices
+#hwmux_group_name: utf-dev-team-hyd
+#For integration test devices
+#hwmux_group_name: UTF_Integration_Test
 
 # The python virtual environment directory
 python_venv_dir: venv
