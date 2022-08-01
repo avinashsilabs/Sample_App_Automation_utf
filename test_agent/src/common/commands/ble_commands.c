@@ -1291,7 +1291,7 @@ void rsi_ble_read_phy_command(sl_cli_command_arg_t* arguments)
     status = rsi_ble_readphy(dev_addr, &read_phy_resp);
     if(status == 0)
     {
-    printf("dev_addr:%02x:%02x:%02x:%02x:%02x:%02x, tx_phy:%d, maxrx_time:%d\n",read_phy_resp.dev_addr[0],read_phy_resp.dev_addr[1],read_phy_resp.dev_addr[2], read_phy_resp.dev_addr[3], read_phy_resp.dev_addr[4], read_phy_resp.dev_addr[5], read_phy_resp.tx_phy, read_phy_resp.rx_phy);
+    printf("dev_addr:%02x:%02x:%02x:%02x:%02x:%02x, tx_phy:%d, rx_phy:%d\n",read_phy_resp.dev_addr[0],read_phy_resp.dev_addr[1],read_phy_resp.dev_addr[2], read_phy_resp.dev_addr[3], read_phy_resp.dev_addr[4], read_phy_resp.dev_addr[5], read_phy_resp.tx_phy, read_phy_resp.rx_phy);
     }
     print_status(status);
 
