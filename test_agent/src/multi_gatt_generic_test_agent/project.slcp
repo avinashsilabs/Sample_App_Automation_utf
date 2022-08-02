@@ -939,6 +939,14 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
+    name: ble_notify_custom_value
+    handler: rsi_ble_custom_notify_value_command
+    help: 'BLE notify with custom value'
+    argument:
+    - {type: string, help: 'configure the data'}
+- name: cli_command
+  priority: 0
+  value:
     name: ble_notify_value
     handler: rsi_ble_notify_value_command
     help: 'BLE notify the value'
