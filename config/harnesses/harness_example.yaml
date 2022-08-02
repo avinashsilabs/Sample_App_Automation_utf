@@ -822,28 +822,28 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
-            free_radius_server:
+            radius_server:
                 type: 'radius_server.freeradius.freeradius_linux'
                 shell: 'linux_shell'
                 ap_ip_address: '192.168.50.1/24'
                 ap_secret: '12345678'
-                user: 'user1'
+                username: 'user1'
                 password: '12345678'
 
     static_radius_server:
         interfaces:
             ssh_shell: 
                 type: 'shell.ssh_shell'
-                remote: '192.168.50.210'  # configure sniffer NUC IP
-                username: test       # sniffer NUC username
-                password: test123    # sniffer NUC password
+                remote: '192.168.50.210'  # configure Free Radius Server NUC IP
+                username: test       # NUC username
+                password: test123    # NUC password
                 use_paramiko_expect: false
-            free_radius_server:
+            radius_server:
                 type: 'radius_server.freeradius.static'
                 shell: 'ssh_shell'
                 ap_ip_address: '192.168.50.1/24'
-                secret: '12345678'
-                user: 'user1'
+                ap_secret: '12345678'
+                username: 'user1'
                 password: '12345678'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
