@@ -30453,7 +30453,7 @@ test_cases:
     test_id: test_power_meter_keysight_benchvue_win_wcf::1
     test_module: test_cases/test_power_meter.py
     test_markers:
-      - pytest.mark.power_meter('keysight_power_analyzer_benchvue_win_wcf',)
+      - pytest.mark.power_meter('keysight_benchvue_power_analyzer_win_wcf',)
     test_params: []
     test_class: null
     description: null
@@ -30469,7 +30469,7 @@ test_cases:
     test_id: test_power_meter_keysight_benchvue_win_rm::1
     test_module: test_cases/test_power_meter.py
     test_markers:
-      - pytest.mark.power_meter('keysight_power_analyzer_benchvue_win_rm',)
+      - pytest.mark.power_meter('keysight_benchvue_power_analyzer_win_rm',)
     test_params: []
     test_class: null
     description: null
