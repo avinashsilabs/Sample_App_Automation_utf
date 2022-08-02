@@ -531,6 +531,7 @@ void rsi_bt_get_local_device_address_command(sl_cli_command_arg_t* arguments)
     (void)arguments;
     uint8_t device_address[6] = { 0 };
 
+    printf("\r\n rsi_bt_get_local_address_command invoked \r\n");
     int32_t status = rsi_bt_get_local_device_address(device_address);
     if (status == RSI_SUCCESS) {
         printf("\n%02X:%02X:%02X:%02X:%02X:%02X\n", device_address[5], device_address[4], device_address[3], device_address[2], device_address[1], device_address[0]);
@@ -622,6 +623,7 @@ void rsi_ble_add_service_command(sl_cli_command_arg_t* arguments)
     uuid_t new_uuid                       = { 0 };
     new_uuid.size      = 2;
     new_uuid.val.val16 = uuid;
+    printf("\r\n rsi_ble_add_service_command invoked \r\n");
     print_status(rsi_ble_add_service(new_uuid, &new_serv_resp));
 }
 
@@ -945,6 +947,7 @@ static int32_t rsi_ble_app_get_event(void)
  */
 void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_report)
 {
+    uint8_t count = 0;
 //    if (device_found == 1) {
 //        return;
 //    }
@@ -970,8 +973,21 @@ void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_
             // LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s, dev_addr_type: %s, remote_name: %s\n",
             //     ble_str_conn_bd_addr,
             //     remote_addr_type, remote_name);
-            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s\n",
-                ble_str_conn_bd_addr);
+//            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s\n",
+//                ble_str_conn_bd_addr);
+            LOG_EVENT("\nrsi_ble_simple_central_on_adv_report_event- dev_addr: %s, dev_addr_type: %d, adv_data_len: %d, rssi:%d, report_type:%d,",
+                ble_str_conn_bd_addr,
+                adv_report->dev_addr_type,
+                adv_report->adv_data_len,
+                adv_report->rssi,
+                adv_report->report_type
+                );
+            LOG_EVENT("adv_data:");
+            for(count = 0; count < RSI_MAX_ADV_REPORT_SIZE; count++)
+            {
+            LOG_EVENT("%d-",adv_report->adv_data[count]);
+            }
+            LOG_EVENT("\n");
             rsi_ble_app_set_event(RSI_APP_EVENT_ADV_REPORT);
         }
     }
@@ -1275,7 +1291,7 @@ void rsi_ble_read_phy_command(sl_cli_command_arg_t* arguments)
     status = rsi_ble_readphy(dev_addr, &read_phy_resp);
     if(status == 0)
     {
-    printf("dev_addr:%02x:%02x:%02x:%02x:%02x:%02x, tx_phy:%d, maxrx_time:%d\n",read_phy_resp.dev_addr[0],read_phy_resp.dev_addr[1],read_phy_resp.dev_addr[2], read_phy_resp.dev_addr[3], read_phy_resp.dev_addr[4], read_phy_resp.dev_addr[5], read_phy_resp.tx_phy, read_phy_resp.rx_phy);
+    printf("dev_addr:%02x:%02x:%02x:%02x:%02x:%02x, tx_phy:%d, rx_phy:%d\n",read_phy_resp.dev_addr[0],read_phy_resp.dev_addr[1],read_phy_resp.dev_addr[2], read_phy_resp.dev_addr[3], read_phy_resp.dev_addr[4], read_phy_resp.dev_addr[5], read_phy_resp.tx_phy, read_phy_resp.rx_phy);
     }
     print_status(status);
 
