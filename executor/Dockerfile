@@ -4,12 +4,6 @@ FROM utf_core:latest
 ENV APP_DIR=/app
 WORKDIR $APP_DIR
 
-# TODO: Remove below four lines after updating the base image in utf_core.
-USER root
-RUN apt update
-RUN sudo apt install -y freeradius  -y
-USER dockerUser
-
 #################################################
 # UTF Core components
 #
