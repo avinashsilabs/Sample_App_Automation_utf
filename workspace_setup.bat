@@ -25,6 +25,9 @@ if %errorlevel% neq 0 (
    goto ERROR
 )
 
+if "%1"=="skip_gui" (
+    goto SUCCESS
+)
 SET "UTF_GUI=%LOCALAPPDATA%\Programs\utf-sequence-manager\UTF Sequence Manager.exe"
 
 if not EXIST "%UTF_GUI%" (
