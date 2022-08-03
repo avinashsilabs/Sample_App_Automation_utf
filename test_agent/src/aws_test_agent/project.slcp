@@ -132,6 +132,8 @@ template_contribution:
     - {type: string, help: 'server_name'}
     - {type: uint16, help: 'server_port'}
     - {type: string, help: 'client_id'}
+    - {type: uint8, help: 'clean session'}
+
 - name: cli_command
   priority: 0
   value: 
@@ -679,3 +681,17 @@ template_contribution:
     help: closes the socket on demand
     argument:
     - {type: int32, help: socket ID}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit

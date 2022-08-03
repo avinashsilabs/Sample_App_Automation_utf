@@ -13,6 +13,7 @@ from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
+from utf.interfaces.cli import CLITransportException
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.wifi import WlanError
 
@@ -47,6 +48,40 @@ def __print_throughput(iperf_throughput: dict):
 
 def logger():
     return get_logger(__name__)
+
+class cleanup_store_config():
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def dut_recovery(self):
+        tries = 0
+        while tries < 3:
+            tries += 1
+            try:
+                logger().info("Initiating reset for device cleanup")
+                self.wifi_dut.interfaces.wifi.reset_soft()
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.associated = True
+                logger().info("Initializing the DUT")
+                self.wifi_dut.interfaces.wifi.wireless_init(oper_mode=6, coex_mode=9, retries=1)
+                time.sleep(10)
+                return True
+            except:
+                logger().info("clean up process failed ,retrying for 3 times")
+
+    def disconnect(self):
+
+        try:
+            logger().info("Initiating disconnect for cleanup")
+            self.wifi_dut.interfaces.wifi.leave()
+            time.sleep(5)
+            logger().info("cfg disable")
+            # Enables the store configuration
+            self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+            return True
+        except:
+            logger().info("clean up process failed")
 
 
 
@@ -1124,7 +1159,7 @@ def test_DUT_APMode_11d_support_C19448(wifi_sniffer, wifi_dut, wifi_client, chan
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
         "Unable to find beacon frame with region code  in Sniffer"
 
-##########store_configuration##################
+# ##########store_configuration##################
 
 pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
@@ -1153,67 +1188,75 @@ pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_DUT_APMode_store_config_wpa2_C19452(wifi_sniffer, wifi_dut, wifi_client, channel):
-    logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
-    validation = True
-    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
-                                      static_gateway=static_gateway)
-    logger().info("********* configuring static ip to DUT *********")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    logger().info("********* configuring the sniffer with access point channel *********")
-    time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_store_config_wpa2_C19452')
-    logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-    wifi_dut.interfaces.wifi.start_ap(channel=channel)
-    logger().info(" ********** Starting DUT as an AP ********* ")
-    wifi_client.interfaces.wifi.join()
-    logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
-    host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    logger().info(f"********* Dut IP **********: {device_ip}")
-    logger().info(f"********* Host IP *********: {host_ip}")
-    logger().info(" ********** Starting ping ********* ")
-    status = ping(device_ip, ping_count)
-    assert status == True, f"Client failed to ping DUT"
-    logger().info(" ********** Ping successful ********* ")
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    try:
+        logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
+        validation = True
+        wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
+                                          static_gateway=static_gateway)
+        logger().info("********* configuring static ip to DUT *********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        logger().info("********* configuring the sniffer with access point channel *********")
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_store_config_wpa2_C19452')
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_dut.interfaces.wifi.start_ap(channel=channel)
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_client.interfaces.wifi.join()
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"********* Dut IP **********: {device_ip}")
+        logger().info(f"********* Host IP *********: {host_ip}")
+        logger().info(" ********** Starting ping ********* ")
+        status = ping(device_ip, ping_count)
+        assert status == True, f"Client failed to ping DUT"
+        logger().info(" ********** Ping successful ********* ")
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-    logger().info(f"*********RASPI_STA connected to DUT AP**********")
-    logger().info(f"*********Validating the Sniffer Packet **********")
+        logger().info(f"*********RASPI_STA connected to DUT AP**********")
+        logger().info(f"*********Validating the Sniffer Packet **********")
 
-    # Save the wireless configuration in the flash
-    wifi_dut.interfaces.wifi.config_save()
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
 
-    # Enable the wireless configuration in the flash
-    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
 
-    logger().info("Initiating wireless de init")
-    # deinit
-    logger().info("Instead of reset need to add  wireless de init")
-    wifi_dut.interfaces.wifi.reset_soft()
-    wifi_dut.interfaces.wifi.associated = True
-    time.sleep(2)
-    logger().info("Initiating wireless init")
-    wifi_dut.interfaces.wifi.wireless_init(oper_mode=6, coex_mode=9)
-    time.sleep(30)
-    wifi_client.interfaces.wifi.join()
-    logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        logger().info("Initiating wireless de init")
+        # deinit
+        logger().info("Instead of reset need to add  wireless de init")
+        wifi_dut.interfaces.wifi.reset_soft()
+        wifi_dut.interfaces.wifi.associated = True
+        time.sleep(2)
+        logger().info("Initiating wireless init")
+        wifi_dut.interfaces.wifi.wireless_init(oper_mode=6, coex_mode=9)
+        time.sleep(30)
+        wifi_client.interfaces.wifi.join()
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
 
-    logger().info("Disable store configuration")
-    # Enable the wireless configuration in the flash
-    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
-    time.sleep(5)
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+        time.sleep(5)
 
-    packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8))'
-    packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1  || ' \
-                     f'eapol|| icmp))'
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("validating sniffer capture")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find beacon frame  in Sniffer"
-    logger().info(f"*********keep alive packets found in capture*********")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
-        "Unable to find assoc req,assoc resp,eapol packets in Sniffer"
+        packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8))'
+        packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1  || ' \
+                         f'eapol|| icmp))'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("validating sniffer capture")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
+            "Unable to find beacon frame  in Sniffer"
+        logger().info(f"*********keep alive packets found in capture*********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
+            "Unable to find assoc req,assoc resp,eapol packets in Sniffer"
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+          clean_up.dut_recovery()
+        clean_up.disconnect()
+        raise e
 
 ###################################OPEN MODE######################
 pytest.mark.wifi_client("raspi_wifi")
@@ -1242,74 +1285,82 @@ pytest.mark.wifi_client("raspi_wifi")
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.skip()
+# @pytest.mark.skip()
 def test_DUT_APMode_store_config_C19451(wifi_sniffer, wifi_dut, wifi_client, channel):
-    logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
-    validation = True
-    wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
-                                      static_gateway=static_gateway)
-    logger().info("********* configuring static ip to DUT *********")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    logger().info("********* configuring the sniffer with access point channel *********")
-    time.sleep(2)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_store_config_C19451')
-    logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-    wifi_dut.interfaces.wifi.start_ap(channel=channel)
-    logger().info(" ********** Starting DUT as an AP ********* ")
-    time.sleep(200)
-    wifi_client.interfaces.wifi.join()
-    logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-    device_ip = wifi_client.interfaces.wifi.client_gateway_ip
-    host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    logger().info(f"********* Dut IP **********: {device_ip}")
-    logger().info(f"********* Host IP *********: {host_ip}")
-    logger().info(" ********** Starting ping ********* ")
-    status = ping(device_ip, ping_count)
-    assert status == True, f"Client failed to ping DUT"
-    logger().info(" ********** Ping successful ********* ")
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    try:
+        logger().info("********* Currently Verifying  DUT_AP_Mode- Single_Client connection in US region*********")
+        validation = True
+        wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
+                                          static_gateway=static_gateway)
+        logger().info("********* configuring static ip to DUT *********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        logger().info("********* configuring the sniffer with access point channel *********")
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_APMode_store_config_C19451')
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_dut.interfaces.wifi.start_ap(channel=channel)
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        time.sleep(200)
+        wifi_client.interfaces.wifi.join()
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"********* Dut IP **********: {device_ip}")
+        logger().info(f"********* Host IP *********: {host_ip}")
+        logger().info(" ********** Starting ping ********* ")
+        status = ping(device_ip, ping_count)
+        assert status == True, f"Client failed to ping DUT"
+        logger().info(" ********** Ping successful ********* ")
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-    logger().info(f"*********RASPI_STA connected to DUT AP**********")
-    logger().info(f"*********Validating the Sniffer Packet **********")
+        logger().info(f"*********RASPI_STA connected to DUT AP**********")
+        logger().info(f"*********Validating the Sniffer Packet **********")
 
-    # Save the wireless configuration in the flash
-    wifi_dut.interfaces.wifi.config_save()
+        # Save the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_save()
 
-    # Enable the wireless configuration in the flash
-    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
 
-    logger().info("Initiating wireless de init")
-    # deinit
-    logger().info("Instead of reset need to add  wireless de init")
-    wifi_dut.interfaces.wifi.reset_soft()
-    wifi_dut.interfaces.wifi.associated = True
-    time.sleep(2)
-    logger().info("Initiating wireless init")
-    wifi_dut.interfaces.wifi.wireless_init(oper_mode=6, coex_mode=9)
-    time.sleep(20)
-    # result = wifi_dut.interfaces.wifi.get_wireless_info()
-    # assert wifi_dut.interfaces.wifi.ssid in result, "dut AP ssid not found in the get wireless info"
-    wifi_client.interfaces.wifi.join()
-    logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        logger().info("Initiating wireless de init")
+        # deinit
+        logger().info("Instead of reset need to add  wireless de init")
+        wifi_dut.interfaces.wifi.reset_soft()
+        wifi_dut.interfaces.wifi.associated = True
+        time.sleep(2)
+        logger().info("Initiating wireless init")
+        wifi_dut.interfaces.wifi.wireless_init(oper_mode=6, coex_mode=9)
+        time.sleep(20)
+        # result = wifi_dut.interfaces.wifi.get_wireless_info()
+        # assert wifi_dut.interfaces.wifi.ssid in result, "dut AP ssid not found in the get wireless info"
+        wifi_client.interfaces.wifi.join()
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
 
-    logger().info("Disable store configuration")
-    # Enable the wireless configuration in the flash
-    wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
-    time.sleep(5)
+        logger().info("Disable store configuration")
+        # Enable the wireless configuration in the flash
+        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+        time.sleep(5)
 
-    packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8))'
-    packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1  || eapol|| icmp))'
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
-        "Unable to find beacon frame with Region US in Sniffer"
-    logger().info(f"*********keep alive packets found in capture*********")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
-        "unable to find assoc request,assoc response or icmp packets in sniffer"
+        packet_filter1 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 8))'
+        packet_filter2 = f'((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1  || eapol|| icmp))'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1),\
+            "Unable to find beacon frame with Region US in Sniffer"
+        logger().info(f"*********keep alive packets found in capture*********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2), \
+            "unable to find assoc request,assoc response or icmp packets in sniffer"
+    except Exception as e:
+        logger().info(f"Exception: {str(e)}")
+        clean_up = cleanup_store_config(wifi_dut)
+        if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+          clean_up.dut_recovery()
+        clean_up.disconnect()
+        raise e
 
 
 
-#########################SOFT RESET#################
+########################SOFT RESET#################
 
 pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
@@ -1404,7 +1455,7 @@ def test_DUT_APMode_softreset_aptosta_C19450(wifi_sniffer, wifi_dut, wifi_client
         "Unable to find assoc req or resp packet in Sniffer"
 
 
-#######################################19449################################
+######################################19449################################
 
 pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
@@ -1505,7 +1556,7 @@ def test_DUT_softreset_statoap_C19449(wifi_sniffer, wifi_dut, wifi_client, chann
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3),\
         "Unable to find beacon frame from DUT  in Sniffer"
 
-########19439######
+#######19439######
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -1569,7 +1620,7 @@ def test_DUT_APMode_raspista_inactive_C19439(wifi_sniffer, wifi_dut, wifi_client
     logger().info(f"*********keep alive packets or deauth packets found in capture*********")
 
 
-################################19441########################
+###############################19441########################
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(

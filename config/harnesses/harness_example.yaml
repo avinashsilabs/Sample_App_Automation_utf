@@ -25,7 +25,7 @@ devices:
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
             cli_transport: 'uart'
-            #gpio_transport: 'gpio_uart'
+            gpio_transport: 'gpio_uart'
 
         # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
         interfaces:
@@ -258,7 +258,7 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: 'F6E49FCE'
-                switch: 'pdu_switch'
+                switch_config: 'pdu_switch'
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'

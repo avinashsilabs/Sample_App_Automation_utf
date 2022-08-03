@@ -3,6 +3,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116CustomFeatureBitMap
 from utf.utils.logger import get_logger
 import time
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.bluetooth import BLEDeviceState
 
@@ -41,7 +42,7 @@ remote_le_devices = 2
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_C19911(ble_dut, ble_clients):
+def test_ble_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_C19911(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
 
     ble_advertisers = []
@@ -110,7 +111,7 @@ def test_ble_dual_role_C19911(ble_dut, ble_clients):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_C19912(ble_dut, ble_clients):
+def test_ble_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_C19912(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
     ble_advertisers = []
     for item in range(0, 2):
@@ -184,7 +185,7 @@ def test_ble_dual_role_C19912(ble_dut, ble_clients):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_C19913(ble_dut, ble_clients):
+def test_ble_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_C19913(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
 
     ble_advertisers = []
@@ -266,7 +267,7 @@ def test_ble_dual_role_C19913(ble_dut, ble_clients):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_C19914(ble_dut, ble_clients):
+def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_C19914(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
 
     ble_advertisers = []
@@ -349,7 +350,7 @@ def test_ble_dual_role_C19914(ble_dut, ble_clients):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_C19915(ble_dut, ble_clients):
+def test_ble_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_C19915(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
 
     ble_advertisers = []
@@ -435,7 +436,7 @@ def test_ble_dual_role_C19915(ble_dut, ble_clients):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_connection_C19916(ble_dut, ble_clients,bt_logs):
+def test_ble_dual_role_3slaves_1master_conn_disconn_reconn_C19916(ble_dut, ble_clients,bt_logs):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
     ble_client_1 = ble_clients[0]
@@ -524,7 +525,7 @@ def test_ble_dual_role_connection_C19916(ble_dut, ble_clients,bt_logs):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_connection_C19917(ble_dut, ble_clients,bt_logs):
+def test_ble_dual_role_1slave_1master_conn_disconn_reconn_C19917(ble_dut, ble_clients,bt_logs):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
     ble_client_1 = ble_clients[0]
@@ -622,7 +623,7 @@ def test_ble_dual_role_connection_C19917(ble_dut, ble_clients,bt_logs):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_connection_C19918(ble_dut, ble_clients, bt_logs):
+def test_ble_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_C19918(ble_dut, ble_clients, bt_logs):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
     ble_client_1 = ble_clients[0]
@@ -707,6 +708,7 @@ def test_ble_dual_role_connection_C19918(ble_dut, ble_clients, bt_logs):
     time.sleep(2)
     ble_client.interfaces.bluetooth.close()
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -720,7 +722,7 @@ def test_ble_dual_role_connection_C19918(ble_dut, ble_clients, bt_logs):
         "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_dual_role_connection_C19919(ble_dut, ble_clients,bt_logs):
+def test_ble_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_C19919(ble_dut, ble_clients,bt_logs):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
     ble_client_1 = ble_clients[0]
@@ -803,4 +805,41 @@ def test_ble_dual_role_connection_C19919(ble_dut, ble_clients,bt_logs):
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
     time.sleep(2)
+    ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+def test_ble_scan_in_busy_environment_C19827_C19828(ble_dut, ble_clients):
+    assert len(ble_clients) >= remote_le_devices
+
+    ble_advertisers = []
+    for item in range(0, remote_le_devices):
+        ble_advertisers.append(ble_clients[item])
+
+    logger().info("start ble in dut")
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "ble initialization failed in dut"
+    count = 0
+    for ble_client in ble_advertisers:
+        count = count+1
+        logger().info(f" ======= initialize ble adv in remote device {count}")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        assert bt_client_address, f"ble initialization failed in remote device{count}"
+        logger().info(f"ble client address of remote device {count} is {bt_client_address}")
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+        time.sleep(2)
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    time.sleep(5)
     ble_client.interfaces.bluetooth.close()
