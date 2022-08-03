@@ -7846,34 +7846,6 @@ test_cases:
   - http_https_get_post
   - sqa_test_suites
   - wlan_standalone
-- id: d7bf07ad74b48e2c1697303c575cca885a0373f9
-  test_case_id: test_http_post_functionality_different_urls_C19224[cgi-bin/cgi_example.py]
-  test_function: test_http_post_functionality_different_urls_C19224
-  test_id: test_http_post_functionality_different_urls_C19224[cgi-bin/cgi_example.py]::1
-  test_module: sqa_test_suites/functional/wlan_standalone/http_https/test_http_https_get_post.py
-  test_markers:
-  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
-  - pytest.mark.http_server('raspi_lighttpd',)
-  - pytest.mark.dut('rs9116_sapi',)
-  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
-    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''config_features'':
-    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''ext_tcpip_features'':
-    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''tcpip_features'':
-    RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client})'
-  test_params:
-  - name: index_path
-    value: cgi-bin/cgi_example.py
-  test_class: null
-  description: null
-  library_name: null
-  version: 0
-  enabled: true
-  labels:
-  - functional
-  - http_https
-  - http_https_get_post
-  - sqa_test_suites
-  - wlan_standalone
 - id: 3f6158c17d458c37355fb206d4dac1e87e574185
   test_case_id: test_http_post_functionality_different_urls_C19224[index_long_crlf.html]
   test_function: test_http_post_functionality_different_urls_C19224
@@ -7891,6 +7863,34 @@ test_cases:
   test_params:
   - name: index_path
     value: index_long_crlf.html
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - functional
+  - http_https
+  - http_https_get_post
+  - sqa_test_suites
+  - wlan_standalone
+- id: d7bf07ad74b48e2c1697303c575cca885a0373f9
+  test_case_id: test_http_post_functionality_different_urls_C19224[cgi-bin/cgi_example.py]
+  test_function: test_http_post_functionality_different_urls_C19224
+  test_id: test_http_post_functionality_different_urls_C19224[cgi-bin/cgi_example.py]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/http_https/test_http_https_get_post.py
+  test_markers:
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.http_server('raspi_lighttpd',)
+  - pytest.mark.dut('rs9116_sapi',)
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client})'
+  test_params:
+  - name: index_path
+    value: cgi-bin/cgi_example.py
   test_class: null
   description: null
   library_name: null
@@ -9103,34 +9103,6 @@ test_cases:
   - https_get
   - sqa_test_suites
   - wlan_standalone
-- id: 1e5e4e45a0ba0e26589293616c5362c26737852d
-  test_case_id: test_https_get_functionality_different_urls_C19205[index.html]
-  test_function: test_https_get_functionality_different_urls_C19205
-  test_id: test_https_get_functionality_different_urls_C19205[index.html]::1
-  test_module: sqa_test_suites/functional/wlan_standalone/http_https/test_https_get.py
-  test_markers:
-  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
-  - pytest.mark.http_server('raspi_lighttpd_tls',)
-  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
-    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''config_features'':
-    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''tcpip_features'':
-    RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
-    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''ca_cert'':
-    ''ca-chain.cert.pem''})'
-  test_params:
-  - name: index_path
-    value: index.html
-  test_class: null
-  description: null
-  library_name: null
-  version: 0
-  enabled: true
-  labels:
-  - functional
-  - http_https
-  - https_get
-  - sqa_test_suites
-  - wlan_standalone
 - id: b464e8c236d372f5a706d7fe532429b45b1a26ff
   test_case_id: test_https_get_functionality_different_urls_C19205[index_long_crlf.html]
   test_function: test_https_get_functionality_different_urls_C19205
@@ -9148,6 +9120,34 @@ test_cases:
   test_params:
   - name: index_path
     value: index_long_crlf.html
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - functional
+  - http_https
+  - https_get
+  - sqa_test_suites
+  - wlan_standalone
+- id: 1e5e4e45a0ba0e26589293616c5362c26737852d
+  test_case_id: test_https_get_functionality_different_urls_C19205[index.html]
+  test_function: test_https_get_functionality_different_urls_C19205
+  test_id: test_https_get_functionality_different_urls_C19205[index.html]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/http_https/test_https_get.py
+  test_markers:
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.http_server('raspi_lighttpd_tls',)
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''ca_cert'':
+    ''ca-chain.cert.pem''})'
+  test_params:
+  - name: index_path
+    value: index.html
   test_class: null
   description: null
   library_name: null
@@ -15464,6 +15464,456 @@ test_cases:
   enabled: true
   labels:
   - aws_iot_wifi_sqa
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: bc608ef388e7447a01d991e7c34024b9a6c5fd78
+  test_case_id: test_aws_publish_data_with_different_length_C19553
+  test_function: test_aws_publish_data_with_different_length_C19553
+  test_id: test_aws_publish_data_with_different_length_C19553::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 034766ae90fbf9413f8c7afe0e889c4ad64624a2
+  test_case_id: test_aws_receive_data_over_subscribed_topic_with_different_lengths_C19554
+  test_function: test_aws_receive_data_over_subscribed_topic_with_different_lengths_C19554
+  test_id: test_aws_receive_data_over_subscribed_topic_with_different_lengths_C19554::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 2970f1c83790d8a5c398ff00531764a6a7b2fefd
+  test_case_id: test_aws_tx_after_rejoin_qos0_C19555
+  test_function: test_aws_tx_after_rejoin_qos0_C19555
+  test_id: test_aws_tx_after_rejoin_qos0_C19555::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 2de1934d227af68583d259e79de1d52be2646d9e
+  test_case_id: test_aws_tx_after_rejoin_qos1_C19556
+  test_function: test_aws_tx_after_rejoin_qos1_C19556
+  test_id: test_aws_tx_after_rejoin_qos1_C19556::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 8816b8c4affca29406d1515103f33385989d96c5
+  test_case_id: test_aws_connection_when_client_id_is_null_C19558
+  test_function: test_aws_connection_when_client_id_is_null_C19558
+  test_id: test_aws_connection_when_client_id_is_null_C19558::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 95af8cd12e59fc70981c353aaec26c3ecde2a219
+  test_case_id: test_aws_tcp_shutdown_C19546
+  test_function: test_aws_tcp_shutdown_C19546
+  test_id: test_aws_tcp_shutdown_C19546::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 1e0ab7164d185f4be2282f61b298ebaa6d7f2e98
+  test_case_id: test_aws_rx_over_subscribed_topic_after_rejoin_qos1_C19559
+  test_function: test_aws_rx_over_subscribed_topic_after_rejoin_qos1_C19559
+  test_id: test_aws_rx_over_subscribed_topic_after_rejoin_qos1_C19559::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 3f1abed53122828a546a10898e93a6deb82afcc7
+  test_case_id: test_aws_publish_message_in_thread1_and_receive_message_in_thread2_C19566
+  test_function: test_aws_publish_message_in_thread1_and_receive_message_in_thread2_C19566
+  test_id: test_aws_publish_message_in_thread1_and_receive_message_in_thread2_C19566::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 07977f06a507d48128529ea1ee6513c907d41b80
+  test_case_id: test_aws_publish_a_message_on_the_topic_for_every_10_minutes_C19567
+  test_function: test_aws_publish_a_message_on_the_topic_for_every_10_minutes_C19567
+  test_id: test_aws_publish_a_message_on_the_topic_for_every_10_minutes_C19567::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 20703c02fb352782112d5daa89e968f1275cdaf2
+  test_case_id: test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuously_C19561[10]
+  test_function: test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuously_C19561
+  test_id: test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuously_C19561[10]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+  test_params:
+  - name: iterations
+    value: 10
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 6379e6823051f9cc769c1d1f8417e935c320b3c5
+  test_case_id: test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_C19562[493-1024000-1]
+  test_function: test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_C19562
+  test_id: test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_C19562[493-1024000-1]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params:
+  - name: publish_len
+    value: 493
+  - name: total_bytes
+    value: 1024000
+  - name: iterations
+    value: 1
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 0866d20396d1ecb0b56eeadf973d38733ece074b
+  test_case_id: test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_C19563[20]
+  test_function: test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_C19563
+  test_id: test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_C19563[20]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+  test_params:
+  - name: total_bytes
+    value: 20
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 682016e0f48f8d6a5c1860fef246636c3433345d
+  test_case_id: test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_C19564[90-1024000-1]
+  test_function: test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_C19564
+  test_id: test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_C19564[90-1024000-1]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params:
+  - name: publish_len
+    value: 90
+  - name: total_bytes
+    value: 1024000
+  - name: iterations
+    value: 1
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
+  - aws_testing
+  - custom_testagent
+  - functional
+  - sqa_test_suites
+  - testplans_with_custom_requirements
+  - wlan_standalone
+- id: 3d5dc29169057e4eb891653f84e0d1d78a7a390e
+  test_case_id: test_aws_check_rejoin_failure_functionality_of_dut_C19549[10]
+  test_function: test_aws_check_rejoin_failure_functionality_of_dut_C19549
+  test_id: test_aws_check_rejoin_failure_functionality_of_dut_C19549[10]::1
+  test_module: sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/aws_testing/test_aws_iot_wifi_sqa_2.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,''features'':
+    RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,''tcpip_features'':
+    RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''custom_features'':
+    RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,''ext_custom_features'':
+    RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower|RS9116ExtCustomFeatureBitMap.SslCertWith4096Support|RS9116ExtCustomFeatureBitMap.RsaKeyWith4096Support,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,''config_features'':
+    RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,''set_send_feature_frame'':
+    True,''ca_cert'': [''start_field.pem''],''client_cert'': [''client-certificate.crt''],''client_key'':
+    [''private-key.key'']})'
+  - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','close_sockets'])
+  - pytest.mark.start_state('wifi_dut',wifi=['init'])
+  test_params:
+  - name: iterations
+    value: 10
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - aws_iot_wifi_sqa_2
   - aws_testing
   - custom_testagent
   - functional
