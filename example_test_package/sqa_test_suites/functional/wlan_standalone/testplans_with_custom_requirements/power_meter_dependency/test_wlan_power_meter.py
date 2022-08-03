@@ -219,7 +219,6 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.power_meter("keysight_power_analyzer_benchvue_win_wcf")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_active_tx_10dBm_20dBm_5Ghz(wifi_dut, power_meter, power):
     antenna = 1
