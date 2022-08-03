@@ -164,15 +164,13 @@ pipeline {
                                 --harness ${HARNESS_NAME} \
                                 --publish_test_results ${PUBLISH_TEST_RESULTS} \
                                 --docker_flags "-e BUILD_URL=${BUILD_URL}, \
-                                    -e BUILD_NUMBER=${BUILD_NUMBER}, \
-                                    -e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL}, \
-                                    -e JOB_NAME=${JOB_NAME}, \
-                                    -e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
-                                    -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
+                                    -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
+                                    -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
+                                    -e JENKINS_JOB_NAME=${JOB_NAME}, \
+                                    -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
+                                    -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
                                     -e TEST_SUITE=OT_Smoke_brd4161a, \
-                                    -e TEST_BRANCH_NAME=${GIT_BRANCH}, \
                                     -e STACK_NAME=WIFI, \
-                                    -e RELEASE_NAME=${RS9116_FIRMWARE}, \
                                     -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
                         '''
