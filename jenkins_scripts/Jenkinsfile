@@ -137,7 +137,7 @@ pipeline {
                         echo RUN_TESTS_DISPLAY_URL
                         echo RS9116_FIRMWARE
                         echo PUBLISH_TEST_RESULTS
-                        withEnv(['BUILD_URL='+BUILD_URL, 'BUILD_NUMBER='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'RUN_TESTS_DISPLAY_URL='+RUN_TESTS_DISPLAY_URL, 'INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
+                        withEnv(['JENKINS_SERVER_NAME='+BUILD_URL, 'JENKIN_RUN_NUM='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'JENKINS_TEST_RESULTS_URL='+RUN_TESTS_DISPLAY_URL, 'SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
                               sh "echo \$BUILD_URL"
                               sh "echo \$BUILD_NUMBER"
                               sh "echo \$GIT_BRANCH"
@@ -163,7 +163,7 @@ pipeline {
                                 --pytest_command "${UTF_PYTEST_COMMAND}" \
                                 --harness ${HARNESS_NAME} \
                                 --publish_test_results ${PUBLISH_TEST_RESULTS} \
-                                --docker_flags "-e BUILD_URL=${BUILD_URL}, \
+                                --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
                                     -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
                                     -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
                                     -e JENKINS_JOB_NAME=${JOB_NAME}, \
