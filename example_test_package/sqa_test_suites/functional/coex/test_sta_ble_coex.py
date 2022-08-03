@@ -126,6 +126,24 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         time.sleep(2)
     return ble_client_address, ble_dut_address
 
+def verify_sniffer_validation(wifi_sniffer,dut_mac_address,bssid):
+    validation = True
+    # validate PS-POLL frame with PM bit set to '1'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
+                     f'and (wlan.ra == {bssid}))'
+
+    # validate QOS data frame with more data bit set to '1'
+
+    packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
+                     f'and (wlan.ta == {bssid}))'
+
+    logger().info('Validating PS Poll frames are sent from the device with power management bit')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
+
+    logger().info('Validating more data bit in QOS data frames')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Sniffer validation failed for QOS data frame with more data bit 1'
 
 def ble_disconnect(wifi_dut, ble_address):
     # Ble disconnect
@@ -548,6 +566,7 @@ def test_get_local_bd_address_and_name_C20324(wifi_dut, bt_dut, wifi_access_poin
 
 # @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'C20310'})
 @pytest.mark.parametrize("ssid", ['C20310'])
@@ -569,10 +588,16 @@ def test_get_local_bd_address_and_name_C20324(wifi_dut, bt_dut, wifi_access_poin
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_dut, ble_clients, wifi_access_point,
-                                                                   ssid, net_perf_client, wifi_client, protocol):
+                                                                   ssid, net_perf_client, wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
-
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20310.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]
     ble_client2 = ble_clients[0]
@@ -613,8 +638,12 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_
 
     logger().info("Initiating BLE disconnection on DUT")
     wifi_dut.interfaces.wifi.bt_deinit()
+    logger().info("Stop Sniffer finally")
 
+    wifi_sniffer.interfaces.capture.stop_capture()
 
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
+#
 # @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -633,10 +662,16 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
     },
 )
-def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, ble_client):
+def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
-
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20311.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     ssid = "wrong_ssid_scan_C20111"
     ble_mode = "ble_slave"
 
@@ -644,7 +679,14 @@ def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, ble_client):
     with wifi_negative_scan_thread(wifi_dut, ssid), ble_master_slave_thread(wifi_dut, ble_client,
                                                                             ble_mode) as ble_thread:
         time.sleep(15)
-
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+    logger().info(
+        f"Validating Probe req(Broadcast)"
+    )
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find Probe req(Broadcast) in sniffer'
     ble_client_address, _ = ble_thread.return_value
     logger().info(f"ble_client_address:'{ble_client_address}'")
     # logger().info(f"ble_client_address type is :'{type(ble_client_address)}'")
@@ -791,10 +833,16 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_clien
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
-def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_access_point, ssid):
+def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
-
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20315.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     ble_mode = "ble_master"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, _ = ble_master_slave(wifi_dut, ble_client, ble_mode)
@@ -811,7 +859,11 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
 
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_address)
+    logger().info("Stop Sniffer finally")
 
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 ############### PR2 ####################################
 # @pytest.mark.skip()

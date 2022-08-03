@@ -2013,70 +2013,20 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
-    name: bt_per_tx
-    handler: rsi_bt_per_tx_command
-    help: configure the per transmit parameters
-    argument:
-    - {type: uint8, help: cmd_id}
-    - {type: uint8, help: transmit_enable}
-    - {type: string, help: device_Addr}
-    - {type: string, help: pkt_len}
-    - {type: uint8, help: pkt_type}
-    - {type: uint8, help: br_edr_mode}
-    - {type: uint8, help: rx_chnl_in}
-    - {type: uint8, help: tx_chnl_in}
-    - {type: uint8, help: link_type}
-    - {type: uint8, help: scrambler_seed}
-    - {type: uint8, help: hopping_type}
-    - {type: uint8, help: ant_sel}
-    - {type: uint8, help: pll_mode}
-    - {type: uint8, help: rf_type}
-    - {type: uint8, help: rf_chain}
-    - {type: uint8, help: payload_type}
-    - {type: uint8, help: tx_power}
-    - {type: uint8, help: transmit_mode}
-    - {type: uint8, help: inter_pkt_gap}
-    - {type: string, help: num_packets}
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
 
 - name: cli_command
   priority: 0
   value:
-    name: bt_per_rx
-    handler: rsi_bt_per_rx_command
-    help: configure the per receive parameters
-    argument:
-    - {type: uint8, help: cmd_id}
-    - {type: uint8, help: receive_enable}
-    - {type: string, help: device_Addr}
-    - {type: string, help: pkt_len}
-    - {type: uint8, help: pkt_type}
-    - {type: uint8, help: br_edr_mode}
-    - {type: uint8, help: rx_chnl_in}
-    - {type: uint8, help: tx_chnl_in}
-    - {type: uint8, help: link_type}
-    - {type: uint8, help: scrambler_seed}
-    - {type: uint8, help: hopping_type}
-    - {type: uint8, help: ant_sel}
-    - {type: uint8, help: pll_mode}
-    - {type: uint8, help: rf_type}
-    - {type: uint8, help: rf_chain}
-    - {type: uint8, help: loop_back_mode}
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit
 
 - name: cli_command
   priority: 0
   value:
-    name: bt_per_stats
-    handler: rsi_bt_per_stats_command
-    help: request the local device for bt per operation
-    argument:
-    - {type: uint8, help: cmd_type}
-    - {type: uint16, help: crc_fail_cnt}
-    - {type: uint16, help: crc_pass_cnt}
-    - {type: uint16, help: tx_abort_cnt}
-    - {type: uint16, help: rx_drop_cnt}
-    - {type: uint16, help: rx_cca_idle_cnt}
-    - {type: uint16, help: rx_start_idle_cnt}
-    - {type: uint16, help: rx_abrt_cnt}
-    - {type: uint16, help: tx_dones}
-    - {type: int8, help: rssi}
-    - {type: int8, help: id_pkts_rcvd}
+    name: http_abort
+    handler: rsi_http_abort_command
+    help: Abort http connection

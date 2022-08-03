@@ -12,7 +12,9 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116FeatureBitMap,
     RS9116BTFeatureBitMap,
     RS9116PowerSaveModes,
-    RS9116PowerSaveProcedureTypes
+    RS9116PowerSaveProcedureTypes,
+    RS9116ExtTCPIPFeatureBitMap,
+    RS9116ConfigFeatureBitMap
     )
 
 def logger():
@@ -47,16 +49,14 @@ test_data = ["9,01,00,00,04,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",
         3. Initiate Scan, connect and interrupt data between the bt socket
         4. verify the functionality
 
-    Author: RaviNemali
+    Author: RaviNemali/Harshitha
     
     Note: ******** This test plan supports only in AT mode **********
 """
 
-
-pytestmark = [
-    pytest.mark.bt_client("raspi_ble_client"),
-    pytest.mark.dut("rs9116"),
-    pytest.mark.config(
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
         "wifi_dut",
         wifi=
         {
@@ -71,7 +71,6 @@ pytestmark = [
             "rejoin_enable":False,
         }
     )
-]
 def test_hid_conn_in_device_role_C20017(bt_dut, bt_client):
     with TimeMeasurer() as t:
 
@@ -114,6 +113,23 @@ def test_hid_conn_in_device_role_C20017(bt_dut, bt_client):
             bt_client.interfaces.bluetooth.close()
     logger().info(f"test completed in {t.duration} seconds")
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=False)
@@ -163,13 +179,24 @@ def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
         time.sleep(5)
     logger().info(f"test completed in {t.duration} seconds")
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_set_local_cod_C20023_class_002560(bt_dut, bt_client):
-    logger().info("set bt profile....")
-    bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
-
-    logger().info("set sdp config....")
-    bt_dut.interfaces.bluetooth.bt_hid_send_sdp_config()
-
     logger().info("configure bt class.... ")
     bt_dut.interfaces.bluetooth.bt_set_class(cod="002560")
 
@@ -231,13 +258,24 @@ def test_set_local_cod_C20023_class_002560(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_set_local_cod_C20023_class_002540(bt_dut, bt_client):
-    logger().info("set bt profile....")
-    bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
-
-    logger().info("set sdp config....")
-    bt_dut.interfaces.bluetooth.bt_hid_send_sdp_config()
-
     logger().info("configure bt class.... ")
     bt_dut.interfaces.bluetooth.bt_set_class(cod="002540")
 
@@ -298,13 +336,24 @@ def test_set_local_cod_C20023_class_002540(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_set_local_cod_C20023_class_002580(bt_dut, bt_client):
-    logger().info("set bt profile....")
-    bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
-
-    logger().info("set sdp config....")
-    bt_dut.interfaces.bluetooth.bt_hid_send_sdp_config()
-
     logger().info("configure bt class.... ")
     bt_dut.interfaces.bluetooth.bt_set_class(cod="002580")
 
@@ -365,10 +414,24 @@ def test_set_local_cod_C20023_class_002580(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_connectivity_SSP_with_IO_capa_Display_only_C20025(bt_dut, bt_client):
-
-    logger().info("Initializing dut with hid...")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
 
     logger().info("configuring dut local name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_hid_io_capability")
@@ -427,10 +490,24 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_only_C20025(bt_dut, bt_client
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_connectivity_SSP_with_IO_capa_Display_yes_no_C20026(bt_dut, bt_client):
-
-    logger().info("Initializing dut with hid...")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
 
     logger().info("configuring dut local name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_local_name")
@@ -489,11 +566,24 @@ def test_hid_connectivity_SSP_with_IO_capa_Display_yes_no_C20026(bt_dut, bt_clie
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_client):
-
-    logger().info("Initializing dut with hid...")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
-
     logger().info("configuring dut local name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_local_name")
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
@@ -551,6 +641,23 @@ def test_hid_connectivity_SSP_with_IO_capa_no_input_output_C20028(bt_dut, bt_cli
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client):
     logger().info("configuring dut for hid slave role with sdp config data with capability....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
@@ -611,6 +718,23 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20031(bt_dut, bt_client)
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_conn_and_disconn_C20019(bt_dut, bt_client):
 
         logger().info("configuring dut for hid slave role with sdp config data....")
@@ -657,6 +781,23 @@ def test_hid_conn_and_disconn_C20019(bt_dut, bt_client):
                 logger().info(f"******************* iteration {count} completed ********************* ")
         time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_disconn_in_device_role_C20018(bt_dut, bt_client):
         logger().info("configuring dut for hid slave role with sdp config data....")
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
@@ -699,10 +840,25 @@ def test_hid_disconn_in_device_role_C20018(bt_dut, bt_client):
         bt_client.interfaces.bluetooth.close()
         time.sleep(5)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_client):
     pin_code = "123456"
-    logger().info("Initializing dut with hid...")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
 
     logger().info("configuring dut local name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_local_name")
@@ -762,145 +918,25 @@ def test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027(bt_dut, bt_clien
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
-    assert bt_dut_address ,"failed to initialize bt dut"
-    logger().info(f'bt dut address {bt_dut_address}')
-
-    logger().info("initiating scan form remote bt device...")
-    bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
-                                                                      pin_code=pin_code)
-    assert bt_client_address ,"bt client setup failed"
-    logger().info(f'bt client address {bt_client_address}')
-
-    device_found = False
-    sw = Stopwatch()
-    while sw.elapsed_sec < 30:
-        if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
-            device_found = True
-            break
-
-    logger().info("stopping scan.....")
-    bt_client.interfaces.bluetooth.stop_scanning()
-    assert device_found, "unable to scan device"
-
-    with bt_dut.interfaces.bluetooth.run_bt_task():
-        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
-        assert connected, "unable to connect bt device"
-        logger().info(f'device connection state is {connected}')
-
-    bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
-                                               SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
-                                               sniffTimeout=sniffTimeout)
-    time.sleep(5)
-    logger().info("set dut in power save.....")
-    bt_dut.interfaces.bluetooth.power_save(3,1)
-    time.sleep(15)
-    logger().info("bt power save configuration success")
-
-    with HidRecorder() as hid_recorder:
-        for item in test_data:
-            logger().info("sending interrupt data at remote window....")
-            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
-        hid_logs = hid_recorder.logs()
-
-    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
-    for i in range(len(test_data)):
-        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
-
-    time.sleep(60)
-
-    logger().info("fetching the connection status after 60 secs of sleep")
-    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
-    assert connected == 1, "dut is disconnected"
-    logger().info(f"connection status :{connected}")
-
-    logger().info("disconnecting from bt device")
-    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
-    time.sleep(5)
-    bt_client.interfaces.bluetooth.close()
-    time.sleep(5)
-
-def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
-
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
-
-    logger().info("configuring dut local name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_local_name")
-    bt_dut.interfaces.bluetooth.bt_set_slave_role()
-
-    logger().info("configuring dut with capability....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
-
-    logger().info("configuring dut pin code....")
-    pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
-
-    logger().info("fetching dut local address....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    logger().info(f'bt dut address {bt_dut_address}')
-
-    for count in range(0, iter_count):
-        logger().info(f"******************* iteration {count}  ********************* ")
-        logger().info("initiating scan form remote bt device...")
-        bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
-                                                                      pin_code=pin_code)
-        assert bt_client_address,"bt client setup failed"
-        logger().info(f'bt client address {bt_client_address}')
-
-        device_found = False
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
-                device_found = True
-                break
-
-        logger().info("stopping scan.....")
-        bt_client.interfaces.bluetooth.stop_scanning()
-        assert device_found, "unable to scan device"
-
-        with bt_dut.interfaces.bluetooth.run_bt_task():
-            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
-            assert connected, "unable to connect bt device"
-            logger().info(f'device connection state is {connected}')
-
-        bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
-                                                   SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
-                                                   sniffTimeout=sniffTimeout)
-        time.sleep(5)
-        logger().info("set dut in power save.....")
-        bt_dut.interfaces.bluetooth.power_save(3,1)
-        logger().info("bt power save configuration success")
-
-        with HidRecorder() as hid_recorder:
-            for item in test_data:
-                logger().info("sending interrupt data at remote window....")
-                bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
-            hid_logs = hid_recorder.logs()
-
-        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
-        for i in range(len(test_data)):
-            assert hid_logs[i] == test_data[i],"hid data and test data is not same"
-
-        time.sleep(60)
-
-        logger().info("fetching the connection status after 60 secs of sleep")
-        connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
-        assert connected == 1, "dut is disconnected"
-        logger().info(f"connection status :{connected}")
-
-        logger().info("disconnecting from bt device")
-        bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
-        bt_client.interfaces.bluetooth.close()
-        logger().info(f"******************* iteration {count} completed ********************* ")
-    time.sleep(10)
-
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client):
-
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
-
+    bt_dut.interfaces.bluetooth.start_bt_slave_hid()
     logger().info("configuring dut local name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_local_name")
     bt_dut.interfaces.bluetooth.bt_set_slave_role()
@@ -972,11 +1008,113 @@ def test_hid_conn_send_Interrupt_data_in_ps_3_ulp_mode_C20035(bt_dut, bt_client)
         logger().info(f"******************* iteration {count} completed ********************* ")
     time.sleep(10)
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
+def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20034(bt_dut, bt_client):
+
+    logger().info("configuring dut local name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="bt_local_name")
+    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+
+    logger().info("configuring dut with capability....")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+
+    logger().info("configuring dut pin code....")
+    pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
+
+    logger().info("fetching dut local address....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    for count in range(0, iter_count):
+        logger().info(f"******************* iteration {count}  ********************* ")
+        logger().info("initiating scan form remote bt device...")
+        bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                      pin_code=pin_code)
+        assert bt_client_address,"bt client setup failed"
+        logger().info(f'bt client address {bt_client_address}')
+
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
+                device_found = True
+                break
+
+        logger().info("stopping scan.....")
+        bt_client.interfaces.bluetooth.stop_scanning()
+        assert device_found, "unable to scan device"
+
+        with bt_dut.interfaces.bluetooth.run_bt_task():
+            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            assert connected, "unable to connect bt device"
+            logger().info(f'device connection state is {connected}')
+
+        bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                                   SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                                   sniffTimeout=sniffTimeout)
+        time.sleep(5)
+        logger().info("set dut in power save.....")
+        bt_dut.interfaces.bluetooth.power_save(3,1)
+        logger().info("bt power save configuration success")
+
+        with HidRecorder() as hid_recorder:
+            for item in test_data:
+                logger().info("sending interrupt data at remote window....")
+                bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+            hid_logs = hid_recorder.logs()
+
+        assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
+        for i in range(len(test_data)):
+            assert hid_logs[i] == test_data[i],"hid data and test data is not same"
+
+        time.sleep(60)
+
+        logger().info("fetching the connection status after 60 secs of sleep")
+        connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+        assert connected == 1, "dut is disconnected"
+        logger().info(f"connection status :{connected}")
+
+        logger().info("disconnecting from bt device")
+        bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        bt_client.interfaces.bluetooth.close()
+        logger().info(f"******************* iteration {count} completed ********************* ")
+    time.sleep(10)
+
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_bt_hid_functionality_in_sniff_mode_C20037(bt_dut, bt_client):
-
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
-
+    bt_dut.interfaces.bluetooth.start_bt_slave_hid()
     logger().info("get cod")
     bt_dut.interfaces.bluetooth.bt_get_class()
 
@@ -1052,10 +1190,24 @@ def test_bt_hid_functionality_in_sniff_mode_C20037(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
 
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
 def test_bt_hid_send_continuous_Hid_Interrupt_data_C20038(bt_dut, bt_client):
-
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut.interfaces.bluetooth.bt_hid_init()
 
     logger().info("get cod")
     bt_dut.interfaces.bluetooth.bt_get_class()
@@ -1122,6 +1274,166 @@ def test_bt_hid_send_continuous_Hid_Interrupt_data_C20038(bt_dut, bt_client):
         assert len(hid_logs) == len(test_data), "hid data and test data length is not matched"
         for i in range(len(test_data)):
             assert hid_logs[i] == test_data[i], "hid data and test data is not same"
+
+    time.sleep(60)
+
+    logger().info("fetching the connection status after 60 secs of sleep")
+    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+    assert connected == 1, "dut is disconnected"
+    logger().info(f"connection status :{connected}")
+
+    logger().info("disconnecting from bt device")
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(5)
+    bt_client.interfaces.bluetooth.close()
+
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+            "ext_tcpip_features": 0,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+            "ble_features": 0,
+            "rejoin_enable":False,
+        }
+    )
+def test_hid_conn_send_Interrupt_data_in_ps_3_lp_mode_C20030(bt_dut, bt_client):
+    logger().info("configuring dut for hid slave role with sdp config data with capability....")
+    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
+    assert bt_dut_address ,"failed to initialize bt dut"
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    logger().info("initiating scan form remote bt device...")
+    bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                      pin_code=pin_code)
+    assert bt_client_address ,"bt client setup failed"
+    logger().info(f'bt client address {bt_client_address}')
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
+            device_found = True
+            break
+
+    logger().info("stopping scan.....")
+    bt_client.interfaces.bluetooth.stop_scanning()
+    assert device_found, "unable to scan device"
+
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        assert connected, "unable to connect bt device"
+        logger().info(f'device connection state is {connected}')
+
+    bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                               SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                               sniffTimeout=sniffTimeout)
+    time.sleep(5)
+    logger().info("set dut in power save.....")
+    bt_dut.interfaces.bluetooth.power_save(3,1)
+    time.sleep(15)
+    logger().info("bt power save configuration success")
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            logger().info("sending interrupt data at remote window....")
+            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data),"hid data and test data length is not matched"
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data[i],"hid data and test data is not same"
+
+    time.sleep(60)
+
+    logger().info("fetching the connection status after 60 secs of sleep")
+    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+    assert connected == 1, "dut is disconnected"
+    logger().info(f"connection status :{connected}")
+
+    logger().info("disconnecting from bt device")
+    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(5)
+    bt_client.interfaces.bluetooth.close()
+    time.sleep(5)
+
+@pytest.mark.bt_client("raspi_ble_client")
+@pytest.mark.dut("rs9116")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+        "features": RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "ext_tcpip_features":RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection | RS9116BTFeatureBitMap.BTSniff,
+        "ble_features": 0,
+        "rejoin_enable":False,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        }
+)
+def test_bt_hid_disabling_sniff_feature_C20036(bt_dut, bt_client):
+
+    logger().info("configuring dut for hid slave role with sdp config data with capability....")
+    bt_dut.interfaces.bluetooth.bt_hid_init()
+
+    logger().info("get cod")
+    bt_dut.interfaces.bluetooth.bt_get_class()
+
+    logger().info("configure bt local name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name='REDPINE_HID_KEYBOARD')
+
+    logger().info("configuring dut with capability....")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=3)
+
+    logger().info("initializing bt.....")
+    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+
+    logger().info("configuring dut pin code....")
+    pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
+
+    logger().info("fetching dut local address....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    logger().info("initiating scan form remote bt device...")
+    bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address, pin_code=pin_code)
+    assert bt_client_address, "failed to initiate scan in remote device"
+    logger().info(f'bt client address {bt_client_address}')
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
+            device_found = True
+            break
+    logger().info("stop scanning.....")
+    bt_client.interfaces.bluetooth.stop_scanning()
+    assert device_found, "unable to scan device"
+
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        logger().info("connecting to remote bt device....")
+        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        assert connected, "unable to connect bt device"
+        logger().info(f'device connection state is {connected}')
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data), "hid data and test data length is not matched"
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data[i], "hid data and test data is not same"
 
     time.sleep(60)
 

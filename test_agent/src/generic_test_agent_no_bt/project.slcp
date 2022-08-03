@@ -138,6 +138,7 @@ template_contribution:
     - {type: string, help: 'server_name'}
     - {type: uint16, help: 'server_port'}
     - {type: string, help: 'client_id'}
+    - {type: uint8, help: 'clean session'}
 - name: cli_command
   priority: 0
   value: 
@@ -2187,3 +2188,42 @@ template_contribution:
     - {type: uint8, help: type}
     - {type: uint8, help: gain_2g}
     - {type: uint8, help: gain_5g}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit
+
+- name: cli_command
+  priority: 0
+  value:
+    name: socket_config
+    handler: rsi_socket_config_command
+    help: Set socket related information
+    argument:
+    - {type: uint8, help: total_sockets}
+    - {type: uint8, help: total_tcp_sockets}
+    - {type: uint8, help: total_udp_sockets}
+    - {type: uint8, help: tcp_tx_only_sockets}
+    - {type: uint8, help: tcp_rx_only_sockets}
+    - {type: uint8, help: udp_tx_only_sockets}
+    - {type: uint8, help: udp_rx_only_sockets}
+    - {type: uint8, help: tcp_rx_high_performance_sockets}
+    - {type: uint8, help: tcp_rx_window_size_cap}
+    - {type: uint8, help: tcp_rx_window_div_factor}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_abort
+    handler: rsi_http_abort_command
+    help: Abort http connection

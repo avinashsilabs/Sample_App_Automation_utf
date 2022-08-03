@@ -21,7 +21,16 @@ pytestmark = [
                                                        TestResultsModelAttrs.test_description: 'module desc',
                                                        TestResultsModelAttrs.iot_req_id: 'IOTREQ-1194',
                                                        TestResultsModelAttrs.tool_chain: 'tool_chain',
-                                                       TestResultsModelAttrs.engineer_name: 'Hidayathulla'})
+                                                       TestResultsModelAttrs.engineer_name: 'Hidayathulla',
+                                                       TestResultsModelAttrs.test_case_version_num: 1,
+                                                       TestResultsModelAttrs.test_suite_name: 'test_suite_name',
+                                                       TestResultsModelAttrs.phy_name: 'phy_name',
+                                                       TestResultsModelAttrs.vendor_result: 'vendor_result',
+                                                       TestResultsModelAttrs.vendor_build: 'vendor_build',
+                                                       TestResultsModelAttrs.vendor_name: 'vendor_name',
+                                                       TestResultsModelAttrs.portal_watch: 'true',
+                                                       TestResultsModelAttrs.test_parametric_data: 'p1',
+                                                       })
 ]
 
 

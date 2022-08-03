@@ -5,7 +5,7 @@ from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.iperf.iperf_utils import print_dict
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
-    RS9116PowerSaveModes, RS9116JoinFeatureBitMap
+    RS9116PowerSaveModes, RS9116JoinFeatureBitMap, RS9116Band
 
 def logger():
     return get_logger(__name__)
@@ -28,7 +28,7 @@ def __print_throughput(throughput: dict):
     if throughput is not None:
         print_dict("##     ", throughput)
 
-@pytest.mark.parametrize("dtim", [1, 3, 10])
+@pytest.mark.parametrize("dtim", [1,3,10])
 @pytest.mark.config(
         "wifi_dut",
         wifi=
@@ -38,13 +38,14 @@ def __print_throughput(throughput: dict):
             "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "set_send_feature_frame": True,
+            "rf_type":1,
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_dtim_2g(wifi_dut, wifi_access_point, power_meter, dtim):
+def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
 
     bcast_in_tim_next_cmd = 1
     beacon_drop = 500
@@ -66,12 +67,12 @@ def test_wlan_standby_dtim_2g(wifi_dut, wifi_access_point, power_meter, dtim):
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info("sending filter broadcast command")
 
-    wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
-    # assert status, "filter broadcast is failed"
-
     logger().info("enabling wifi power save mode in DUT......")
     wifi_dut.interfaces.wifi.power_save(2)
     logger().info(f'DUT ip {device_ip}')
+
+    wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
+    # assert status, "filter broadcast is failed"
 
     time.sleep(10)
 
@@ -90,6 +91,7 @@ def test_wlan_standby_dtim_2g(wifi_dut, wifi_access_point, power_meter, dtim):
     __print_throughput(parsed_result)
     assert parsed_result["Output"] is not None
 
+
 @pytest.mark.parametrize("dtim", [1, 3, 10])
 @pytest.mark.config(
         "wifi_dut",
@@ -101,6 +103,7 @@ def test_wlan_standby_dtim_2g(wifi_dut, wifi_access_point, power_meter, dtim):
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "band": RS9116Band.FiveGHz,
             "set_send_feature_frame": True,
+            "rf_type":0,
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -154,6 +157,8 @@ def test_wlan_standby_dtim_5g(wifi_access_point, wifi_dut, power_meter, dtim):
     assert parsed_result["Output"] is not None
 
 
+##
+@pytest.mark.parametrize("power", [10, 20])
 @pytest.mark.config(
         "wifi_dut",
         wifi=
@@ -162,22 +167,29 @@ def test_wlan_standby_dtim_5g(wifi_access_point, wifi_dut, power_meter, dtim):
             "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "set_send_feature_frame": True,
+            "rf_type":1,
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-# @pytest.mark.parametrize("power","rate","length","mode","channel", [4,139,30,0,1])
-def test_wlan_active_tx_10dBm(wifi_dut, power_meter):
+def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
     antenna = 1
     gain_2g = 0
     gain_5g = 0
+    # power_list=[10, 20]
+    rate=139
+    length=1000
+    mode=0
+    channel=1
+    # for power in power_list:
     time.sleep(5)
     wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
     logger().info("setting the wireless antenna ")
     time.sleep(5)
-    wifi_dut.interfaces.wifi.set_wlan_transmit_start(10, 139, 1000, 0, 1)
+    logger().info(f"configuring dut with diff power:{power}")
+    wifi_dut.interfaces.wifi.set_wlan_transmit_start(power=power, rate=rate, length=length, mode=mode, channel=channel)
     time.sleep(5)
-   # Init power meter by specifying module name as datalogger or scope
+    # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter(data_log_file_name=f"UTF1_Data_Log")
     # Init power meter module
     power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
@@ -187,10 +199,56 @@ def test_wlan_active_tx_10dBm(wifi_dut, power_meter):
     power_meter.interfaces.power_meter.start_capture()
 
     # Parse result as throughput object
-    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
     __print_throughput(parsed_result)
     assert parsed_result["Output"] is not None
 
+###################################################################
+@pytest.mark.parametrize("power", [20])
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 8,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "set_send_feature_frame": True,
+            "band": RS9116Band.FiveGHz,
+            "rf_type":0,
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.power_meter("keysight_power_analyzer_benchvue_win_wcf")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wlan_active_tx_10dBm_20dBm_5Ghz(wifi_dut, power_meter, power):
+    antenna = 1
+    gain_2g = 0
+    gain_5g = 0
+    rate=139
+    length=1000
+    mode=0
+    channel=36
+    time.sleep(5)
+    wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
+    logger().info("setting the wireless antenna ")
+    time.sleep(5)
+    logger().info(f"configuring dut with diff power:{power}")
+    wifi_dut.interfaces.wifi.set_wlan_transmit_start(power=power, rate=rate, length=length, mode=mode, channel=channel)
+    time.sleep(5)
+    # Init power meter by specifying module name as datalogger or scope
+    power_meter.interfaces.power_meter.init_power_meter(data_log_file_name=f"UTF1_Data_Log")
+    # Init power meter module
+    power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
+    # set power meter out put channels
+    power_meter.interfaces.power_meter.set_output_channels(["1"])
+    # start capture power meter datalog/scope
+    power_meter.interfaces.power_meter.start_capture()
 
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
 
 

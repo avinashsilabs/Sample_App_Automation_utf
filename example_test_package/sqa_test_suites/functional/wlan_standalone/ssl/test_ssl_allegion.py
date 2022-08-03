@@ -1945,6 +1945,7 @@ def test_2SSL_TX_1TCP_RX_testcaseTC19161(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             3),
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ca_cert": ["ca-chain.cert.pem", "ca-chain.cert.pem"]
         }
     )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -1967,8 +1968,8 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(
         ):
     capture_filename = "test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162"
     listen_interval = 700
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger, cert1, cert2,
-                                  cert3, listen_interval_feature=True,listen_interval=listen_interval)
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  listen_interval_feature=True, listen_interval=listen_interval)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -2035,7 +2036,7 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(
 
             time.sleep(5)
             events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-            assert len(events) == 1, "Socket select asynchronous event is not received"
+            assert len(events) != 0, "Socket select asynchronous event is not received"
             logger.info(f"Socket select event received")
             sock_list = []
             for event in events:

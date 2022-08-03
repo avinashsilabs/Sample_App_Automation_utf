@@ -1,6 +1,6 @@
 from utf.interfaces.wifi import WlanError
 
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116PowerSaveModes
 import time
 import pytest
 from utf.utils.logger import get_logger
@@ -68,7 +68,7 @@ ping_count=10
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
                     | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -112,10 +112,10 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
     logger().info(f"DUT ip address : {device_ip}")
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
@@ -169,7 +169,7 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
                     | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -213,10 +213,10 @@ def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_po
     logger().info(f"DUT ip address : {device_ip}")
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
@@ -270,7 +270,7 @@ def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_po
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
                     | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_request_timeout_scan_100misc(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -303,11 +303,10 @@ def test_request_timeout_scan_100misc(wifi_sniffer, wifi_dut, wifi_access_point)
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"DUT ip address : {device_ip}")
 
-    logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
@@ -340,7 +339,7 @@ def test_request_timeout_scan_100misc(wifi_sniffer, wifi_dut, wifi_access_point)
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
                     | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -374,10 +373,10 @@ def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point)
     logger().info(f"DUT ip address : {device_ip}")
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     time.sleep(2)
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")

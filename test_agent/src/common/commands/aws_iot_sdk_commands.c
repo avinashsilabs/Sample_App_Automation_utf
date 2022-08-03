@@ -106,6 +106,7 @@ void aws_client_init(sl_cli_command_arg_t* arguments) {
     char* server_name = sl_cli_get_argument_string(arguments, 0);
     uint16_t server_port = sl_cli_get_argument_uint16(arguments, 1);
     char* client_id = sl_cli_get_argument_string(arguments, 2);
+    uint8_t clean_session = sl_cli_get_argument_uint8(arguments, 3);
 
     if (s_yield_mutex == 0) {
         rsi_mutex_create(&s_yield_mutex);
@@ -118,7 +119,6 @@ void aws_client_init(sl_cli_command_arg_t* arguments) {
     s_init_params.pHostURL = strdup(server_name);
     s_init_params.port = server_port;
     s_init_params.disconnectHandler = aws_iot_disconnect_handler;
-
     IoT_Error_t status = aws_iot_mqtt_init(&s_iot_client, &s_init_params);
     if (status != SUCCESS) {
         print_status(status);
@@ -130,6 +130,7 @@ void aws_client_init(sl_cli_command_arg_t* arguments) {
     }
     s_connect_params.pClientID = strdup(client_id);
     s_connect_params.clientIDLen = strlen(client_id);
+    s_connect_params.isCleanSession =  (bool) clean_session;
     status = aws_iot_mqtt_connect(&s_iot_client, &s_connect_params);
     if (status == SUCCESS) {
         s_run_yield_task = true;

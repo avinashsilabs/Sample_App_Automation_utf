@@ -70,7 +70,7 @@ def _check_for_devices_in_scanned_results(ble_interface, bt_dut_address, adv_dat
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_undirected_connectable_adv_T3244(wifi_dut, ble_client):
+def test_ble_undirected_connectable_adv_C19801(wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_undirected_connectable_adv_T3244_{int(time.time())}.log",
@@ -142,7 +142,7 @@ def test_ble_undirected_connectable_adv_T3244(wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_undirected_scannable_adv_T3246(wifi_dut, ble_client):
+def test_ble_undirected_scannable_adv_C19803(wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_undirected_scannable_adv_T3246_{int(time.time())}.log",
@@ -212,7 +212,7 @@ def test_ble_undirected_scannable_adv_T3246(wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_undirected_non_connectable_adv_T3247(wifi_dut, ble_client):
+def test_ble_undirected_non_connectable_adv_C19804(wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_undirected_non_connectable_adv_T3247_{int(time.time())}.log",
@@ -265,7 +265,7 @@ def test_ble_undirected_non_connectable_adv_T3247(wifi_dut, ble_client):
             in bt_logs.device_adv_type
         ),"Expected avd type not found bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
-
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -349,7 +349,7 @@ def test_ble_connect_T3275(wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertisement_repeat_T3292(wifi_dut, ble_client):
+def test_ble_init_adv_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client):
     for count in range(0, 15):
         wifi_dut.interfaces.wifi.ble_initialized = False
         logger().info("Initializing BLE")
@@ -392,7 +392,7 @@ def test_ble_advertisement_repeat_T3292(wifi_dut, ble_client):
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
@@ -407,15 +407,21 @@ def test_ble_advertisement_repeat_T3292(wifi_dut, ble_client):
         "first_time_retry": 0,
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-
-def test_ble_advertisement_setname_T3293(wifi_dut, ble_client):
+def test_ble_adv_with_configured_name_of_length_16bytes_C19850(wifi_dut, ble_client):
+    set_local_name = "ble_123456789012"
+    logger().info(f"Setting BLE local name {set_local_name}")
+    wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
+    status = wifi_dut.interfaces.wifi.bt_get_local_name()
+    logger().info(f"getting the local name : {status}")
+    assert set_local_name == status, "Set local name and get local name not matched "
     # Set up DUT for BLE advertising
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
 
-    logger().info("Advertising DUT with the name ble_1234567890 ")
+    logger().info("Advertising DUT with the name ble_123456789012 ")
     wifi_dut.interfaces.wifi.ble_start_advertising(
-        ble_advertising_data="ble_1234567890"
+        ble_advertising_data="ble_123456789012"
     )
     # wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=128)
 
@@ -444,7 +450,7 @@ def test_ble_advertisement_setname_T3293(wifi_dut, ble_client):
     logger().info("initiating stop advertising")
     wifi_dut.interfaces.wifi.ble_stop_advertising()
 
-
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -485,7 +491,7 @@ def test_ble_set_localname_testcase61(wifi_dut):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_local_name_17bytes_neg_testcase60(wifi_dut):
+def test_ble_set_localname_configured_with_17bytes_C71442(wifi_dut):
 
     with pytest.raises(WlanError) as exc_info:
 
