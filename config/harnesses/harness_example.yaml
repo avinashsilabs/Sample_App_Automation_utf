@@ -635,13 +635,13 @@ devices:
                 username: 'test'
                 password: 'test123'
 
-    keysight_power_analyzer:
+    keysight_N6705_power_analyzer:
         interfaces:
             power_meter:
                 type: 'power_meter.keysight_N6705'
-                instrument_lan_ip_address: '10.207.19.83'
+                instrument_lan_ip_address: '10.207.21.140'
 
-    keysight_power_analyzer_benchvue_win_rm:
+    keysight_benchvue_power_analyzer_win_rm:
         interfaces:
             windows_shell: 
                 type: 'rem_mgmt.win_rm'
@@ -654,8 +654,8 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-
-    keysight_power_analyzer_benchvue_win_wcf:
+    
+    keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
@@ -881,7 +881,7 @@ defaults:
 
     logic_analyzer: 'saleae_logic_analyzer'
 
-    power_meter: 'keysight_power_analyzer'
+    power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
 
     ble_client: 'raspi_ble_client'
 

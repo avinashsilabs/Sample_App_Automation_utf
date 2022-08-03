@@ -43,7 +43,6 @@ def __print_throughput(throughput: dict):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
-@pytest.mark.power_meter("keysight_power_analyzer_benchvue_win_wcf")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
@@ -109,7 +108,6 @@ def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
-@pytest.mark.power_meter("keysight_power_analyzer_benchvue_win_wcf")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_dtim_5g(wifi_access_point, wifi_dut, power_meter, dtim):
@@ -173,7 +171,6 @@ def test_wlan_standby_dtim_5g(wifi_access_point, wifi_dut, power_meter, dtim):
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.power_meter("keysight_power_analyzer_benchvue_win_wcf")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
     antenna = 1
@@ -222,7 +219,6 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.power_meter("keysight_power_analyzer_benchvue_win_wcf")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_active_tx_10dBm_20dBm_5Ghz(wifi_dut, power_meter, power):
     antenna = 1
