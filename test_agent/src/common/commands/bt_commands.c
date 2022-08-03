@@ -1444,7 +1444,7 @@ void rsi_bt_get_rssi_command(sl_cli_command_arg_t *arguments){
     rsi_ascii_dev_address_to_6bytes_rev(device_address, (int8_t*)remote_bond_dev_addr);
     int32_t status = rsi_bt_get_rssi((uint8_t *)device_address, &bt_rsi_app_resp_rssi);
     if (status == RSI_SUCCESS) {
-        printf("\n%d\n", bt_rsi_app_resp_rssi);
+        printf("\nbt_rssi_value : %d\n", bt_rsi_app_resp_rssi);
     }
     print_status(status);
 }
