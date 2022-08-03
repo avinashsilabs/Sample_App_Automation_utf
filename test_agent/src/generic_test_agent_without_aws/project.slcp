@@ -2177,6 +2177,7 @@ template_contribution:
     - {type: uint8, help: hopping_type}
     - {type: string, help: Multiple arguments bundled together}
 
+
 - name: cli_command
   priority: 0
   value:
@@ -2230,6 +2231,20 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit
+
+- name: cli_command
+  priority: 0
+  value:
     name: bt_sniff_mode
     handler: rsi_bt_sniff_mode_command
     help: To set bt sniff mode
@@ -2257,32 +2272,8 @@ template_contribution:
     - {type: uint8, help: tcp_rx_high_performance_sockets}
     - {type: uint8, help: tcp_rx_window_size_cap}
     - {type: uint8, help: tcp_rx_window_div_factor}
-
-- name: cli_command
-  priority: 0
-  value:
-    name: wlan_radio_init
-    handler: rsi_wlan_radio_init_command
-    help: wifi radio init
-
-- name: cli_command
-  priority: 0
-  value:
-    name: wlan_radio_deinit
-    handler: rsi_wlan_radio_deinit_command
-    help: wifi radio deinit
-
-- name: cli_command
-  priority: 0
-  value:
-    name: http_abort
-    handler: rsi_http_abort_command
-    help: Abort http connection
-
-- name: cli_command
-  priority: 0
-  value:
-    name: http_put
+    
+- name: http_put
     handler: rsi_http_client_put_start_command
     help: starts http put service in dut
     argument:
@@ -2299,6 +2290,9 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
+    name: http_abort
+    handler: rsi_http_abort_command
+    help: Abort http connection
     name: http_put_pkt
     handler: rsi_http_client_put_pkt_command
     help: puts data into server
