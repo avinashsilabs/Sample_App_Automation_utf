@@ -66,16 +66,16 @@ def test_http_server_and_linux_client_get(http_server, http_client, logger):
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -101,12 +101,15 @@ def test_https_get_functionality_C19209(http_server, wifi_dut,http_client, wifi_
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling  bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching the data on https using post method")
@@ -124,15 +127,15 @@ def test_https_get_functionality_C19209(http_server, wifi_dut,http_client, wifi_
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -159,12 +162,15 @@ def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wif
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching data on https using get method")
@@ -176,16 +182,16 @@ def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wif
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -212,11 +218,15 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut,h
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
@@ -227,17 +237,18 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut,h
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html","index_long_crlf.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -264,12 +275,15 @@ def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut,htt
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching  https data using get method")
@@ -286,17 +300,17 @@ def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut,htt
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -323,12 +337,15 @@ def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wi
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
@@ -342,17 +359,17 @@ def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wi
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -380,11 +397,15 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut,http_client, w
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
@@ -395,17 +416,17 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut,http_client, w
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=10)
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -433,12 +454,15 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut,http_
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetches https data using get method")
@@ -451,17 +475,17 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut,http_
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=200)
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -488,12 +512,15 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut,http
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetches https data using get method")
@@ -506,17 +533,17 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut,http
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+         "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=2000)
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -544,12 +571,15 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut,htt
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps,"failed to enable bt power save"
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
@@ -563,16 +593,16 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut,htt
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default
                           | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.config("http_server", port=20000)
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -600,11 +630,16 @@ def test_https_get_functionality_port20000_C19207_case4(http_server, wifi_dut,ht
     logger().info("ping to DUT is successful....")
 
     logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps,"failed to enable wifi power save"
 
-    logger().info("Enabling bt power save")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info("enable bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
     logger().info("fetching https data using get method")
@@ -628,7 +663,7 @@ def test_https_get_functionality_port20000_C19207_case4(http_server, wifi_dut,ht
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
+
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
