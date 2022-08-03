@@ -82,6 +82,47 @@ static void rsi_http_response_handler(uint16_t status, const uint8_t* buffer, co
 *                       IMPLEMENTATION: Public functions
 *
 *******************************************************************************/
+//! http put response notify call back handler
+void rsi_http_client_put_response_handler(uint16_t status,
+                                          const uint8_t type,
+                                          const uint8_t *buffer,
+                                          uint16_t length,
+                                          const uint8_t end_of_put_pkt)
+{
+    if (status == RSI_SUCCESS)
+    {
+        char* b64data = base64_encode(buffer, length);
+        if (b64data != NULL) {
+            if (!s_moreDataPending) {
+                printf("\r\nSAPI+RSI_HTTP_READ_DATA %s ", b64data);
+            }
+            else {
+                printf("%s ", b64data);
+            }
+            free(b64data);
+        }
+        else {
+            s_httpReceiveComplete = true;
+            s_httpReceiveStatus = RSI_ERROR_PKT_ALLOCATION_FAILURE;
+            return;
+        }
+
+        if (end_of_put_pkt == 0)
+        {
+            s_moreDataPending = true;
+        }
+        else {
+            s_httpReceiveComplete = true;
+            s_httpReceiveStatus = RSI_SUCCESS;
+        }
+    }
+    else {
+        s_httpReceiveComplete = true;
+        s_httpReceiveStatus = status;
+    }
+}
+
+
 void rsi_http_client_get_async_command(sl_cli_command_arg_t* arguments) {
     uint8_t flags = sl_cli_get_argument_uint8(arguments, 0);
     uint16_t port = sl_cli_get_argument_uint16(arguments, 1);
@@ -114,7 +155,6 @@ void rsi_http_client_get_async_command(sl_cli_command_arg_t* arguments) {
     print_status(status);
     rsi_http_reset_handler();
 }
-
 
 void rsi_http_client_post_async_command(sl_cli_command_arg_t* arguments) {
     uint8_t flags = sl_cli_get_argument_uint8(arguments, 0);
@@ -152,6 +192,42 @@ void rsi_http_client_post_async_command(sl_cli_command_arg_t* arguments) {
     status = rsi_http_response_status();
     print_status(status);
     rsi_http_reset_handler();
+}
+
+void rsi_http_client_put_start_command(sl_cli_command_arg_t* arguments) {
+    uint8_t flags = sl_cli_get_argument_uint8(arguments, 0);
+    uint16_t port = sl_cli_get_argument_uint16(arguments, 1);
+    char* hostname = sl_cli_get_argument_string(arguments, 2);
+    char* ip_address = sl_cli_get_argument_string(arguments, 3);
+    char* url = sl_cli_get_argument_string(arguments, 4);
+    char* username = sl_cli_get_argument_string(arguments, 5);
+    char* password = sl_cli_get_argument_string(arguments, 6);
+    char* ext_header = sl_cli_get_argument_string(arguments, 7);
+    uint32_t size_of_file = sl_cli_get_argument_uint32(arguments, 8);
+
+    uint16_t status = rsi_http_client_put_start((uint8_t)flags,
+        (uint8_t*)ip_address,
+        (uint16_t)port,
+        (uint8_t*)url,
+        (uint8_t*)hostname,
+        (uint8_t*)(strlen(ext_header) ? ext_header : NULL),
+        (uint8_t*)(strlen(username) ? username : NULL),
+        (uint8_t*)(strlen(password) ? password : NULL),
+		(uint32_t) (size_of_file),
+        (rsi_http_client_put_response_handler));
+
+        print_status(status);
+}
+
+void rsi_http_client_put_pkt_command(sl_cli_command_arg_t* arguments) {
+    char* file_content = sl_cli_get_argument_string(arguments, 0);
+    uint16_t chunk_length = sl_cli_get_argument_uint16(arguments, 1);
+
+    //! send http put pkt data
+    uint16_t status = rsi_http_client_put_pkt((uint8_t *)file_content,
+        (uint16_t)chunk_length);
+
+    print_status(status);
 }
 
 /*******************************************************************************

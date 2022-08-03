@@ -2177,7 +2177,6 @@ template_contribution:
     - {type: uint8, help: hopping_type}
     - {type: string, help: Multiple arguments bundled together}
 
-
 - name: cli_command
   priority: 0
   value:
@@ -2231,20 +2230,6 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
-    name: wlan_radio_init
-    handler: rsi_wlan_radio_init_command
-    help: wifi radio init
-
-- name: cli_command
-  priority: 0
-  value:
-    name: wlan_radio_deinit
-    handler: rsi_wlan_radio_deinit_command
-    help: wifi radio deinit
-
-- name: cli_command
-  priority: 0
-  value:
     name: bt_sniff_mode
     handler: rsi_bt_sniff_mode_command
     help: To set bt sniff mode
@@ -2276,6 +2261,60 @@ template_contribution:
 - name: cli_command
   priority: 0
   value:
+    name: wlan_radio_init
+    handler: rsi_wlan_radio_init_command
+    help: wifi radio init
+
+- name: cli_command
+  priority: 0
+  value:
+    name: wlan_radio_deinit
+    handler: rsi_wlan_radio_deinit_command
+    help: wifi radio deinit
+
+- name: cli_command
+  priority: 0
+  value:
     name: http_abort
     handler: rsi_http_abort_command
     help: Abort http connection
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_put
+    handler: rsi_http_client_put_start_command
+    help: starts http put service in dut
+    argument:
+    - {type: uint8, help: flags}
+    - {type: uint16, help: port}
+    - {type: string, help: hostname}
+    - {type: string, help: ip address}
+    - {type: string, help: url}
+    - {type: string, help: username}
+    - {type: string, help: password}
+    - {type: string, help: ext header}
+    - {type: uint32, help: size_of_file}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_put_pkt
+    handler: rsi_http_client_put_pkt_command
+    help: puts data into server
+    argument:
+    - {type: uint8, help: file_content}
+    - {type: uint16, help: chunk_length}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_put_response_handler
+    handler: rsi_http_client_put_response_handler
+    help: gets the http put response
+    argument:
+    - {type: uint16, help: status}
+    - {type: uint8, help: type}
+    - {type: uint8, help: buffer}
+    - {type: uint8, help: length}
+    - {type: uint16, help: end_of_put_pkt}
