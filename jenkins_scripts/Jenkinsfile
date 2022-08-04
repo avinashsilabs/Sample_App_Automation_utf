@@ -144,62 +144,63 @@ pipeline {
                               sh "echo \$RUN_TESTS_DISPLAY_URL"
                               sh "echo \$INSTALLER_URL_SDK"
                         }
-                        if(isUnix()) {
-                            sh '''
-                                rm -rf reports
-                                . ../venv/bin/activate
-                                pushd executor
+                        script {
+                            if(isUnix()) {
+                                sh '''
+                                    rm -rf reports
+                                    . ../venv/bin/activate
+                                    pushd executor
 
-                                . launch_utf_tests.sh \
-                                    -target ${SSH_TARGET} \
-                                    --pytest_command "${UTF_PYTEST_COMMAND}" \
-                                    --harness ${HARNESS_NAME} \
-                                    --publish_test_results ${PUBLISH_TEST_RESULTS} \
-                                    --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
-                                        -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
-                                        -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
-                                        -e JENKINS_JOB_NAME=${JOB_NAME}, \
-                                        -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
-                                        -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
-                                        -e TEST_SUITE=OT_Smoke_brd4161a, \
-                                        -e STACK_NAME=WIFI, \
-                                        -e SSH_TARGET=${SSH_TARGET}, \
-                                        -e GIT_BRANCH=${GIT_BRANCH}" \
+                                    . launch_utf_tests.sh \
+                                        -target ${SSH_TARGET} \
+                                        --pytest_command "${UTF_PYTEST_COMMAND}" \
+                                        --harness ${HARNESS_NAME} \
+                                        --publish_test_results ${PUBLISH_TEST_RESULTS} \
+                                        --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
+                                            -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
+                                            -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
+                                            -e JENKINS_JOB_NAME=${JOB_NAME}, \
+                                            -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
+                                            -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
+                                            -e TEST_SUITE=OT_Smoke_brd4161a, \
+                                            -e STACK_NAME=WIFI, \
+                                            -e SSH_TARGET=${SSH_TARGET}, \
+                                            -e GIT_BRANCH=${GIT_BRANCH}" \
 
-                                export exitcode=$?
-                                ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
-                                ping -n 15 %UTF_DOCKER_TARGET%
-                                exit %exitcode%
-                            '''
-                        } else {
-                            bat(label: "Run UTF Launcher", script: """
-                                rd /s /q reports
-                                call venv\\scripts\\activate
-                                pushd executor
+                                    export exitcode=$?
+                                    ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
+                                    ping -n 15 %UTF_DOCKER_TARGET%
+                                    exit %exitcode%
+                                '''
+                            } else {
+                                bat """
+                                    rd /s /q reports
+                                    call venv\\scripts\\activate
+                                    pushd executor
 
-                                call launch_utf_tests.bat \
-                                    --target %SSH_TARGET% \
-                                    --pytest_command "%UTF_PYTEST_COMMAND%" \
-                                    --harness %HARNESS_NAME% \
-                                    --publish_test_results %PUBLISH_TEST_RESULTS% \
-                                    --docker_flags "-e JENKINS_SERVER_NAME=%BUILD_URL%, \
-                                        -e JENKIN_RUN_NUM=%BUILD_NUMBER%, \
-                                        -e JENKINS_TEST_RESULTS_URL=%RUN_TESTS_DISPLAY_URL%, \
-                                        -e JENKINS_JOB_NAME=%JOB_NAME%, \
-                                        -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs/heads/%RS9116_FIRMWARE%, \
-                                        -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
-                                        -e TEST_SUITE=OT_Smoke_brd4161a, \
-                                        -e STACK_NAME=WIFI, \
-                                        -e SSH_TARGET=%SSH_TARGET%, \
-                                        -e GIT_BRANCH=%GIT_BRANCH%"
+                                    call launch_utf_tests.bat \
+                                        --target %SSH_TARGET% \
+                                        --pytest_command "%UTF_PYTEST_COMMAND%" \
+                                        --harness %HARNESS_NAME% \
+                                        --publish_test_results %PUBLISH_TEST_RESULTS% \
+                                        --docker_flags "-e JENKINS_SERVER_NAME=%BUILD_URL%, \
+                                            -e JENKIN_RUN_NUM=%BUILD_NUMBER%, \
+                                            -e JENKINS_TEST_RESULTS_URL=%RUN_TESTS_DISPLAY_URL%, \
+                                            -e JENKINS_JOB_NAME=%JOB_NAME%, \
+                                            -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs/heads/%RS9116_FIRMWARE%, \
+                                            -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
+                                            -e TEST_SUITE=OT_Smoke_brd4161a, \
+                                            -e STACK_NAME=WIFI, \
+                                            -e SSH_TARGET=%SSH_TARGET%, \
+                                            -e GIT_BRANCH=%GIT_BRANCH%"
 
-                                set exitcode=%ERRORLEVEL%
-                                ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
-                                ping -n 15 %UTF_DOCKER_TARGET%
-                                exit /b %exitcode%
-                            """)
+                                    set exitcode=%ERRORLEVEL%
+                                    ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
+                                    ping -n 15 %UTF_DOCKER_TARGET%
+                                    exit /b %exitcode%
+                                """
+                            }
                         }
-
                         archiveArtifacts 'example_test_package/**'
                         archiveArtifacts 'manifest/**'
                         archiveArtifacts 'reports/**'
