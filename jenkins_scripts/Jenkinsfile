@@ -171,11 +171,6 @@ pipeline {
                                     -e STACK_NAME=WIFI, \
                                     -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
-
-                            export exitcode=$?
-                            ssh -o StrictHostKeyChecking=no pi@${SSH_TARGET} "sudo reboot"
-                            ping -c 15 ${SSH_TARGET}
-                            exit %exitcode%
                         '''
                         archiveArtifacts 'example_test_package/**'
                         archiveArtifacts 'manifest/**'
