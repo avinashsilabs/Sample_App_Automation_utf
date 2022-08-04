@@ -158,7 +158,7 @@ pipeline {
 
                             export PYTHONPATH=../utf_core/src
 
-                            python executor/launch_utf_tests.py \
+                            python ./launch_utf_tests.py \
                                 --target ${SSH_TARGET} \
                                 --pytest_command "${UTF_PYTEST_COMMAND}" \
                                 --harness ${HARNESS_NAME} \
