@@ -1124,3 +1124,14 @@ static void http_otaf_response_handler(uint16_t status, const uint8_t* buffer)
     otaf_status = status;
 }
 
+void rsi_wlan_radio_init_command()
+{
+    int32_t status = rsi_wlan_radio_init();
+    print_status(status);
+}
+
+void rsi_wlan_radio_deinit_command()
+{
+    int32_t status = rsi_wlan_radio_deinit();
+    print_status(status);
+}

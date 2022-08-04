@@ -728,6 +728,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
     assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
 
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -861,7 +862,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_maxpsp_C40150')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=dtim_skip-1)
+                                                  number_of_dtim_skip=dtim_skip - 1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -949,7 +950,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -967,7 +968,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
             Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
     },
 )
-def test_max_psp_lp_mode_c40152(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1220
     monitor_interval = 50
     ps_poll_time_delta_obj = FilterPacket()
@@ -1093,7 +1094,6 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_access_point.interfaces.wifi.start_ap()
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
@@ -1390,7 +1390,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=dtim_skip-1)
+                                                  number_of_dtim_skip=dtim_skip - 1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1559,11 +1559,10 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
 
 '''*********************************POWER SAVE 3 TEST CASES************************************************'''
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1628,7 +1627,7 @@ def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.firmware_app("test_wlan_powersave_mode")
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1688,11 +1687,10 @@ def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wi
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found for pwmt bit enable'
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1771,11 +1769,10 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
     # Validate the time delta between PS-poll packet
     assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1865,11 +1862,10 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
     assert ps_packet_exchange_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1902,7 +1898,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     time.sleep(5)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='dtim_powersave3_C40164')
     wifi_dut.interfaces.wifi.set_power_save_param(dtim_aligned_type=1, monitor_interval=50,
-                                                  number_of_dtim_skip=dtim_skip-1)
+                                                  number_of_dtim_skip=dtim_skip - 1)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1974,11 +1970,10 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.firmware_app("test_wlan_powersave_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
