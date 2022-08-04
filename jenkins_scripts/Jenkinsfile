@@ -154,11 +154,9 @@ pipeline {
                                . venv/Scripts/activate
                             fi
 
-                            cd executor
+                            export PYTHONPATH=./utf_core/src
 
-                            export PYTHONPATH=../utf_core/src
-
-                            python ./launch_utf_tests.py \
+                            python ./executor/launch_utf_tests.py \
                                 --target ${SSH_TARGET} \
                                 --pytest_command "${UTF_PYTEST_COMMAND}" \
                                 --harness ${HARNESS_NAME} \
