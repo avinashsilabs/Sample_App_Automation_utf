@@ -280,6 +280,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   test_params: []
   test_class: null
   description: null
@@ -298,6 +299,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   test_params: []
   test_class: null
   description: null
@@ -316,6 +318,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   test_params: []
   test_class: null
   description: null
@@ -334,6 +337,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   - pytest.mark.firmware_app('test_multi_gatt_conn',)
   test_params: []
   test_class: null

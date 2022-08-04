@@ -12,3 +12,5 @@ test_suite_infos:
     iterations: 1
   - test_suite_id: 574b2525-611f-41dd-bf28-37bd0724b301
     iterations: 1
+  - test_suite_id: 164fd6e3-2e6a-4c97-8cfc-5afe783df8be
+    iterations: 1
