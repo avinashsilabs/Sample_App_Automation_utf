@@ -2,8 +2,6 @@ import subprocess
 import click
 import os
 from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption, UtfExecutorTypes
-from utf.utils.executor.docker_manager import DockerManager
-from utf.utils.executor.local_executor import LocalExecutor
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
