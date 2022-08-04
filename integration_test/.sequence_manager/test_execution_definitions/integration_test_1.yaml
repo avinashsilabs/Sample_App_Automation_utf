@@ -196,30 +196,6 @@ test_sequence:
       - cases
     visible: true
     iterations: 1
-  - id: 25745669c19bf515f8becbcaa88ee70b0aa404c0
-    test_case_id: test_ble_gatt_server_slave
-    test_function: test_ble_gatt_server_slave
-    test_id: test_ble_gatt_server_slave::1
-    test_module: test_cases/test_ble.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
-      - >-
-        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - ble
-      - cases
-    visible: true
-    iterations: 1
   - id: a94aa1b958e402d8e1a5e51093d69f4fb02bf582
     test_case_id: test_ble_gatt_client_master
     test_function: test_ble_gatt_client_master
@@ -234,6 +210,30 @@ test_sequence:
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
       - pytest.mark.firmware_app('test_multi_gatt_conn',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - ble
+      - cases
+    visible: true
+    iterations: 1
+  - id: 25745669c19bf515f8becbcaa88ee70b0aa404c0
+    test_case_id: test_ble_gatt_server_slave
+    test_function: test_ble_gatt_server_slave
+    test_id: test_ble_gatt_server_slave::1
+    test_module: test_cases/test_ble.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
     test_params: []
     test_class: null
     description: null
