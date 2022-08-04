@@ -1,7 +1,7 @@
 import os
 import pytest
 from _pytest.config import Config
-from utf.utils.commander import reset_device
+import utf.utils.commander as commander
 from time import sleep
 from utf.utils.firmware_manager import FirmwareManager
 
@@ -18,7 +18,7 @@ last_loaded_custom_app_name = None
 
 @pytest.fixture(autouse=True)
 def reset_dut():
-    reset_device()
+    commander.reset_device()
     sleep(5)
 
 
