@@ -464,6 +464,23 @@ test_cases:
   labels:
   - bt_spp
   - cases
+- id: a8c28f1bc92a2e0350bea92f36239ec050f80966
+  test_case_id: test_ble_phy_wiseconnect_dut
+  test_function: test_ble_phy_wiseconnect_dut
+  test_id: test_ble_phy_wiseconnect_dut::1
+  test_module: test_cases/test_bt_wiseconnect_device.py
+  test_markers:
+  - pytest.mark.ble_client('bt_wiseconnect',)
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - bt_wiseconnect_device
+  - cases
 - id: be5a4ff6e87ca1469a76f5fcc8baa60d3f9c3b79
   test_case_id: test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]_1
   test_function: test_wifi_ap_configuration_lb
