@@ -145,7 +145,7 @@ pipeline {
                               sh "echo \$INSTALLER_URL_SDK"
                         }
                         if(isUnix()) {
-                            sh(label: "Run UTF Launcher", script: """
+                            sh '''
                                 rm -rf reports
                                 . ../venv/bin/activate
                                 pushd executor
@@ -170,7 +170,7 @@ pipeline {
                                 ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
                                 ping -n 15 %UTF_DOCKER_TARGET%
                                 exit %exitcode%
-                            """)
+                            '''
                         } else {
                             bat(label: "Run UTF Launcher", script: """
                                 rd /s /q reports
