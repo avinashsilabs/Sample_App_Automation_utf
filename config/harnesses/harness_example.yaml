@@ -229,9 +229,10 @@ devices:
                 ip_address: '192.168.0.1'
                 web_ui_port: 80
                 admin_password: '12345678'
+                skip_assertion_failure : True
                 security: WPA
                 ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                passphrase: 'thisisatestnetwork11'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -794,28 +795,28 @@ devices:
 
     raspi_ftp_server:
         interfaces:
-            vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
+            ftp_server:
+                type: 'ftp.server.ftp_server'
                 tls_enabled: false
 
     raspi_ftp_server_tls:
         interfaces:
-            vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
+            ftp_server:
+                type: 'ftp.server.ftp_server'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
 
     raspi_ftp_client:
         interfaces:
-            ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+            ftp_client:
+                type: 'ftp.client.ftp_client'
                 tls_enabled: false
     
     raspi_ftp_client_tls:
         interfaces:
-            ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+            ftp_client:
+                type: 'ftp.client.ftp_client'
                 tls_enabled: true
 
     raspi_radius_server:

@@ -463,13 +463,13 @@ devices:
 
     secondary_raspi_iperf:
             ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+                type: 'ftp.client.ftp_client'
                 tls_enabled: false
 
     raspi_ftp_client_tls:
         interfaces:
             ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+                type: 'ftp.client.ftp_client'
                 tls_enabled: true
 
 # The entries in the defaults section define the default devices used in the test system, as well as default

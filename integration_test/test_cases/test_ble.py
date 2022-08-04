@@ -24,6 +24,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -76,6 +77,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client, logger):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -122,6 +124,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client, logger):
     assert not state_int == BLEDeviceState.Connected
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
 def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -236,6 +239,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
 
 
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
 def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, ble_client, logger):
     # # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
