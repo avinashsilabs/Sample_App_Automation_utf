@@ -150,7 +150,7 @@ pipeline {
                                     rm -rf reports
                                     . ./venv/bin/activate
 
-                                    ( cd executor ; pwd ); pwd
+                                    cd executor
 
                                     . launch_utf_tests.sh \
                                         -target ${SSH_TARGET} \
