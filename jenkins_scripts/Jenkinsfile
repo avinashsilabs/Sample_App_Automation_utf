@@ -173,8 +173,8 @@ pipeline {
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
 
                             export exitcode=$?
-                            ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
-                            ping -n 15 %UTF_DOCKER_TARGET%
+                            ssh -o StrictHostKeyChecking=no pi@%SSH_TARGET% "sudo reboot"
+                            ping -n 15 %SSH_TARGET%
                             exit %exitcode%
                         '''
                         archiveArtifacts 'example_test_package/**'
