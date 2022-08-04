@@ -148,7 +148,7 @@ pipeline {
                             if(isUnix()) {
                                 sh '''
                                     rm -rf reports
-                                    . ../venv/bin/activate
+                                    . ./venv/bin/activate
                                     pushd executor
 
                                     . launch_utf_tests.sh \
