@@ -98,7 +98,7 @@ class IopTcpIpSockets:
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     },
 )
-def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator):
+def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator, utf_constants):
 
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
@@ -113,6 +113,9 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
             ap_ssid = wifi_networked_dut_with_sniffer.interfaces.wifi.ssid
             logger().info(f"AP_ssid {ap_ssid}")
 
+            test_execution_time = utf_constants.get("time_duration")
+            logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
+
             tcp_socket_id = tcp_socket_obj.open_socket(wifi_networked_dut_with_sniffer)
             time.sleep(5)
             connect_status = tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
@@ -121,7 +124,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
                 assert connect_status
 
             """ Start time for long duration and send messages """
-            end_time = datetime.now() + timedelta(hours=10)
+            end_time = datetime.now() + timedelta(hours=test_execution_time)
             start_time = datetime.now()
 
             while 1:
@@ -199,6 +202,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
         logger().info(f"Total execution time of test case = {exact_execution_time}")
     wifi_networked_dut_with_sniffer.interfaces.wifi.leave()
 
+
 @pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -218,7 +222,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
 
     },
 )
-def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator):
+def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
     count_disconnect, count_connect, count_rejoin = set(), set(), set()
@@ -235,6 +239,9 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
             ap_ssid = wifi_networked_dut_with_sniffer.interfaces.wifi.ssid
             logger().info(f"AP_ssid {ap_ssid}")
 
+            test_execution_time = utf_constants.get("time_duration")
+            logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
+
             tcp_socket_id = tcp_socket_obj.open_socket(wifi_networked_dut_with_sniffer)
             connect_status = tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
             if connect_status is False:
@@ -242,7 +249,7 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
                 assert connect_status
 
             """ Start time for long duration and send messages """
-            end_time = datetime.now() + timedelta(hours=10)
+            end_time = datetime.now() + timedelta(hours=test_execution_time)
             start_time = datetime.now()
 
             while 1:
@@ -345,11 +352,13 @@ pytestmark = [
 @pytest.mark.skip
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator, utf_constants):
     topic_1 = "IOP_AWS_Shadow"
 
     """ Start time for long duration and send messages """
-    end_time = datetime.now() + timedelta(hours=12)
+    test_execution_time = utf_constants.get("time_duration")
+    logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
+    end_time = datetime.now() + timedelta(hours=test_execution_time)
     start_time = datetime.now()
     try:
         wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
@@ -410,14 +419,19 @@ pytestmark = [
         },
     ),
 ]
+
+
 @pytest.mark.skip
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator, utf_constants):
     topic_1 = "IOP_AWS_Shadow"
 
     """ Start time for long duration and send messages """
-    end_time = datetime.now() + timedelta(hours=12)
+    test_execution_time = utf_constants.get("time_duration")
+    logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
+
+    end_time = datetime.now() + timedelta(hours=test_execution_time)
     start_time = datetime.now()
     try:
         wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
@@ -482,14 +496,20 @@ pytestmark = [
         },
     ),
 ]
+
+
 @pytest.mark.firmware_app("test_wlan_aws_enable")
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_device_shadow_enhanced_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+def test_aws_device_shadow_enhanced_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer,
+                                            aws_iot_dut, rf_attenuator, utf_constants):
     rejected_event_counter = 0
     timeout_event_counter = 0
     """ Start time for long duration and send messages """
-    end_time = datetime.now() + timedelta(hours=10)
+    test_execution_time = utf_constants.get("time_duration")
+    logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
+
+    end_time = datetime.now() + timedelta(hours=test_execution_time)
     start_time = datetime.now()
     wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
@@ -560,14 +580,20 @@ pytestmark = [
         },
     ),
 ]
+
+
 @pytest.mark.firmware_app("test_wlan_aws_enable")
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_device_shadow_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+def test_aws_device_shadow_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer,
+                                   aws_iot_dut, rf_attenuator, utf_constants):
     rejected_event_counter = 0
     timeout_event_counter = 0
     """ Start time for long duration and send messages """
-    end_time = datetime.now() + timedelta(hours=10)
+    test_execution_time = utf_constants.get("time_duration")
+    logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
+
+    end_time = datetime.now() + timedelta(hours=test_execution_time)
     start_time = datetime.now()
     wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
