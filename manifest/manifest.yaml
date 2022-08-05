@@ -56,3 +56,13 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: 'aws_test_agent.hex'
+
+    test_wlan_rts:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'rts_test_agent.hex'
+
+    test_wlan_powersave_mode2_without_ram_ret:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'generic_test_agent_wt_aws_wt_ram_ret.hex'
