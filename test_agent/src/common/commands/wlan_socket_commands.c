@@ -1483,16 +1483,16 @@ void rsi_web_socket_close_command(sl_cli_command_arg_t* arguments)
 
 void rsi_socket_config_command(sl_cli_command_arg_t* arguments)
 {
-    uint8_t g_total_sockets = sl_cli_get_argument_int8(arguments, 0);
-    uint8_t g_total_tcp_sockets = sl_cli_get_argument_int8(arguments, 1);
-    uint8_t g_total_udp_sockets = sl_cli_get_argument_int8(arguments, 2);
-    uint8_t g_tcp_tx_only_sockets = sl_cli_get_argument_int8(arguments, 3);
-    uint8_t g_tcp_rx_only_sockets = sl_cli_get_argument_int8(arguments, 4);
-    uint8_t g_udp_tx_only_sockets = sl_cli_get_argument_int8(arguments, 5);
-    uint8_t g_udp_rx_only_sockets = sl_cli_get_argument_int8(arguments, 6);
-    uint8_t g_tcp_rx_high_perfornamce_sockets = sl_cli_get_argument_int8(arguments, 7);
-    uint8_t g_tcp_rx_window_size_cap = sl_cli_get_argument_int8(arguments, 8);
-    uint8_t g_tcp_rx_window_div_factor = sl_cli_get_argument_int8(arguments, 9);
+    g_total_sockets = sl_cli_get_argument_int8(arguments, 0);
+    g_total_tcp_sockets = sl_cli_get_argument_int8(arguments, 1);
+    g_total_udp_sockets = sl_cli_get_argument_int8(arguments, 2);
+    g_tcp_tx_only_sockets = sl_cli_get_argument_int8(arguments, 3);
+    g_tcp_rx_only_sockets = sl_cli_get_argument_int8(arguments, 4);
+    g_udp_tx_only_sockets = sl_cli_get_argument_int8(arguments, 5);
+    g_udp_rx_only_sockets = sl_cli_get_argument_int8(arguments, 6);
+    g_tcp_rx_high_perfornamce_sockets = sl_cli_get_argument_int8(arguments, 7);
+    g_tcp_rx_window_size_cap = sl_cli_get_argument_int8(arguments, 8);
+    g_tcp_rx_window_div_factor = sl_cli_get_argument_int8(arguments, 9);
     uint32_t status = rsi_socket_config();
     print_status(status);
 }
