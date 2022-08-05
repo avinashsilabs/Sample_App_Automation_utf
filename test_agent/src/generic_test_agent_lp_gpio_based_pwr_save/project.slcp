@@ -76,6 +76,8 @@ define:
   value: 2
 - name: RSI_SELECT_LP_OR_ULP_MODE
   value: 0
+- name: RSI_WLAN_CONFIG_ENABLE
+  value: 0
 
 
 component:

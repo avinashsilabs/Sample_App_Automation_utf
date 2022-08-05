@@ -149,6 +149,11 @@ extern uint8_t g_tcp_rx_high_perfornamce_sockets;
 extern uint8_t g_tcp_rx_window_size_cap;
 extern uint8_t g_tcp_rx_window_div_factor;
 
+//Parameter to set Config Threshold
+extern uint16_t config_threshold;
+//Parameter to set RTS Threshold
+extern uint16_t rts_threshold;
+
 // Enable feature
 #define RSI_ENABLE 1
 // Disable feature
@@ -786,6 +791,10 @@ extern uint8_t g_tcp_rx_window_div_factor;
 #define TCP_RX_HIGH_PERFORMANCE_SOCKETS g_tcp_rx_high_perfornamce_sockets
 #define TCP_RX_WINDOW_SIZE_CAP   g_tcp_rx_window_size_cap
 #define TCP_RX_WINDOW_DIV_FACTOR   g_tcp_rx_window_div_factor
+
+#define CONFIG_RTSTHRESHOLD config_threshold
+
+#define RSI_RTS_THRESHOLD rts_threshold
 
 
 

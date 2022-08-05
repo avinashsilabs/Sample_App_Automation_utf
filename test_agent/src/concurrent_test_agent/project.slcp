@@ -75,6 +75,9 @@ define:
 - name: RSI_SELECT_LP_OR_ULP_MODE
   value: 1
 
+- name: RSI_WLAN_CONFIG_ENABLE
+  value: 0
+
 component:
 - {id: sl_system}
 - {id: iostream_retarget_stdio}
