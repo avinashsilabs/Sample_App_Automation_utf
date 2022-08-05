@@ -702,8 +702,8 @@ void rsi_ble_add_char_val_att_command(sl_cli_command_arg_t* arguments)
     uint16_t val_handle_num = sl_cli_get_argument_uint8(arguments, 2);
     char* data = sl_cli_get_argument_string(arguments, 3);
 
-    memset(ble_gatt_data, 0, strlen(ble_gatt_data));
-    memcpy(ble_gatt_data, data, strlen(data));
+    memset(ble_gatt_data, 0, sizeof(ble_gatt_data));
+    memcpy(ble_gatt_data, data, sizeof(data));
 
     //! adding characteristic value attribute to the service
     uuid_t new_uuid                       = { 0 };
@@ -715,7 +715,7 @@ void rsi_ble_add_char_val_att_command(sl_cli_command_arg_t* arguments)
                             new_uuid,
                             val_prop,
                             (uint8_t *)ble_gatt_data,
-                            strlen(ble_gatt_data)));
+                            sizeof(ble_gatt_data)));
 }
 
 //get profiles async command written for multi connection gatt example
