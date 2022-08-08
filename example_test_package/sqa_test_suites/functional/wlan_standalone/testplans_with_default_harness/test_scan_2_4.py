@@ -474,7 +474,11 @@ def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
     logger().info("Initiating the selective channel scan ...")
     scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel,ssid=None,scan_bitmap_2_4=channel_bitmap_2_4,scan_feature=scan_feature_extend)
     logger().info(scan_results)
-    assert len(scan_results) <= 11,"Dut should scan max upto 11 APs only"
+    logger().info(len(scan_results))
+    if len(scan_results) == 11:
+        assert True, f"Dut can scan more number of APs up to 11"
+    else:
+        assert False, f"To scan more number of APs, Need to keep setup in open air environment"
 
 @pytest.mark.config(
         "wifi_dut",
