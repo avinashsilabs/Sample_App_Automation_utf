@@ -796,13 +796,13 @@ devices:
     raspi_ftp_server:
         interfaces:
             ftp_server:
-                type: 'ftp.server.ftp_server'
+                type: 'ftp.server.vsftpd_ftp_server'
                 tls_enabled: false
 
     raspi_ftp_server_tls:
         interfaces:
             ftp_server:
-                type: 'ftp.server.ftp_server'
+                type: 'ftp.server.vsftpd_ftp_server'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -810,13 +810,13 @@ devices:
     raspi_ftp_client:
         interfaces:
             ftp_client:
-                type: 'ftp.client.ftp_client'
+                type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
     
     raspi_ftp_client_tls:
         interfaces:
             ftp_client:
-                type: 'ftp.client.ftp_client'
+                type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: true
 
     raspi_radius_server:
