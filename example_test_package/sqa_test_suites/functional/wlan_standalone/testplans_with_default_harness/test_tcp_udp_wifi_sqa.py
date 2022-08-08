@@ -15,6 +15,10 @@ import threading
 import string
 import random
 
+
+def logger():
+    return get_logger(__name__)
+
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
         2. Association of Third party AP's
@@ -428,63 +432,93 @@ def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, remote_socket, wifi_dut
     wifi_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_tcp_rejoin_TC19354(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger):
-    capture_filename = "test_wifi_tcp_rejoin_TC19354"
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
-    # The below api parses DUTs IP address
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.
+            Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "client_socket_limit": 10,
+    }
+)
+def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, net_perf_client, protocol):
+    validation = True
+    time_out = 240
 
-    server_port = randint(5001, 50000)
-    execute_command = ['iperf', '-s', '-i 1', '-p', str(server_port)]
+    '''Verify TCP data transfer functionality while STA is in rejoin process(Send 10,000 packets from the module with 
+    size 1460)'''
 
-    iperf_process = SubprocessManager(execute_command)
-    iperf_process.start()
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    time.sleep(2)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='tcp_data_transfer_c19354')
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
-    # DUT opens tcp client sockets
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-    assert sock == 0, f"socket id received is wrong, expected is 0"
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    logger.info(f"socket id received is {sock} which is expected")
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
 
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                               SocketOptions.TCP_MAX_RETRY)
-    local_port = randint(5001, 60000)
-    # Socket binds at (device_ip, 5001) in DUT
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    time.sleep(2)
 
-    wifi_dut.interfaces.wifi.connect(sock, server_ip, server_port)
-    data_length = 1460
-    no_of_pkts = 20000
-    bytes_triggered = (data_length * no_of_pkts)
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 15, logger), )
-    thread.start()
-    wifi_dut.interfaces.wifi.send_data_pkts(sock, data_length, no_of_pkts, timeout=600)
+    result = wifi_dut.interfaces.wifi.start_ip()
+    device_ip = result.ip.decode()
+    logger().info(f"DUT ip address: {device_ip}")
+
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+
+    wifi_dut.interfaces.wifi.power_save(2, 0)
+    wifi_dut.interfaces.wifi.bt_power_save(
+        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+    )
+    # Probe req & response packet
+    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004 || wlan.fc.type_subtype == 0x0005) && (wlan.addr == ' \
+                     f'{dut_mac_address} || wlan.addr == {ap_bssid})'
+    # Association req & response packet & EAPOL 4 way handshake packet
+    packet_filter2 = f'(wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1) || ' \
+                     f'(wlan_rsna_eapol.keydes.key_info.key_type == 1) && (wlan.addr == {ap_bssid} || wlan.addr == ' \
+                     f'{dut_mac_address})'
+    # DHCP discovery, offer, request, ack packet
+    packet_filter3 = f'((((dhcp.option.dhcp == 5)) || (dhcp.option.dhcp == 1)) || (dhcp.option.dhcp == 2)) || ' \
+                     f'(dhcp.option.dhcp == 3) && (wlan.addr == {ap_bssid} || wlan.addr == {dut_mac_address})'
+    # Verify PS-Poll & PWMGT bit
+    packet_filter4 = f'wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1 && (wlan.addr == {ap_bssid} || ' \
+                     f'wlan.addr == {dut_mac_address})'
+
+    time.sleep(10)
+
+    ''' Start Iperf traffic DUT as a client and Linux machine as a server'''
+    wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip, host_ip, time_out)
+    '''  Turn off and turn on the AP '''
+    ap_obj = AccessPointApOnOff(wifi_access_point)
+
+    wlan_obj.start()
     time.sleep(5)
-    iperf_process.stop()
-    time.sleep(1)
-    data_received = iperf_process.get_all_lines()
+    ap_obj.start()
+    ap_obj.wait_for_exit()
+    wlan_obj.wait_for_exit()
 
-    receive_stats = 0
-    for count in data_received:
-        if "sec" in count:
-            if ("Bytes" in count) and (not ("KBytes" in count)) and (not ("MBytes" in count)):
-                receive_stats = receive_stats + (float(count.split("Bytes")[0].split("sec")[1].strip()))
-            elif "KBytes" in count:
-                receive_stats = receive_stats + (float(count.split("KBytes")[0].split("sec")[1].strip()) * 1024)
-            elif "MBytes" in count:
-                receive_stats = receive_stats + (float(count.split("MBytes")[0].split("sec")[1].strip()) * 1024 * 1024)
-    logger.info(f"Bytes sent on the DUT -> {bytes_triggered}, received on remote tcp socket {receive_stats}")
-
-    logger.info("Stop the sniffer")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    validation = True
-    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-    logger.info(f"PS-POLL packets are captured in the sniffer")
-    wifi_dut.interfaces.wifi.leave()
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Probe req & response packet'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find Association req & response packet & EAPOL 4 way handshake packet'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find DHCP discovery, offer, request, ack packet'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
+        'Unable to find Verify PS-Poll & PWMGT bit'
