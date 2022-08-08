@@ -476,7 +476,7 @@ def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
     logger().info(scan_results)
     logger().info(len(scan_results))
     if len(scan_results) == 11:
-        assert True, f"Dut can scan more number of APs up to 11"
+        assert True, f"Dut has scanned {len(scan_results)} Aps"
     else:
         assert False, f"To scan more number of APs, Need to keep setup in open air environment"
 
