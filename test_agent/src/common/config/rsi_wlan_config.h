@@ -114,7 +114,7 @@ extern uint8_t g_rsi_ltcp_sockets;
 extern uint8_t g_rsi_client_sockets;
 
 //globals for WMM tos, referenced in #defines below
-extern uint8_t g_rsi_tos;
+extern uint32_t g_rsi_tos;
 
 //globals for AP mode set region, referenced in #defines below 
 extern uint8_t g_region_config;
@@ -733,6 +733,7 @@ extern uint16_t rts_threshold;
 #define RSI_HTTP_STATUS_INDICATION_EN RSI_DISABLE
 
 #include "rsi_wlan_common_config.h"
+#include "rsi_wlan_apis.h"
 #endif
 
 
