@@ -643,7 +643,7 @@ devices:
                 type: 'docker.ble_sweyntooth'
                 ip_address: '127.0.0.1'
                 container_name: "utf_sweyntooth"
-                image: 'ubuntu'
+                image: 'utfsilabs/rpi_ubuntu_secondary'
                 volume:
                     - '/dev/sweynetooth:/dev/sweynetooth'
                 is_prune: false
