@@ -936,10 +936,8 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in slave mode"
     logger().info(f"Dut is in connected state {state_int}")
     logger().info(f"DUT has connected to BLE CLIENT and is in Slave Mode")
-    logger().info(f"Disconnecting the REMOTE device")
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
-
+    logger().info("Initiating disconnect from BLE client")
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1011,10 +1009,5 @@ def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
 
     logger().info(f"Dut is in connected state {state_int}")
     logger().info(f"DUT has connected to BLE CLIENT and is in Master Mode")
-
-    # Disconnect
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
-    logger().info("remote BLE device has been disconnected")
-
-
+    logger().info("Initiating disconnect from BLE client")
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
