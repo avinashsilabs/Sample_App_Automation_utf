@@ -1,12 +1,11 @@
 import time
-
 from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS9116CoexMode, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, RS9116PowerSaveModes
 from utf_wiseconnect.utils.rs911x_version import parse_version, extract_version
 from utf.utils.time_measurer import TimeMeasurer
 import pytest
 from utf.utils.logger import get_logger
-from utf import TestResultsModelAttrs, UtfDatabaseProperties
+from utf import UtfDatabaseProperties
 
 
 def logger():
