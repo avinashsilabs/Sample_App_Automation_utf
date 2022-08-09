@@ -258,13 +258,7 @@ def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, w
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_scan_and_connect_in_world_domain_c19075')
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         logger().info(scan_results)
-
-
-        # packet_filter8 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address}' \
-        #                  f'  and wlan.da == ff:ff:ff:ff:ff:ff)'
-        # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8)[
-        #     'packet_count'], 'Unable to find Probe req packet  in sniffer'
-        # logger().info(f'probe response is success in channel ')
+        assert len(scan_results) >= 1, "scan results not found"
 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -348,7 +342,7 @@ def test_scan_and_connect_in_world_domain_c19078(wifi_dut, wifi_access_point, wi
         scan_result = wifi_dut.interfaces.wifi.scan(channel=6, ssid=wifi_access_point.interfaces.wifi.ssid)
 
         logger().info(f'Scan results are : {scan_result}')
-
+        assert len(scan_result) >= 1, "scan results not found"
         # This API connects STA to the third party AP
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
