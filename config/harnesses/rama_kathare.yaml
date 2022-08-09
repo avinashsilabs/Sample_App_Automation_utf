@@ -236,6 +236,15 @@ devices:
                 shell: 'linux_shell'
                 interface: 'wlan0'
 
+    primary_raspi_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.14.3
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+
     raspi_ble_client:
         interfaces:
             linux_shell:
@@ -626,6 +635,24 @@ devices:
             socket:
                 type: 'socket.ip_socket_factory'
 
+    ble_sweynetooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker.ble_sweyntooth'
+                ip_address: '127.0.0.1'
+                container_name: "utf_sweyntooth"
+                image: 'ubuntu'
+                volume:
+                    - '/dev/sweynetooth:/dev/sweynetooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+            linux_shell:
+                type: 'shell.shell'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -640,6 +667,8 @@ defaults:
     wiseconnect_duts:
         - 'rs9116_sapi'
         - 'efr32_4180b'
+
+    ble_sweynetooth: 'ble_sweynetooth'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
