@@ -2,7 +2,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict, logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
-    RS9116PowerSaveModes
+    RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes
 import time
 import pytest
 from utf.utils.logger import get_logger
@@ -50,9 +50,9 @@ def logger():
     return get_logger(__name__)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos","disassociated",])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -62,6 +62,7 @@ def logger():
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_tcpdata_tx_with_best_effort_19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
@@ -85,39 +86,47 @@ def test_tcpdata_tx_with_best_effort_19752(wifi_sniffer, net_perf_client, wifi_a
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, TCP traffic for best effort *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+    try:
+        if traffic_category == ['0x00']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 0)
+        logger().info(f"****** Calling IPERF TX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** open socket and send traffic  ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
+
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -132,9 +141,9 @@ def test_tcpdata_tx_with_best_effort_19752(wifi_sniffer, net_perf_client, wifi_a
         'Unable to find Best effort packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos","disassociated",])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -167,39 +176,46 @@ def test_tcpdata_tx_with_background_c19752(wifi_sniffer, net_perf_client, wifi_a
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, TCP traffic for background ******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    try:
+        if traffic_category == ['0x20']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 1)
+        logger().info(f"****** Calling IPERF TX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
 
-        logger().info(f"***** open socket and send traffic  ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -214,9 +230,8 @@ def test_tcpdata_tx_with_background_c19752(wifi_sniffer, net_perf_client, wifi_a
         'Unable to find Background packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos","disassociated",])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -249,39 +264,46 @@ def test_tcpdata_tx_with_video_c19752(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, TCP traffic for Video *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    try:
+        if traffic_category == ['0x80']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 4)
+        logger().info(f"****** Calling IPERF TX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
 
-        logger().info(f"***** open socket and send traffic  ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -289,16 +311,16 @@ def test_tcpdata_tx_with_video_c19752(wifi_sniffer, net_perf_client, wifi_access
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter3 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter3 = f'(wlan.qos.priority == 4) && (wlan.sa == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for Video ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
         'Unable to find Video packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos","disassociated",])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -331,39 +353,46 @@ def test_tcpdata_tx_with_voice_c19752(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, TCP traffic for Voice *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    try:
+        if traffic_category == ['0xc8']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 6)
+        logger().info(f"****** Calling IPERF TX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
 
-        logger().info(f"***** open socket and send traffic  ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -378,9 +407,9 @@ def test_tcpdata_tx_with_voice_c19752(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Voice packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -390,6 +419,7 @@ def test_tcpdata_tx_with_voice_c19752(wifi_sniffer, net_perf_client, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
@@ -413,39 +443,47 @@ def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, UDP traffic for best effort *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+    try:
+        if traffic_category == ['0x00']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 0)
+        logger().info(f"****** Calling IPERF TX, UDP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** open socket and send traffic ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
+
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -460,9 +498,9 @@ def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_
         'Unable to find Best effort packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -472,6 +510,8 @@ def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
@@ -495,39 +535,46 @@ def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, UDP traffic for Voice *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    try:
+        if traffic_category == ['0xC8']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 6)
+        logger().info(f"****** Calling IPERF TX, UDP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
 
-        logger().info(f"***** open socket and send traffic ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -542,9 +589,9 @@ def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Voice packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -554,6 +601,8 @@ def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
@@ -577,39 +626,47 @@ def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, UDP traffic for Video *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+    try:
+        if traffic_category == ['0x80']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 5)
+        logger().info(f"****** Calling IPERF TX, UDP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** open socket and send traffic ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
+
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -624,9 +681,9 @@ def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Video packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -636,6 +693,8 @@ def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
@@ -659,39 +718,47 @@ def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_a
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF TX, UDP traffic for background *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+    try:
+        if traffic_category == ['0x20']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 1)
+        logger().info(f"****** Calling IPERF TX, UDP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
-        logger().info(f"***** open socket and send traffic ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+            logger().info(f"***** starting iperf ******")
+            net_perf_client.interfaces.net_perf.start()
+
+            logger().info(f"***** open socket and send traffic  ******")
+            wifi_dut.interfaces.wifi.send_traffic_from_device(
+                host_ip,
+                device_ip,
+                net_perf_client.interfaces.net_perf.server_port,
+                net_perf_client.interfaces.net_perf.protocol,
+                net_perf_client.interfaces.net_perf.client_options,
+            )
+            logger().info(f"***** get and print throughput ******")
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughtput..."
+            __print_throughput(tp)
+            time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -706,9 +773,9 @@ def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_a
         'Unable to find background packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -718,6 +785,8 @@ def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_a
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -741,18 +810,24 @@ def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, TCP traffic for best effort *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
-                                                        tos_value=traffic)
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0x00']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 0)
+        logger().info(f"****** Calling IPERF RX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                            tos_value=traffic)
         logger().info(f"Host IP: {host_ip}")
         logger().info(f"Dut IP: {device_ip}")
         logger().info(f"Protocol: {protocol}")
@@ -780,6 +855,8 @@ def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -787,16 +864,16 @@ def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter9 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
+    packet_filter9 = f'(wlan.qos.priority == 0) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for best effort ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)['packet_count'], \
         'Unable to find Best effort packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -806,6 +883,7 @@ def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -829,17 +907,23 @@ def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, TCP traffic for voice *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0xC8']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 6)
+        logger().info(f"****** Calling IPERF RX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
         logger().info(f"Host IP: {host_ip}")
         logger().info(f"Dut IP: {device_ip}")
@@ -869,22 +953,25 @@ def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access
         __print_throughput(tp)
         time.sleep(5)
 
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
+
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter10 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+    packet_filter10 = f'(wlan.qos.priority == 6) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for voice ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter10)['packet_count'], \
         'Unable to find voice packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -894,6 +981,8 @@ def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -917,22 +1006,28 @@ def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, TCP traffic for video *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0x80']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 5)
+        logger().info(f"****** Calling IPERF RX, TCP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -956,6 +1051,8 @@ def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -963,16 +1060,16 @@ def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter11 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter11 = f'(wlan.qos.priority == 5) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for video ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter11)['packet_count'], \
         'Unable to find video packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -982,11 +1079,13 @@ def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                            protocol):
-    traffic_category = ['0x80']
+    traffic_category = ['0x20']
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1005,22 +1104,28 @@ def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_a
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, TCP traffic for background *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0x20']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 1)
+        logger().info(f"****** Calling IPERF RX, TCP traffic for background *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -1044,6 +1149,8 @@ def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_a
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1051,16 +1158,16 @@ def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_a
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter12 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
+    packet_filter12 = f'(wlan.qos.priority == 1) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for background ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter12)['packet_count'], \
         'Unable to find background from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -1070,6 +1177,8 @@ def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_a
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -1093,22 +1202,28 @@ def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, UDP traffic for best effort *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0x00']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 0)
+        logger().info(f"****** Calling IPERF RX, UDP traffic for best effort *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -1132,6 +1247,8 @@ def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1139,16 +1256,16 @@ def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter13 = f'(wlan.qos.priority == 0) && (wlan.sa == {dut_mac_address})'
+    packet_filter13 = f'(wlan.qos.priority == 0) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for best effort ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter13)['packet_count'], \
         'Unable to find Best effort packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -1158,6 +1275,8 @@ def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -1181,22 +1300,29 @@ def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, UDP traffic for voice *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0xC8']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 6)
+
+        logger().info(f"****** Calling IPERF RX, UDP traffic for voice *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -1220,6 +1346,8 @@ def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1227,7 +1355,7 @@ def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter14 = f'(wlan.qos.priority == 6) && (wlan.sa == {dut_mac_address})'
+    packet_filter14 = f'(wlan.qos.priority == 6) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for voice ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter14)['packet_count'], \
@@ -1236,7 +1364,7 @@ def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -1246,6 +1374,8 @@ def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -1269,22 +1399,28 @@ def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, UDP traffic for video *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0x80']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 5)
+        logger().info(f"****** Calling IPERF RX, UDP traffic for video *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -1308,6 +1444,8 @@ def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1315,16 +1453,16 @@ def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter15 = f'(wlan.qos.priority == 5) && (wlan.sa == {dut_mac_address})'
+    packet_filter15 = f'(wlan.qos.priority == 5) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for video ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter15)['packet_count'], \
         'Unable to find video packet from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -1334,6 +1472,8 @@ def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
@@ -1357,22 +1497,28 @@ def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_a
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info(f"****** Calling IPERF RX, UDP traffic for background *******")
-    for traffic in traffic_category:
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    try:
+        if traffic_category == ['0x20']:
+            wifi_dut.interfaces.wifi.set_tos(tos = 1)
+        logger().info(f"****** Calling IPERF RX, UDP traffic for background *******")
+        for traffic in traffic_category:
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                         tos_value=traffic)
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
-        logger().info(f"tos_value: {traffic}")
+            logger().info(f"Host IP: {host_ip}")
+            logger().info(f"Dut IP: {device_ip}")
+            logger().info(f"Protocol: {protocol}")
+            logger().info(f"tos_value: {traffic}")
 
         # creating results object for sharing between host and dut
         result = Result(net_perf_client.interfaces.net_perf.protocol)
@@ -1396,6 +1542,8 @@ def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_a
         assert tp, "failed to get throughtput..."
         __print_throughput(tp)
         time.sleep(5)
+    finally:
+        wifi_dut.interfaces.wifi.set_tos(0)
 
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1403,14 +1551,14 @@ def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_a
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    packet_filter16 = f'(wlan.qos.priority == 1) && (wlan.sa == {dut_mac_address})'
+    packet_filter16 = f'(wlan.qos.priority == 1) && (wlan.da == {dut_mac_address})'
 
     logger().info(f"***** Validating packets for background ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter16)['packet_count'], \
         'Unable to find background from the DUT side'
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+#@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
@@ -1420,6 +1568,8 @@ def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_a
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+
     },
 )
 def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -1445,10 +1595,13 @@ def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_
     logger().info(f"Current Version: {result}")
 
     logger().info(f"*****Initiating Power_save Mode2 in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    logger().info("enabling bt power save mode in DUT......")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     logger().info(f"***** Initiate ping from third party wifi-client to DUT ******")
     for qos_category in traffic_category_list:
