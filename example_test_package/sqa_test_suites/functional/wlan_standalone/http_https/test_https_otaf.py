@@ -7,6 +7,8 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ConfigFeatureBitMap,
     RS9116FeatureBitMap,
     RS9116AsyncEventType,
+    RS9116CustomFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap,
     RS9116OperatingMode,
     RS9116Band,
     RS9116PowerSaveModes
@@ -1100,19 +1102,24 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
 
+@pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": RS9116OperatingMode.ConcurrentMode,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
-        "ca_cert": "ca-chain.cert.pem",
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server
+                          | RS9116TCPIPFeatureBitMap.Ping | RS9116TCPIPFeatureBitMap.HTTPClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORDBIT,
         "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "ca_cert": "ca-chain.cert.pem",
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1
     }
 )
 @pytest.mark.config(
@@ -1121,19 +1128,25 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
         'ssid': 'Concurent_ap',
         'security': 'WPA2',
         'passphrase': 'test1234',
-        'channel': 8,
+        'channel': 1,
     }
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1}
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, http_server, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, http_server, wifi_sniffer,
+                                                              wifi_dut, wifi_access_point, wifi_client):
     """ ******* SERVER CHECKS ******* """
+    ping_count = 10
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_in_conc_mode_msure_time_C19762')
+    logger().info("preparing wifi_dut as access point - AP Mode")
+
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
     assert server_stat == True
@@ -1144,44 +1157,30 @@ def test_https_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, 
     start_time = time.perf_counter_ns()
     async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
-
+    #
     logger().info("pinging to server ip....")
-    status = ping(host_ip, 10)
+    status = ping(host_ip, ping_count)
     assert status == 1, "unable to ping to server"
 
+    # validation = True
     ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
-    logger().info(" ====== configuring the sniffer with access point channel ====== ")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19314')
-    logger().info("preparing wifi_dut as access point - AP Mode")
+
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info("Fetching DUT fw version before upgrade...")
-    wifi_dut.interfaces.wifi.version()
+    logger().info(f'ap mac is {dut_mac_address}')
+
     ap_mac = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-    # preparing wifi_dut as STA - STA Mode
-    logger().info("joining to 3rd party AP")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
 
-    logger().info("DUT Station Mode")
-    logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
-
-    # preparing wifi_dut as AP - STA Mode
     logger().info("Bringing up DUT in AP mode")
     wifi_dut.interfaces.wifi.start_ap()
+
     logger().info("joining 3rd party client to DUT ap")
     wifi_client.interfaces.wifi.join()
+
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
+
     logger().info("fetching p address of 3rd party sta")
     wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
     status = ping(wifi_client_ip, ping_iterations)
@@ -1190,6 +1189,17 @@ def test_https_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, 
     logger().info("wifi client ip: " + str(wifi_client_ip))
 
     # preparing wifi_dut as STA - STA Mode
+    logger().info("joining to 3rd party AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    logger().info("fetching ip address through DHCP")
+    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+
+    logger().info("DUT Station Mode")
+    logger().info("dut station mode ip: " + device_ip_dut_as_client)
+    logger().info("access point ip: " + str(acces_point_ip))
 
     # performs the firmware upgrade on DUT over the http port
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
@@ -1212,7 +1222,6 @@ def test_https_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, 
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-    time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
     wifi_dut.interfaces.wifi.wireless_deinit()
@@ -1229,4 +1238,3 @@ def test_https_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, 
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    time.sleep(2)
