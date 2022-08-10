@@ -55,6 +55,56 @@ pytestmark = [
     ]
 
 
+class WifiJoinThread(ThreadBase):
+    def __init__(self, wifi_dut, net_perf_client, protocol, device_ip, host_ip, time_out):
+        super().__init__()
+        self.iperf_obj = RunTraffic()
+        self.wifi_dut = wifi_dut
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.device_ip = device_ip
+        self.host_ip = host_ip
+        self.time_out = time_out
+
+    def run(self):
+        self.iperf_obj.start_iperf_dut_as_client(self.wifi_dut, self.net_perf_client, self.protocol, self.device_ip, self.host_ip, self.time_out)
+
+
+class RunTraffic:
+    def start_iperf_dut_as_client(self, wifi_dut, net_perf_client, protocol, device_ip, host_ip, time_out):
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
+                                                        device_ip=device_ip, protocol=protocol, time_out=time_out)
+
+        net_perf_client.interfaces.net_perf.start()
+
+        # open socket and send traffic
+        wifi_dut.interfaces.wifi.send_traffic_from_device(
+            host_ip,
+            device_ip,
+            net_perf_client.interfaces.net_perf.server_port,
+            net_perf_client.interfaces.net_perf.protocol,
+            net_perf_client.interfaces.net_perf.client_options,
+        )
+
+        # get and print throughput
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None
+        if tp is not None:
+            print_dict("##     ", tp)
+
+
+class AccessPointApOnOff(ThreadBase):
+    def __init__(self, wifi_access_point):
+        super().__init__()
+        self.wifi_access_point = wifi_access_point
+
+    def run(self):
+        logger().info('******* Disable the AP radio **********')
+        self.wifi_access_point.interfaces.wifi.stop_ap()
+        logger().info('******* Enable the AP radio **********')
+        self.wifi_access_point.interfaces.wifi.start_ap()
+
+
 class tx_rx:
     def __init__(self):
         self.thread_lock = threading.Lock()
