@@ -117,6 +117,11 @@ def test_bt_connectable_C19974(bt_dut, bt_client):
         bt_server_socket.close()
 
 def test_bt_non_connectable_C19975(bt_dut, bt_client):
+    inq_type = 1
+    duration = 10000
+    max_no_dev = 10
+    retry_count = 2
+
     bt_local_name = "rs911x_bt_spp"
     bt_pin_code = "4321"
     pin_code = bt_pin_code
@@ -150,6 +155,9 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
     bt_dut.interfaces.bluetooth.bt_spp_init()
     time.sleep(2)
 
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address,duration=duration, retry_counts=retry_count)
+    logger().info(f"found:{found}")
+
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
     assert bt_client_address, "failed to fetch client bt address"
 
@@ -178,6 +186,7 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
     inq_type = 1
     duration = 10000
     max_no_dev = 10
+    retry_count = 2
 
     bt_local_name = "rs911x_bt_spp"
     bt_pin_code = "4321"
@@ -266,7 +275,9 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
         bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
         time.sleep(10)
-        bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration,retry_counts=retry_count)
+        logger().info(f"found:{found}")
+
 
         with bt_client.interfaces.bluetooth.bt_socket(
                 mode=BTSocketRole.Server
@@ -285,6 +296,7 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     inq_type = 1
     duration = 10000
     max_no_dev = 10
+    retry_count = 2
     bt_local_name = "rs911x_bt_spp"
     bt_pin_code = "4321"
     pin_code = bt_pin_code
@@ -324,6 +336,10 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     # Added set class to 400100 to avoid [Errno 112] Host is down issue
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
     time.sleep(2)
+
+    time.sleep(3)
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration, retry_counts=retry_count)
+    logger().info(f"found:{found}")
 
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
@@ -366,7 +382,8 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
 
     time.sleep(10)
-    bt_dut.interfaces.bluetooth.bt_inquiry(inq_type, duration, max_no_dev)
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration, retry_counts=retry_count)
+    logger().info(f"found:{found}")
 
     with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
