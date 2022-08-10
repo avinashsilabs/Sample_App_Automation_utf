@@ -156,6 +156,7 @@ def test_bt_non_connectable_C19975(bt_dut, bt_client):
     time.sleep(2)
 
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address,duration=duration, retry_counts=retry_count)
+    assert found != bt_dut_address, "DUT address not found in Inquiry"
     logger().info(f"found:{found}")
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
@@ -276,6 +277,7 @@ def test_bt_connectable_non_connectable_C19976(bt_dut, bt_client):
 
         time.sleep(10)
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration,retry_counts=retry_count)
+        assert found != bt_dut_address, "DUT address not found in Inquiry"
         logger().info(f"found:{found}")
 
 
@@ -339,6 +341,7 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
 
     time.sleep(3)
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration, retry_counts=retry_count)
+    assert found != bt_dut_address, "DUT address not found in Inquiry"
     logger().info(f"found:{found}")
 
     time.sleep(10)
@@ -383,6 +386,7 @@ def test_bt_connec_and_non_connectable_C19977(bt_dut, bt_client):
 
     time.sleep(10)
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration, retry_counts=retry_count)
+    assert found != bt_dut_address, "DUT address not found in Inquiry"
     logger().info(f"found:{found}")
 
     with bt_client.interfaces.bluetooth.bt_socket(
