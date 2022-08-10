@@ -5,6 +5,8 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtTCPIPFeatureBitMap,
     RS9116CoexMode,
     RS9116ConfigFeatureBitMap,
+    RS9116CustomFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap,
     RS9116FeatureBitMap,
     RS9116OperatingMode,
     RS9116Band,
