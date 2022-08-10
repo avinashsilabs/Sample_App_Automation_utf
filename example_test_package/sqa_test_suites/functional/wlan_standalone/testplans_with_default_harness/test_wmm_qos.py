@@ -50,7 +50,7 @@ def logger():
     return get_logger(__name__)
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos","disassociated",])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -318,7 +318,7 @@ def test_tcpdata_tx_with_video_c19752(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Video packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos","disassociated",])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -407,7 +407,7 @@ def test_tcpdata_tx_with_voice_c19752(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Voice packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -498,7 +498,7 @@ def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_
         'Unable to find Best effort packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -589,7 +589,7 @@ def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Voice packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -681,7 +681,7 @@ def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access
         'Unable to find Video packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -773,7 +773,7 @@ def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_a
         'Unable to find background packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -871,7 +871,7 @@ def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_
         'Unable to find Best effort packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -969,7 +969,7 @@ def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access
         'Unable to find voice packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1067,7 +1067,7 @@ def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access
         'Unable to find video packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1165,7 +1165,7 @@ def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_a
         'Unable to find background from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1263,7 +1263,7 @@ def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_
         'Unable to find Best effort packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable","set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1460,7 +1460,7 @@ def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access
         'Unable to find video packet from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "set_default_qos", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1558,7 +1558,7 @@ def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_a
         'Unable to find background from the DUT side'
 
 
-#@pytest.mark.start_state("wifi_dut", wifi=['init'])
+
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
