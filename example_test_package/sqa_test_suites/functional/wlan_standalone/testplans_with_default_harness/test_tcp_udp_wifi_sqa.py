@@ -93,16 +93,18 @@ class RunTraffic:
             print_dict("##     ", tp)
 
 
-class AccessPointApOnOff(ThreadBase):
-    def __init__(self, wifi_access_point):
+class AccessPointOnOff(ThreadBase):
+    def __init__(self, wifi_access_point, switch):
         super().__init__()
         self.wifi_access_point = wifi_access_point
+        self.switch = switch
 
     def run(self):
-        logger().info('******* Disable the AP radio **********')
-        self.wifi_access_point.interfaces.wifi.stop_ap()
-        logger().info('******* Enable the AP radio **********')
-        self.wifi_access_point.interfaces.wifi.start_ap()
+        logger().info('******* Turn off the AP radio **********')
+        self.switch.interfaces.pdu_switch.turn_off()
+        time.sleep(60)
+        logger().info('******* Turn on the AP radio **********')
+        self.switch.interfaces.pdu_switch.turn_on()
 
 
 class tx_rx:
@@ -504,12 +506,22 @@ def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, remote_socket, wifi_dut
         "client_socket_limit": 10,
     }
 )
-def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, net_perf_client, protocol):
+def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, net_perf_client,
+                                                protocol, switch):
     validation = True
     time_out = 240
 
     '''Verify TCP data transfer functionality while STA is in rejoin process(Send 10,000 packets from the module with 
     size 1460)'''
+    logger().info(f'Check PDU state = {pdu_state}')
+    state = wifi_access_point.interfaces.wifi.switch.get_state()
+    logger().info("pdu switch state : " + str(state))
+    if state == 'true':
+        logger().info('PDU is ready for use')
+    else:
+        logger().info(f'\n\n Please check the AP & PDU current state')
+        assert False
+
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
@@ -531,10 +543,10 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
 
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
 
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     # Probe req & response packet
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0004 || wlan.fc.type_subtype == 0x0005) && (wlan.addr == ' \
                      f'{dut_mac_address} || wlan.addr == {ap_bssid})'
@@ -554,7 +566,7 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
     ''' Start Iperf traffic DUT as a client and Linux machine as a server'''
     wlan_obj = WifiJoinThread(wifi_dut, net_perf_client, protocol, device_ip, host_ip, time_out)
     '''  Turn off and turn on the AP '''
-    ap_obj = AccessPointApOnOff(wifi_access_point)
+    ap_obj = AccessPointOnOff(wifi_access_point, switch)
 
     wlan_obj.start()
     time.sleep(5)
@@ -562,6 +574,7 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
     ap_obj.wait_for_exit()
     wlan_obj.wait_for_exit()
 
+    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
