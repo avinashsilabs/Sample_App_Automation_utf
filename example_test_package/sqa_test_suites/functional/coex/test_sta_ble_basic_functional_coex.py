@@ -797,3 +797,98 @@ def test_get_attribute_descriptors_value_C20190(wifi_dut, wifi_sniffer, wifi_acc
 
     logger().info("Initiating BLE disconnection from DUT")
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=30)
+    
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+    },
+)
+@pytest.mark.parametrize("ping_count_bytes", [20])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect"])
+def test_sta_ble_verify_msg_power_save_C20275(wifi_dut, wifi_sniffer, wifi_access_point, wifi_client, ble_client,
+                                              ping_count_bytes):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    channel = wifi_access_point.interfaces.wifi.channel
+    capture_filename = "test_C20275"
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+    with TimeMeasurer() as t:
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+        assert len(scan_results) > 0, "scan_list not found"
+        logger().info(scan_results)
+    logger().info(f"Scan in {t.duration} seconds")
+
+    logger().info("Joining into Wi-Fi on DUT")
+    device_ip = wifi_join(wifi_dut, wifi_access_point)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
+    ble_mode = "ble_slave"
+    logger().info("Initiating BLE test with DUT mode '{ble_mode}'")
+    ble_client_addr, ble_dut_addr = ble_master_slave(wifi_dut, ble_client, ble_mode)
+
+    time.sleep(60)
+    logger().info("Checking connection status of BLE")
+    check_connection_status(wifi_dut, ble=True, wlan=True)
+
+    # DO PING
+    logger().info(f"Initiating wlan ping with {ping_count_bytes} bytes")
+    status = ping(device_ip, ping_count_bytes)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
+
+    logger().info("Waiting for 5 minutes for checking connection stability")
+    time.sleep(300)
+    check_connection_status(wifi_dut, ble=True, wlan=True)
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    # Validate probe request from DUT
+    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) && (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)'
+
+    # Validate association request and association response packets
+    packet_filter2 = f'((wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0) || eapol) and ((wlan.addr == {ap_bssid} && wlan.fc.type_subtype == 1) || eapol)'
+
+    # Validate qos data packets should be observed with more data bit set to 1
+    packet_filter3 = f'(wlan.ta == {ap_bssid}) && (wlan.da=={dut_mac_address}) && (wlan.fc.moredata==1)'
+
+    # Validate PS Polls with power management Bit set to 1
+    packet_filter4 = f'(wlan.addr == {dut_mac_address} || wlan.fc.type_subtype == 0x001a)'
+
+    logger().info("Validating probe request packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find probe request packets'
+
+    logger().info("Validating association request and association response packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find association request and association response packets'
+
+    logger().info("Validating qos data packets should be observed with more data bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to find qos data packets should be observed with more data bit set to 1'
+
+    logger().info("Validating PS Polls with power management Bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
+
+    logger().info("Initiating BLE disconnection from DUT")
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_addr)
+
+
