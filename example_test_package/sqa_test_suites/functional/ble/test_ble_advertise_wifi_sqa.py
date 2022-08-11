@@ -12,7 +12,8 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ConfigFeatureBitMap,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
-    RS9116ExtCustomFeatureBitMap,
+    RS9116ExtCustomFeatureBitMap,RS9116PowerSaveProcedureTypes
+
 )
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
@@ -57,7 +58,7 @@ def _check_for_devices_in_scanned_results(ble_interface, bt_dut_address, adv_dat
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -86,9 +87,14 @@ def test_ble_undirected_connectable_adv_C19801(wifi_dut, ble_client):
 
         wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=128)
 
-        logger().info("Enabling power save ")
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info("Enabled Wlan and BLE power save ")
+        # # Enables the wlan power save in DUT
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+        # # Enables the bt power save in DUT
+
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("Initiating scan from remote BLE device")
 
@@ -129,7 +135,7 @@ def test_ble_undirected_connectable_adv_C19801(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -155,10 +161,14 @@ def test_ble_undirected_scannable_adv_C19803(wifi_dut, ble_client):
         logger().info("keeping the DUT in undirected_scannable ADV mode")
         wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=130)
 
-        logger().info("Initiating power save")
+        logger().info("Enabled Wlan and BLE power save ")
+        # # Enables the wlan power save in DUT
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+        # # Enables the bt power save in DUT
 
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("Initiating BLE scanning from remote device")
 
@@ -199,7 +209,7 @@ def test_ble_undirected_scannable_adv_C19803(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -227,10 +237,14 @@ def test_ble_undirected_non_connectable_adv_C19804(wifi_dut, ble_client):
         logger().info("keeping the DUT in undirected_non_connectable_adv mode")
         wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=131)
 
-        logger().info("Initiating power save")
+        logger().info("Enabled Wlan and BLE power save ")
+        # # Enables the wlan power save in DUT
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+        # # Enables the bt power save in DUT
 
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("Initiating scanning from Remote remote device")
 
@@ -273,7 +287,7 @@ def test_ble_undirected_non_connectable_adv_C19804(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -296,10 +310,14 @@ def test_ble_connect_T3275(wifi_dut, ble_client):
 
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
-    logger().info("Initiating power save")
+    logger().info("Enabled Wlan and BLE power save ")
+    # # Enables the wlan power save in DUT
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # # Enables the bt power save in DUT
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     logger().info("Initiating scan from remote device")
 
@@ -336,7 +354,7 @@ def test_ble_connect_T3275(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -358,10 +376,14 @@ def test_ble_init_adv_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client)
         logger().info("Advertising DUT ")
         wifi_dut.interfaces.wifi.ble_start_advertising()
 
-        logger().info("Initiating power save")
+        logger().info("Enabled Wlan and BLE power save ")
+        # # Enables the wlan power save in DUT
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+        # # Enables the bt power save in DUT
 
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("Initiating BLE scan from remote BLE")
 
@@ -395,7 +417,7 @@ def test_ble_init_adv_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client)
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -425,10 +447,14 @@ def test_ble_adv_with_configured_name_of_length_16bytes_C19850(wifi_dut, ble_cli
     )
     # wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=128)
 
-    logger().info("Initiating power save")
+    logger().info("Enabled Wlan and BLE power save ")
+    # # Enables the wlan power save in DUT
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # # Enables the bt power save in DUT
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     logger().info("Initiating scan from remote device")
     # Begin Scanning for BLE devices
