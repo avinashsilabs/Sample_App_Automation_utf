@@ -1,7 +1,6 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType, \
-     RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap,  \
-     RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap, RS9116CertificateType, RS9116ConfigFeatureBitMap, RS9116PowerSaveProcedureTypes
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116CustomFeatureBitMap, RS9116PowerSaveProcedureTypes, \
+     RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116BTFeatureBitMap
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.logger import get_logger
 from utf.interfaces.bluetooth import BLEDeviceState
@@ -34,14 +33,13 @@ def logger():
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19889(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19889(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19889"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -93,7 +91,6 @@ def test_ble_slave_latency_C19889(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -110,14 +107,13 @@ def test_ble_slave_latency_C19889(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19890(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19890(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19890"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -169,7 +165,6 @@ def test_ble_slave_latency_C19890(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE disconnect successful")
@@ -186,14 +181,13 @@ def test_ble_slave_latency_C19890(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19891(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19891(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19891"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -244,7 +238,6 @@ def test_ble_slave_latency_C19891(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -261,14 +254,13 @@ def test_ble_slave_latency_C19891(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19892(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19892(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19892"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -320,7 +312,6 @@ def test_ble_slave_latency_C19892(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -337,14 +328,13 @@ def test_ble_slave_latency_C19892(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19893(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19893(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19893"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -396,7 +386,6 @@ def test_ble_slave_latency_C19893(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -413,14 +402,13 @@ def test_ble_slave_latency_C19893(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19894(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19894(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19894"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -472,7 +460,6 @@ def test_ble_slave_latency_C19894(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -489,14 +476,13 @@ def test_ble_slave_latency_C19894(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19895(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19895(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19895"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -548,7 +534,6 @@ def test_ble_slave_latency_C19895(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE disconnect successful")
@@ -566,14 +551,13 @@ def test_ble_slave_latency_C19895(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19896(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19896(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19896"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -624,7 +608,6 @@ def test_ble_slave_latency_C19896(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -642,14 +625,13 @@ def test_ble_slave_latency_C19896(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19897(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19897(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19897"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -701,7 +683,6 @@ def test_ble_slave_latency_C19897(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -719,13 +700,12 @@ def test_ble_slave_latency_C19897(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19898(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
+def test_ble_slave_latency_C19898(wifi_dut, wifi_access_point, ble_client):
     set_local_name = "BLETEST123"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
@@ -777,6 +757,7 @@ def test_ble_slave_latency_C19898(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
+    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -794,14 +775,13 @@ def test_ble_slave_latency_C19898(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19899(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19899(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19899"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -853,7 +833,6 @@ def test_ble_slave_latency_C19899(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -872,14 +851,13 @@ def test_ble_slave_latency_C19899(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19900(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19900(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19900"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -931,7 +909,6 @@ def test_ble_slave_latency_C19900(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -948,14 +925,13 @@ def test_ble_slave_latency_C19900(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19901(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19901(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19901"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1007,7 +983,6 @@ def test_ble_slave_latency_C19901(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1025,14 +1000,13 @@ def test_ble_slave_latency_C19901(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19902(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19902(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19902"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1084,7 +1058,6 @@ def test_ble_slave_latency_C19902(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1102,14 +1075,13 @@ def test_ble_slave_latency_C19902(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19903(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19903(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19903"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1161,7 +1133,6 @@ def test_ble_slave_latency_C19903(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1179,14 +1150,13 @@ def test_ble_slave_latency_C19903(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19904(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19904(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19904"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1238,7 +1208,6 @@ def test_ble_slave_latency_C19904(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1256,14 +1225,13 @@ def test_ble_slave_latency_C19904(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19905(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19905(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19905"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1315,7 +1283,6 @@ def test_ble_slave_latency_C19905(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1333,14 +1300,13 @@ def test_ble_slave_latency_C19905(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19906(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19906(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19906"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1392,7 +1358,6 @@ def test_ble_slave_latency_C19906(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1410,14 +1375,13 @@ def test_ble_slave_latency_C19906(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19907(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19907(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19907"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1469,7 +1433,6 @@ def test_ble_slave_latency_C19907(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1487,14 +1450,13 @@ def test_ble_slave_latency_C19907(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19908(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19908(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19908"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1546,7 +1508,6 @@ def test_ble_slave_latency_C19908(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1564,14 +1525,13 @@ def test_ble_slave_latency_C19908(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19909(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
-    set_local_name = "BLETEST123"
+def test_ble_slave_latency_C19909(wifi_dut, wifi_access_point, ble_client):
+    set_local_name = "BLETEST19909"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -1623,7 +1583,6 @@ def test_ble_slave_latency_C19909(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1641,13 +1600,12 @@ def test_ble_slave_latency_C19909(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_slave_latency_C19910(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, ble_client):
+def test_ble_slave_latency_C19910(wifi_dut, wifi_access_point, ble_client):
     set_local_name = "BLETEST123"
     logger().info(f"Setting BLE local name {set_local_name}")
     wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
@@ -1700,7 +1658,6 @@ def test_ble_slave_latency_C19910(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     logger().info("DUT is not disconnected from BLE")
 
     #ble_logs.update_connection_logs()
-
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
