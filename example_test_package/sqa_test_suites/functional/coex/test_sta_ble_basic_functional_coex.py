@@ -84,17 +84,16 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
             assert ble_dut_address is not None, f"Unable to fetch ble dut address"
         logger().info("Start ble client")
         ble_client.interfaces.bluetooth.close()
-        time.sleep(3)
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
-        assert ble_client_address is not None
+        assert ble_client_address is not None, f"Unable to fetch ble_client_address"
         time.sleep(5)
         if not skip_scan:
             logger().info("Start scanning and connect to ble client")
-            wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+            wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=80)
             wifi_dut.interfaces.wifi.ble_stop_scanning()
-        time.sleep(5)
         logger().info("Initiating BLE connection with ble_client")
         wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, expected=expected, timeout=120)
+        time.sleep(2)
         logger().info("BLE Connection success")
 
     if mode == "ble_slave":
@@ -105,7 +104,6 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         wifi_dut.interfaces.wifi.ble_start_advertising()
         logger().info(f"Begin Scanning for BLE devices")
         ble_client.interfaces.bluetooth.close()
-        time.sleep(3)
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address is not None, f"ble client address not found"
         time.sleep(5)
@@ -115,9 +113,8 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         assert wifi_dut.interfaces.wifi.ble_address in found_devices
         assert (found_devices[
                     wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
-        time.sleep(5)
         logger().info(f"See that we found our device:'{ble_dut_address}'")
-        ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
+        ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address)
         time.sleep(2)
         logger().info("BLE Connection success")
     return ble_client_address, ble_dut_address
@@ -131,11 +128,12 @@ def run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip
     # starting iperf
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
                                                     time_out=iperf_time)
+    time.sleep(5)
     global iperf_started
     iperf_started = True
     net_perf_client.interfaces.net_perf.start()
+    time.sleep(5)
     # open socket and send traffic
-
     wifi_dut.interfaces.wifi.send_traffic_from_device(
         host_ip,
         device_ip,
@@ -143,9 +141,8 @@ def run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
     )
-
-    # get and print throughput
     time.sleep(30)
+    # get and print throughput
     tp = net_perf_client.interfaces.net_perf.process_output()
     assert tp is not None
     __print_throughput(tp)
@@ -153,11 +150,12 @@ def run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
+        time.sleep(5)
         print_dict("##     ", iperf_throughput)
         logger().info("Iperf throughput printed successfully")
 
 
-def check_connection_status(wifi_dut, bt=False, ble=False, wlan=False):
+def check_connection_status(wifi_dut, ble=False, wlan=False):
     if ble:
         logger().info("Checking connection status of BLE")
         state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -223,10 +221,6 @@ def test_ble_encryption_C20194(wifi_dut, wifi_sniffer, wifi_access_point, net_pe
     capture_filename = "test_ble_encryption_C20194"
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
 
     with TimeMeasurer() as t:
@@ -237,6 +231,11 @@ def test_ble_encryption_C20194(wifi_dut, wifi_sniffer, wifi_access_point, net_pe
 
     logger().info("Joining into Wi-Fi on DUT")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
     t1.start()
@@ -263,7 +262,8 @@ def test_ble_encryption_C20194(wifi_dut, wifi_sniffer, wifi_access_point, net_pe
     logger().info("BLE Connection success")
 
     t1.wait_for_exit(True)
-    logger().info("Checking connection status of BLE after traffic run")
+    time.sleep(60)
+    logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     logger().info("Stop Sniffer finally")
@@ -346,10 +346,6 @@ def test_ble_smp_pair_request_C20195(wifi_dut, wifi_sniffer, wifi_access_point, 
     capture_filename = "test_ble_smp_pair_request_C20195"
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
 
     with TimeMeasurer() as t:
@@ -361,18 +357,24 @@ def test_ble_smp_pair_request_C20195(wifi_dut, wifi_sniffer, wifi_access_point, 
     logger().info("Joining into Wi-Fi on DUT")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
 
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
     t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
     t1.start()
 
     ble_mode = "ble_master"
     logger().info("Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_addr, ble_dut_addr = ble_master_slave(wifi_dut, ble_client, ble_mode)
-    time.sleep(60)
+
     logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     t1.wait_for_exit(True)
-    logger().info("Checking connection status of BLE after traffic run")
+    time.sleep(60)
+    logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     logger().info("Stop Sniffer finally")
@@ -455,10 +457,6 @@ def test_ble_smp_pair_response_C20196(wifi_dut, wifi_sniffer, wifi_access_point,
     capture_filename = "test_ble_smp_pair_response_C20196"
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
 
     with TimeMeasurer() as t:
@@ -470,18 +468,21 @@ def test_ble_smp_pair_response_C20196(wifi_dut, wifi_sniffer, wifi_access_point,
     logger().info("Joining into Wi-Fi on DUT")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
 
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
     t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
     t1.start()
 
     ble_mode = "ble_slave"
     logger().info("Initiating BLE test with DUT mode '{ble_mode}'")
     _, ble_dut_addr = ble_master_slave(wifi_dut, ble_client, ble_mode)
-    time.sleep(60)
-    logger().info("Checking connection status of BLE")
-    check_connection_status(wifi_dut, ble=True)
 
     t1.wait_for_exit(True)
-    logger().info("Checking connection status of BLE after traffic run")
+    time.sleep(60)
+    logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     logger().info("Stop Sniffer finally")
@@ -564,10 +565,6 @@ def test_ble_smp_passkey_C20197(wifi_dut, wifi_sniffer, wifi_access_point, net_p
     capture_filename = "test_ble_smp_passkey_C20197"
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
 
     with TimeMeasurer() as t:
@@ -579,18 +576,24 @@ def test_ble_smp_passkey_C20197(wifi_dut, wifi_sniffer, wifi_access_point, net_p
     logger().info("Joining into Wi-Fi on DUT")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
 
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
     t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
     t1.start()
 
     ble_mode = "ble_master"
     logger().info("Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_addr, _ = ble_master_slave(wifi_dut, ble_client, ble_mode)
-    time.sleep(60)
+
     logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     t1.wait_for_exit(True)
-    logger().info("Checking connection status of BLE after traffic run")
+    time.sleep(60)
+    logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     logger().info("Stop Sniffer finally")
@@ -674,10 +677,6 @@ def test_get_attribute_descriptors_value_C20190(wifi_dut, wifi_sniffer, wifi_acc
     capture_filename = "test_get_attribute_descriptors_value_C20190"
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
 
     with TimeMeasurer() as t:
@@ -688,6 +687,11 @@ def test_get_attribute_descriptors_value_C20190(wifi_dut, wifi_sniffer, wifi_acc
 
     logger().info("Joining into Wi-Fi on DUT")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     logger().info("start ble GATT service in DUT")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
@@ -742,7 +746,7 @@ def test_get_attribute_descriptors_value_C20190(wifi_dut, wifi_sniffer, wifi_acc
     logger().info(f"Attribute Value is:{att_value}")
 
     t1.wait_for_exit(True)
-    logger().info("Checking connection status of BLE after traffic run")
+    logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
     logger().info("Stop Sniffer finally")
