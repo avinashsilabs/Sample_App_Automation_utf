@@ -597,90 +597,103 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_c
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_http_get_func_host_name_with_tcp_C19216(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point, wifi_client,
-                                            protocol):
-    for count in range(0, iter_count):
-        logger().info(f"******************* iteration {count}  ********************* ")
-        logger().info("Initiates scan in dut")
-        scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
-        assert scan_result, "scan failure,no ap found"
+def test_http_get_func_host_name_with_tcp_C19218(wifi_sniffer, http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
+                                                 wifi_client, protocol, index_path):
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_get_func_host_name_with_tcp_C19218')
+    time.sleep(2)
 
-        logger().info("Joining access point")
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
-        logger().info("starts the dhcp in dut")
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC: {bssid}")
 
-        logger().info("Enables the wifi power save in dut")
-        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_wifi_ps, "failed to enable wifi power save "
+    logger().info("Initiates scan in dut")
+    scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
+    assert scan_result, "scan failure,no ap found"
 
-        logger().info("Enables the bt power save in dut")
-        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info("Joining access point")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-        assert enable_bt_ps, "failed to enable bt power save"
-        logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
-        status = ping(device_ip, ping_count)
-        assert status == 1, "DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+    logger().info("starts the dhcp in dut")
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-        logger().info("sends data to http server using post method")
-        status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
-                                                             post_data="hellotestingfrohttppostcontent")
-        logger().info(f"***** Start get IP address ******")
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) #< 0.1, "fail to ping host"
-        logger().info("ping successful to host")
+    logger().info("Enables the wifi power save in dut")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save "
 
-        time.sleep(2)
-        logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-        status = ping(device_ip, ping_count)
-        assert status is True, "DUT is not responding to ping request from third party device"
-        logger().info(f"ping is successful")
-        time.sleep(5)
+    logger().info("Enables the bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
+    assert enable_bt_ps, "failed to enable bt power save"
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
-        print('\n\n ********** Calling IPERF TX, TCP traffic for all Qos services ********************\n\n')
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+    logger().info("sends data to http server using GET method")
+    logger().info("fetching the data from server bt get method")
+    status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
 
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    logger().info(f"***** Start get Host IP address ******")
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) #< 0.1, "fail to ping host"
+    logger().info("ping successful to host")
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+    logger().info(f"Host IP: {host_ip}")
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Protocol: {protocol}")
 
-        logger().info(f"***** open socket and send traffic  ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+    print('\n\n ********** Calling IPERF TCP TX ********************\n\n')
 
-        assert status, "failed to post data"
-        logger().info(status)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
-        logger().info("disconnecting ap")
-        wifi_dut.interfaces.wifi.leave()
+    logger().info(f"***** starting iperf ******")
+    net_perf_client.interfaces.net_perf.start()
+
+    logger().info(f"***** open socket and send traffic  ******")
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
+    logger().info(f"***** get and print throughput ******")
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp, "failed to get throughtput..."
+    __print_throughput(tp)
+    time.sleep(5)
+
+    assert status, "failed to fetch the http data"
+    assert content, "failed to load the http data"
+
+    logger().info(status)
     logger().info(content)
-    logger().info(f"******************* iteration {count} completed ********************* ")
+
+    logger().info("disconnecting ap")
+    wifi_dut.interfaces.wifi.leave()
+
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -765,7 +778,7 @@ def test_https_get_with_wrong_certificate_C19211(http_server, wifi_sniffer, http
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "ca_cert": "ca-chain.cert.pem"
@@ -837,90 +850,103 @@ def test_https_post_functionality_for_5_iterations_C19225(http_server, wifi_dut,
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_http_get_func_host_name_with_udp_C19216(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point, wifi_client,
-                                            protocol):
-    for count in range(0, iter_count):
-        logger().info(f"******************* iteration {count}  ********************* ")
-        logger().info("Initiates scan in dut")
-        scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
-        assert scan_result, "scan failure,no ap found"
+def test_http_get_func_host_name_with_udp_C19218(wifi_sniffer, http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
+                                                 wifi_client, protocol, index_path):
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_get_func_host_name_with_udp_C19218')
+    time.sleep(2)
 
-        logger().info("Joining access point")
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
 
-        logger().info("starts the dhcp in dut")
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC: {bssid}")
 
-        logger().info("Enables the wifi power save in dut")
-        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_wifi_ps, "failed to enable wifi power save "
+    logger().info("Initiates scan in dut")
+    scan_result = wifi_dut.interfaces.wifi.scan(ssid=None)
+    assert scan_result, "scan failure,no ap found"
 
-        logger().info("Enables the bt power save in dut")
-        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info("Joining access point")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-        assert enable_bt_ps, "failed to enable bt power save"
-        logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
-        status = ping(device_ip, ping_count)
-        assert status == 1, "DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+    logger().info("starts the dhcp in dut")
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-        logger().info("sends data to http server using post method")
-        status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
-                                                             post_data="hellotestingfrohttppostcontent")
-        logger().info(f"***** Start get IP address ******")
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) #< 0.1, "fail to ping host"
-        logger().info("ping successful to host")
+    logger().info("Enables the wifi power save in dut")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save "
 
-        time.sleep(2)
-        logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-        status = ping(device_ip, ping_count)
-        assert status is True, "DUT is not responding to ping request from third party device"
-        logger().info(f"ping is successful")
-        time.sleep(5)
+    logger().info("Enables the bt power save in dut")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        logger().info(f"Host IP: {host_ip}")
-        logger().info(f"Dut IP: {device_ip}")
-        logger().info(f"Protocol: {protocol}")
+    assert enable_bt_ps, "failed to enable bt power save"
+    logger().info(f'DUT ip {device_ip}')
+    logger().info("pinging to dut.....")
+    status = ping(device_ip, ping_count)
+    assert status == 1, "DUT not responding for ping request......"
+    logger().info("ping to DUT is successful....")
 
-        print('\n\n ********** Calling IPERF TX, TCP traffic for all Qos services ********************\n\n')
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+    logger().info("sends data to http server using GET method")
+    logger().info("fetching the data from server bt get method")
+    status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
 
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    logger().info(f"***** Start get IP address for host IP ******")
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) #< 0.1, "fail to ping host"
+    logger().info("ping successful to host")
 
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+    logger().info(f"Host IP: {host_ip}")
+    logger().info(f"Dut IP: {device_ip}")
+    logger().info(f"Protocol: {protocol}")
 
-        logger().info(f"***** open socket and send traffic  ******")
-        wifi_dut.interfaces.wifi.send_traffic_from_device(
-            host_ip,
-            device_ip,
-            net_perf_client.interfaces.net_perf.server_port,
-            net_perf_client.interfaces.net_perf.protocol,
-            net_perf_client.interfaces.net_perf.client_options,
-        )
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughtput..."
-        __print_throughput(tp)
-        time.sleep(5)
+    print('\n\n ********** Calling IPERF TCP TX  ********************\n\n')
 
-        assert status, "failed to post data"
-        logger().info(status)
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
-        logger().info("disconnecting ap")
-        wifi_dut.interfaces.wifi.leave()
+    logger().info(f"***** starting iperf ******")
+    net_perf_client.interfaces.net_perf.start()
+
+    logger().info(f"***** open socket and send traffic  ******")
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
+    logger().info(f"***** get and print throughput ******")
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    assert tp, "failed to get throughtput..."
+    __print_throughput(tp)
+    time.sleep(5)
+
+    assert status, "failed to fetch the http data"
+    assert content, "failed to load the http data"
+
+    logger().info(status)
     logger().info(content)
-    logger().info(f"******************* iteration {count} completed ********************* ")
+
+    logger().info("disconnecting ap")
+    wifi_dut.interfaces.wifi.leave()
+
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+
 
 
 @pytest.mark.config(
