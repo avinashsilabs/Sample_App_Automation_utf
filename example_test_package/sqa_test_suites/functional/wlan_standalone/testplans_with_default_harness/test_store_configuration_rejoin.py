@@ -347,7 +347,6 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
-        time.sleep(10)
 
         for i in range(0, 3):
 
@@ -564,7 +563,7 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             switch.interfaces.pdu_switch.turn_off()
             pdu_state = False
         wifi_dut.interfaces.wifi.associated = False
-        time.sleep(100)
+        time.sleep(150)
         logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
 
@@ -577,9 +576,6 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
 
         # Validating beacons
         packet_filter2 = f'wlan.fc.type_subtype == 0x0008 and wlan.addr == {bssid}'
-
-        logger().info(
-            f"beacons : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']}")
         assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
             "beacons found even AP is turned OFF"
 
@@ -599,7 +595,6 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
                 wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0)
             assert (exc_info.value.error_code == 0x3 or exc_info.value.error_code == 0x19),\
                 "Wrong error code found"
-
             time.sleep(150)
             logger().info("stopping the capture")
             #Stop Sniffer
@@ -608,10 +603,8 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             # Validating Prob Request
             packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff'
 
-            logger().info(f"Validating broadcast probe requests : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num']}")
-
             logger().info("Validating broadcast probe requests")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1,packet_filter2)[
                 'packet_count'], \
                 "Unable to find the brodcast probe requests"
 
