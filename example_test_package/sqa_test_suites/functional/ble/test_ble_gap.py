@@ -819,7 +819,8 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
     ble_client.interfaces.bluetooth.stop_scanning()
 
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert ble_dut.interfaces.bluetooth.ble_address in found_devices,"dut is not listed in scan results"
+    logger().info(f"scan results from remote device:*********{found_devices}*****************")
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices, "dut is not listed in scan results"
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
