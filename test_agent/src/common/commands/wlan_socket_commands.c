@@ -434,7 +434,7 @@ void rsi_config_ipaddress_command(sl_cli_command_arg_t* arguments)
 	char* ip_string = sl_cli_get_argument_string(arguments, 1);
 	char* subnet_string = sl_cli_get_argument_string(arguments, 2);
 	char* gateway_ip_string = sl_cli_get_argument_string(arguments, 3);
-	uint8_t vap_id = sl_cli_get_argument_string(arguments, 4);
+	uint8_t vap_id = sl_cli_get_argument_uint8(arguments, 4);
 
 	printf("\r\n rsi_config_ipaddress_command invoked\r\n");
 
