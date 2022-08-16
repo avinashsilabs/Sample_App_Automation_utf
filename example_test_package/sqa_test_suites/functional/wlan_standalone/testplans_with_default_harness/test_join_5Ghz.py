@@ -56,7 +56,7 @@ ping_count = 10
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
+@pytest.mark.config('wifi_access_point',wifi ={"channel": 36, 'standard': 'n'})
 def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10

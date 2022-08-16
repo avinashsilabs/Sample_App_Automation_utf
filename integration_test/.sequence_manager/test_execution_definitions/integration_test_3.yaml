@@ -23,6 +23,7 @@ test_sequence:
       - cases
       - ram_dump
     iterations: 1
+    visible: true
   - id: 0fa45c2a4f8b9986864795b890978d80bee5a286
     test_case_id: test_ram_dump[0-127]
     test_function: test_ram_dump
@@ -46,6 +47,7 @@ test_sequence:
       - cases
       - ram_dump
     iterations: 1
+    visible: true
   - id: f46b5b8a09b7c35041084f1c9c4bc2d1f5a222fa
     test_case_id: test_ram_dump[37-3457]
     test_function: test_ram_dump
@@ -69,6 +71,7 @@ test_sequence:
       - cases
       - ram_dump
     iterations: 1
+    visible: true
   - id: 3e108771e1b7204cdbc2f5d356d447f895ee4ef4
     test_case_id: test_ram_dump[60000-65535]
     test_function: test_ram_dump
@@ -92,6 +95,7 @@ test_sequence:
       - cases
       - ram_dump
     iterations: 1
+    visible: true
   - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
     test_case_id: test_prepare_static_ap
     test_function: test_prepare_static_ap
@@ -113,6 +117,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: 40a1fec3f61d75d9333daa4a6975d321a107dbef
     test_case_id: test_websocket_server_and_linux_client
     test_function: test_websocket_server_and_linux_client
@@ -132,6 +137,7 @@ test_sequence:
       - cases
       - websocket
     iterations: 1
+    visible: true
   - id: ede54b7e9780d3ddbdb18bce398a9b4a40eccd55
     test_case_id: test_device_as_server[TCP]
     test_function: test_device_as_server
@@ -152,6 +158,7 @@ test_sequence:
     labels:
       - cases
       - iperf
+    visible: true
     iterations: 1
   - id: 55f357e3f7e970e8494bcafc29f1f6ca76087a69
     test_case_id: test_device_as_server[UDP]
@@ -173,6 +180,7 @@ test_sequence:
     labels:
       - cases
       - iperf
+    visible: true
     iterations: 1
   - id: 7bc6d9ff17c4706dead6edcf6e70bf53995f7e91
     test_case_id: test_host_as_server[TCP]
@@ -196,6 +204,7 @@ test_sequence:
     labels:
       - cases
       - iperf
+    visible: true
     iterations: 1
   - id: 01c7f11755924f279931013fe4faed543cf481c6
     test_case_id: test_host_as_server[UDP]
@@ -219,6 +228,7 @@ test_sequence:
     labels:
       - cases
       - iperf
+    visible: true
     iterations: 1
   - id: ce44d558066a25b6e15f93509d003595ad536bee
     test_case_id: test_wifi_leave
@@ -239,6 +249,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: d4b6ecc9c54f925fc20357dbddb9682cccb5cc64
     test_case_id: test_wifi_ping
     test_function: test_wifi_ping
@@ -258,6 +269,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: 9bf2a1951ec733ba23a7ad9cfe6a565a32776a8e
     test_case_id: test_wifi_dhcp
     test_function: test_wifi_dhcp
@@ -277,6 +289,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: fb1256f2a3b05820535277be1343c17a4f6740b2
     test_case_id: test_version
     test_function: test_version
@@ -295,6 +308,7 @@ test_sequence:
       - cases
       - version
     iterations: 1
+    visible: true
   - id: e1c8f48a-8b73-4a4b-9978-32dc2ac1db09
     test_case_id: test_wifi_leave-at
     test_function: test_wifi_leave
@@ -314,6 +328,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: 425ee425-9177-48d1-8a1b-6aac79f9f113
     test_case_id: test_wifi_ping-at
     test_function: test_wifi_ping
@@ -333,6 +348,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: 8d6fad5d-1cb6-4efa-9bc1-b8fde5f7ded7
     test_case_id: test_wifi_dhcp-at
     test_function: test_wifi_dhcp
@@ -352,6 +368,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: cc409444-de36-4faa-b27f-90d24cdff3ff
     test_case_id: test_version-at
     test_function: test_version
@@ -370,3 +387,40 @@ test_sequence:
       - cases
       - version
     iterations: 1
+    visible: true
+  - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
+    test_case_id: test_secondary_raspi_shell
+    test_function: test_secondary_raspi_shell
+    test_id: test_secondary_raspi_shell::1
+    test_module: test_cases/test_secondary_raspi.py
+    test_markers:
+      - pytest.mark.bt_client('secondary_raspi_bt_client',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - secondary_raspi
+    iterations: 1
+    visible: true
+  - id: b86234b56ad9257ad9c9e69ae20829e11e7ef18a
+    test_case_id: test_secondary_raspi_bt
+    test_function: test_secondary_raspi_bt
+    test_id: test_secondary_raspi_bt::1
+    test_module: test_cases/test_secondary_raspi.py
+    test_markers:
+      - pytest.mark.bt_client('secondary_raspi_bt_client',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - secondary_raspi
+    iterations: 1
+    visible: true

@@ -154,9 +154,7 @@ pipeline {
                                . venv/Scripts/activate
                             fi
 
-                            export PYTHONPATH=/opt/jenkins/jenkins-worker/workspace/UTF_WiFi/utf_core/src
-                            echo $PYTHONPATH
-                            echo $UTF_PYTEST_COMMAND
+                            export PYTHONPATH=./utf_core/src
 
                             python executor/launch_utf_tests.py \
                                 --target ${SSH_TARGET} \

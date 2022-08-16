@@ -2,8 +2,6 @@ import subprocess
 import click
 import os
 from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption, UtfExecutorTypes
-from utf.utils.executor.docker_manager import DockerManager
-from utf.utils.executor.local_executor import LocalExecutor
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -29,7 +27,7 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
             UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch(),
-            UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu:02_28_2022",
+            UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu",
         }
 
 

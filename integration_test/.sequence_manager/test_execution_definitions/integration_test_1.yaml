@@ -31,6 +31,7 @@ test_sequence:
       - Custom
       - asus_rt_ax3000
     iterations: 1
+    visible: true
   - id: f3eaefed-bdcf-420f-8257-d632652111e1
     test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-11bgn-6-AES]
     test_function: test_wifi_ap_configuration
@@ -62,6 +63,7 @@ test_sequence:
       - Custom
       - asus_rt_ax3000
     iterations: 1
+    visible: true
   - id: 78bea853-6a22-4fc2-b09c-858b2eadb347
     test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-nac-36-AES]
     test_function: test_wifi_ap_configuration
@@ -93,6 +95,7 @@ test_sequence:
       - Custom
       - asus_rt_ax3000
     iterations: 1
+    visible: true
   - id: f055740d-4419-4541-a087-5f2b88f7e128
     test_case_id: test_wifi_ap_configuration-asus_rt_ax3000_ap[WPA2-anac-153-AES]
     test_function: test_wifi_ap_configuration
@@ -124,6 +127,7 @@ test_sequence:
       - Custom
       - asus_rt_ax3000
     iterations: 1
+    visible: true
   - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
     test_case_id: test_prepare_static_ap
     test_function: test_prepare_static_ap
@@ -145,6 +149,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
+    visible: true
   - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_case_id: test_ble_advertisement
     test_function: test_ble_advertisement
@@ -166,6 +171,7 @@ test_sequence:
       - ble
       - cases
     iterations: 1
+    visible: true
   - id: f6f77eea2d9c2b7d4b13459d53a3e4fc23022db0
     test_case_id: test_ble_scanning
     test_function: test_ble_scanning
@@ -177,27 +183,8 @@ test_sequence:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - ble
-      - cases
-    iterations: 1
-  - id: 25745669c19bf515f8becbcaa88ee70b0aa404c0
-    test_case_id: test_ble_gatt_server_slave
-    test_function: test_ble_gatt_server_slave
-    test_id: test_ble_gatt_server_slave::1
-    test_module: test_cases/test_ble.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.dut('rs9116_sapi',)
       - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
     test_params: []
     test_class: null
     description: null
@@ -207,6 +194,7 @@ test_sequence:
     labels:
       - ble
       - cases
+    visible: true
     iterations: 1
   - id: a94aa1b958e402d8e1a5e51093d69f4fb02bf582
     test_case_id: test_ble_gatt_client_master
@@ -219,6 +207,8 @@ test_sequence:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
       - pytest.mark.firmware_app('test_multi_gatt_conn',)
     test_params: []
     test_class: null
@@ -229,6 +219,31 @@ test_sequence:
     labels:
       - ble
       - cases
+    visible: true
+    iterations: 1
+  - id: 25745669c19bf515f8becbcaa88ee70b0aa404c0
+    test_case_id: test_ble_gatt_server_slave
+    test_function: test_ble_gatt_server_slave
+    test_id: test_ble_gatt_server_slave::1
+    test_module: test_cases/test_ble.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - ble
+      - cases
+    visible: true
     iterations: 1
   - id: 14ff158744d0d70ba65a57797509bec4ceff8b42
     test_case_id: test_bt_hid_dut_as_slave[True]
@@ -253,6 +268,7 @@ test_sequence:
     labels:
       - bt_hid
       - cases
+    visible: true
     iterations: 1
   - id: c0b8dafa3e28f0c69b446fe793d32cc7bd1d60c0
     test_case_id: test_bt_hid_dut_as_slave[False]
@@ -277,6 +293,7 @@ test_sequence:
     labels:
       - bt_hid
       - cases
+    visible: true
     iterations: 1
   - id: 0c0f092834509c8ab0cdd496992905ef605459fd
     test_case_id: test_python_client
@@ -300,6 +317,7 @@ test_sequence:
     labels:
       - aws_iot
       - cases
+    visible: true
     iterations: 1
   - id: 4bfdb7a37aca9da77c1d994fcaf9660ab6585b51
     test_case_id: test_aws_device_shadow
@@ -323,6 +341,7 @@ test_sequence:
     labels:
       - aws_iot
       - cases
+    visible: true
     iterations: 1
   - id: c2351d8a0a01883540b6606e765005a170cac80b
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-POST-content0]
@@ -351,6 +370,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: ba60c41e56cdb747f708e4a72763d0c7e4ccef45
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-PUT-content1]
     test_function: test_http_server_and_linux_client
@@ -378,6 +398,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: e032cfa53c846df7bc336e92edc56112f9a206e1
     test_case_id: test_http_server_and_linux_client[cgi-bin/cgi_example.py-GET-None]
     test_function: test_http_server_and_linux_client
@@ -403,6 +424,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: 07546eb3-9a79-4a1d-8b24-8eb509058a09
     test_case_id: test_http_server_and_linux_client[index_long_lf.html-GET-None]
     test_function: test_http_server_and_linux_client
@@ -428,6 +450,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: e63ea760-48e7-4f37-9d81-cb74f6e34d4d
     test_case_id: test_http_server_and_linux_client[-GET-None]
     test_function: test_http_server_and_linux_client
@@ -452,6 +475,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: 8242af35187720ad234954fc436910e6247179b3
     test_case_id: test_http_server_and_dut_client[index_long_crlf.html]
     test_function: test_http_server_and_dut_client
@@ -477,6 +501,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: 30fdf2fe-6fed-4502-a867-5eeed15e2c90
     test_case_id: test_http_server_and_dut_client[index_long_crlf.html]-at
     test_function: test_http_server_and_dut_client
@@ -502,6 +527,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: 19cd774cf468552990550bda9d13b24733fc41bd
     test_case_id: test_http_server_and_dut_client[index_long_lf.html]
     test_function: test_http_server_and_dut_client
@@ -527,6 +553,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: f64bd88a-77ea-4d43-aa87-70654322e109
     test_case_id: test_http_server_and_dut_client[index_long_lf.html]-at
     test_function: test_http_server_and_dut_client
@@ -552,6 +579,7 @@ test_sequence:
       - cases
       - http
     iterations: 1
+    visible: true
   - id: ce5f6b8141173d5bc06d722f46ec2558efa63999
     test_case_id: test_mqtt_dut
     test_function: test_mqtt_dut
@@ -576,6 +604,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: ba69230a-a3ea-4aad-b9de-f46c0ca551e3
     test_case_id: test_mqtt_dut-raspi_mosquitto_auth
     test_function: test_mqtt_dut
@@ -600,6 +629,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 780d979b-3b79-4853-a2db-324ccc3e21a5
     test_case_id: test_mqtt_dut-raspi_mosquitto_tls
     test_function: test_mqtt_dut
@@ -624,6 +654,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 932fe79d-d9b0-470b-92eb-55796ae6110e
     test_case_id: test_mqtt_dut-static_mqtt_broker
     test_function: test_mqtt_dut
@@ -647,6 +678,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 5c3b33ee-1783-48a7-b108-5632668aa48c
     test_case_id: test_mqtt_dut-at
     test_function: test_mqtt_dut
@@ -671,6 +703,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 279fa301-6937-41dc-a966-44931823a982
     test_case_id: test_mqtt_dut-at-raspi_mosquitto_auth
     test_function: test_mqtt_dut
@@ -695,6 +728,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: f38ecd5d-7c8b-4cda-9e01-2c0a67c96e34
     test_case_id: test_mqtt_dut-at-raspi_mosquitto_tls
     test_function: test_mqtt_dut
@@ -719,6 +753,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 4243e063-7bc5-4e1e-bcac-b93523a24eb9
     test_case_id: test_mqtt_dut-at-static_mqtt_broker
     test_function: test_mqtt_dut
@@ -742,6 +777,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
     test_case_id: test_power_save
     test_function: test_power_save
@@ -764,6 +800,7 @@ test_sequence:
       - cases
       - powersave
     iterations: 1
+    visible: true
   - id: d0413e2060109b0feefbbc0884e89b119bca0da8
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-False]
     test_function: test_sniffer_icmp_inspection
@@ -786,6 +823,7 @@ test_sequence:
       - cases
       - sniffer
     iterations: 1
+    visible: true
   - id: 1981b7a96bdeee129b6692b75e5fe1f94641352c
     test_case_id: >-
       test_sniffer_icmp_inspection[ether host
@@ -811,6 +849,7 @@ test_sequence:
     labels:
       - cases
       - sniffer
+    visible: true
     iterations: 1
   - id: 61f7ae813bc4830583d7d766f8b34b62deca64d4
     test_case_id: test_sniffer_icmp_inspection[None-no_filter-True]
@@ -834,6 +873,7 @@ test_sequence:
       - cases
       - sniffer
     iterations: 1
+    visible: true
   - id: 0b49b1dfb2f2cd2d074569ecb872e0bc93c562b6
     test_case_id: test_sniffer_icmp_inspection[ether host 88:da:1a:e4:ba:44-mac_filter-True]
     test_function: test_sniffer_icmp_inspection
@@ -857,6 +897,7 @@ test_sequence:
     labels:
       - cases
       - sniffer
+    visible: true
     iterations: 1
   - id: ec502278ec2f7fd76e913868331fa8fe852523bd
     test_case_id: test_socket_basic
@@ -880,6 +921,7 @@ test_sequence:
       - cases
       - socket
     iterations: 1
+    visible: true
   - id: f9ac7b90be9fd12186de271c539cdbf319eaf866
     test_case_id: test_socket_factory_tcp_server
     test_function: test_socket_factory_tcp_server
@@ -899,6 +941,7 @@ test_sequence:
       - cases
       - socket_factory
     iterations: 1
+    visible: true
   - id: 7ababbe792d9b11615a79062ede0928dfffb75dd
     test_case_id: test_multiple_sockets_tcp_server[3]
     test_function: test_multiple_sockets_tcp_server
@@ -920,6 +963,7 @@ test_sequence:
       - cases
       - socket_factory
     iterations: 1
+    visible: true
   - id: 681ec660f8dc60022e98a3db72b2d2dd02e82079
     test_case_id: test_multiple_sockets_tcp_client[1]
     test_function: test_multiple_sockets_tcp_client
@@ -945,3 +989,4 @@ test_sequence:
       - cases
       - socket_factory
     iterations: 1
+    visible: true
