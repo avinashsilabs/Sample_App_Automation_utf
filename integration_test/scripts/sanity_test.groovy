@@ -8,7 +8,7 @@ pipeline {
         disableConcurrentBuilds()
         office365ConnectorWebhooks(
             [
-                [   // send notifications to 'Jenkins Alerts' channel for failures only
+                [   // send notifications to 'IOT Infra SW - HYD - Alerts' channel for failures only
                     name: 'jenkins-alerts', notifyBackToNormal: true, notifyFailure: true, notifyNotBuilt: true,
                     notifyRepeatedFailure: true, notifyUnstable: true,  notifyAborted: true,
                     url: 'https://silabs.webhook.office.com/webhookb2/f32efe2c-4054-44e7-a35a-896d4418e86d@54dbd822-5231-4b20-944d-6f4abcd541fb/JenkinsCI/c20267f6a1a14453b36458912f6c360d/eb415314-edf4-4416-b04b-bc76de139102'
