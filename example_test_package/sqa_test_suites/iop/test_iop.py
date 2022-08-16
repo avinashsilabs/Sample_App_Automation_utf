@@ -10,7 +10,7 @@ import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
-    RS9116CustomFeatureBitMap, RS9116PowerSaveModes
+    RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
@@ -40,34 +40,28 @@ def logger():
 
 
 class IopTcpIpSockets:
-    def open_socket(self, wifi_networked_dut) -> int:
-        if isinstance(wifi_networked_dut.interfaces.wifi, RSSAPICommands):
-            result = wifi_networked_dut.interfaces.wifi.start_ip()
-            dut_ip = result.ip.decode()
-            logger().info(f"DUT ip address : {dut_ip}")
-            assert isinstance(result, wifi_networked_dut.interfaces.wifi.IPConfig)
+    def open_socket(self, wifi_associated_dut_with_sniffer, dut_ip) -> int:
+        tcp_socket_id = wifi_associated_dut_with_sniffer.interfaces.wifi.open_tcp_client_socket()
+        if isinstance(tcp_socket_id, int):
+            logger().info(f"Socket open successfully : {tcp_socket_id}")
+        else:
+            logger().error(f"Unable to open socket id: {tcp_socket_id}")
+            raise RuntimeError(tcp_socket_id)
 
-            tcp_socket_id = wifi_networked_dut.interfaces.wifi.open_tcp_client_socket()
-            if isinstance(tcp_socket_id, int):
-                logger().info(f"Socket open successfully : {tcp_socket_id}")
-            else:
-                logger().error(f"Unable to open socket id: {tcp_socket_id}")
-                raise RuntimeError(tcp_socket_id)
-
-            time.sleep(2)
-            bind_response = wifi_networked_dut.interfaces.wifi.bind(tcp_socket_id, dut_ip)
-            if bind_response.decode().split(">")[1].replace("'", '').strip() == 'success':
-                logger().info(f"Bind socket successfully: {bind_response}")
-            else:
-                logger().error(f"Unable to bind socket: {bind_response}")
-                raise RuntimeError(bind_response)
+        time.sleep(2)
+        bind_response = wifi_associated_dut_with_sniffer.interfaces.wifi.bind(tcp_socket_id, dut_ip)
+        if bind_response.decode().split(">")[1].replace("'", '').strip() == 'success':
+            logger().info(f"Bind socket successfully: {bind_response}")
+        else:
+            logger().error(f"Unable to bind socket: {bind_response}")
+            raise RuntimeError(bind_response)
         return tcp_socket_id
 
-    def connect_socket(self, wifi_networked_dut, tcp_socket_id: int):
+    def connect_socket(self, wifi_associated_dut_with_sniffer, tcp_socket_id: int):
         retry_limit: int = 2
         connect_status = False
         for retry in range(1, retry_limit):
-            connect_response = wifi_networked_dut.interfaces.wifi.connect(tcp_socket_id)
+            connect_response = wifi_associated_dut_with_sniffer.interfaces.wifi.connect(tcp_socket_id)
             logger().info(f"Connect response : {connect_response}")
             if connect_response.decode() == '':
                 logger().info(f"Unable to connect socket: {connect_response} in {retry} try")
@@ -96,29 +90,36 @@ class IopTcpIpSockets:
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
             EnahanceMaxPsp,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
     },
 )
-def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator, utf_constants):
+def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_associated_dut_with_sniffer, rf_attenuator, utf_constants):
 
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
     count_disconnect, count_connect, count_rejoin = set(), set(), set()
     try:
-        if isinstance(wifi_networked_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
-            wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+        if isinstance(wifi_associated_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
+            wifi_associated_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+
+            ip_result = wifi_associated_dut_with_sniffer.interfaces.wifi.start_ip()
+            dut_ip = ip_result.ip.decode()
+            logger().info(f"DUT ip address: {dut_ip}")
 
             """Applying Max power save """
             logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-            wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
-            ap_ssid = wifi_networked_dut_with_sniffer.interfaces.wifi.ssid
+            wifi_associated_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            wifi_associated_dut_with_sniffer.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            ap_ssid = wifi_associated_dut_with_sniffer.interfaces.wifi.ssid
             logger().info(f"AP_ssid {ap_ssid}")
 
             test_execution_time = utf_constants.get("time_duration")
             logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
 
-            tcp_socket_id = tcp_socket_obj.open_socket(wifi_networked_dut_with_sniffer)
+            tcp_socket_id = tcp_socket_obj.open_socket(wifi_associated_dut_with_sniffer, dut_ip)
             time.sleep(5)
-            connect_status = tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
+            connect_status = tcp_socket_obj.connect_socket(wifi_associated_dut_with_sniffer, tcp_socket_id)
             if connect_status is False:
                 logger().info("Unable to connect with Server")
                 assert connect_status
@@ -129,11 +130,11 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
 
             while 1:
                 if datetime.now() >= end_time:
-                    close_response = wifi_networked_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
+                    close_response = wifi_associated_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
                     logger().info(f"close_response: {close_response}")
                     break
                 logger().info(datetime.now())
-                send_response = wifi_networked_dut_with_sniffer.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                send_response = wifi_associated_dut_with_sniffer.interfaces.wifi.send(tcp_socket_id, send_bytes)
                 logger().info(f'SEND-RESPONSE = {send_response}')
                 if 'status 10' in str(send_response):
                     result = send_response.decode().replace("\r\n", '').strip()
@@ -142,7 +143,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
                         logger().info(f"Send {send_bytes} bytes successfully")
                         time.sleep(55)
 
-                events = wifi_networked_dut_with_sniffer.interfaces.wifi.get_async_events()
+                events = wifi_associated_dut_with_sniffer.interfaces.wifi.get_async_events()
                 connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
                 disconnect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Disconnect]
                 rejoin_error_events = [event for event in events if
@@ -163,21 +164,21 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
                     # if DUT disconnect from AP, it will wait till 130 seconds for reconnection and resume TCP/IP
                     # server connection
                     time.sleep(130)
-                    events = wifi_networked_dut_with_sniffer.interfaces.wifi.get_async_events()
+                    events = wifi_associated_dut_with_sniffer.interfaces.wifi.get_async_events()
                     connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
                     if len(connect_events):
                         count_connect.add(str(connect_events[0]))
-                        close_response = wifi_networked_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
+                        close_response = wifi_associated_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
                         logger().info(f"close_response: {close_response}")
-                        tcp_socket_id = tcp_socket_obj.open_socket(wifi_networked_dut_with_sniffer)
+                        tcp_socket_id = tcp_socket_obj.open_socket(wifi_associated_dut_with_sniffer, dut_ip)
                         time.sleep(2)
-                        tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
+                        tcp_socket_obj.connect_socket(wifi_associated_dut_with_sniffer, tcp_socket_id)
                     else:
                         logger().info("Unable to connect with AP after 130 seconds")
                         break
                 elif 'status -1' in str(send_response):
                     logger().info("If Socket disconnected from server")
-                    tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
+                    tcp_socket_obj.connect_socket(wifi_associated_dut_with_sniffer, tcp_socket_id)
 
     except (IndexError, CLITransportException, AssertionError):
         logger().info("Find exception")
@@ -200,7 +201,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
         end_time = datetime.now()
         exact_execution_time = end_time - start_time
         logger().info(f"Total execution time of test case = {exact_execution_time}")
-    wifi_networked_dut_with_sniffer.interfaces.wifi.leave()
+    wifi_associated_dut_with_sniffer.interfaces.wifi.leave()
 
 
 @pytest.mark.skip()
@@ -222,28 +223,32 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
 
     },
 )
-def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_attenuator, utf_constants):
+def test_tcp_socket_max_psp(wifi_sniffer, wifi_associated_dut_with_sniffer, rf_attenuator, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
     count_disconnect, count_connect, count_rejoin = set(), set(), set()
     try:
-        if isinstance(wifi_networked_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
-            wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+        if isinstance(wifi_associated_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
+            wifi_associated_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
+            
+            ip_result = wifi_associated_dut_with_sniffer.interfaces.wifi.start_ip()
+            dut_ip = ip_result.ip.decode()
+            logger().info(f"DUT ip address: {dut_ip}")
 
             """Applying Max power save """
             logger().info(f"*****Enable Max PSP in DUT******")
-            wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
-            wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
+            wifi_associated_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+            wifi_associated_dut_with_sniffer.interfaces.wifi.bt_power_save(
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
-            ap_ssid = wifi_networked_dut_with_sniffer.interfaces.wifi.ssid
+            ap_ssid = wifi_associated_dut_with_sniffer.interfaces.wifi.ssid
             logger().info(f"AP_ssid {ap_ssid}")
 
             test_execution_time = utf_constants.get("time_duration")
             logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
 
-            tcp_socket_id = tcp_socket_obj.open_socket(wifi_networked_dut_with_sniffer)
-            connect_status = tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
+            tcp_socket_id = tcp_socket_obj.open_socket(wifi_associated_dut_with_sniffer, dut_ip)
+            connect_status = tcp_socket_obj.connect_socket(wifi_associated_dut_with_sniffer, tcp_socket_id)
             if connect_status is False:
                 logger().info("Unable to connect with Server")
                 assert connect_status
@@ -254,11 +259,11 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
 
             while 1:
                 if datetime.now() >= end_time:
-                    close_response = wifi_networked_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
+                    close_response = wifi_associated_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
                     logger().info(f"close_response: {close_response}")
                     break
                 logger().info(datetime.now())
-                send_response = wifi_networked_dut_with_sniffer.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                send_response = wifi_associated_dut_with_sniffer.interfaces.wifi.send(tcp_socket_id, send_bytes)
                 logger().info(f'SEND-RESPONSE = {send_response}')
                 if 'status 10' in str(send_response):
                     result = send_response.decode().replace("\r\n", '').strip()
@@ -267,7 +272,7 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
                         logger().info(f"Send {send_bytes} bytes successfully")
                         time.sleep(55)
 
-                events = wifi_networked_dut_with_sniffer.interfaces.wifi.get_async_events()
+                events = wifi_associated_dut_with_sniffer.interfaces.wifi.get_async_events()
                 connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
                 disconnect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Disconnect]
                 rejoin_error_events = [event for event in events if
@@ -286,21 +291,21 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
                         count_disconnect.add(str(disconnect_events[0]))
                         logger().info(f' Disconnect Event = {count_disconnect}')
                     time.sleep(130)
-                    events = wifi_networked_dut_with_sniffer.interfaces.wifi.get_async_events()
+                    events = wifi_associated_dut_with_sniffer.interfaces.wifi.get_async_events()
                     connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
                     if len(connect_events):
                         count_connect.add(str(connect_events[0]))
-                        close_response = wifi_networked_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
+                        close_response = wifi_associated_dut_with_sniffer.interfaces.wifi.close_socket(tcp_socket_id)
                         logger().info(f"close_response: {close_response}")
-                        tcp_socket_id = tcp_socket_obj.open_socket(wifi_networked_dut_with_sniffer)
+                        tcp_socket_id = tcp_socket_obj.open_socket(wifi_associated_dut_with_sniffer, dut_ip)
                         time.sleep(2)
-                        tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
+                        tcp_socket_obj.connect_socket(wifi_associated_dut_with_sniffer, tcp_socket_id)
                     else:
                         logger().info("Unable to connect with AP after 130 seconds")
                         break
                 elif 'status -1' in str(send_response):
                     logger().info("If Socket disconnected from server")
-                    tcp_socket_obj.connect_socket(wifi_networked_dut_with_sniffer, tcp_socket_id)
+                    tcp_socket_obj.connect_socket(wifi_associated_dut_with_sniffer, tcp_socket_id)
 
     except (IndexError, CLITransportException, AssertionError):
         logger().info("Find exception")
