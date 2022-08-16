@@ -17,7 +17,7 @@ pipeline {
         )
     }
     stages {
-        stage('Run Sanity test ') {
+        stage('Run Sanity test') {
             agent {
                 label 'LAB0014503'
             }
@@ -40,7 +40,7 @@ pipeline {
                         """
                     }
                 }
-                stage('Run Integration Tests') {
+                stage('Launch Tests') {
                     steps {
                         hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
                             timeout(time: 120, unit: 'MINUTES') {
