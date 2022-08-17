@@ -451,7 +451,7 @@ class connect_disconnect_ble_thread(Thread):
 # Verify STA_BT_BLE functionality when BT and BLE in SLAVE mode and Wi-Fi in STA mode
 # @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -481,6 +481,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -516,7 +517,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
 # Need to re-look as bt_master mode test is failing.
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -534,7 +535,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect", "bt_disconnect"])
 def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                             net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -542,6 +543,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_master"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -575,7 +577,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
 # In this case , for C20077 test case getting issue while Creating RPC server.
 @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -593,7 +595,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
     },
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", ])
 def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client, ble_clients, wifi_access_point,
                                                             net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -605,6 +607,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     # bt_mode = "bt_slave"
     # logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -636,14 +639,10 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
-    # logger().info("Initiating BT disconnection on DUT")
-    # bt_disconnect(wifi_dut, bt_address, bt_socket)
-
 
 # Verify the connection stability of STA_BT_BLE devices while all the devices are connected and data transfer is happening
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -670,6 +669,7 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -699,7 +699,7 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
 # Verify the http download functionality of STA while BT and BLE are connected with remote devices and data transfer (SPP Rx and notifications are enabled).
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -770,7 +770,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
 # Verify the DUAL_MODE functionality if STA_BT_BLE while all the devices are connected and data transfer is in progress
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -796,6 +796,7 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -824,7 +825,7 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
 # Verify STA connect and disconnect functionality while BT and BLE are connected with remote devices and data transfer is happening.
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -850,6 +851,7 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -885,7 +887,7 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
 # Verify BT connect and disconnect multiple times while STA and BLE are connected with remote devices and data transfer is in progress.
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -911,6 +913,7 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -940,7 +943,7 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
 # Verify BLE connect and disconnect multiple times while STA and BT are connected with remote devices and data transfer is in progress
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -966,6 +969,7 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -998,7 +1002,7 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
 # Verify Power save 2 functionality of DUT when configured in STA_BT_BLE mode. Check if connectivity and data transfer is functional.
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
@@ -1032,6 +1036,7 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     # Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
@@ -1079,7 +1084,7 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
 
 # Verify the BG-SCAN functionality of STA when BT and BLE are connected to remote devices and data transfer is happening in STA_BT_BLE mode
 #@pytest.mark.skip()
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1113,6 +1118,7 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -1164,7 +1170,7 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
 # Verify the functionality of DUT when we bringup and connect RSI_BT and RSI_BLE with remote devices first and then initiate RSI_STA scan and connect to AP in STA_BT_BLE mode.
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_C20086'})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("ssid", ['test_C20086'])
@@ -1208,6 +1214,7 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
@@ -1228,7 +1235,7 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
 # Verify the Deep Sleep functionality of DUT when configured in STA_BT_BLE mode
 #@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
     "net_perf_client",
@@ -1252,6 +1259,7 @@ def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Failed to fetch device ip"
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
