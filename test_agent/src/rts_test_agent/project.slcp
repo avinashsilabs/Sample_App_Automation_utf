@@ -1717,7 +1717,7 @@ template_contribution:
     handler: rsi_set_tos_field
     help: sets tos field for socket
     argument:
-    - {type: uint8, help: type of service value}
+    - {type: uint32, help: type of service value}
 
 - name: cli_command
   priority: 0
@@ -2167,7 +2167,7 @@ template_contribution:
     handler: rsi_set_rts_command
     help: sets the threshold parameters
     argument:
-    - {type: uint8, help: config threshold value}
+    - {type: uint16, help: config threshold value}
     - {type: uint16, help: rsi threshold value}
 
 - name: cli_command

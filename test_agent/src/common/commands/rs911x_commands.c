@@ -64,7 +64,7 @@ uint8_t g_rsi_ltcp_sockets = 0;
 uint8_t g_rsi_client_sockets = 2;
 
 //globals for socket WMM settings, referenced by #defines in rsi_wlan_config.h
-uint8_t g_rsi_tos = 0;
+uint32_t g_rsi_tos = 0;
 
 //globals for power save parameters, referenced by #defines in rsi_wlan_config.h
 uint8_t g_dtim_aligned_type = 0;
@@ -163,7 +163,8 @@ void rsi_set_socket_limit(sl_cli_command_arg_t* arguments)
 
 void rsi_set_tos_field(sl_cli_command_arg_t* arguments)
 {
-	g_rsi_tos = sl_cli_get_argument_uint8(arguments, 0);
+	g_rsi_tos = sl_cli_get_argument_uint32(arguments, 0);
+	print_status(RSI_ERROR_NONE);
 }
 
 void rsi_device_init_command(sl_cli_command_arg_t* arguments)
