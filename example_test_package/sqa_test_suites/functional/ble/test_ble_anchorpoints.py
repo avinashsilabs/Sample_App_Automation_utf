@@ -56,7 +56,6 @@ def test_ble_slave_latency_C19889(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -129,7 +128,6 @@ def test_ble_slave_latency_C19890(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -202,7 +200,6 @@ def test_ble_slave_latency_C19891(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -275,7 +272,6 @@ def test_ble_slave_latency_C19892(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -348,7 +344,6 @@ def test_ble_slave_latency_C19893(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -421,7 +416,6 @@ def test_ble_slave_latency_C19894(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -494,7 +488,6 @@ def test_ble_slave_latency_C19895(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -568,7 +561,6 @@ def test_ble_slave_latency_C19896(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -642,7 +634,6 @@ def test_ble_slave_latency_C19897(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -789,7 +780,6 @@ def test_ble_slave_latency_C19899(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -864,7 +854,6 @@ def test_ble_slave_latency_C19900(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -937,7 +926,6 @@ def test_ble_slave_latency_C19901(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1011,7 +999,6 @@ def test_ble_slave_latency_C19902(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1085,7 +1072,6 @@ def test_ble_slave_latency_C19903(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1159,7 +1145,6 @@ def test_ble_slave_latency_C19904(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1233,7 +1218,6 @@ def test_ble_slave_latency_C19905(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1307,7 +1291,6 @@ def test_ble_slave_latency_C19906(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1382,7 +1365,6 @@ def test_ble_slave_latency_C19907(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1456,7 +1438,6 @@ def test_ble_slave_latency_C19908(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1530,7 +1511,6 @@ def test_ble_slave_latency_C19909(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -1604,7 +1584,6 @@ def test_ble_slave_latency_C19910(wifi_dut, wifi_access_point, ble_client):
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
-    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
