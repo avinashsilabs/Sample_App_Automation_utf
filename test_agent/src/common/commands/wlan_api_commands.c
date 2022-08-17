@@ -101,6 +101,11 @@ uint8_t g_region_code[4] = "US ";
 //globals for AP mode ht caps parameters, referenced by #defines in rsi_wlan_config.h
 uint16_t g_rsi_ht_caps_bitmap = 0;
 
+#if RSI_WLAN_CONFIG_ENABLE
+uint16_t config_threshold = 1;
+uint16_t rts_threshold = 2346;
+#endif
+
 extern int sli_cli_io_getchar();
 extern int32_t rsi_wlan_pmk_generate(int8_t type, int8_t* psk, int8_t* ssid, uint8_t* pmk, uint16_t length);
 
@@ -1073,6 +1078,15 @@ void rsi_wireless_antenna_command(sl_cli_command_arg_t* arguments)
    int32_t status = rsi_wireless_antenna(type, gain_2g, gain_5g);
    print_status(status);
 }
+
+#if RSI_WLAN_CONFIG_ENABLE
+void rsi_set_rts_command(sl_cli_command_arg_t* arguments)
+{
+    config_threshold = sl_cli_get_argument_uint16(arguments, 0);
+    rts_threshold = sl_cli_get_argument_uint16(arguments, 1);
+    print_status(RSI_ERROR_NONE);
+}
+#endif
 /*******************************************************************************
 *
 *                       IMPLEMENTATION: Private functions

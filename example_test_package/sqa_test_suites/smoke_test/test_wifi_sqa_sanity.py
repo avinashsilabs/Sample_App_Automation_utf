@@ -110,19 +110,21 @@ class WifiJoinThread(ThreadBase):
 
         logger().info("Validating beacons in sniffer with filter : {}".format(packet_filter1))
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'],"Beacons not found in sniffer capture"
+            'packet_count'], "Beacons not found in sniffer capture"
 
-        for count in range(0,self.iteration):
+        for count in range(0, self.iteration):
 
             logger().info("starting the sniffer again")
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
 
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
 
            #bles the scan in dut on channel
-            scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0,ssid=None)
+            scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
 
             logger().info(f"scan results : {scan_results}")
-            assert (len(scan_results) >= 1),"Scan failed"
+            assert (len(scan_results) >= 1), "Scan failed"
 
             # Join Wi-Fi Access Point
             self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
@@ -170,7 +172,8 @@ class WifiJoinThread(ThreadBase):
                  f'((wlan.fc.type_subtype == 0x0000) or (wlan.fc.type_subtype==0x0001) ) or eapol or ' \
                  f'(wlan.fc.type_subtype == 0x000b) or (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+                'packet_count'], "packets not found"
             logger().info("sniffer validation is successful")
 
 
@@ -202,10 +205,11 @@ class WifiThread(ThreadBase):
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
 
-        for i in range(0,3):
+        for i in range(0, 3):
             try:
                 #enables the scan in dut on channel
-                scan_results = self.wifi_dut.interfaces.wifi.scan(channel=self.wifi_access_point.interfaces.wifi.channel, ssid=None)
+                scan_results = self.wifi_dut.interfaces.wifi.scan(channel=self.wifi_access_point.interfaces.wifi.channel
+                                                                  , ssid=None)
                 logger().info(f"scan results : {scan_results}")
                 if len(scan_results):
                     break
@@ -272,10 +276,10 @@ class BleThread_Connection(ThreadBase):
         if (self.mode == "ble_master"):
             # Start DUT
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None,f"Unable to fetch MAC address from DUT"
+            assert bt_dut_address is not None, f"Unable to fetch MAC address from DUT"
             # Start ble client
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None,f"Unable to fetch MAC address from Remote device"
+            assert bt_client_address is not None, f"Unable to fetch MAC address from Remote device"
             time.sleep(1)
 
             logger().info("initiating BLE scan from DUT")
@@ -302,7 +306,7 @@ class BleThread_Connection(ThreadBase):
         if (self.mode == "ble_slave"):
             # Set up DUT for BLE advertising
             bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert bt_dut_address is not None,f"Unable to fetch MAC address from DUT"
+            assert bt_dut_address is not None, f"Unable to fetch MAC address from DUT"
 
             logger().info("Advertising the DUT")
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
@@ -310,7 +314,7 @@ class BleThread_Connection(ThreadBase):
             logger().info("Initiating scan from BLE client")
             # Begin Scanning for BLE devices
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None,"Unable to fetch MAC address from Remote device"
+            assert bt_client_address is not None, "Unable to fetch MAC address from Remote device"
 
             logger().info(f"Remote BT device address : {bt_client_address}")
             # See that we found our device
@@ -365,8 +369,8 @@ def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client,  wi
     test_type = "iperf"
 
     logger().info("DUT set to Region -. World domain")
-    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
-                        net_perf_client, protocol,test_type,iteration=1)
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
+                                 net_perf_client, protocol, test_type, iteration=1)
     wifi_thread.start()
     wifi_thread.wait_for_exit()
 
@@ -398,7 +402,7 @@ def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_s
     testcase = "test_join_EU_2_4_C34786"
     test_type = "iperf"
     logger().info("Setting the DUT to Region Europe")
-    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                  net_perf_client, protocol, test_type, iteration=1)
     wifi_thread.start()
     wifi_thread.wait_for_exit()
@@ -431,7 +435,7 @@ def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client,  wifi_
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region US")
-    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                  net_perf_client, protocol, test_type, iteration=1)
     wifi_thread.start()
     wifi_thread.wait_for_exit()
@@ -463,7 +467,7 @@ def test_join_US_5Ghz_C34789(wifi_access_point, wifi_dut, net_perf_client,  wifi
     testcase = "test_join_US_5Ghz_C34789"
     test_type = "iperf"
     logger().info("Setting the DUT to Region US")
-    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                  net_perf_client, protocol, test_type, iteration=1)
     wifi_thread.start()
     wifi_thread.wait_for_exit()
@@ -496,7 +500,7 @@ def test_join_EU_5Ghz_C34790(wifi_access_point, wifi_dut, net_perf_client,  wifi
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region Europe")
-    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                  net_perf_client, protocol, test_type, iteration=1)
     wifi_thread.start()
     wifi_thread.wait_for_exit()
@@ -529,7 +533,7 @@ def test_join_WORLD_5Ghz_C34792(wifi_access_point, wifi_dut, net_perf_client,  w
     test_type = "iperf"
 
     logger().info("Setting the DUT to Region World")
-    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+    wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                  net_perf_client, protocol, test_type, iteration=1)
     wifi_thread.start()
     wifi_thread.wait_for_exit()
@@ -571,7 +575,7 @@ def test_join_US_dual_band_C34793(wifi_access_point, wifi_dut, net_perf_client, 
 
         wifi_access_point.interfaces.wifi.start_ap()
         time.sleep(10)
-        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                      net_perf_client, protocol, test_type, iteration=1)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
@@ -613,7 +617,7 @@ def test_join_EU_dual_band_C34794(wifi_access_point, wifi_dut, net_perf_client, 
 
         wifi_access_point.interfaces.wifi.start_ap()
         time.sleep(10)
-        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                      net_perf_client, protocol, test_type, iteration=1)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
@@ -656,7 +660,7 @@ def test_join_WORLD_dual_band_C34796(wifi_access_point, wifi_dut, net_perf_clien
 
         wifi_access_point.interfaces.wifi.start_ap()
         time.sleep(10)
-        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,\
+        wifi_thread = WifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, wifi_client,
                                      net_perf_client, protocol, test_type, iteration=1)
         wifi_thread.start()
         wifi_thread.wait_for_exit()

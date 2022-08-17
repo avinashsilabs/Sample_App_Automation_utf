@@ -76,6 +76,8 @@ define:
   value: 1
 - name: RSI_SELECT_LP_OR_ULP_MODE
   value: 0
+- name: RSI_WLAN_CONFIG_ENABLE
+  value: 0
 
 
 component:
@@ -1724,7 +1726,7 @@ template_contribution:
     handler: rsi_set_tos_field
     help: sets tos field for socket
     argument:
-    - {type: uint8, help: type of service value}
+    - {type: uint32, help: type of service value}
     
 - name: cli_command
   priority: 0

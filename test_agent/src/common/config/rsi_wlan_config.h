@@ -114,7 +114,7 @@ extern uint8_t g_rsi_ltcp_sockets;
 extern uint8_t g_rsi_client_sockets;
 
 //globals for WMM tos, referenced in #defines below
-extern uint8_t g_rsi_tos;
+extern uint32_t g_rsi_tos;
 
 //globals for AP mode set region, referenced in #defines below 
 extern uint8_t g_region_config;
@@ -148,6 +148,11 @@ extern uint8_t g_udp_rx_only_sockets;
 extern uint8_t g_tcp_rx_high_perfornamce_sockets;
 extern uint8_t g_tcp_rx_window_size_cap;
 extern uint8_t g_tcp_rx_window_div_factor;
+
+//Parameter to set Config Threshold
+extern uint16_t config_threshold;
+//Parameter to set RTS Threshold
+extern uint16_t rts_threshold;
 
 // Enable feature
 #define RSI_ENABLE 1
@@ -728,6 +733,7 @@ extern uint8_t g_tcp_rx_window_div_factor;
 #define RSI_HTTP_STATUS_INDICATION_EN RSI_DISABLE
 
 #include "rsi_wlan_common_config.h"
+#include "rsi_wlan_apis.h"
 #endif
 
 
@@ -786,6 +792,10 @@ extern uint8_t g_tcp_rx_window_div_factor;
 #define TCP_RX_HIGH_PERFORMANCE_SOCKETS g_tcp_rx_high_perfornamce_sockets
 #define TCP_RX_WINDOW_SIZE_CAP   g_tcp_rx_window_size_cap
 #define TCP_RX_WINDOW_DIV_FACTOR   g_tcp_rx_window_div_factor
+
+#define CONFIG_RTSTHRESHOLD config_threshold
+
+#define RSI_RTS_THRESHOLD rts_threshold
 
 
 

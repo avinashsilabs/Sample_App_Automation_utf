@@ -31,6 +31,7 @@
 #define RSI_BLE_MTU_EVENT                   11
 #define RSI_BLE_GATT_WRITE_EVENT            12
 #define RSI_BLE_DATA_LENGTH_CHANGE_EVENT    13
+#define RSI_BLE_PHY_UPDATE_COMPLETE_EVENT   14
 
 #define RSI_PRINT_LOGS 0
 
@@ -92,6 +93,7 @@ static void rsi_ble_app_set_event(uint32_t event_num);
 void rsi_ble_simple_central_on_adv_report_event(rsi_ble_event_adv_report_t *adv_report);
 void rsi_ble_on_enhance_conn_status_event(rsi_ble_event_enhance_conn_status_t *resp_enh_conn);
 void rsi_ble_data_length_change_event(rsi_ble_event_data_length_update_t *rsi_ble_data_length_update);
+void rsi_ble_phy_set_update_complete_event(rsi_ble_event_phy_update_t *rsi_ble_event_phy_update_complete);
 static void rsi_ble_on_connect_event(rsi_ble_event_conn_status_t *resp_conn);
 static void rsi_ble_on_disconnect_event(rsi_ble_event_disconnect_t *resp_disconnect, uint16_t reason);
 void rsi_ble_on_smp_request(rsi_bt_event_smp_req_t *remote_dev_address);
@@ -226,6 +228,13 @@ static void ble_task(void* arg)
                 LOG_EVENT("\nRSI_BLE_DATA_LENGTH_CHANGE_EVENT \n");
                 //! clear the event.
                 rsi_ble_app_clear_event(RSI_BLE_DATA_LENGTH_CHANGE_EVENT);
+            } break;
+
+            case RSI_BLE_PHY_UPDATE_COMPLETE_EVENT: {
+                //! phy update complete event
+                LOG_EVENT("\nRSI_BLE_PHY_UPDATE_COMPLETE_EVENT \n");
+                //! clear the event.
+                rsi_ble_app_clear_event(RSI_BLE_PHY_UPDATE_COMPLETE_EVENT);
             } break;
 
             case RSI_BLE_MTU_EVENT:
@@ -378,7 +387,7 @@ void init_ble_command(sl_cli_command_arg_t *arguments)
                                         rsi_ble_on_connect_event,
                                         rsi_ble_on_disconnect_event,
                                         NULL,
-                                        NULL,
+                                        rsi_ble_phy_set_update_complete_event,
                                         rsi_ble_data_length_change_event,
                                         rsi_ble_on_enhance_conn_status_event,
                                         NULL,
@@ -1015,6 +1024,13 @@ void rsi_ble_data_length_change_event(rsi_ble_event_data_length_update_t *rsi_bl
     LOG_EVENT("\nrsi_ble_data_length_change_event- dev_addr: %s\n",
             rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, rsi_ble_data_length_update->dev_addr));
     rsi_ble_app_set_event(RSI_BLE_DATA_LENGTH_CHANGE_EVENT);
+}
+
+void rsi_ble_phy_set_update_complete_event(rsi_ble_event_phy_update_t *rsi_ble_event_phy_update_complete)
+{
+    LOG_EVENT("\nrsi_ble_phy_set_update_complete_event- dev_addr: %s\n",
+            rsi_6byte_dev_address_to_ascii(ble_str_conn_bd_addr, rsi_ble_event_phy_update_complete->dev_addr));
+    rsi_ble_app_set_event(RSI_BLE_PHY_UPDATE_COMPLETE_EVENT);
 }
 
 /*==============================================*/
