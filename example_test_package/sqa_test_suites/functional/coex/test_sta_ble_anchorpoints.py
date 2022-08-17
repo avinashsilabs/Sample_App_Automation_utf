@@ -61,11 +61,13 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f"enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -87,7 +89,6 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(" fetching the host IP for http server")
     host_ip = get_host_ip()
     logger().info(f"host ip is {host_ip}")
-
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
     assert status == 1, "unable to ping to server"
@@ -108,19 +109,17 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
     assert ble_client_address is not None
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,
@@ -146,7 +145,6 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
-
 
 
 
@@ -187,11 +185,13 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f"enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -213,7 +213,6 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(" fetching the host IP for http server")
     host_ip = get_host_ip()
     logger().info(f"host ip is {host_ip}")
-
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
     assert status == 1, "unable to ping to server"
@@ -234,19 +233,17 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
     assert ble_client_address is not None
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,
@@ -272,7 +269,6 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
-
 
 
 
@@ -314,11 +310,13 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f"enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -340,7 +338,6 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(" fetching the host IP for http server")
     host_ip = get_host_ip()
     logger().info(f"host ip is {host_ip}")
-
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
     assert status == 1, "unable to ping to server"
@@ -361,19 +358,17 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
     assert ble_client_address is not None
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,
@@ -399,9 +394,6 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
-
-
-
 
 
 
@@ -442,11 +434,13 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f"enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -468,7 +462,6 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(" fetching the host IP for http server")
     host_ip = get_host_ip()
     logger().info(f"host ip is {host_ip}")
-
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
     assert status == 1, "unable to ping to server"
@@ -489,19 +482,17 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
     assert ble_client_address is not None
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,
@@ -527,9 +518,6 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
-
-
-
 
 
 
@@ -570,11 +558,13 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     logger().info(f"enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -596,7 +586,6 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(" fetching the host IP for http server")
     host_ip = get_host_ip()
     logger().info(f"host ip is {host_ip}")
-
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
     assert status == 1, "unable to ping to server"
@@ -617,19 +606,17 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
     assert ble_client_address is not None
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,
