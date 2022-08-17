@@ -790,7 +790,7 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
     )
-    assert bt_client_address,"failed to initiate ble in remote device"
+    assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
