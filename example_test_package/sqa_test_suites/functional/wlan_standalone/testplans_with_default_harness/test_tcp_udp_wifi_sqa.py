@@ -19,7 +19,10 @@ import random
 def logger():
     return get_logger(__name__)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> d7aa3b9088b004661728d1cb854666f04e7f95fe
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
         2. Association of Third party AP's
@@ -70,6 +73,58 @@ class WifiJoinThread(ThreadBase):
     def run(self):
         self.iperf_obj.start_iperf_dut_as_client(self.wifi_dut, self.net_perf_client, self.protocol, self.device_ip,
                                                  self.host_ip, self.time_out)
+
+
+class RunTraffic:
+    def start_iperf_dut_as_client(self, wifi_dut, net_perf_client, protocol, device_ip, host_ip, time_out):
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
+                                                        device_ip=device_ip, protocol=protocol, time_out=time_out)
+
+        net_perf_client.interfaces.net_perf.start()
+
+        # open socket and send traffic
+        wifi_dut.interfaces.wifi.send_traffic_from_device(
+            host_ip,
+            device_ip,
+            net_perf_client.interfaces.net_perf.server_port,
+            net_perf_client.interfaces.net_perf.protocol,
+            net_perf_client.interfaces.net_perf.client_options,
+        )
+
+        # get and print throughput
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None
+        if tp is not None:
+            print_dict("##     ", tp)
+
+
+class AccessPointOnOff(ThreadBase):
+    def __init__(self, wifi_access_point, switch):
+        super().__init__()
+        self.wifi_access_point = wifi_access_point
+        self.switch = switch
+
+    def run(self):
+        logger().info('******* Turn off the AP radio **********')
+        self.switch.interfaces.pdu_switch.turn_off()
+        time.sleep(60)
+        logger().info('******* Turn on the AP radio **********')
+        self.switch.interfaces.pdu_switch.turn_on()
+
+
+class WifiJoinThread(ThreadBase):
+    def __init__(self, wifi_dut, net_perf_client, protocol, device_ip, host_ip, time_out):
+        super().__init__()
+        self.iperf_obj = RunTraffic()
+        self.wifi_dut = wifi_dut
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.device_ip = device_ip
+        self.host_ip = host_ip
+        self.time_out = time_out
+
+    def run(self):
+        self.iperf_obj.start_iperf_dut_as_client(self.wifi_dut, self.net_perf_client, self.protocol, self.device_ip, self.host_ip, self.time_out)
 
 
 class RunTraffic:
@@ -492,6 +547,10 @@ def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, remote_socket, wifi_dut
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+<<<<<<< HEAD
+=======
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+>>>>>>> d7aa3b9088b004661728d1cb854666f04e7f95fe
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -515,13 +574,35 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
 
     '''Verify TCP data transfer functionality while STA is in rejoin process(Send 10,000 packets from the module with 
     size 1460)'''
+<<<<<<< HEAD
     state = switch.interfaces.pdu_switch.get_state()
+=======
+    logger().info(f'Check PDU state = {pdu_state}')
+    state = wifi_access_point.interfaces.wifi.switch.get_state()
+>>>>>>> d7aa3b9088b004661728d1cb854666f04e7f95fe
     logger().info("pdu switch state : " + str(state))
     if state == 'true':
         logger().info('PDU is ready for use')
     else:
         logger().info(f'\n\n Please check the AP & PDU current state')
         assert False
+
+<<<<<<< HEAD
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    time.sleep(2)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='tcp_data_transfer_c19354')
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    time.sleep(2)
+
+=======
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
@@ -537,6 +618,7 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     time.sleep(2)
 
+>>>>>>> d7aa3b9088b004661728d1cb854666f04e7f95fe
     result = wifi_dut.interfaces.wifi.start_ip()
     device_ip = result.ip.decode()
     logger().info(f"DUT ip address: {device_ip}")
@@ -574,6 +656,10 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
     ap_obj.wait_for_exit()
     wlan_obj.wait_for_exit()
 
+<<<<<<< HEAD
+=======
+    wifi_dut.interfaces.wifi.leave()
+>>>>>>> d7aa3b9088b004661728d1cb854666f04e7f95fe
     wifi_sniffer.interfaces.capture.stop_capture()
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
@@ -583,4 +669,8 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
         'Unable to find DHCP discovery, offer, request, ack packet'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
+<<<<<<< HEAD
         'Unable to find Verify PS-Poll & PWMGT bit'
+=======
+        'Unable to find Verify PS-Poll & PWMGT bit'
+>>>>>>> d7aa3b9088b004661728d1cb854666f04e7f95fe
