@@ -52,23 +52,23 @@ def test_ble_slave_latency_C19889(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -90,7 +90,6 @@ def test_ble_slave_latency_C19889(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -126,23 +125,23 @@ def test_ble_slave_latency_C19890(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -164,7 +163,6 @@ def test_ble_slave_latency_C19890(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE disconnect successful")
@@ -200,22 +198,23 @@ def test_ble_slave_latency_C19891(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -237,7 +236,6 @@ def test_ble_slave_latency_C19891(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -273,23 +271,23 @@ def test_ble_slave_latency_C19892(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -311,7 +309,6 @@ def test_ble_slave_latency_C19892(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -347,23 +344,23 @@ def test_ble_slave_latency_C19893(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -385,7 +382,6 @@ def test_ble_slave_latency_C19893(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -421,23 +417,23 @@ def test_ble_slave_latency_C19894(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -459,7 +455,6 @@ def test_ble_slave_latency_C19894(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -495,23 +490,23 @@ def test_ble_slave_latency_C19895(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -533,7 +528,6 @@ def test_ble_slave_latency_C19895(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE disconnect successful")
@@ -570,22 +564,23 @@ def test_ble_slave_latency_C19896(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -607,7 +602,6 @@ def test_ble_slave_latency_C19896(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -644,23 +638,23 @@ def test_ble_slave_latency_C19897(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -682,7 +676,6 @@ def test_ble_slave_latency_C19897(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -719,23 +712,22 @@ def test_ble_slave_latency_C19898(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -757,7 +749,6 @@ def test_ble_slave_latency_C19898(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -794,23 +785,23 @@ def test_ble_slave_latency_C19899(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -832,7 +823,6 @@ def test_ble_slave_latency_C19899(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -870,23 +860,23 @@ def test_ble_slave_latency_C19900(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -908,7 +898,6 @@ def test_ble_slave_latency_C19900(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -944,23 +933,23 @@ def test_ble_slave_latency_C19901(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -982,7 +971,6 @@ def test_ble_slave_latency_C19901(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1019,23 +1007,23 @@ def test_ble_slave_latency_C19902(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1057,7 +1045,6 @@ def test_ble_slave_latency_C19902(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1094,23 +1081,23 @@ def test_ble_slave_latency_C19903(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1132,7 +1119,6 @@ def test_ble_slave_latency_C19903(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1169,23 +1155,23 @@ def test_ble_slave_latency_C19904(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1207,7 +1193,6 @@ def test_ble_slave_latency_C19904(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1244,23 +1229,23 @@ def test_ble_slave_latency_C19905(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1282,7 +1267,6 @@ def test_ble_slave_latency_C19905(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1319,23 +1303,23 @@ def test_ble_slave_latency_C19906(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1357,7 +1341,6 @@ def test_ble_slave_latency_C19906(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1392,25 +1375,26 @@ def test_ble_slave_latency_C19907(wifi_dut, wifi_access_point, ble_client):
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert ble_dut_address is not None, f"Unable to find ble dut address"
     wifi_dut.interfaces.wifi.ble_start_advertising()
+    time.sleep(5)
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1432,7 +1416,6 @@ def test_ble_slave_latency_C19907(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1469,23 +1452,23 @@ def test_ble_slave_latency_C19908(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1507,7 +1490,6 @@ def test_ble_slave_latency_C19908(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1544,23 +1526,23 @@ def test_ble_slave_latency_C19909(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1582,7 +1564,6 @@ def test_ble_slave_latency_C19909(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
@@ -1619,23 +1600,23 @@ def test_ble_slave_latency_C19910(wifi_dut, wifi_access_point, ble_client):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
+    #ble_client.interfaces.bluetooth.close()
     logger().info(f"Begin Scanning for BLE devices")
-    ble_client.interfaces.bluetooth.close()
-    time.sleep(3)
-
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
+    logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     logger().info("Initiating BLE connection")
     ble_client.interfaces.bluetooth.connect(ble_dut_address)
     logger().info("BLE Connection success")
-    time.sleep(10)
+    time.sleep(5)
 
     # setting data length on ble_client
     with BleLogs(start_collecting_logs=True,bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}") as ble_logs:
@@ -1657,7 +1638,6 @@ def test_ble_slave_latency_C19910(wifi_dut, wifi_access_point, ble_client):
     assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
     logger().info("DUT is not disconnected from BLE")
 
-    #ble_logs.update_connection_logs()
     logger().info("Disconnect BLE connection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     logger().info("BLE diconnect successful")
