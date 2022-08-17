@@ -19,6 +19,7 @@ import random
 def logger():
     return get_logger(__name__)
 
+
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
         2. Association of Third party AP's
@@ -50,9 +51,9 @@ pytestmark = [
             "set_send_feature_frame": True,
             "set_tx_wait_time": True,
             "tx_wait_time": 160000,
-            }
-        )
-    ]
+        }
+    )
+]
 
 
 class WifiJoinThread(ThreadBase):
@@ -67,7 +68,8 @@ class WifiJoinThread(ThreadBase):
         self.time_out = time_out
 
     def run(self):
-        self.iperf_obj.start_iperf_dut_as_client(self.wifi_dut, self.net_perf_client, self.protocol, self.device_ip, self.host_ip, self.time_out)
+        self.iperf_obj.start_iperf_dut_as_client(self.wifi_dut, self.net_perf_client, self.protocol, self.device_ip,
+                                                 self.host_ip, self.time_out)
 
 
 class RunTraffic:
@@ -164,7 +166,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     for count in range(1, 3):
         try:
             scan_fail = 1
@@ -185,7 +187,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     logger.info("Start the sniffer")
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
 
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
@@ -385,7 +387,7 @@ def test_wifi_udp_close_TC19348(wifi_sniffer, remote_socket, wifi_dut, wifi_acce
 @pytest.mark.parametrize("test_run_time", [60])
 # The test case checks data receive functionality over udp socket
 @pytest.mark.skip()
-def test_wifi_udp_receive_TC19361(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger,test_run_time):
+def test_wifi_udp_receive_TC19361(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, logger, test_run_time):
     capture_filename = "test_wifi_udp_receive_TC19361"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -405,7 +407,8 @@ def test_wifi_udp_receive_TC19361(wifi_sniffer, remote_socket, wifi_dut, wifi_ac
     # send 50 bytes of data from udp socket opened remotely
     remote_socket.interfaces.socket.send_data_udp(tx_buffer, device_ip, port=5001)
     try:
-        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length, timeout=50)
+        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length,
+                                                                            timeout=50)
         assert buffer_length == buffer_length_rx, "buffer length sent and received is not matched"
         assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
     except:
@@ -489,7 +492,6 @@ def test_wifi_tcp_remote_terminate_TC19362(wifi_sniffer, remote_socket, wifi_dut
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -513,15 +515,13 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
 
     '''Verify TCP data transfer functionality while STA is in rejoin process(Send 10,000 packets from the module with 
     size 1460)'''
-    logger().info(f'Check PDU state = {pdu_state}')
-    state = wifi_access_point.interfaces.wifi.switch.get_state()
+    state = switch.interfaces.pdu_switch.get_state()
     logger().info("pdu switch state : " + str(state))
     if state == 'true':
         logger().info('PDU is ready for use')
     else:
         logger().info(f'\n\n Please check the AP & PDU current state')
         assert False
-
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
@@ -574,7 +574,6 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
     ap_obj.wait_for_exit()
     wlan_obj.wait_for_exit()
 
-    wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
