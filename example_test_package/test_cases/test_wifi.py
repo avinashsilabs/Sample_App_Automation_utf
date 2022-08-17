@@ -1,44 +1,42 @@
 import time
-
 from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS9116CoexMode, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, RS9116PowerSaveModes
 from utf_wiseconnect.utils.rs911x_version import parse_version, extract_version
 from utf.utils.time_measurer import TimeMeasurer
 import pytest
 from utf.utils.logger import get_logger
-from utf import TestResultsModelAttrs
+from utf import UtfDatabaseProperties
 
 
 def logger():
     return get_logger(__name__)
 
+
 pytestmark = [
-    pytest.mark.user_properties("database_test_results",
-                                database_test_results={TestResultsModelAttrs.test_result_type: 'FEATURE',
-                                                       TestResultsModelAttrs.feature_name: 'wifi_tests',
-                                                       TestResultsModelAttrs.test_creation_date: '2022-06-06',
-                                                       TestResultsModelAttrs.module_name: 'wifi',
-                                                       TestResultsModelAttrs.test_description: 'module desc',
-                                                       TestResultsModelAttrs.iot_req_id: 'IOTREQ-1194',
-                                                       TestResultsModelAttrs.tool_chain: 'tool_chain',
-                                                       TestResultsModelAttrs.engineer_name: 'Hidayathulla',
-                                                       TestResultsModelAttrs.test_case_version_num: 1,
-                                                       TestResultsModelAttrs.test_suite_name: 'test_suite_name',
-                                                       TestResultsModelAttrs.phy_name: 'phy_name',
-                                                       TestResultsModelAttrs.vendor_result: 'vendor_result',
-                                                       TestResultsModelAttrs.vendor_build: 'vendor_build',
-                                                       TestResultsModelAttrs.vendor_name: 'vendor_name',
-                                                       TestResultsModelAttrs.portal_watch: 'true',
-                                                       TestResultsModelAttrs.test_parametric_data: 'p1',
-                                                       })
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='wifi_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
 ]
 
 
-@pytest.mark.user_properties("database_test_results",
-                             database_test_results={TestResultsModelAttrs.test_result_type: 'SMOKE',
-                                                    TestResultsModelAttrs.test_case_name: 'test_version1',
-                                                    TestResultsModelAttrs.test_case_id: 'test_version1::1',
-                                                    TestResultsModelAttrs.notes: 'notes'})
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
+                                                       test_case_name='test_version1',
+                                                       test_case_id='test_version1::1',
+                                                       notes='test notes'))
 def test_version(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
@@ -101,10 +99,10 @@ def test_wifi_start_ap(wifi_dut):
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
     assert (
-        wifi_client.interfaces.wifi.ping(
-            server_ip=wifi_client.interfaces.wifi.client_gateway_ip
-        )
-        < 0.1
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
     )
 
 
@@ -133,10 +131,10 @@ def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
     assert (
-        wifi_client.interfaces.wifi.ping(
-            server_ip=wifi_client.interfaces.wifi.client_gateway_ip
-        )
-        < 0.1
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
     )
 
 
