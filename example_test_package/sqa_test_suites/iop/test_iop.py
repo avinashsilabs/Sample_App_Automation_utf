@@ -94,7 +94,6 @@ class IopTcpIpSockets:
     },
 )
 def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_associated_dut_with_sniffer, rf_attenuator, utf_constants):
-
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 10
     count_disconnect, count_connect, count_rejoin = set(), set(), set()
@@ -106,10 +105,12 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_associated_dut_with_snif
             dut_ip = ip_result.ip.decode()
             logger().info(f"DUT ip address: {dut_ip}")
 
-            """Applying Max power save """
+            """Applying Enhanced Max Power save"""
             logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-            wifi_associated_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            wifi_associated_dut_with_sniffer.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            wifi_associated_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+            wifi_associated_dut_with_sniffer.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
             ap_ssid = wifi_associated_dut_with_sniffer.interfaces.wifi.ssid
             logger().info(f"AP_ssid {ap_ssid}")
@@ -230,7 +231,7 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_associated_dut_with_sniffer, rf_a
     try:
         if isinstance(wifi_associated_dut_with_sniffer.interfaces.wifi, RSSAPICommands):
             wifi_associated_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
-            
+
             ip_result = wifi_associated_dut_with_sniffer.interfaces.wifi.start_ip()
             dut_ip = ip_result.ip.decode()
             logger().info(f"DUT ip address: {dut_ip}")
@@ -519,9 +520,13 @@ def test_aws_device_shadow_enhanced_max_psp(firmware_loader, wifi_sniffer, wifi_
     wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
     time.sleep(2)
-    """Applying Max power save """
+    """Applying enhanced max psp power save """
     logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 1)
+    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave
+                                                                  )
 
     shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
         RS9116AsyncEventType.AWSIoTShadowUpdateAccepted
@@ -533,7 +538,7 @@ def test_aws_device_shadow_enhanced_max_psp(firmware_loader, wifi_sniffer, wifi_
         RS9116AsyncEventType.AWSIoTShadowUpdateTimeout
     ]
     while datetime.now() < end_time:
-        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1,100))
+        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1, 100))
         try:
             shadow_update_accepted_event_queue.get(timeout=60)
         except(QueueEmpty, Empty):
@@ -604,7 +609,7 @@ def test_aws_device_shadow_max_psp(firmware_loader, wifi_sniffer, wifi_networked
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
     time.sleep(2)
     """Applying Max power save """
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
+    logger().info(f"*****Enable Max Power save in DUT******")
     wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
     wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
@@ -620,7 +625,7 @@ def test_aws_device_shadow_max_psp(firmware_loader, wifi_sniffer, wifi_networked
         RS9116AsyncEventType.AWSIoTShadowUpdateTimeout
     ]
     while datetime.now() < end_time:
-        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1,100))
+        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1, 100))
         try:
             shadow_update_accepted_event_queue.get(timeout=10)
         except(QueueEmpty, Empty):
