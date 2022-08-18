@@ -108,13 +108,13 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert ble_dut_address is not None, f"Unable to find ble dut address"
+    assert ble_dut_address, f"Unable to find ble dut address"
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None, "Unable to get BLE client address"
+    assert ble_client_address, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -235,13 +235,13 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert ble_dut_address is not None, f"Unable to find ble dut address"
+    assert ble_dut_address, f"Unable to find ble dut address"
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None, "Unable to get BLE client address"
+    assert ble_client_address, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -363,13 +363,13 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert ble_dut_address is not None, f"Unable to find ble dut address"
+    assert ble_dut_address, f"Unable to find ble dut address"
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None, "Unable to get BLE client address"
+    assert ble_client_address, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -490,13 +490,13 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert ble_dut_address is not None, f"Unable to find ble dut address"
+    assert ble_dut_address, f"Unable to find ble dut address"
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None, "Unable to get BLE client address"
+    assert ble_client_address, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -617,13 +617,13 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert ble_dut_address is not None, f"Unable to find ble dut address"
+    assert ble_dut_address, f"Unable to find ble dut address"
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None, "Unable to get BLE client address"
+    assert ble_client_address, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
