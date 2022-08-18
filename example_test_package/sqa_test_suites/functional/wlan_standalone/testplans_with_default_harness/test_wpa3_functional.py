@@ -4,7 +4,8 @@ from utf.utils.iperf.iperf_utils import print_dict, logger
 
 from utf.interfaces.wifi import WlanError
 import sys
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116PowerSaveModes, \
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap
 import time
 import pytest
@@ -43,9 +44,8 @@ def logger():
 
 
 pytestmark = [
-    pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA3'})
+    pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 ]
-
 
 ping_count = 10
 
@@ -62,7 +62,7 @@ ping_count = 10
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
     }
 )
@@ -113,7 +113,8 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid, channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                          channel=wifi_access_point.interfaces.wifi.channel)
             scan_fail = 0
             break
         except:
@@ -136,10 +137,6 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                     f'and wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
-                     f'and wlan.da == ff:ff:ff:ff:ff:ff'
-
     packet_filter3 = f'(wlan.fixed.sae_message_type == 1) || (wlan.fixed.sae_message_type == 2)' \
                      f' && wlan.addr == {dut_mac_address}'
 
@@ -157,18 +154,17 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
     status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(5)
+    time.sleep(10)
     logger().info("Dut going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    logger().info("Sniffer Validation for Probe request packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
     logger().info("Sniffer Validation for Authentication packets of COMMIT & CONFIRM")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
     logger().info("Sniffer Validation for Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count']
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -184,13 +180,12 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
     }
 )
 def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                      protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -210,7 +205,7 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -268,13 +263,12 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
     }
 )
 def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                      protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -294,7 +288,7 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -352,13 +346,12 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
     }
 )
 def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                      protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -378,7 +371,7 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -441,13 +434,12 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
 
     }
 )
 def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                      protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -467,7 +459,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -520,7 +512,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -530,13 +522,12 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
     }
 )
 def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                         protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -556,7 +547,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -598,13 +589,12 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
 
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -614,13 +604,12 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
     }
 )
 def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                         protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -640,7 +629,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -687,7 +676,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -697,13 +686,12 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
     }
 )
 def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                         protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -723,7 +711,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
 
     time.sleep(2)
@@ -777,7 +765,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -787,14 +775,13 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
         "band": 2,
 
     }
 )
 def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
-                                            protocol):
-
+                                         protocol):
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -814,7 +801,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1,"fail to ping host"
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
     logger().info("ping successful to host")
     time.sleep(2)
 
@@ -983,20 +970,12 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-    time.sleep(5)
-
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                     f'wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
-                     f'and wlan.da == ff:ff:ff:ff:ff:ff'
-
     time.sleep(10)
+
     logger().info(f"DUT is going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
     logger().info("*********##### Sniffer is going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
-
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
 
 
 @pytest.mark.parametrize(
@@ -1063,18 +1042,9 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
     logger().info(f"ping is successful")
     time.sleep(15)
 
-    packet_filter1 = f'wlan_radio.channel == {channel_list} and ' \
-                     f'wlan.sa == {mac_address} and wlan.fc.type_subtype == 0x0004 ' \
-                     f'and wlan.da == ff:ff:ff:ff:ff:ff'
-
     logger().info(f"DUT is going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
 
     logger().info("*********##### Sniffer is going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
-
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find Broadcast Probe request packet'
     time.sleep(5)
-
-
