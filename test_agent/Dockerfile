@@ -78,7 +78,9 @@ ENV PROJECT_LIST="generic_test_agent \
                     generic_test_agent_lp_gpio_based_pwr_save \
                     generic_test_agent_lp_msg_based_pwr_save \
                     aws_test_agent \
-                    http_file_download"
+                    http_file_download \
+                    rts_test_agent \
+                    generic_test_agent_wt_aws_wt_ram_ret"
 
 # Generate the project files to prepare for building
 ENV SRC_ROOT /build/src
