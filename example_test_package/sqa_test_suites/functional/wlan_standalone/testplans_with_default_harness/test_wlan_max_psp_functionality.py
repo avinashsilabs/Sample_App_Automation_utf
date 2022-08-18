@@ -610,27 +610,21 @@ class FilterPacket:
             return True
 
     def validate_time_delta(self, ps_poll_packets_time_delta_list, time_delta_for_listen_interval):
-        list_status = []
+        '''It returns the count of when DUT didn't send the ps_poll at listen interval'''
         unable_to_send_ps_poll_at_li =0
         listen_interval_beacon = int(time_delta_for_listen_interval / 100)
-        # logger().info(f'\n\n PS-poll packet time delta list after removing 0 = {ps_poll_packets_time_delta_list}')
+
         for time_diff in ps_poll_packets_time_delta_list:
             is_between = time_diff in range(time_delta_for_listen_interval - 20, time_delta_for_listen_interval + 90)
             logger().info(f'is_between = {is_between}')
             if is_between is True:
                 logger().info(
                     f'DUT sends PS-poll after {listen_interval_beacon} consecutive beacon frame and time diff is = {time_diff / 1000}')
-                # list_status.append(is_between)
             else:
                 logger().info(
                     f'DUT unable to send PS-poll after {listen_interval_beacon} consecutive beacon frame and time diff is = {time_diff / 1000}')
                 unable_to_send_ps_poll_at_li = unable_to_send_ps_poll_at_li + 1
-                # list_status.append(is_between)
         return unable_to_send_ps_poll_at_li
-        # if False in list_status:
-        #     return "Fail"
-        # else:
-        #     return "Pass"
 
     def validate_pspoll_data_packet_with_more_bit_enable(self, frame_list, frame_number, listen_interval_time,
                                                          current_beacon_time):
@@ -644,11 +638,11 @@ class FilterPacket:
         no_of_filtered_packets = len(frame_list)
         case2 = 0
         while 1:
-            if frame_number < no_of_filtered_packets - 2:
+            if frame_number < no_of_filtered_packets - 2:#removing last 2 frames from the capture
                 frame_number = frame_number + 1
             else:
                 break
-            md_failed = 0
+            moredata_pspoll_failed = 0
             if ((frame_list[frame_number][2] == str(qos_data)) or (frame_list[frame_number][2] == str(qos_null)) or (
                     frame_list[frame_number][2] == str(action_frame)) or (frame_list[frame_number][2] == str(block_req))):
                 if (frame_list[frame_number][5]) == '1':
@@ -665,7 +659,7 @@ class FilterPacket:
                             if listen_interval_time == 0:
                                 if frame_list[frame_number][6] == '0' and frame_list[frame_number + 1][2] == str(ps_poll) and len(
                                         frame_list[frame_number]) == 8:
-                                    md_failed = 1
+                                    moredata_pspoll_failed = 1
                                     logger().info(
                                         "DUT is sending PS-POLL at next DTIM/DTIMSKIP beacon only even though more data bit set")
                                     case2 = case2 + 1
@@ -675,7 +669,7 @@ class FilterPacket:
                                     logger().info(
                                         "DUT is sending PS-POLL at next LI beacon only even though more data bit set")
                                     logger().info(f'time_diff={time_diff}')
-                                    md_failed = 1
+                                    moredata_pspoll_failed = 1
                                     case2 = case2 + 1
                                     first_beacon_time = float(frame_list[frame_number][1])
                                     break
@@ -693,7 +687,7 @@ class FilterPacket:
                     break
             else:
                 if frame_list[frame_number][2] == str(ps_poll):
-                    if md_failed > 1:
+                    if moredata_pspoll_failed > 1:
                         first_beacon_time = float(frame_list[frame_number][1])
                     continue
                 elif frame_list[frame_number][2] == str(beacon):
@@ -734,7 +728,7 @@ class FilterPacket:
             frame_list.append(line.strip().split('\t'))
         filter_file.close()
         no_of_filtered_packets = len(frame_list)
-        no_of_filtered_packets = no_of_filtered_packets - 10
+        no_of_filtered_packets = no_of_filtered_packets - 10 #removing last 10 frames from the capture
         for frame_number in range(no_of_filtered_packets):
             if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
                 logger().info("found Null frame with PM '1'")
