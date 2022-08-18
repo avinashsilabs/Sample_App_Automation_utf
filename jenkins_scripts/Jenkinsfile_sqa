@@ -1,0 +1,211 @@
+pipeline {
+    agent none
+        options {
+            lock(resource: null, label: "${env.SSH_TARGET}", variable: 'LOCKED_RESOURCE', quantity: 1)
+        }
+    stages {
+        stage('Start') {
+            agent {
+                label 'swarm && linux64'
+            }
+            environment {
+                JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
+                JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
+                JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
+            }
+            stages{
+                stage('Toolchain Setup'){
+                    steps {
+                        script {
+                            if (env.SQA_TEST_AGENT == "") {
+                                env.SQA_TEST_AGENT = env.RS9116_FIRMWARE
+                            }
+                            if(env.LOCKED_RESOURCE == "10.207.18.106"){
+                                env.HARNESS_NAME = "sqa_jenkins_tb1_harness_sapi.yaml"
+                            }
+                            if(env.LOCKED_RESOURCE == "10.207.18.108"){
+                                env.HARNESS_NAME = "sqa_jenkins_tb2_harness_sapi.yaml"
+                            }
+                            if(env.LOCKED_RESOURCE == "10.207.18.120"){
+                                env.HARNESS_NAME = "sqa_jenkins_tb3_harness_sapi.yaml"
+                            }
+                            if(env.LOCKED_RESOURCE == "10.207.18.133"){
+                                env.HARNESS_NAME = "sqa_jenkins_tb4_harness_sapi.yaml"
+                            }
+                            if(env.LOCKED_RESOURCE == "10.207.18.126"){
+                                env.HARNESS_NAME = "sqa_jenkins_tb5_harness_sapi.yaml"
+                            }
+                            echo env.HARNESS_NAME
+                            echo env.LOCKED_RESOURCE
+                            env.SSH_TARGET=env.LOCKED_RESOURCE
+                            echo env.SSH_TARGET
+                        }
+                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                           keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
+                            sh '''
+                                export GIT_SSH=ssh
+                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+
+                                git config --file=.gitmodules submodule.utf_core.url ssh://git@stash.silabs.com/utf/utf_core
+                                git submodule update --init --recursive utf_core
+
+                                git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect
+                                git submodule update --init --recursive utf_wiseconnect
+                            '''
+                        }
+                        script {
+                            if(isUnix()) {
+                                sh '''
+                                    ./workspace_setup.sh
+                                '''
+                            } else {
+                                bat '''
+                                   call workspace_setup.bat
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('Get rs9116 binary') {
+                    steps{
+                        script{
+                            if(FLASH_RS9116.toBoolean()){
+                                if(BUILD_LOCATION != "source_code"){
+                                    if(RS9116_FIRMWARE != "Internal"){
+                                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                                keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
+
+                                            if(BUILD_LOCATION == "build_artifacts"){
+                                                sh '''
+                                                    rm -rf rs9116_binary
+                                                    export GIT_SSH=ssh
+                                                    export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                    git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
+                                                '''
+                                            } else {
+                                                sh '''
+                                                    rm -rf rs9116_binary
+                                                    export GIT_SSH=ssh
+                                                    export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                                    git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                                '''
+                                            }
+                                        }
+                                        dir('rs9116_binary'){
+                                            sh '''
+                                            if [ -d venv/bin ]; then
+                                            . venv/bin/activate
+                                            elif [ -d venv/Scripts ]; then
+                                            . venv/Scripts/activate
+                                            fi
+                                            python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                            '''
+                                        }
+                                    }
+                                }
+                            } else {
+                                echo "Skipping release package checkout for RS9116 firmware."
+                            }
+                        }
+                    }
+                }
+                stage('Build sqa test agent binary') {
+                    steps{
+                        script{
+                            if(FLASH_EFR32.toBoolean()){
+                                if(SQA_TEST_AGENT != "Internal"){
+                                    withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                               keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                               passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                               usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                        sh '''
+                                            export GIT_SSH=ssh
+                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+
+                                            git config --file=.gitmodules submodule.mini_gecko_sdk.url ssh://git@stash.silabs.com/Redpine/mini_gecko_sdk
+                                            git submodule update --init --recursive test_agent/mini_gecko_sdk
+
+                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
+                                        '''
+                                    }
+                                }
+                            } else {
+                                echo "Skipping release package checkout for SQA test agent."
+                            }
+                        }
+                    }
+                }
+                stage('Update manifest yaml'){
+                    steps {
+                        sh '''
+                            if [ -d venv/bin ]; then
+                               . venv/bin/activate
+                            else
+                               . venv/Scripts/activate
+                            fi
+                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV} ${BUILD_LOCATION}
+                        '''
+                    }
+                }
+                stage('Run Tests') {
+                    steps {
+                        echo BUILD_URL
+                        echo BUILD_NUMBER
+                        echo GIT_BRANCH
+                        echo RUN_TESTS_DISPLAY_URL
+                        echo RS9116_FIRMWARE
+                        echo PUBLISH_TEST_RESULTS
+                        withEnv(['BUILD_URL='+BUILD_URL, 'BUILD_NUMBER='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'RUN_TESTS_DISPLAY_URL='+RUN_TESTS_DISPLAY_URL, 'INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
+                              sh "echo \$BUILD_URL"
+                              sh "echo \$BUILD_NUMBER"
+                              sh "echo \$GIT_BRANCH"
+                              sh "echo \$RUN_TESTS_DISPLAY_URL"
+                              sh "echo \$INSTALLER_URL_SDK"
+                        }
+                        sh '''
+                            rm -rf reports
+                            export SKIP_PROCESSING_ARTIFACTS=1
+
+                            if [ -d venv/bin ]; then
+                               . venv/bin/activate
+                            else
+                               . venv/Scripts/activate
+                            fi
+
+                            export PYTHONPATH=/opt/jenkins/jenkins-worker/workspace/UTF_WiFi/utf_core/src
+                            echo $PYTHONPATH
+                            echo $UTF_PYTEST_COMMAND
+
+                            python executor/launch_utf_tests.py \
+                                --target ${SSH_TARGET} \
+                                --pytest_command "${UTF_PYTEST_COMMAND}" \
+                                --harness ${HARNESS_NAME} \
+                                --publish_test_results ${PUBLISH_TEST_RESULTS} \
+                                --docker_flags "-e BUILD_URL=${BUILD_URL}, \
+                                    -e BUILD_NUMBER=${BUILD_NUMBER}, \
+                                    -e RUN_TESTS_DISPLAY_URL=${RUN_TESTS_DISPLAY_URL}, \
+                                    -e JOB_NAME=${JOB_NAME}, \
+                                    -e INSTALLER_URL_SDK=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
+                                    -e STUDIO_MIRROR_LOCATION=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
+                                    -e TEST_SUITE=OT_Smoke_brd4161a, \
+                                    -e TEST_BRANCH_NAME=${GIT_BRANCH}, \
+                                    -e STACK_NAME=WIFI, \
+                                    -e RELEASE_NAME=${RS9116_FIRMWARE}, \
+                                    -e SSH_TARGET=${SSH_TARGET}, \
+                                    -e GIT_BRANCH=${GIT_BRANCH}" \
+                        '''
+                        archiveArtifacts 'example_test_package/**'
+                        archiveArtifacts 'manifest/**'
+                        archiveArtifacts 'reports/**'
+                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
+                        junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                    }
+                }
+            }
+        }
+    }
+}
