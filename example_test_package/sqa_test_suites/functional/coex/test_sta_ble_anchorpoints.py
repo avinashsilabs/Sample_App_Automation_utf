@@ -42,7 +42,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path):
+def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -97,11 +97,14 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
     logger().info(status)
     logger().info(content)
+    assert content == content1, f"http send and receive content is not same"
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -111,7 +114,7 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -166,7 +169,7 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path):
+def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -221,11 +224,14 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
     logger().info(status)
     logger().info(content)
+    assert content == content1, f"http send and receive content is not same"
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -235,7 +241,7 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -291,7 +297,7 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path):
+def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -346,11 +352,14 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
     logger().info(status)
     logger().info(content)
+    assert content == content1, f"http send and receive content is not same"
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -360,7 +369,7 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -415,7 +424,7 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path):
+def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -470,11 +479,14 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
     logger().info(status)
     logger().info(content)
+    assert content == content1, f"http send and receive content is not same"
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -484,7 +496,7 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -539,7 +551,7 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path):
+def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -594,11 +606,14 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
 
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
     logger().info(status)
     logger().info(content)
+    assert content == content1, f"http send and receive content is not same"
 
     logger().info(f"Set up DUT for BLE advertising")
     ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -608,7 +623,7 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info(f"Begin Scanning for BLE devices")
     logger().info("Executing lescan in raspi")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert ble_client_address is not None
+    assert ble_client_address is not None, "Unable to get BLE client address"
     time.sleep(1)
     logger().info(f"Stop Scanning for BLE devices")
     ble_client.interfaces.bluetooth.stop_scanning()
