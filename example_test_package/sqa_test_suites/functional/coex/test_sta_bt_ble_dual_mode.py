@@ -47,10 +47,12 @@ def wifi_join(wifi_dut, wifi_access_point):
     assert isinstance(result, wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+    assert enable_ps, "failed to enable power save"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info(f'DUT ip {device_ip}')
     logger().info("pinging to dut.....")
@@ -68,10 +70,10 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         bt_client.interfaces.bluetooth.close()
         logger().info("Setting DUT as bt_slave....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
-        assert bt_dut_address is not None, f"Unable to get bt_dut_address"
+        assert bt_dut_address, f"Unable to get bt_dut_address"
         logger().info("Advertising started on BT SLAVE device....DUT")
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-        assert bt_client_address is not None, f"Unable to get bt_client_address"
+        assert bt_client_address, f"Unable to get bt_client_address"
         logger().info("Started BT in MASTER device....bt_client")
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
         if not found:
@@ -89,8 +91,10 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             logger().info("Initiating power save on DUT")
             if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                 wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-                wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-                wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
+                enable_ps = wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_ps, "Unable to enable power save"
+                enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_bt_ps, "Unable to enable bt power save"
                 logger().info("DUT is on power save mode")
 
             # Send data from bt_client to dut
@@ -101,7 +105,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
                 assert sent, f"Not sent data from bt_client to DUT"
                 data = bt_server_socket.recv()
                 logger().info(f"Data received back from DUT is......'{data.decode()}'")
-                assert data is not None, f"Data not received back from DUT "
+                assert data, f"Data not received back from DUT "
                 assert data.decode() == recv_text
                 logger().info(f"Send data from bt_client to dut is successful")
 
@@ -111,7 +115,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             data = bt_server_socket.recv()
             logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
             logger().info(f"Data received back from bt_client is......'{data.decode()}'")
-            assert data is not None, f"Data not received back from bt_client"
+            assert data, f"Data not received back from bt_client"
             assert data.decode() == send_text
             logger().info(f"Send data from dut to bt_client is successful")
 
@@ -134,10 +138,10 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
 
         logger().info("Setting DUT as bt_master....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
-        assert bt_dut_address is not None, f"Unable to get bt_dut_address"
+        assert bt_dut_address, f"Unable to get bt_dut_address"
         logger().info("Started BT in MASTER device....DUT")
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
-        assert bt_client_address is not None,  f"Unable to get bt_client_address"
+        assert bt_client_address,  f"Unable to get bt_client_address"
         logger().info("Advertising started on SLAVE device....bt_client")
         time.sleep(3)
 
@@ -166,7 +170,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
                 time.sleep(2)
                 data = bt_client_socket.recv()
                 logger().info(f"Data received back from DUT is......'{data.decode()}'")
-                assert data is not None, f"Data not received back from DUT "
+                assert data, f"Data not received back from DUT "
                 assert data.decode() == recv_text
                 logger().info(f"Send data from bt_client to dut is successful")
 
@@ -176,7 +180,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
             data = bt_client_socket.recv()
             logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
             logger().info(f"Data received back from bt_client is......'{data.decode()}'")
-            assert data is not None, f"Data received back from bt_client"
+            assert data, f"Data received back from bt_client"
             assert data.decode() == send_text
             logger().info("Send data from DUT to bt_client is successful.")
 
@@ -197,11 +201,11 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         if start_needed:
             ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
             time.sleep(3)
-            assert ble_dut_address is not None, f"Unable to get ble_dut_address"
+            assert ble_dut_address, f"Unable to get ble_dut_address"
             logger().info(f"Started BLE in DUT")
         logger().info(f"Start ble client")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
-        assert ble_client_address is not None, f"Unable to get ble_client_address"
+        assert ble_client_address, f"Unable to get ble_client_address"
         time.sleep(5)
         logger().info(f"Start scanning and connect to ble client")
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=100)
@@ -216,12 +220,12 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         if start_needed:
             logger().info(f"Set up DUT for BLE advertising")
             ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-            assert ble_dut_address is not None,  f"Unable to get ble_dut_address"
+            assert ble_dut_address, f"Unable to get ble_dut_address"
         wifi_dut.interfaces.wifi.ble_start_advertising()
         time.sleep(3)
         logger().info(f"Begin Scanning for BLE devices")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-        assert ble_client_address is not None, f"Unable to get ble_client_address"
+        assert ble_client_address, f"Unable to get ble_client_address"
         time.sleep(5)
         ble_client.interfaces.bluetooth.stop_scanning()
         logger().info(f"See that we found our device")
@@ -229,7 +233,6 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         assert wifi_dut.interfaces.wifi.ble_address in found_devices
         assert (found_devices[wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data)
         logger().info("Connecting ble_client to DUT")
-        # ble_client.interfaces.bluetooth.connect(ble_dut_address, supervision_timeout=120)
         conn_params = {"min_conn_interval": 40,
                        "max_conn_interval": 40,
                        "conn_latency": 0,
@@ -340,7 +343,7 @@ def connect_disconnect_ble(wifi_dut, ble_client, ble_client_address, iter_count)
         time.sleep(3)
         logger().info(f"Re-Initiating BLE connection...iteration: '{i}'")
         ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-        assert ble_dut_address is not None, f"Unable to get ble_dut_address"
+        assert ble_dut_address, f"Unable to get ble_dut_address"
         wifi_dut.interfaces.wifi.ble_start_advertising()
         ble_client.interfaces.bluetooth.connect(ble_dut_address)
         logger().info(f"DUT successfully connected to {ble_client} Device...iteration: '{i}'")
@@ -449,7 +452,6 @@ class connect_disconnect_ble_thread(Thread):
 
 
 # Verify STA_BT_BLE functionality when BT and BLE in SLAVE mode and Wi-Fi in STA mode
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -609,9 +611,9 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
 
-    # bt_mode = "bt_slave"
-    # logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
-    # bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
+    bt_mode = "bt_slave"
+    logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
+    bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
 
     logger().info("Initiating power save on DUT")
     if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1053,7 +1055,7 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
     # Initiating power save2
     wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
     result = wifi_dut.interfaces.wifi.power_save(2, 0)
-    assert result is not None
+    assert result, "Power save is not enabled"
     time.sleep(3)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
@@ -1233,7 +1235,6 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
 
 
 # Verify the Deep Sleep functionality of DUT when configured in STA_BT_BLE mode
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1274,7 +1275,7 @@ def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt
     logger().info("Initiating power-save2 on DUT")
     result = wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    assert result is not None, "Device has not gone to powersave mode"
+    assert result, "Device has not gone to powersave mode"
 
     logger().info("Initiating BT disconnection on DUT")
     bt_disconnect(wifi_dut, bt_address, bt_socket)
