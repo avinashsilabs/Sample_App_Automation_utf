@@ -7,12 +7,13 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtTCPIPFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
     RS9116CustomFeatureBitMap,
-    RS9116TCPIPFeatureBitMap,RS9116CoexMode)
+    RS9116TCPIPFeatureBitMap, RS9116CoexMode)
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
+
 """Test Author = Rakesh Nayini
 
         1. DUT in AP Mode
@@ -35,7 +36,7 @@ def logger():
 
 # Configure below time parameter to run the test case for specific time lapse # below is the 30 mins given as default
 time_lapse = 30
-ping_count=10
+ping_count = 10
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -75,14 +76,17 @@ gateway = '192.168.100.76'
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "IperfConstants.TCP"])
 def test_DUTAP_Validate_TCPTx_data_C19462(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     validation = True
-    wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
-    time.sleep(5)
+    ip_dict = wifi_dut.interfaces.wifi.ip
+    if not ip_dict:
+        wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
+        time.sleep(5)
+        logger().info(f"********** DUT works as a Ap mode *********")
+        wifi_dut.interfaces.wifi.start_ap(channel=channel)
     logger().info(f"********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info(f"******* start capturing with Sniffer by giving the test case name as filename *******")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_TCP_Tx_data_C19462')
-    logger().info(f"********** DUT works as a Ap mode *********")
-    wifi_dut.interfaces.wifi.start_ap(channel=channel)
+    logger().info("********** wifi_client is joining to DUT(works as a Ap mode) *********")
     wifi_client.interfaces.wifi.join()
     logger().info(f"******** Wi-Fi client join with AP(DUT) ********")
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
@@ -150,7 +154,6 @@ def test_DUTAP_Validate_TCPTx_data_C19462(wifi_sniffer, net_perf_client, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "IperfConstants.UDP"])
 def test_DUTAP_Validate_UDP_Tx_C19463(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     validation = True
-
     logger().info("********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
@@ -222,7 +225,7 @@ def test_DUTAP_Validate_UDP_Tx_C19463(wifi_sniffer, net_perf_client, wifi_dut, w
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "IperfConstants.TCP"])
 def test_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel,
-                            wifi_access_point):
+                                           wifi_access_point):
     validation = True
     logger().info("********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -275,6 +278,7 @@ def test_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_client, wifi_d
         "in sniffer"
     )
     time.sleep(2)
+
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
@@ -373,19 +377,17 @@ def test_DUTAP_Validate_UDP_Rx_C19465(wifi_sniffer, net_perf_client, wifi_dut, w
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"}
 )
-
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "IperfConstants.TCP"])
-def test_DUTAP_TCPSocket_CreateTransferTerminate_30min_C19480(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
+def test_DUTAP_TCPSocket_CreateTransferTerminate_30min_C19480(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
+                                                              protocol, channel):
     validation = True
-
     logger().info(f"********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     logger().info(f"******* start capturing with Sniffer by giving the test case name as filename *******")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_TCP_Tx_data_C19462')
-
 
     logger().info(" **********Initiating connection from Wifi Client")
     wifi_client.interfaces.wifi.join()
@@ -423,8 +425,6 @@ def test_DUTAP_TCPSocket_CreateTransferTerminate_30min_C19480(wifi_sniffer, net_
     logger().info("******* Remote terminated *******")
 
 
-
-
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -444,12 +444,12 @@ def test_DUTAP_TCPSocket_CreateTransferTerminate_30min_C19480(wifi_sniffer, net_
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"}
 )
-
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "IperfConstants.UDP"])
-def test_DUTAP_UDP_Socket_CreateTransferTerminate_30min_C19481(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
+def test_DUTAP_UDP_Socket_CreateTransferTerminate_30min_C19481(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
+                                                               protocol, channel):
     validation = True
     logger().info("********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -484,10 +484,7 @@ def test_DUTAP_UDP_Socket_CreateTransferTerminate_30min_C19481(wifi_sniffer, net
         __print_throughput(tp)
         # result =wifi_client.interfaces.socket.socket_close_indication(1)
         # assert b"success" in result, "unable to close opened socket"
-        logger.info("Successfully closed opened socket")
+        logger().info("Successfully closed opened socket")
     logger().info("******* Initiating termination from the Remote  *******")
     wifi_client.interfaces.wifi.leave()
     logger().info("******* Remote terminated *******")
-
-
-
