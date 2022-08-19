@@ -2328,3 +2328,35 @@ template_contribution:
     - {type: uint8, help: buffer}
     - {type: uint8, help: length}
     - {type: uint16, help: end_of_put_pkt}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: mdns_init
+    handler: mdns_init_command
+    help: initilize mdns
+    argument:
+    - {type: uint8, help: ip_version}
+    - {type: uint16, help: ttl}
+    - {type: string, help: host_name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: mdns_register_service
+    handler: mdns_register_service_command
+    help: register mdns service
+    argument:
+    - {type: uint16, help: port}
+    - {type: uint16, help: ttl}
+    - {type: uint8, help: more}
+    - {type: string, help: service_ptr_name}
+    - {type: string, help: service_name}
+    - {type: string, help: service_text}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: mdns_deinit
+    handler: mdns_deinit_command
+    help: deinit mdns

@@ -1793,3 +1793,27 @@ void rsi_get_firmware_image_command(sl_cli_command_arg_t* arguments)
 	print_status(status);
 }
 #endif
+
+void mdns_init_command(sl_cli_command_arg_t* arguments)
+{
+    uint8_t ip_version = sl_cli_get_argument_uint8(arguments, 0);
+	uint16_t ttl = sl_cli_get_argument_uint16(arguments, 1);
+	char* host_name = sl_cli_get_argument_string(arguments, 2);
+    print_status(rsi_mdnsd_init(ip_version, ttl, host_name));
+}
+
+void mdns_register_service_command(sl_cli_command_arg_t* arguments)
+{
+     uint16_t port = sl_cli_get_argument_uint16(arguments, 0);
+     uint16_t ttl = sl_cli_get_argument_uint16(arguments, 1);
+     uint8_t more = sl_cli_get_argument_uint8(arguments, 2);
+     char* service_ptr_name = sl_cli_get_argument_string(arguments, 3);
+     char* service_name = sl_cli_get_argument_string(arguments, 4);
+     char* service_text = sl_cli_get_argument_string(arguments, 5);
+     print_status(rsi_mdnsd_register_service(port,ttl,more, service_ptr_name,service_name,service_text));
+}
+
+void mdns_deinit_command()
+{
+    print_status(rsi_mdnsd_deinit());
+}
