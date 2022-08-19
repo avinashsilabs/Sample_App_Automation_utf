@@ -173,7 +173,7 @@ void rsa_wlan_get_mac_address(sl_cli_command_arg_t* arguments)
     uint8_t mac_address[6];
     int32_t status = rsi_wlan_get(RSI_MAC_ADDRESS, mac_address, (uint16_t)sizeof(mac_address));
     if (status == 0) {
-        printf("\n%02x:%02x:%02x:%02x:%02x:%02x\n",
+        printf("\nget_mac_address response is: %02x:%02x:%02x:%02x:%02x:%02x\n",
             mac_address[0],
             mac_address[1],
             mac_address[2],
