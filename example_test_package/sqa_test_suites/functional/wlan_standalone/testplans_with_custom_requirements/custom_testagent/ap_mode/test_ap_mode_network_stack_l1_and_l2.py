@@ -46,9 +46,9 @@ def __print_throughput(iperf_throughput: dict):
 
 # Configuring static IP to DUT
 mode = 'static'
-ip_address = '192.168.100.76'
-subnet = '255.255.255.0'
-gateway = '192.168.100.76'
+static_ip = '192.168.100.76'
+static_subnet = '255.255.255.0'
+static_gateway = '192.168.100.76'
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -78,7 +78,7 @@ def test_DUTAP_Validate_TCPTx_data_C19462(wifi_sniffer, net_perf_client, wifi_du
     validation = True
     ip_dict = wifi_dut.interfaces.wifi.ip
     if not ip_dict:
-        wifi_dut.interfaces.wifi.start_ip(mode=mode, ip_address=ip_address, subnet=subnet, gateway=gateway)
+        wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode=mode, static_ip=static_ip, static_subnet=static_subnet, static_gateway=static_gateway)
         time.sleep(5)
         logger().info(f"********** DUT works as a Ap mode *********")
         wifi_dut.interfaces.wifi.start_ap(channel=channel)
