@@ -2315,7 +2315,7 @@ template_contribution:
     handler: rsi_http_client_put_pkt_command
     help: puts data into server
     argument:
-    - {type: uint8, help: file_content}
+    - {type: string, help: file_content}
     - {type: uint16, help: chunk_length}
 
 - name: cli_command
@@ -2377,3 +2377,10 @@ template_contribution:
     - {type: uint8, help: ant_cmd_4}
     - {type: uint8, help: ant_cmd_5}
     - {type: uint8, help: ant_cmd_resp}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_put_create
+    handler: http_put_create_command
+    help: http put

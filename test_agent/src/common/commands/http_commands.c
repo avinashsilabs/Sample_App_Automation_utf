@@ -296,3 +296,8 @@ static void rsi_http_response_handler(uint16_t status, const uint8_t* buffer, co
 void rsi_http_abort_command() {
     print_status(rsi_http_client_abort());
 }
+
+void http_put_create_command()
+{
+    print_status(rsi_http_client_put_create());
+}
