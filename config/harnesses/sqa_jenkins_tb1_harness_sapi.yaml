@@ -1032,7 +1032,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
+#        device: 'reset'
         wifi: 'init'
 
 #end_state:
