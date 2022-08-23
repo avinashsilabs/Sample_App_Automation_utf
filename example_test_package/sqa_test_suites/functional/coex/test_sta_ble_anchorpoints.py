@@ -128,14 +128,14 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
-        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_connection(dev_addr=ble_dut_address,
-                                                                               Connection_Handle="0x61 0x00",
-                                                                               Connection_Interval_Min="0x06 0x00",
-                                                                               Connection_Interval_Max="0x06 0x00",
-                                                                               Max_Latency="0x05 0x00",
-                                                                               Supervision_Timeout="0x90 0x01",
-                                                                               Min_CE_Length="0x00 0x00",
-                                                                               Max_CE_Length="0x00 0x00"
+        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                               connection_handle="0x61 0x00",
+                                                                               connection_interval_min="0x06 0x00",
+                                                                               connection_interval_max="0x06 0x00",
+                                                                               max_latency="0x05 0x00",
+                                                                               supervision_timeout="0x90 0x01",
+                                                                               min_ce_length="0x00 0x00",
+                                                                               max_ce_length="0x00 0x00"
                                                                                )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -255,14 +255,14 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
-        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_connection(dev_addr=ble_dut_address,
-                                                                               Connection_Handle="0x61 0x00",
-                                                                               Connection_Interval_Min="0x0C 0x00",
-                                                                               Connection_Interval_Max="0x0C 0x00",
-                                                                               Max_Latency="0x05 0x00",
-                                                                               Supervision_Timeout="0x90 0x01",
-                                                                               Min_CE_Length="0x00 0x00",
-                                                                               Max_CE_Length="0x00 0x00"
+        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                               connection_handle="0x61 0x00",
+                                                                               connection_interval_min="0x0C 0x00",
+                                                                               connection_interval_max="0x0C 0x00",
+                                                                               max_latency="0x05 0x00",
+                                                                               supervision_timeout="0x90 0x01",
+                                                                               min_ce_length="0x00 0x00",
+                                                                               max_ce_length="0x00 0x00"
                                                                                )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -383,14 +383,14 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
-        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_connection(dev_addr=ble_dut_address,
-                                                                               Connection_Handle="0x61 0x00",
-                                                                               Connection_Interval_Min="0x80 0x0C",
-                                                                               Connection_Interval_Max="0x80 0x0C",
-                                                                               Max_Latency="0x02 0x00",
-                                                                               Supervision_Timeout="0x80 0x0C",
-                                                                               Min_CE_Length="0x00 0x00",
-                                                                               Max_CE_Length="0x00 0x00"
+        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                               connection_handle="0x61 0x00",
+                                                                               connection_interval_min="0x80 0x0C",
+                                                                               connection_interval_max="0x80 0x0C",
+                                                                               max_latency="0x02 0x00",
+                                                                               supervision_timeout="0x80 0x0C",
+                                                                               min_ce_length="0x00 0x00",
+                                                                               max_ce_length="0x00 0x00"
                                                                                )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -510,14 +510,14 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
-        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_connection(dev_addr=ble_dut_address,
-                                                                               Connection_Handle="0x61 0x00",
-                                                                               Connection_Interval_Min="0x06 0x00",
-                                                                               Connection_Interval_Max="0x06 0x00",
-                                                                               Max_Latency="0x00 0x00",
-                                                                               Supervision_Timeout="0x90 0x01",
-                                                                               Min_CE_Length="0x00 0x00",
-                                                                               Max_CE_Length="0x00 0x00"
+        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                               connection_handle="0x61 0x00",
+                                                                               connection_interval_min="0x06 0x00",
+                                                                               connection_interval_max="0x06 0x00",
+                                                                               max_latency="0x00 0x00",
+                                                                               supervision_timeout="0x90 0x01",
+                                                                               min_ce_length="0x00 0x00",
+                                                                               max_ce_length="0x00 0x00"
                                                                                )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -637,14 +637,14 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
-        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_connection(dev_addr=ble_dut_address,
-                                                                               Connection_Handle="0x61 0x00",
-                                                                               Connection_Interval_Min="0x80 0x0C",
-                                                                               Connection_Interval_Max="0x80 0x0C",
-                                                                               Max_Latency="0x00 0x00",
-                                                                               Supervision_Timeout="0x80 0x0C",
-                                                                               Min_CE_Length="0x00 0x00",
-                                                                               Max_CE_Length="0x00 0x00"
+        ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                               connection_handle="0x61 0x00",
+                                                                               connection_interval_min="0x80 0x0C",
+                                                                               connection_interval_max="0x80 0x0C",
+                                                                               max_latency="0x00 0x00",
+                                                                               supervision_timeout="0x80 0x0C",
+                                                                               min_ce_length="0x00 0x00",
+                                                                               max_ce_length="0x00 0x00"
                                                                                )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
