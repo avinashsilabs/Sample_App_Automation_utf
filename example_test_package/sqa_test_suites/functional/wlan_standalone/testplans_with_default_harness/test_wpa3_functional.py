@@ -1114,9 +1114,8 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
     time.sleep(2)
     logger().info('#### Turn off Access point ####')
 
-    if state:
+    if state == 'true':
         switch.interfaces.pdu_switch.turn_off()
-        pdu_state = False
     time.sleep(30)
 
     packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
@@ -1128,6 +1127,7 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
     logger().info(f"checking status: {state}")
     if state == 'false':
         switch.interfaces.pdu_switch.turn_on()
+        logger().info(f"PDU was off, trying to turn on using PDU, Please wait for 150 seconds ........")
         time.sleep(150)
 
     try:
@@ -1146,7 +1146,7 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
         result = wifi_dut.interfaces.wifi.start_ip()
         dut_ip = result.ip.decode()
         logger().info(f"DUT ip address : {dut_ip}")
-        status = ping(dut_ip, ping_count)
+        status = ping(dut_ip, 20)
         if status == 1:
             logger().info('#### Ping successful ####')
         else:
@@ -1159,5 +1159,6 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
         else:
             logger().info('\n\n Turn on the Access Point')
             switch.interfaces.pdu_switch.turn_on()
+            logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
             time.sleep(30)
 
