@@ -45,8 +45,12 @@ def test_device_as_server_ap_tcp_rx_c20790(wifi_sniffer, net_perf_client, wifi_d
     wifi_dut.interfaces.wifi.start_ap()
     logger().info(f"Wifi client is going to join AP")
     wifi_client.interfaces.wifi.join()
+
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"Device IP is: {device_ip}")
+
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Host IP is: {host_ip}")
 
     status = ping(device_ip, ping_count)
     assert status == True, f"Ping failed"
@@ -115,8 +119,12 @@ def test_device_as_client_ap_udp_tx_c20789(wifi_sniffer, net_perf_client, wifi_d
     wifi_dut.interfaces.wifi.start_ap()
     logger().info(f"Wifi client is going to join AP")
     wifi_client.interfaces.wifi.join()
+
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"Device IP is: {device_ip}")
+
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Host IP is: {host_ip}")
 
     status = ping(device_ip, ping_count)
     assert status == True, f"Ping failed"
@@ -185,8 +193,12 @@ def test_host_as_server_ap_tcp_rx_c20788(wifi_sniffer, net_perf_client, wifi_dut
     wifi_dut.interfaces.wifi.start_ap()
     logger().info(f"Wifi client is going to join AP")
     wifi_client.interfaces.wifi.join()
+
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"Device IP is: {device_ip}")
+
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Host IP is: {host_ip}")
 
     status = ping(device_ip, ping_count)
     assert status == True, f"Ping failed"
@@ -248,8 +260,12 @@ def test_host_as_client_ap_udp_tx_c20787(wifi_sniffer, net_perf_client, wifi_dut
     wifi_dut.interfaces.wifi.start_ap()
     logger().info(f"Wifi client is going to join AP")
     wifi_client.interfaces.wifi.join()
+
     device_ip = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info(f"Device IP is: {device_ip}")
+
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Host IP is: {host_ip}")
 
     status = ping(device_ip, ping_count)
     assert status == True, f"Ping failed"
