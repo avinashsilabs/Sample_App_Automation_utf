@@ -258,7 +258,7 @@ def test_store_config_rejoin_specific_channel_C19100(wifi_sniffer,wifi_dut,wifi_
             time.sleep(2)
             with pytest.raises(WlanError) as exc_info:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0, timeout=120)
             assert exc_info.value.error_code == 0x3, "wrong error found"
 
             logger().info("Stopping the capture")
@@ -355,7 +355,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
             time.sleep(2)
             with pytest.raises(WlanError) as exc_info:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0, timeout=120)
             if exc_info.value.error_code == 0x5A5A:
                 status = True
                 break
@@ -541,7 +541,7 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             time.sleep(2)
             with pytest.raises(WlanError) as exc_info:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0, timeout=120)
             if exc_info.value.error_code == 0x5A5A:
                 status = True
                 break

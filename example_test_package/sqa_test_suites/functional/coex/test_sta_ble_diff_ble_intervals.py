@@ -195,7 +195,6 @@ class BleThread_Scan(ThreadBase):
         self.ble_scan_window = int(ble_scan_window / 0.625)
         self.bt_dut_address = None
 
-
     def stop_adv_scan(self):
         logger().info("Initiating stop scan from Remote dut")
         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
