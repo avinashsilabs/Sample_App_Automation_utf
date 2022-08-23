@@ -167,6 +167,16 @@ devices:
                 channel: 1
                 cipher: 'AES'
 
+    binatone_static_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'binatone_dt910w'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+                cipher: 'AES'
+
     asus_rt_ax3000_ap:
         interfaces:
             wifi:
@@ -184,7 +194,7 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: 'F6E49FCE'
-                switch: 'pdu_switch'
+                switch_config: 'pdu_switch'
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
@@ -633,7 +643,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap_static'
+    wifi_access_point: 'binatone_static_ap'
 
     # To connect the multiple access points
     wifi_access_points:

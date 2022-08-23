@@ -1,5 +1,5 @@
 firmware:
-  rs911x: RS9116W.2.7.0.5.rps
+  rs911x: RS9116W.2.7.0.6.rps
   efx32: concurrent_test_agent.hex
 
 # List of devices to be reset when needed
@@ -12,7 +12,7 @@ firmware_applications:
     # List of devices and their firmware images for this marker
     - device_type: 'rs911x'
       device_subtype: 'rs9116'
-      filename: 'RS9116W.2.7.0.5.rps'
+      filename: 'RS9116W.2.7.0.6.rps'
     - device_type: 'efx32'
       device_subtype: 'efr32'
       filename: 'concurrent_test_agent.hex'

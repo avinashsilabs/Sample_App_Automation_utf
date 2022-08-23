@@ -43,7 +43,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
 def logger():
     return get_logger(__name__)
 
-ping_count = 20
+ping_count = 60
 
 
 # this thread used for wifi join
@@ -93,9 +93,6 @@ class WifiJoinThread(ThreadBase):
 
         validation = True
 
-        ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"ap_bssid : {ap_bssid}")
-
         logger().info(f"starting the sniffer in channel {self.wifi_access_point.interfaces.wifi.channel}")
 
         self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
@@ -105,7 +102,7 @@ class WifiJoinThread(ThreadBase):
 
         ##validating beacons from AP
 
-        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {ap_bssid})'
+        packet_filter1 = f'(wlan.fc.type_subtype == 0x0008) and (wlan.addr == {self.wifi_access_point.interfaces.wifi.bssid})'
 
         logger().info("stopping the sniffer")
 
@@ -141,6 +138,8 @@ class WifiJoinThread(ThreadBase):
             dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"Device mac address: {dut_mac_address}")
 
+            ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+            logger().info(f"ap_bssid : {ap_bssid}")
 
             logger().info("Initiating power save")
             logger().info("enabling wifi power save mode in DUT......")
@@ -167,9 +166,9 @@ class WifiJoinThread(ThreadBase):
             logger().info("stopping the sniffer capture")
             self.wifi_sniffer.interfaces.capture.stop_capture()
             # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-            packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                             f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+            packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and  ' \
+                 f'((wlan.fc.type_subtype == 0x0000) or (wlan.fc.type_subtype==0x0001) ) or eapol or ' \
+                 f'(wlan.fc.type_subtype == 0x000b) or (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
             logger().info("sniffer validation is successful")
@@ -240,8 +239,7 @@ class WifiThread(ThreadBase):
         dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"Device mac address: {dut_mac_address}")
 
-        packet_filter1 = f'wlan_radio.channel == {self.wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.da == {dut_mac_address} and wlan.ta == {self.wifi_access_point.interfaces.wifi.bssid} and ' \
+        packet_filter1 = f'wlan.da == {dut_mac_address} and wlan.ta == {self.wifi_access_point.interfaces.wifi.bssid} and ' \
                          f'wlan.fc.moredata == 1 and wlan.fc.type_subtype == 0x0028'
 
         # Validating the ps poll frames
@@ -683,8 +681,6 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
     with TimeMeasurer() as t:
         validation = True
 
-        ap_bssid = wifi_access_point.interfaces.wifi.bssid
-
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -717,16 +713,16 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
 
         logger().info(f"dut_mac_address : {dut_mac_address}")
 
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP_mac_address : {ap_bssid}")
+
         ## Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and  ' \
+                 f'((wlan.fc.type_subtype == 0x0000) or (wlan.fc.type_subtype==0x0001) ) or eapol or ' \
+                 f'(wlan.fc.type_subtype == 0x000b) or (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
         # Validating the power management bit
-        packet_filter3 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
-
-        # # Validate dhcp
-        # packet_filter4 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} or dhcp'
+        packet_filter3 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(device_ip, ping_count)
@@ -745,9 +741,6 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
-        # logger().info(" Validate dhcp")
-        # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-        #     'packet_count'], 'Unable to find dhcp in sniffer '
         logger().info("disconnecting to ap.....")
         wifi_dut.interfaces.wifi.leave()
     logger().info(f"Associated and ping in {t.duration} seconds")
@@ -777,7 +770,7 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     validation = True
     packet_filter2 = False
 
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
@@ -808,16 +801,16 @@ def test_rejoin_functionality_C34758(wifi_sniffer, wifi_dut, wifi_access_point):
     status = ping(device_ip, ping_count)
     assert status is True, "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
     # Validate Probe req(Broadcast/Unicast)
 
-    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+    packet_filter1 = f'wlan.sa == {mac_address}  and ' \
                      f'wlan.fc.type_subtype == 0x0004 and (wlan.da == ff:ff:ff:ff:ff:ff)'
 
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter3 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
-                     f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {mac_address})'
+    packet_filter3 = f'!(wlan.fc.type_subtype == 0x0008) and  ' \
+                     f'((wlan.fc.type_subtype == 0x0000) or (wlan.fc.type_subtype==0x0001) ) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x000b) or (wlan.addr == {ap_bssid}) || (wlan.addr == {mac_address})'
 
 
     logger().info("Starting the capture")

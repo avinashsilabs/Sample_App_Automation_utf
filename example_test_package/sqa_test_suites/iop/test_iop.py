@@ -35,6 +35,7 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
+    Author: Vivek Verma
 """
 
 
@@ -80,6 +81,7 @@ class IopTcpIpSockets:
         return connect_status
 
 
+@pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -119,7 +121,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
                 assert connect_status
 
             """ Start time for long duration and send messages """
-            end_time = datetime.now() + timedelta(hours=12)
+            end_time = datetime.now() + timedelta(hours=10)
             start_time = datetime.now()
 
             while 1:
@@ -197,7 +199,7 @@ def test_tcp_socket_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniff
         logger().info(f"Total execution time of test case = {exact_execution_time}")
     wifi_networked_dut_with_sniffer.interfaces.wifi.leave()
 
-
+@pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -240,7 +242,7 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
                 assert connect_status
 
             """ Start time for long duration and send messages """
-            end_time = datetime.now() + timedelta(hours=12)
+            end_time = datetime.now() + timedelta(hours=10)
             start_time = datetime.now()
 
             while 1:
@@ -316,6 +318,7 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, rf_at
         logger().info(f"Total execution time of test case = {exact_execution_time}")
 
 
+#Feature enhancement to be done..
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
@@ -339,6 +342,7 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.skip
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
@@ -406,6 +410,7 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.skip
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
@@ -477,13 +482,14 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.firmware_app("test_wlan_aws_enable")
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+def test_aws_device_shadow_enhanced_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     rejected_event_counter = 0
     timeout_event_counter = 0
     """ Start time for long duration and send messages """
-    end_time = datetime.now() + timedelta(hours=12)
+    end_time = datetime.now() + timedelta(hours=10)
     start_time = datetime.now()
     wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
@@ -504,18 +510,18 @@ def test_aws_device_shadow_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_wit
     while datetime.now() < end_time:
         aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1,100))
         try:
-            shadow_update_accepted_event_queue.get(timeout=10)
+            shadow_update_accepted_event_queue.get(timeout=60)
         except(QueueEmpty, Empty):
             # did not receive update accepted event
             pass
         try:
-            shadow_update_rejected_event_queue.get(timeout=10)
+            shadow_update_rejected_event_queue.get(timeout=60)
             rejected_event_counter = rejected_event_counter + 1
         except(QueueEmpty, Empty):
             # did not receive rejected event
             pass
         try:
-            shadow_update_timeout_event_queue.get(timeout=10)
+            shadow_update_timeout_event_queue.get(timeout=60)
             timeout_event_counter = timeout_event_counter + 1
         except(QueueEmpty, Empty):
             # did not receive timeout event
@@ -554,13 +560,14 @@ pytestmark = [
         },
     ),
 ]
+@pytest.mark.firmware_app("test_wlan_aws_enable")
 @pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_device_shadow_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
+def test_aws_device_shadow_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut, rf_attenuator):
     rejected_event_counter = 0
     timeout_event_counter = 0
     """ Start time for long duration and send messages """
-    end_time = datetime.now() + timedelta(hours=12)
+    end_time = datetime.now() + timedelta(hours=10)
     start_time = datetime.now()
     wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()

@@ -31,6 +31,7 @@ test_sequence:
       - Custom
       - dlink810
     iterations: 1
+    visible: true
   - id: 15f0966f-bcef-419b-b479-7f6476ff9740
     test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-11bgn-6-AES]
     test_function: test_wifi_ap_configuration
@@ -62,6 +63,7 @@ test_sequence:
       - Custom
       - dlink810
     iterations: 1
+    visible: true
   - id: 90d4593e-0edd-4a4d-b437-e890e4dc12e8
     test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-n-36-AES]
     test_function: test_wifi_ap_configuration
@@ -93,6 +95,7 @@ test_sequence:
       - Custom
       - dlink810
     iterations: 1
+    visible: true
   - id: d9e3aec4-f7f5-4663-99c2-4ad313c5f7ae
     test_case_id: test_wifi_ap_configuration-dlink810_ap[WPA2-nac-153-AES]
     test_function: test_wifi_ap_configuration
@@ -124,6 +127,7 @@ test_sequence:
       - Custom
       - dlink810
     iterations: 1
+    visible: true
   - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
     test_case_id: test_prepare_static_ap
     test_function: test_prepare_static_ap
@@ -145,40 +149,7 @@ test_sequence:
       - cases
       - wifi
     iterations: 1
-  - id: 69a51615160a5bf71be5ef8d005a36de17ce900b
-    test_case_id: test_secondary_raspi_shell
-    test_function: test_secondary_raspi_shell
-    test_id: test_secondary_raspi_shell::1
-    test_module: test_cases/test_secondary_raspi.py
-    test_markers:
-      - pytest.mark.bt_client('secondary_raspi_bt_client',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - secondary_raspi
-    iterations: 1
-  - id: b86234b56ad9257ad9c9e69ae20829e11e7ef18a
-    test_case_id: test_secondary_raspi_bt
-    test_function: test_secondary_raspi_bt
-    test_id: test_secondary_raspi_bt::1
-    test_module: test_cases/test_secondary_raspi.py
-    test_markers:
-      - pytest.mark.bt_client('secondary_raspi_bt_client',)
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - secondary_raspi
-    iterations: 1
+    visible: true
   - id: 8853c4b63fd3c3d7d364feca5d882785e9b13961
     test_case_id: test_bt_a2dp_dut_as_src
     test_function: test_bt_a2dp_dut_as_src
@@ -202,6 +173,7 @@ test_sequence:
       - bt_a2dp
       - cases
     iterations: 1
+    visible: true
   - id: bcd131694368ebfa14b7591d2d57c335cb7a1576
     test_case_id: test_bt_avrcp_dut_as_src
     test_function: test_bt_avrcp_dut_as_src
@@ -225,6 +197,7 @@ test_sequence:
       - bt_a2dp
       - cases
     iterations: 1
+    visible: true
   - id: 7d91abc71974424f4476da49a2aef75fc8631225
     test_case_id: test_bt_spp_dut_as_slave
     test_function: test_bt_spp_dut_as_slave
@@ -247,6 +220,7 @@ test_sequence:
       - bt_spp
       - cases
     iterations: 1
+    visible: true
   - id: f565f38f8b55baa281415df4bfaff60ff78a4311
     test_case_id: test_bt_spp_dut_as_master
     test_function: test_bt_spp_dut_as_master
@@ -269,6 +243,7 @@ test_sequence:
       - bt_spp
       - cases
     iterations: 1
+    visible: true
   - id: 163198c8-cb9a-410b-881d-cc215bd9fe6f
     test_case_id: test_bt_spp_dut_as_slave-at
     test_function: test_bt_spp_dut_as_slave
@@ -291,6 +266,7 @@ test_sequence:
       - bt_spp
       - cases
     iterations: 1
+    visible: true
   - id: 8bb43705-1ccc-4d8d-a008-f238885028b7
     test_case_id: test_bt_spp_dut_as_master-at
     test_function: test_bt_spp_dut_as_master
@@ -313,6 +289,7 @@ test_sequence:
       - bt_spp
       - cases
     iterations: 1
+    visible: true
   - id: ddb02204ed8117e7d5efdb9abc4db2284c85cbc3
     test_case_id: test_mqtt_server_and_linux_client
     test_function: test_mqtt_server_and_linux_client
@@ -332,6 +309,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 83154b2d-28f3-486f-84f5-df94507cb5e6
     test_case_id: test_mqtt_server_and_linux_client-mosquito_tls
     test_function: test_mqtt_server_and_linux_client
@@ -351,6 +329,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: c7c9580b-79b1-4677-8053-4e3c4c5d7b2b
     test_case_id: test_mqtt_server_and_linux_client-mosquito_auth
     test_function: test_mqtt_server_and_linux_client
@@ -370,6 +349,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: 626ec90d-4cac-41d0-aa3a-0a2e724fa66b
     test_case_id: test_mqtt_server_and_linux_client-static_mqtt_broker
     test_function: test_mqtt_server_and_linux_client
@@ -388,6 +368,7 @@ test_sequence:
       - cases
       - mqtt
     iterations: 1
+    visible: true
   - id: bf700f89cdc14806fb0033122c55c8f4b43c57a2
     test_case_id: test_threading
     test_function: test_threading
@@ -406,6 +387,7 @@ test_sequence:
       - cases
       - threading
     iterations: 1
+    visible: true
   - id: 50ed1a6948f44767dacb6275e18db2fc1c973910
     test_case_id: test_threading_contextmgr
     test_function: test_threading_contextmgr
@@ -424,6 +406,7 @@ test_sequence:
       - cases
       - threading
     iterations: 1
+    visible: true
   - id: 2284a298be459553462ee40132a605b788e0e3c3
     test_case_id: >-
       test_cert_load[RS9116CertificateType.SSLCACertificate-ca-cert-with-crlf.pem]
@@ -451,6 +434,7 @@ test_sequence:
       - cases
       - ssl_certs
     iterations: 1
+    visible: true
   - id: 47379509-9206-47fb-ab28-1877aaf92d1b
     test_case_id: >-
       test_cert_load[RS9116CertificateType.SSLCACertificate-ca-cert-with-crlf.pem]-at
@@ -478,6 +462,7 @@ test_sequence:
       - cases
       - ssl_certs
     iterations: 1
+    visible: true
   - id: b08f08da1d7bef09cc5d551b78ef9e8c054aaa6d
     test_case_id: test_async_rejoin_errors
     test_function: test_async_rejoin_errors
@@ -498,6 +483,7 @@ test_sequence:
       - async_events
       - cases
     iterations: 1
+    visible: true
   - id: 4f4b433f5c680d9d96046faebdc93b6443d87bdb
     test_case_id: test_async_rejoin_errors_using_queue
     test_function: test_async_rejoin_errors_using_queue
@@ -518,6 +504,7 @@ test_sequence:
       - async_events
       - cases
     iterations: 1
+    visible: true
   - id: 3581ce42cb4036c0f2923f47dcf1d1ea7fe6b5dd
     test_case_id: test_async_rejoin_errors_using_wait_for_event
     test_function: test_async_rejoin_errors_using_wait_for_event
@@ -537,4 +524,5 @@ test_sequence:
     labels:
       - async_events
       - cases
+    visible: true
     iterations: 1

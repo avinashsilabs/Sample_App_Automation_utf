@@ -349,7 +349,7 @@ def test_ssl_server_no_server_cert_testcase_TC19111(
     assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
-    assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
+    assert exc_info.value.error_code == 0xD1, f"DUT sent wrong error code expected is 0xD1"
 
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()

@@ -1,6 +1,6 @@
 from utf.interfaces.wifi import WlanError
 
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
     RS9116TCPIPFeatureBitMap
 import time
 import pytest
@@ -42,8 +42,7 @@ def logger():
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
 def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -87,10 +86,10 @@ def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_p
     packet_filter3 = f'dhcp.hw.mac_addr == {mac_address}'
 
     logger().info(f"***** Enabling Power save mode ******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(2)
 
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
@@ -131,8 +130,7 @@ def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_p
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
 def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -174,10 +172,10 @@ def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_a
     packet_filter3 = f'wlan.addr == {mac_address} && dns.id == dns.id'
 
     logger().info(f"***** Enabling Power save mode ******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(2)
 
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
@@ -215,7 +213,7 @@ def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_a
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 
     }
@@ -251,10 +249,11 @@ def test_dns_server_when_dns_feature_not_enabled_c19299(wifi_sniffer, wifi_dut, 
     logger().info(f'Device is {device_ip}')
 
     logger().info(f"***** Enabling Power save mode ******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(2)
 
     logger().info(f"*****Initiate ping from third party wifi-client to DUT******")

@@ -280,6 +280,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   test_params: []
   test_class: null
   description: null
@@ -298,6 +299,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   test_params: []
   test_class: null
   description: null
@@ -316,6 +318,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   test_params: []
   test_class: null
   description: null
@@ -334,6 +337,7 @@ test_cases:
   - pytest.mark.framework_integration_test()
   - pytest.mark.dut('rs9116_sapi',)
   - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  - pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
   - pytest.mark.firmware_app('test_multi_gatt_conn',)
   test_params: []
   test_class: null
@@ -463,6 +467,23 @@ test_cases:
   enabled: true
   labels:
   - bt_spp
+  - cases
+- id: a8c28f1bc92a2e0350bea92f36239ec050f80966
+  test_case_id: test_ble_phy_wiseconnect_dut
+  test_function: test_ble_phy_wiseconnect_dut
+  test_id: test_ble_phy_wiseconnect_dut::1
+  test_module: test_cases/test_bt_wiseconnect_device.py
+  test_markers:
+  - pytest.mark.ble_client('bt_wiseconnect',)
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': 0,''coex_mode'': RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})'
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - bt_wiseconnect_device
   - cases
 - id: be5a4ff6e87ca1469a76f5fcc8baa60d3f9c3b79
   test_case_id: test_wifi_ap_configuration_lb[SecurityMode.WPA2-Standard.n-1-Cipher.TKIP_AES]_1
@@ -904,6 +925,24 @@ test_cases:
   labels:
   - cases
   - mqtt
+- id: 80be8a95af7ca0bd442c0db315d2a42ce273914d
+  test_case_id: test_mqtt_dut_thread
+  test_function: test_mqtt_dut_thread
+  test_id: test_mqtt_dut_thread::1
+  test_module: test_cases/test_mqtt_thread.py
+  test_markers:
+  - 'pytest.mark.config(''wifi_dut'',wifi={''tcpip_features'': RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,''ext_tcpip_features'':
+    RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature})'
+  - pytest.mark.dut('rs9116_sapi',)
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - cases
+  - mqtt_thread
 - id: 3c9d14716bd50afdb1b506556f0592cdde5fcf1d
   test_case_id: test_power_save
   test_function: test_power_save
@@ -1497,3 +1536,38 @@ test_cases:
   labels:
   - cases
   - wifi
+- id: e3e247fb76cbe8965f7b5bc0f33829fd18e8015c
+  test_case_id: test_wifi_join_ap
+  test_function: test_wifi_join_ap
+  test_id: test_wifi_join_ap::1
+  test_module: test_cases/test_wifi_client.py
+  test_markers:
+  - pytest.mark.framework_integration_test()
+  - pytest.mark.dut('rs9116_sapi',)
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - cases
+  - wifi_client
+- id: f89ac1469a9c708c978858f8ac2f9dee427470d1
+  test_case_id: test_wifi_join_dut_ap
+  test_function: test_wifi_join_dut_ap
+  test_id: test_wifi_join_dut_ap::1
+  test_module: test_cases/test_wifi_client.py
+  test_markers:
+  - pytest.mark.framework_integration_test()
+  - pytest.mark.dut('rs9116_sapi',)
+  - 'pytest.mark.config(''wifi_dut'',wifi={''oper_mode'': RS9116OperatingMode.AccessPoint})'
+  test_params: []
+  test_class: null
+  description: null
+  library_name: null
+  version: 0
+  enabled: true
+  labels:
+  - cases
+  - wifi_client

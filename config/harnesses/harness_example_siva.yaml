@@ -201,7 +201,7 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: '12345678'
-                switch: 'pdu_switch'
+                switch_config: 'pdu_switch'
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
@@ -740,13 +740,13 @@ devices:
     raspi_ftp_server:
         interfaces:
             vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
+                type: 'ftp.server.ftp_server'
                 tls_enabled: false
 
     raspi_ftp_server_tls:
         interfaces:
             vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
+                type: 'ftp.server.ftp_server'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -754,13 +754,13 @@ devices:
     raspi_ftp_client:
         interfaces:
             ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+                type: 'ftp.client.ftp_client'
                 tls_enabled: false
     
     raspi_ftp_client_tls:
         interfaces:
             ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+                type: 'ftp.client.ftp_client'
                 tls_enabled: true
 
 # The entries in the defaults section define the default devices used in the test system, as well as default

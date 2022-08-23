@@ -646,6 +646,16 @@ void rsi_ble_notify_value_command(sl_cli_command_arg_t* arguments)
     print_status(rsi_ble_notify_value_internal());
 }
 
+void rsi_ble_custom_notify_value_command(sl_cli_command_arg_t* arguments)
+{
+    char* send_data =  sl_cli_get_argument_string(arguments, 0);
+    if(send_data)
+    {
+    memcpy(ble_gatt_data, send_data, sizeof(ble_gatt_data));
+    }
+    print_status(rsi_ble_notify_value_internal());
+}
+
 void rsi_ble_start_notify_value_command(sl_cli_command_arg_t* arguments)
 {
     uint16_t time_out_ms = sl_cli_get_argument_uint16(arguments, 0);
@@ -692,8 +702,8 @@ void rsi_ble_add_char_val_att_command(sl_cli_command_arg_t* arguments)
     uint16_t val_handle_num = sl_cli_get_argument_uint8(arguments, 2);
     char* data = sl_cli_get_argument_string(arguments, 3);
 
-    memset(ble_gatt_data, 0, sizeof(ble_gatt_data));
-    memcpy(ble_gatt_data, data, sizeof(data));
+    memset(ble_gatt_data, 0, strlen(ble_gatt_data));
+    memcpy(ble_gatt_data, data, strlen(data));
 
     //! adding characteristic value attribute to the service
     uuid_t new_uuid                       = { 0 };
@@ -705,7 +715,7 @@ void rsi_ble_add_char_val_att_command(sl_cli_command_arg_t* arguments)
                             new_uuid,
                             val_prop,
                             (uint8_t *)ble_gatt_data,
-                            sizeof(ble_gatt_data)));
+                            strlen(ble_gatt_data)));
 }
 
 //get profiles async command written for multi connection gatt example
@@ -1296,3 +1306,70 @@ void rsi_ble_read_phy_command(sl_cli_command_arg_t* arguments)
     print_status(status);
 
 }
+
+
+void rsi_ble_per_tx_command(sl_cli_command_arg_t *arguments){
+
+    rsi_ble_per_transmit_t ble_per_tx;
+    memset(&ble_per_tx,'\0',sizeof(ble_per_tx));
+
+    ble_per_tx.cmd_ix = sl_cli_get_argument_uint8(arguments, 0);
+    ble_per_tx.transmit_enable = sl_cli_get_argument_uint8(arguments, 1);
+    rsi_uint32_to_4bytes(ble_per_tx.access_addr, sl_cli_get_argument_uint32(arguments, 2));
+    ble_per_tx.phy_rate = sl_cli_get_argument_uint8(arguments, 3);
+
+    char* tmp = sl_cli_get_argument_string(arguments, 4);
+
+    sscanf(tmp, "%03d", &ble_per_tx.rx_chnl_num);
+    sscanf(tmp+4, "%03d", &ble_per_tx.tx_chnl_num);
+    sscanf(tmp+8, "%03d", &ble_per_tx.scrambler_seed);
+    sscanf(tmp+12, "%03d", &ble_per_tx.le_chnl_type);
+    sscanf(tmp+16, "%03d", &ble_per_tx.freq_hop_en);
+
+    char* tmp1 = sl_cli_get_argument_string(arguments, 5);
+    sscanf(tmp1, "%03d", &ble_per_tx.ant_sel);
+    sscanf(tmp1+4, "%03d", &ble_per_tx.pll_mode);
+    sscanf(tmp1+4, "%03d", &ble_per_tx.rf_type);
+    sscanf(tmp1+4, "%03d", &ble_per_tx.rf_chain);
+
+    rsi_uint16_to_2bytes(ble_per_tx.pkt_len, sl_cli_get_argument_uint16(arguments, 6));
+    ble_per_tx.payload_type = sl_cli_get_argument_uint8(arguments, 7);
+    ble_per_tx.tx_power = sl_cli_get_argument_uint8(arguments, 8);
+    ble_per_tx.transmit_mode = sl_cli_get_argument_uint8(arguments, 9);
+    ble_per_tx.inter_pkt_gap = sl_cli_get_argument_uint8(arguments, 10);
+    rsi_uint32_to_4bytes(ble_per_tx.num_pkts, sl_cli_get_argument_uint32(arguments, 11));
+
+    int32_t status = rsi_ble_per_transmit(&ble_per_tx);
+    print_status(status);
+}
+
+void rsi_ble_per_rx_command(sl_cli_command_arg_t *arguments){
+
+    rsi_ble_per_receive_t rsi_ble_per_rx;
+    memset(&rsi_ble_per_rx,'\0',sizeof(rsi_ble_per_rx));
+
+    rsi_ble_per_rx.cmd_ix = sl_cli_get_argument_uint8(arguments, 0);
+    rsi_ble_per_rx.receive_enable = sl_cli_get_argument_uint8(arguments, 1);
+    rsi_uint32_to_4bytes(rsi_ble_per_rx.access_addr, sl_cli_get_argument_uint32(arguments, 2));
+    rsi_ble_per_rx.phy_rate = sl_cli_get_argument_uint8(arguments, 3);
+
+    char* tmp = sl_cli_get_argument_string(arguments, 4);
+
+    sscanf(tmp, "%03d", &rsi_ble_per_rx.rx_chnl_num);
+    sscanf(tmp+4, "%03d", &rsi_ble_per_rx.tx_chnl_num);
+    sscanf(tmp+8, "%03d", &rsi_ble_per_rx.scrambler_seed);
+    sscanf(tmp+12, "%03d", &rsi_ble_per_rx.le_chnl_type);
+    sscanf(tmp+16, "%03d", &rsi_ble_per_rx.freq_hop_en);
+
+    rsi_ble_per_rx.ant_sel = sl_cli_get_argument_uint8(arguments, 5);
+    rsi_ble_per_rx.pll_mode = sl_cli_get_argument_uint8(arguments, 6);
+    rsi_ble_per_rx.rf_type = sl_cli_get_argument_uint8(arguments, 7);
+    rsi_ble_per_rx.rf_chain = sl_cli_get_argument_uint8(arguments, 8);
+    rsi_ble_per_rx.ext_data_len_indication = sl_cli_get_argument_uint8(arguments, 9);
+    rsi_ble_per_rx.loop_back_mode = sl_cli_get_argument_uint8(arguments, 10);
+    rsi_ble_per_rx.duty_cycling_en = sl_cli_get_argument_uint8(arguments, 11);
+
+    int32_t status = rsi_ble_per_receive(&rsi_ble_per_rx);
+    print_status(status);
+}
+

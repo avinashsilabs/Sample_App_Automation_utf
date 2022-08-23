@@ -25,7 +25,7 @@ devices:
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
             cli_transport: 'uart'
-            #gpio_transport: 'gpio_uart'
+            gpio_transport: 'gpio_uart'
 
         # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
         interfaces:
@@ -229,9 +229,10 @@ devices:
                 ip_address: '192.168.0.1'
                 web_ui_port: 80
                 admin_password: '12345678'
+                skip_assertion_failure : True
                 security: WPA
                 ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                passphrase: 'thisisatestnetwork11'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -258,7 +259,7 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: 'F6E49FCE'
-                switch: 'pdu_switch'
+                switch_config: 'pdu_switch'
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
@@ -635,13 +636,13 @@ devices:
                 username: 'test'
                 password: 'test123'
 
-    keysight_power_analyzer:
+    keysight_N6705_power_analyzer:
         interfaces:
             power_meter:
                 type: 'power_meter.keysight_N6705'
-                instrument_lan_ip_address: '10.207.19.83'
+                instrument_lan_ip_address: '10.207.21.140'
 
-    keysight_power_analyzer_benchvue_win_rm:
+    keysight_benchvue_power_analyzer_win_rm:
         interfaces:
             windows_shell: 
                 type: 'rem_mgmt.win_rm'
@@ -654,8 +655,8 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-
-    keysight_power_analyzer_benchvue_win_wcf:
+    
+    keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
@@ -794,29 +795,57 @@ devices:
 
     raspi_ftp_server:
         interfaces:
-            vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
+            ftp_server:
+                type: 'ftp.server.ftp_server'
                 tls_enabled: false
 
     raspi_ftp_server_tls:
         interfaces:
-            vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
+            ftp_server:
+                type: 'ftp.server.ftp_server'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
 
     raspi_ftp_client:
         interfaces:
-            ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+            ftp_client:
+                type: 'ftp.client.ftp_client'
                 tls_enabled: false
     
     raspi_ftp_client_tls:
         interfaces:
-            ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
+            ftp_client:
+                type: 'ftp.client.ftp_client'
                 tls_enabled: true
+
+    raspi_radius_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+
+    static_radius_server:
+        interfaces:
+            ssh_shell: 
+                type: 'shell.ssh_shell'
+                remote: '192.168.50.210'  # configure Free Radius Server NUC IP
+                username: test       # NUC username
+                password: test123    # NUC password
+                use_paramiko_expect: false
+            radius_server:
+                type: 'radius_server.freeradius.static'
+                shell: 'ssh_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -853,7 +882,7 @@ defaults:
 
     logic_analyzer: 'saleae_logic_analyzer'
 
-    power_meter: 'keysight_power_analyzer'
+    power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
 
     ble_client: 'raspi_ble_client'
 
@@ -949,6 +978,8 @@ defaults:
     ftp_server: 'raspi_ftp_server'
 
     ftp_client: 'raspi_ftp_client'
+
+    radius_server: 'raspi_radius_server'
 
     net_perf:
         server_options:

@@ -1,0 +1,8 @@
+id: 0ca66f5d-f8b8-49ea-b01d-0474aa2ea525
+name: test_wifi_client
+description: ''
+test_cases:
+  - test_case_id: e3e247fb76cbe8965f7b5bc0f33829fd18e8015c
+    iterations: '10'
+  - test_case_id: f89ac1469a9c708c978858f8ac2f9dee427470d1
+    iterations: '10'
