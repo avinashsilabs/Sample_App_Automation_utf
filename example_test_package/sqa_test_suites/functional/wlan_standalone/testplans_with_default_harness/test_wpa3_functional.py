@@ -1048,3 +1048,117 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
     logger().info("*********##### Sniffer is going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(5)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower |RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+
+    }
+)
+def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, switch):
+    validation = True
+    ping_count = 10
+
+    ''' Verify Rejoin Functionality in WPA3 Security'''
+    state = switch.interfaces.pdu_switch.get_state()
+    logger().info("pdu switch state : " + str(state))
+    if state == 'true':
+        logger().info('PDU is ready for use')
+    else:
+        logger().info(f'\n\n Please check the AP & PDU current state')
+        assert False
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    wifi_access_point.interfaces.wifi.start_ap()
+    time.sleep(10)
+    # Setting sniffer capture file name
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_wpa3_security_c34509')
+    logger().info(f"Enabling the rejoin parameters")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+    logger().info(f"DUT is going to join third party Access Point")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                     join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
+                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
+
+    time.sleep(2)
+    logger().info(f"*****Enable Fast PSP power save in DUT******")
+    wifi_dut.interfaces.wifi.power_save(2, 0)
+    wifi_dut.interfaces.wifi.bt_power_save(
+        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+    )
+    time.sleep(2)
+    # Initiate ping from third party wifi-client to DUT
+    status = ping(dut_ip, ping_count)
+    assert status == 1
+    time.sleep(5)
+    wifi_dut.interfaces.wifi.leave()
+
+    time.sleep(2)
+    logger().info('#### Turn off Access point ####')
+
+    if state == 'true':
+        switch.interfaces.pdu_switch.turn_off()
+    time.sleep(30)
+
+    packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
+                     f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
+                     f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {mac_address}'
+
+    logger().info('##### Turn on Access point #####')
+    state = switch.interfaces.pdu_switch.get_state()
+    logger().info(f"checking status: {state}")
+    if state == 'false':
+        switch.interfaces.pdu_switch.turn_on()
+        logger().info(f"PDU was off, trying to turn on using PDU, Please wait for 150 seconds ........")
+        time.sleep(150)
+
+    try:
+        wifi_sniffer.interfaces.capture.stop_capture()
+        result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+        if result:
+            logger().info(f'Sniffer validation pass')
+        else:
+            assert result
+
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                         join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
+                                                             | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
+
+        result = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = result.ip.decode()
+        logger().info(f"DUT ip address : {dut_ip}")
+        status = ping(dut_ip, 20)
+        if status == 1:
+            logger().info('#### Ping successful ####')
+        else:
+            logger().info('#### Ping unsuccessful ####')
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if state == 'true':
+            logger().info('\n\n Access point is available')
+        else:
+            logger().info('\n\n Turn on the Access Point')
+            switch.interfaces.pdu_switch.turn_on()
+            logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
+            time.sleep(30)
+
