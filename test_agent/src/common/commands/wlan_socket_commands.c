@@ -815,6 +815,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
             status = rsi_sendto(socketID, buffer, data_len, 0, (struct rsi_sockaddr*)&remote_address, sizeof(remote_address));
             if (checkStatus(status, "rsi_sendto", socketID, 1, debug_output) == -1) {
                 receive_completed = 1;
+                return;
             }
 
             total_bytes_tx = total_bytes_tx + status;
@@ -875,6 +876,7 @@ void rsi_sendto_iperf_command(sl_cli_command_arg_t* arguments)
             status = rsi_send(socketID, buffer, data_len, 0);
             if (checkStatus(status, "rsi_send", socketID, 1, debug_output) == -1) {
                 receive_completed = 1;
+                return;
             }
             total_bytes_tx = total_bytes_tx + status;
             tt_end = rsi_hal_gettickcount();
