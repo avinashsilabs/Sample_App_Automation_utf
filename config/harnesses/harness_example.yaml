@@ -1052,3 +1052,7 @@ end_state:
 constants:
     time_duration:
         value: 5
+    ping_count:
+        value: 10
+    iter_count:
+        value: 5
