@@ -45,6 +45,7 @@ source:
   - path: "network/protocols/rsi_multicast.c"
   - path: "network/protocols/rsi_emb_mqtt_client.c"
   - path: "network/protocols/rsi_mqtt_client.c"
+  - path: "network/protocols/rsi_mdnsd.c"
     condition: ["mqtt-client"]
   - path: "network/protocols/rsi_raw_data.c"
   - path: "network/protocols/rsi_web_socket.c"
@@ -123,6 +124,7 @@ include:
       - path: "rsi_http_client.h"
       - path: "rsi_sntp_client.h"
       - path: "http_server/rsi_json_handlers.h"
+      - path: "rsi_mdnsd.h"
 define:
   - name: RSI_SAMPLE_HAL
   - name: RSI_WITH_OS

@@ -44,6 +44,7 @@ source:
 - path: ../common/commands/http_commands.c
 - path: ../common/commands/wlan_wireless_firmware_upgrade.c
 - path: ../common/commands/ftp_commands.c
+- path: ../common/commands/ant_commands.c
   
   # ble_gatt
 - path: ../common/commands/ble_gatt/rsi_ble_gatt_device_info.c
@@ -65,6 +66,7 @@ define:
 - name: RSI_BLE_ENABLE
 - name: RSI_BT_ENABLE
 - name: RSI_ANT_ENABLE
+  value: 1
 - name: CONCURRENT_MODE
   value: 0
 - name: RSI_MODE_11N_ENABLE
@@ -2313,7 +2315,7 @@ template_contribution:
     handler: rsi_http_client_put_pkt_command
     help: puts data into server
     argument:
-    - {type: uint8, help: file_content}
+    - {type: string, help: file_content}
     - {type: uint16, help: chunk_length}
 
 - name: cli_command
@@ -2328,3 +2330,57 @@ template_contribution:
     - {type: uint8, help: buffer}
     - {type: uint8, help: length}
     - {type: uint16, help: end_of_put_pkt}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: mdns_init
+    handler: mdns_init_command
+    help: initilize mdns
+    argument:
+    - {type: uint8, help: ip_version}
+    - {type: uint16, help: ttl}
+    - {type: string, help: host_name}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: mdns_register_service
+    handler: mdns_register_service_command
+    help: register mdns service
+    argument:
+    - {type: uint16, help: port}
+    - {type: uint16, help: ttl}
+    - {type: uint8, help: more}
+    - {type: string, help: service_ptr_name}
+    - {type: string, help: service_name}
+    - {type: string, help: service_text}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: mdns_deinit
+    handler: mdns_deinit_command
+    help: deinit mdns
+
+- name: cli_command
+  priority: 0
+  value:
+    name: ant_send_command
+    handler: rsi_ant_send_command
+    help: sends ant command to start and stop the ant service in module with supported arguments
+    argument:
+    - {type: uint8, help: ant_cmd}
+    - {type: uint8, help: ant_cmd_1}
+    - {type: uint8, help: ant_cmd_2}
+    - {type: uint8, help: ant_cmd_3}
+    - {type: uint8, help: ant_cmd_4}
+    - {type: uint8, help: ant_cmd_5}
+    - {type: uint8, help: ant_cmd_resp}
+
+- name: cli_command
+  priority: 0
+  value:
+    name: http_put_create
+    handler: http_put_create_command
+    help: http put
