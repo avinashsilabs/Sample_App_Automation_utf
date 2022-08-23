@@ -122,7 +122,9 @@ def sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_min_in
                 enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
                 assert enable_btPowersave, f"Failed to enable BT in Powersave"
 
-            end_time = datetime.now() + timedelta(seconds=60)
+            logger().info("Checking the BT Connection for 30 seconds")
+            time.sleep(30)
+            end_time = datetime.now() + timedelta(seconds=30)
             while datetime.now() < end_time:
                 logger().info("==========Send the data from dut to bt client=========")
                 bt_dut.interfaces.bluetooth.bt_spp_transfer(send_text, bt_client_address)
@@ -190,8 +192,9 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
                 enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
                 assert enable_btPowersave, f"Failed to enable BT in Powersave"
 
-            # Data will transfer 60 seconds
-            end_time = datetime.now() + timedelta(seconds=60)
+            logger().info("Checking the BT Connection for 30 seconds")
+            time.sleep(30)
+            end_time = datetime.now() + timedelta(seconds=30)
             while datetime.now() < end_time:
                 # Send the data from dut to bt client
                 logger().info("=========Send the data from dut to bt client==========")
@@ -287,8 +290,9 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
             exit_mode = bt_dut.interfaces.bluetooth.set_bt_sniff_exit_mode(bt_client_address=bt_client_address)
             assert exit_mode,"Failed to exit the sniff mode from dut"
 
-            time.sleep(5)
-            end_time = datetime.now() + timedelta(seconds=60)
+            logger().info("Checking the BT Connection for 30 seconds")
+            time.sleep(30)
+            end_time = datetime.now() + timedelta(seconds=30)
             while datetime.now() < end_time:
                 logger().info("==========Send the data from dut to bt client=========")
                 bt_dut.interfaces.bluetooth.bt_spp_transfer(send_text, bt_client_address)
