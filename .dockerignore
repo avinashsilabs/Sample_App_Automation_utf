@@ -10,7 +10,7 @@ reports/
 *.pyo
 docs/
 tcmgr/
-test_agent/
+utf_wiseconnect/test_agent/
 
 # old submodules that may be left around
 utf_pytest/
