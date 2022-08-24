@@ -1,0 +1,6 @@
+id: 4ff54395-b343-4b6e-bea1-ac40f3d2684a
+name: sanity_test
+description: ''
+test_suite_infos:
+  - test_suite_id: d81c9abb-fb5d-475a-97ef-06a55aed7a22
+    iterations: 1
