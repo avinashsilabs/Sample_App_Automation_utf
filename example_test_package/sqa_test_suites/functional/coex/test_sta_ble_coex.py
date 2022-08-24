@@ -769,24 +769,18 @@ def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, w
     logger().info(f"Device mac address: {dut_mac_address}")
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
-    ssid = "wrong_ssid_scan_C20111"
 
     ble_mode = "ble_slave"
-
-    logger().info("wifi_negative_scan+ble_connection thread execution starts...")
-    with wifi_negative_scan_thread(wifi_dut, ssid), ble_slave_advertise_thread(wifi_dut, ble_client,
-                                                                               ble_mode) as ble_thread:
+    with wifi_scan_thread(wifi_dut, scan_count=3), ble_slave_advertise_thread(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
-    logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
-    packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+    packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == " \
+                     f"ff:ff:ff:ff:ff:ff) "
     logger().info(
         f"Validating Probe req(Broadcast)"
     )
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find Probe req(Broadcast) in sniffer'
-    ble_client_address, _ = ble_thread.return_value
-    logger().info(f"ble_client_address:'{ble_client_address}'")
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
