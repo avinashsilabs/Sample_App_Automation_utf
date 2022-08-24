@@ -100,15 +100,6 @@ pipeline {
                                                                keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
-// //                                         dir('utf_wiseconnect'){
-//                                             sh '''
-//                                                 export GIT_SSH=ssh
-//                                                 export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-//
-//                                                 git config --file=.gitmodules submodule.mini_gecko_sdk.url ssh://git@stash.silabs.com/Redpine/mini_gecko_sdk
-//                                                 git submodule update --init --recursive test_agent/mini_gecko_sdk
-//                                             '''
-//                                         }
                                         sh '''
                                             ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
                                         '''
