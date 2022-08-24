@@ -55,6 +55,8 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         logger().info("Initiating power save on DUT")
         if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
             wifi_dut.interfaces.wifi.set_sleep_gpio(True)
+            enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            assert enable_wifi_ps, "Failed to enable WIFI power save"
             enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
             assert enable_bt_ps, "failed to enable bt power save"
             logger().info("DUT is on power save mode")
@@ -93,6 +95,8 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         logger().info("Initiating power save on DUT")
         if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
             wifi_dut.interfaces.wifi.set_sleep_gpio(True)
+            enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            assert enable_wifi_ps, "Failed to enable WIFI power save"
             enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
             assert enable_bt_ps, "failed to enable bt power save"
 
@@ -390,12 +394,6 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble
     bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
     logger().info(f"bt_dut_address '{bt_dut_address}'")
 
-    logger().info("Initiating power save on DUT")
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        assert enable_bt_ps, "failed to enable bt power save"
-
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client1, ble_mode)
@@ -654,10 +652,6 @@ def test_bt_ble_connection_with_powersave_mode2_C20001(wifi_dut, bt_client, ble_
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_master_slave(wifi_dut, ble_client, ble_mode)
 
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    # Initiating power save2
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(3)
 
     logger().info("Checking connection status of BT, BLE")
@@ -695,12 +689,6 @@ def test_dual_role_functionality_of_BLE_BT_in_connection_C20002(wifi_dut, bt_cli
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
     bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
-
-    logger().info("Initiating power save on DUT")
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        assert enable_bt_ps, "failed to enable bt power save"
 
     ble_mode = "ble_master"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
