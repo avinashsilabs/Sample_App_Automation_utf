@@ -685,6 +685,15 @@ devices:
                 client_cert: 'python-thing-certificate.pem.crt'
 
 
+    aws_s3_boto3:
+        interfaces:
+            s3:
+                type: 'aws_s3.boto3'
+                aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
+                aws_secret_access_key: "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"
+                region: "us-east-1"
+
+
     50pa500_attenuator:
         interfaces:
             attenuator:
@@ -874,6 +883,8 @@ defaults:
     # (needed in order to test the host AP mode on the DUT)
     wifi_client: 'raspi_wifi'
 
+    aws_s3: 'aws_s3_boto3'
+
     wifi_clients:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
@@ -946,6 +957,11 @@ defaults:
         channel: 1
         capture_screenshot: false
         screenshot_file_name: 'wiseconnect_screenshot'
+
+    s3:
+        aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
+        aws_secret_access_key: "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"
+        region: "us-east-1"
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
