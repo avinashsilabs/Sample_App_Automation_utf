@@ -1048,3 +1048,5 @@ start_state:
 end_state:
     wifi_access_point:
         wifi: 'ap_disabled'
+
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']
