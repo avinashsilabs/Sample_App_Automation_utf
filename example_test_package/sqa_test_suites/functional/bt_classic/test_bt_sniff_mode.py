@@ -105,6 +105,7 @@ def sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_min_in
             logger().info(f"l2ping response {ping_response}")
 
             time.sleep(2)
+            logger().info("Configuring sniff mode in dut")
             sniffmode = bt_dut.interfaces.bluetooth.set_bt_sniff_mode(bt_client_address=bt_client_address,
                                                                       sniff_max_interval=sniff_max_interval,
                                                                       sniff_min_interval=sniff_min_interval,
@@ -112,15 +113,13 @@ def sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_min_in
                                                                       sniff_tout=sniff_time_out)
             assert sniffmode, "Failed to initiate dut in sniff mode"
 
-            # Initiating power save
-            logger().info("======= Initiating the Power Save mode in Wifi and BT==========")
-            if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
-                logger().info("==========Enables Power Save in Wifi Mode===========")
-                enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_wifiPowersave , f"Failed to enable wifi in powersave"
-                logger().info("==========Enables Power Save in BT Mode===========")
-                enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_btPowersave, f"Failed to enable BT in Powersave"
+            logger().info("==========Enables Power Save in Wifi Mode===========")
+            enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_wifiPowersave , f"Failed to enable wifi in powersave"
+
+            logger().info("==========Enables Power Save in BT Mode===========")
+            enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_btPowersave, f"Failed to enable BT in Powersave"
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
@@ -175,6 +174,7 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
             assert ping_response, "fFailed to ping BT client to DUT"
 
             time.sleep(2)
+            logger().info("Configuring sniff mode in dut")
             sniffmode = bt_dut.interfaces.bluetooth.set_bt_sniff_mode(bt_client_address=bt_client_address,
                                                           sniff_max_interval=sniff_max_interval,
                                                           sniff_min_interval=sniff_min_interval,
@@ -182,15 +182,13 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
                                                           sniff_tout=sniff_time_out)
             assert sniffmode, "Failed to initiate dut in sniff mode"
 
-            # Initiating power save
-            logger().info("======= Initiating the Power Save==========")
-            if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
-                logger().info("==========Enables Power Save in Wifi Mode===========")
-                enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
-                logger().info("==========Enables Power Save in BT Mode===========")
-                enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_btPowersave, f"Failed to enable BT in Powersave"
+            logger().info("==========Enables Power Save in Wifi Mode===========")
+            enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
+
+            logger().info("==========Enables Power Save in BT Mode===========")
+            enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_btPowersave, f"Failed to enable BT in Powersave"
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
@@ -270,25 +268,24 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
             logger().info(f"l2ping response {ping_response}")
 
             time.sleep(2)
-            sniffmode = bt_dut.interfaces.bluetooth.set_bt_sniff_mode(bt_client_address=bt_client_address,
-                                                                      sniff_max_interval=sniff_max_interval,
-                                                                      sniff_min_interval=sniff_min_interval,
-                                                                      sniff_attempt=sniff_attempt,
-                                                                      sniff_tout=sniff_time_out)
-            assert sniffmode, "Failed to initiate dut in sniff mode"
+            logger().info("Configuring sniff mode in dut")
+            bt_dut.interfaces.bluetooth.set_bt_sniff_mode(bt_client_address=bt_client_address,
+                                                            sniff_max_interval=sniff_max_interval,
+                                                            sniff_min_interval=sniff_min_interval,
+                                                            sniff_attempt=sniff_attempt,
+                                                            sniff_tout=sniff_time_out)
 
-            # Initiating power save
-            logger().info("======= Initiating the Power Save mode in Wifi and BT==========")
-            if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
-                logger().info("==========Enables Power Save in Wifi Mode===========")
-                enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
-                logger().info("==========Enables Power Save in BT Mode===========")
-                enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_btPowersave, f"Failed to enable BT in Powersave"
 
-            exit_mode = bt_dut.interfaces.bluetooth.set_bt_sniff_exit_mode(bt_client_address=bt_client_address)
-            assert exit_mode,"Failed to exit the sniff mode from dut"
+            logger().info("==========Enables Power Save in Wifi Mode===========")
+            enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
+
+            logger().info("==========Enables Power Save in BT Mode===========")
+            enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_btPowersave, f"Failed to enable BT in Powersave"
+
+            logger().info("Configuring sniff exit mode in dut ")
+            bt_dut.interfaces.bluetooth.set_bt_sniff_exit_mode(bt_client_address=bt_client_address)
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
@@ -308,7 +305,6 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
 
     if not found:
         assert found, f"device with address {bt_dut_address} not found"
-
 
 pytestmark = [
     pytest.mark.config(
@@ -356,7 +352,6 @@ def test_bt_sniff_mode_act_as_master_role_c20051(bt_dut,bt_client, sniff_max_int
     sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out)
     time.sleep(5)
 
-@pytest.mark.skip()
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(160, 160, 5, 3)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_bt_exit_sniff_mode_act_as_slave_role_c20052(bt_dut,bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
