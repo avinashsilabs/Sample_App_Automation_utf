@@ -602,7 +602,6 @@ class stop_ap_thread(ThreadBase):
 @pytest.mark.parametrize("ssid", ['test_C20324'])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -614,8 +613,8 @@ class stop_ap_thread(ThreadBase):
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(wifi_dut, bt_dut, wifi_access_point,
                                                                                net_perf_client, wifi_client,
@@ -668,7 +667,6 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(w
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -679,8 +677,8 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(w
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_dut, ble_clients, wifi_access_point,
                                                                    ssid, net_perf_client, wifi_client, wifi_sniffer,
@@ -748,7 +746,6 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'adv_functionality_ble_C20111'})
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -759,6 +756,7 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
     },
 )
+@pytest.mark.config("net_perf_client")
 def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -790,7 +788,6 @@ def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, w
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -801,8 +798,8 @@ def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, w
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_client, wifi_access_point,
                                                                  net_perf_client,
                                                           wifi_client, protocol, wifi_sniffer):
@@ -846,7 +843,6 @@ def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -857,8 +853,8 @@ def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_client, wifi_access_point, net_perf_client,
                                                              wifi_client, protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -955,7 +951,6 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
 @pytest.mark.parametrize("ssid", ['test_C20314'])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -967,6 +962,7 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.config("net_perf_client")
 def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, ble_client, wifi_access_point, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -1016,7 +1012,6 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, b
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1027,8 +1022,8 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, b
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(wifi_dut, ble_client, wifi_access_point,
                                                                  net_perf_client, wifi_client, protocol, ssid):
@@ -1078,7 +1073,6 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(w
 @pytest.mark.parametrize("ssid", ['test_C20320'])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1090,6 +1084,7 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(w
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.config("net_perf_client")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, wifi_access_point, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1139,7 +1134,6 @@ def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, w
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1151,8 +1145,8 @@ def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, w
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config( "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, ble_client, wifi_access_point,
                                                         net_perf_client, wifi_client, protocol, ssid):
 
@@ -1203,7 +1197,6 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, b
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1215,8 +1208,8 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, b
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut, ble_client, wifi_access_point,
                                                             net_perf_client, wifi_client,protocol, ssid):
 
@@ -1273,7 +1266,6 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1283,8 +1275,8 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_access_point,
                                                    net_perf_client, wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1347,7 +1339,6 @@ def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_a
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1359,8 +1350,8 @@ def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_a
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_access_point,
                                                     net_perf_client, wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1422,7 +1413,6 @@ def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1433,8 +1423,8 @@ def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316(wifi_dut, ble_clients,
                                 wifi_access_point, net_perf_client,wifi_client, protocol, ssid):
 
@@ -1500,7 +1490,6 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1511,8 +1500,8 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_dut, ble_client,
                                             wifi_access_point, net_perf_client, wifi_client, protocol, ssid):
     iter_count = 5
@@ -1631,7 +1620,6 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1643,8 +1631,8 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, wifi_access_point,
                                             net_perf_client, wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1696,7 +1684,6 @@ def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, w
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1707,8 +1694,8 @@ def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, w
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_dut, ble_clients, wifi_access_point,
                                                     net_perf_client,wifi_client, protocol, ssid):
 
@@ -1756,7 +1743,6 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_du
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1768,8 +1754,8 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_du
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C20334(wifi_dut, ble_clients,
                                                              wifi_access_point, net_perf_client, wifi_client,
@@ -1855,7 +1841,6 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C2
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1867,8 +1852,8 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C2
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_func_of_ble_while_sta_data_transfer_inprogress_C20335(wifi_dut, ble_client, wifi_access_point,
                                               net_perf_client, wifi_client, protocol):
@@ -1993,7 +1978,6 @@ def test_sta_connection_with_ble_connect_disconnect_C20280(wifi_dut, ble_client,
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -2005,8 +1989,8 @@ def test_sta_connection_with_ble_connect_disconnect_C20280(wifi_dut, ble_client,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble_client, wifi_access_point,
                                                                    net_perf_client, wifi_client, protocol):
@@ -2075,7 +2059,6 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -2087,8 +2070,8 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, wifi_access_point,
                                                           net_perf_client, wifi_client, protocol):
@@ -2156,7 +2139,6 @@ def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, 
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -2168,8 +2150,8 @@ def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, 
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_client, wifi_access_point,
                                                                  net_perf_client, wifi_client, protocol):
@@ -2234,7 +2216,6 @@ def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_c
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -2246,8 +2227,8 @@ def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_c
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,
                                            net_perf_client, wifi_client, protocol):
@@ -2406,7 +2387,6 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -2418,8 +2398,8 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
-    net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, ble_client, wifi_access_point,
                                                     net_perf_client, wifi_client, protocol):
