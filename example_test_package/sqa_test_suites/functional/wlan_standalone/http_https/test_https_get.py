@@ -80,7 +80,11 @@ def test_http_server_and_linux_client_get(http_server, http_client, logger):
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_C19209(http_server, wifi_dut, http_client, wifi_access_point, index_path,
-                                        utf_constants):
+                                        utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19209')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("Initiates scan in dut")
     wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -124,6 +128,9 @@ def test_https_get_functionality_C19209(http_server, wifi_dut, http_client, wifi
     logger().info(content)
     assert content == content1, "fetched data is not same as expected data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -141,7 +148,11 @@ def test_https_get_functionality_C19209(http_server, wifi_dut, http_client, wifi
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wifi_dut, http_client, wifi_access_point,
-                                                                index_path, utf_constants):
+                                                                index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19204')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("Initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -180,6 +191,9 @@ def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wif
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     assert exc_info.value.error_code == 0xFF74, "observed wrong error code expected is 0xFF74"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -199,7 +213,11 @@ def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wif
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, http_client, wifi_access_point,
-                                                         index_path, utf_constants):
+                                                         index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19203')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -238,6 +256,9 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, 
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     assert exc_info.value.error_code == 0xBBD2, "observed wrong error code expected is 0xBBD2"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -256,7 +277,11 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, 
 @pytest.mark.parametrize("index_path", {"index.html", "index_long_crlf.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, http_client, wifi_access_point,
-                                                       index_path, utf_constants):
+                                                       index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19205')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -301,6 +326,9 @@ def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, ht
     logger().info(content)
     assert content == content1, "fetched data is not same as expected data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -319,7 +347,11 @@ def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, ht
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wifi_dut, http_client, wifi_access_point,
-                                                                 index_path, utf_constants):
+                                                                 index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19206')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -361,6 +393,9 @@ def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wi
     logger().info(content)
     assert content == content1, "fetched data is not same as expected data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -380,7 +415,11 @@ def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the Https Get functionality by comparing the data and, by issuing invalid IP
 def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, wifi_access_point, index_path,
-                                            utf_constants):
+                                            utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_https_get_functionality_invalid_ip')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -419,6 +458,9 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, 
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_ip='192.168.9.99')
     assert exc_info.value.error_code == 0xBB38, "observed wrong error code expected is 0xBB38"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -438,7 +480,11 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, 
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut, http_client, wifi_access_point, index_path,
-                                                     utf_constants):
+                                                     utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case1')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -479,6 +525,9 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut, http
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -498,7 +547,11 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut, http
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut, http_client, wifi_access_point,
-                                                      index_path, utf_constants):
+                                                      index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case2')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -538,6 +591,9 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut, htt
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -557,7 +613,11 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut, htt
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut, http_client, wifi_access_point,
-                                                       index_path, utf_constants):
+                                                       index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case3')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -598,6 +658,9 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut, ht
     assert status, "failed to fetch the https data"
     assert content, "failed to load the https data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -617,7 +680,11 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut, ht
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_port20000_C19207_case4(http_server, wifi_dut, http_client, wifi_access_point,
-                                                        index_path, utf_constants):
+                                                        index_path, utf_constants, wifi_sniffer):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case4')
+    time.sleep(3)
+
     ping_count = utf_constants.get("ping_count")
     logger().info("initiates scan in dut")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -659,6 +726,9 @@ def test_https_get_functionality_port20000_C19207_case4(http_server, wifi_dut, h
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
 
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -684,6 +754,7 @@ def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_get_with_host_name_c19216')
     time.sleep(3)
+
     logger().info("scan for the devices")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
     assert scan_results, "scan failure, No ap found"
@@ -722,8 +793,8 @@ def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, 
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
-    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
@@ -736,9 +807,10 @@ def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, 
     wifi_dut.interfaces.wifi.leave()
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Sniffer validation for power save packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'unable to find the power save packet'
+
+    # logger().info("Sniffer validation for power save packets")
+    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+    #     'unable to find the power save packet'
 
 
 @pytest.mark.config(
@@ -766,6 +838,7 @@ def test_http_get_when_httpserver_does_not_ssl_handshake_C19210(wifi_sniffer, ht
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_get_does_not_ssl_handshake_C19210')
     time.sleep(3)
+
     logger().info("scan for the devices")
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
     assert scan_results, "scan failure, No ap found"
@@ -802,8 +875,8 @@ def test_http_get_when_httpserver_does_not_ssl_handshake_C19210(wifi_sniffer, ht
     assert status == 1, "DUT not responding for ping request......"
     logger().info("ping to DUT is successful....")
 
-    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
@@ -821,6 +894,12 @@ def test_http_get_when_httpserver_does_not_ssl_handshake_C19210(wifi_sniffer, ht
     wifi_dut.interfaces.wifi.leave()
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Sniffer validation for power save packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'unable to find the power save packet'
+
+    # logger().info("Sniffer validation for power save packets")
+    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+    #     'unable to find the power save packet'
+
+
+
+
+
