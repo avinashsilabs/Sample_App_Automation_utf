@@ -515,8 +515,8 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
+        hci_adv_params="0xA0 0x00 "  # Advertising_Interval_Min
+                       "0xA0 0x00 "  # Advertising_Interval_Max
                        "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
                        "0x00 "  # Own_Address_Type
                        "0x00 "  # Peer_Address_Type
@@ -586,8 +586,8 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     logger().info(f"peer_address {peer_address}")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-            hci_adv_params="0x40 0x00 "
-                           "0x40 0x00 "
+            hci_adv_params="0xA0 0x00 "
+                           "0xA0 0x00 "
                            "0x01 "# Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
                            "0x00 "
                            "0x00 "
@@ -654,8 +654,8 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "
-                       "0x40 0x00 "
+        hci_adv_params="0xA0 0x00 "
+                       "0xA0 0x00 "
                        "0x03 "
                        "0x00 "
                        "0x00 "
@@ -717,8 +717,8 @@ def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
     logger().info("start ble client...")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "
-                       "0x40 0x00 "
+        hci_adv_params="0xA0 0x00 "
+                       "0xA0 0x00 "
                        "0x02 "
                        "0x00 "
                        "0x00 "
