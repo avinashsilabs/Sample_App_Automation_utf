@@ -36,7 +36,7 @@ def logger():
 
 
 def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point, index_path, file_name):
-    ping_count = 10
+    ping_count = 120
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
     time.sleep(3)
