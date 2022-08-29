@@ -817,6 +817,10 @@ def test_http_get_when_httpserver_does_not_ssl_handshake_C19210(wifi_sniffer, ht
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     assert exc_info.value.error_code == 0xBBD2, "observed wrong error code expected is 0xBBD2"
 
+    logger().info("stopping the HTTP server")
+    http_server.interfaces.http.stop_server()
+    http_server.interfaces.http.tls_enabled = False
+
     logger().info(f"DUT going to leave")
     wifi_dut.interfaces.wifi.leave()
     logger().info("Sniffer going to stop")
