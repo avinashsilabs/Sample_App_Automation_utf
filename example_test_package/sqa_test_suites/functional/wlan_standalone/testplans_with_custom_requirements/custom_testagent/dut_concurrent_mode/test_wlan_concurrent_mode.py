@@ -11,6 +11,8 @@ from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from datetime import datetime
 import uuid
+from typing import Dict
+
 
 
 """
