@@ -49,7 +49,7 @@ def wifi_join(wifi_dut, wifi_access_point):
 
     enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_ps, "failed to enable power save"
+    assert enable_ps, "failed to enable WLAN power save"
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
@@ -87,15 +87,6 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
                 assert connected
             logger().info(f"bt_client:' {bt_client_address}' Successfully connected to DUT: '{bt_dut_address}'")
 
-            # Initiating power save
-            logger().info("Initiating power save on DUT")
-            if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-                wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-                enable_ps = wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_ps, "Unable to enable power save"
-                enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_bt_ps, "Unable to enable bt power save"
-                logger().info("DUT is on power save mode")
 
             # Send data from bt_client to dut
             logger().info("Sending data from bt_client to DUT.")
@@ -131,11 +122,6 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         # Initiating power save
         bt_client.interfaces.bluetooth.close()
         logger().info("Initiating power save on DUT")
-        if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-            wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-            wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-
         logger().info("Setting DUT as bt_master....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
         assert bt_dut_address, f"Unable to get bt_dut_address"
@@ -466,10 +452,13 @@ class connect_disconnect_ble_thread(Thread):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, ble_client, wifi_access_point,
@@ -531,10 +520,13 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect", "bt_disconnect"])
 def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                             net_perf_client, wifi_client, protocol):
@@ -590,10 +582,13 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", ])
 def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client, ble_clients, wifi_access_point,
                                                             net_perf_client, wifi_client, protocol):
@@ -611,12 +606,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
     bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
-
-    logger().info("Initiating power save on DUT")
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info(f"bt_address: '{bt_address}', bt_socket: '{bt_socket}'")
 
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
@@ -654,10 +644,13 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
 def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client, wifi_access_point, net_perf_client,
@@ -707,7 +700,7 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": "ca-chain.cert.pem"
     },
 )
@@ -737,13 +730,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"ble_address: '{ble_address}'")
 
-    logger().info("Enabling the wifi power save in dut")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-    logger().info("Enabling the bt power save in dut")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-
     # API used to get the https data
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
@@ -781,10 +768,13 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                                    net_perf_client, wifi_client, protocol):
@@ -835,10 +825,13 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                                   net_perf_client, wifi_client, protocol):
@@ -896,10 +889,13 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                                  net_perf_client, wifi_client, protocol):
@@ -951,10 +947,13 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                                   net_perf_client, wifi_client, protocol):
@@ -1009,10 +1008,13 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                            net_perf_client, wifi_client, protocol, wifi_sniffer):
@@ -1041,13 +1043,6 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
-
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    # Initiating power save2
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    result = wifi_dut.interfaces.wifi.power_save(2, 0)
-    assert result, "Power save is not enabled"
-    time.sleep(3)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
@@ -1092,10 +1087,13 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_client, ble_client, wifi_access_point,
                                                    net_perf_client, wifi_client, protocol):
@@ -1133,10 +1131,6 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -1177,10 +1171,13 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                          net_perf_client, wifi_client, protocol, ssid):
@@ -1225,6 +1222,7 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
 
 # Verify the Deep Sleep functionality of DUT when configured in STA_BT_BLE mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -1237,14 +1235,34 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config(
+    "net_perf_client",
+    net_perf={"host_role": IperfConstants.SERVER_MODE},
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt_client, ble_client, wifi_access_point):
+def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt_client, ble_client, wifi_access_point, net_perf_client,
+                                                                    wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+        # Enables the wifi power save in DUT
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+
+        # Enables the bt power save in DUT
+        logger().info("Setting DUT in bt power save...")
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+        logger().info("Initiating scan from dut...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(f'Scan results are : {scan_results}')
+        logger().info("Disabling WLAN Power Save in DUT...")
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
+        # # Enables the bt power save in DUT
+        logger().info("Disabling BT Power Save in DUT...")
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled)
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
@@ -1260,10 +1278,11 @@ def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"ble_address: '{ble_address}'")
 
-    logger().info("Initiating power-save2 on DUT")
-    result = wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    assert result, "Device has not gone to powersave mode"
+    logger().info(f"Initiating '{protocol}' traffic with client '{wifi_client.name}'")
+    run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
+
+    logger().info("Checking connection status of BT, BLE, Wi-Fi")
+    check_connection_status(wifi_dut)
 
     logger().info("Initiating BT disconnection on DUT")
     bt_disconnect(wifi_dut, bt_address, bt_socket)
@@ -1273,5 +1292,7 @@ def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt
 
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
+
+
 
 
