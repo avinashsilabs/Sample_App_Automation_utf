@@ -395,7 +395,6 @@ class BtSppMasterThread_diff_data(ThreadBase):
                     data = bt_client_socket.recv()
                     assert data is not None, f"Failed to ping BT client to DUT"
                     assert data.decode() == send_text
-
                 # Ping dut
                 logger().info(f"**** pinging to DUT ****")
                 assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
@@ -505,7 +504,6 @@ class BtSppMasterThread_diff_data(ThreadBase):
                     data = bt_client_socket.recv()
                     assert data is not None, f"Failed to ping BT client to DUT"
                     assert data.decode() == send_text
-
                 # Ping dut
                 logger().info(f"**** pinging to DUT ****")
                 assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
@@ -736,7 +734,7 @@ def test_bt_coex_mode_C20088(wifi_dut, wifi_access_point, bt_client, wifi_sniffe
         if not found:
             assert found, "Dut unable to find the bt client device. The test case may fail"
 
-        for i in range(1, 6):
+        for i in range(1, iter_cnt):
             logger().info(f"Starting Raspberry PI as BT Server")
             with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server) as bt_server_socket:
                 # SPP Connection
@@ -798,7 +796,6 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut,wifi_access_point,bt_client):
         time.sleep(5)
         t2.wait_for_exit(True)
         logger().info(f" iteration completed: {i} ")
-        time.sleep(10)
 
 
 
@@ -830,7 +827,6 @@ def test_bt_coex_mode_C20090(wifi_dut, bt_client, wifi_access_point):
     t1.start()
     time.sleep(5)
     t1.wait_for_exit(True)
-    time.sleep(10)
 
 
 
@@ -862,8 +858,6 @@ def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point):
     t1.start()
     time.sleep(5)
     t1.wait_for_exit(True)
-    time.sleep(10)
-
 
 
 
@@ -1323,12 +1317,6 @@ def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
                     assert result[1] == bt_dut_address, "Unable to find BT client socket connection"
                     logger().info(f"Result from Callable Function {result}")
 
-                # Ping dut
-                logger().info(f"  Ping to DUT ")
-                assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
-                    f"Failed to ping BT client to DUT"
-                logger().info(f" Pinging ")
-
                 # Send data from bt_client to dut
                 with wifi_dut.interfaces.wifi.run_bt_task():
                     logger().info(f'Data transfer from BT_client')
@@ -1762,8 +1750,6 @@ def test_bt_coex_noremote_C20102(wifi_dut, wifi_access_point, bt_client,wifi_sni
 
         # Remote device un-pairing
         bt_client.interfaces.bluetooth.bt_device.remove_device(bt_dut_address)
-        #bt_client.interfaces.bluetooth.bt_adapter.set_noscan()
-        #bt_client.interfaces.bluetooth.bt_adapter.bt_disable()
         logger().info(f" bt inquiry started ")
         time.sleep(10)
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
@@ -1903,8 +1889,8 @@ def test_bt_coex_wrong_pin_C20104(wifi_dut, wifi_access_point, bt_client, wifi_s
 
         logger().info("fetching dut mac address....")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-        for i in range(1, 4):
+        iter_cnt=4
+        for i in range(1, iter_cnt):
             bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp(bt_pin_code="1234")
             assert bt_dut_address is not None, f"Failed to get bt dut address"
             bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="9876")
@@ -2642,7 +2628,6 @@ def test_sta_bt_C20112(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
     bt_obj.wait_for_exit()
     time.sleep(1)
     clean_obj.wait_for_exit()
-    time.sleep(10)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2663,7 +2648,6 @@ def test_sta_bt_C20113(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
     bt_obj.wait_for_exit()
     time.sleep(1)
     clean_obj.wait_for_exit()
-    time.sleep(10)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2684,7 +2668,6 @@ def test_sta_bt_C20114(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
     bt_obj.wait_for_exit()
     time.sleep(1)
     clean_obj.wait_for_exit()
-    time.sleep(10)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2705,7 +2688,6 @@ def test_sta_bt_C20115(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
     bt_obj.wait_for_exit()
     time.sleep(1)
     clean_obj.wait_for_exit()
-    time.sleep(10)
 
 
 
@@ -3448,8 +3430,8 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_
             # BT initialization
             logger().info(f'******BT initialization******')
             wifi_dut.interfaces.wifi.bt_start()
-
-            for i in range(0, 3):
+            iter_cnt = 4
+            for i in range(1, iter_cnt):
                 # start BT inquiry with RSSI from DUT
                 logger().info(f'******Start BT inquiry with RSSI from DUT******')
                 wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
