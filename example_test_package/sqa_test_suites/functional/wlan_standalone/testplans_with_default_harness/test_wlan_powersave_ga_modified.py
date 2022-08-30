@@ -1008,8 +1008,6 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
     validation = True
     capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487"
     dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1140,8 +1138,6 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remot
     validation = True
     capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490"
     dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1272,8 +1268,6 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remot
     validation = True
     capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493"
     dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1402,8 +1396,6 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
     validation = True
     capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494"
     dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1533,8 +1525,6 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(wifi_sniffer, remo
     validation = True
     capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497"
     dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
