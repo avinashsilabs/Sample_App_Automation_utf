@@ -208,3 +208,49 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'unable to find the power save packet'
     time.sleep(2)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+    }
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_https_put_functionality_c19234(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
+                                        index_path):
+    validation = True
+    file_name = 'test_https_put_functionality_c19231'
+    mac_address, bssid = join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
+                                         index_path, file_name)
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    logger().info("Creating of HTTP PUT ")
+    wifi_dut.interfaces.http.http_put_create()
+
+    logger().info("HTTP PUT command initialization")
+    wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path, "" "" "" '50')
+
+    logger().info("HTTP PUT DATA")
+    wifi_dut.interfaces.http.http_put_pkt("HellotestingforHTTPPUTfunctionalityusingHTTPserver")
+
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+
+    logger().info(f"DUT going to leave")
+    wifi_dut.interfaces.wifi.leave()
+    time.sleep(2)
+    logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'unable to find the power save packet'
+    time.sleep(2)
