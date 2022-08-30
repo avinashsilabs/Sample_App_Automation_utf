@@ -10,7 +10,6 @@ from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
-from utf.interfaces.wifi import RecoveryError
 
 last_loaded_custom_app_name = None
 
@@ -82,11 +81,6 @@ def store_environment_info(request, harness: Harness):
     access_point_type = UtfConfig.instance().data.get("devices", {}).get(access_point, {}).get("interfaces", {}).get("wifi", {}).get("type", "")
     access_point_type = access_point_type.split(".")[-1]
     request.config._metadata['Access point Type'] = access_point_type
-
-
-@pytest.fixture(autouse=True, scope='session')
-def load_recovery_errors(request, harness: Harness):
-    RecoveryError.create_instance(UtfConfig.instance().data.get("recovery_error_codes", []))
 
 
 def pytest_collection_modifyitems(config, items):
