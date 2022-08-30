@@ -36,7 +36,7 @@ def logger():
 
 
 def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point, index_path, file_name):
-    ping_count = 120
+    ping_count = 10
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
     time.sleep(3)
@@ -60,13 +60,13 @@ def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_acces
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"AP MAC: {bssid}")
 
-    logger().info("Enabling wifi power save")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_wifi_ps, "failed to enable wifi power save"
+    logger().info("Enables the wifi power save in dut")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    logger().info("Enabling  bt power save")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    assert enable_bt_ps, "failed to enable bt power save"
+    logger().info("Enables the bt power save in dut")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     logger().info(f'DUT ip {device_ip}')
     logger().info("pinging to dut.....")
