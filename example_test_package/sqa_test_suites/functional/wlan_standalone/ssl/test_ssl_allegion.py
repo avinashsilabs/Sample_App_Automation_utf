@@ -4886,3 +4886,117 @@ def test_TC19186_awscloud_with_different_certificate(
 
     pwr = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
     assert pwr, "packets are not captured in the sniffer"
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["start_field.pem", "start_field.pem", "start_field.pem"],
+        "client_cert": [False, "client-certificate.crt", "client-certificate.crt"],
+        "client_key": [False, "private-key.key", "private-key.key"],
+    }
+)
+@pytest.mark.parametrize("cert1",
+                         [
+                             ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                              "mosquitto-utf.silabs.com.key.pem"],
+                             ]
+                         )
+@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "disassociated", "close_sockets", "disable_store_config"])
+def test_1openssl_2AWS_C19151(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, domain_name, cert1, logger):
+
+        ping_count = 10
+        capture_filename = "test_1openssl_2AWS_C19151"
+        dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+
+        bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {bssid}')
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger.info(f"DUT MAC_Address: {dut_mac_address}")
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+
+        ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
+
+        for sock_count in range(3):
+            logger.info(f"************{sock_count}")
+            if sock_count == 0:
+
+                wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                             str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                             cert_index=0,
+                                                             )
+
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       eval("SocketOptions.CERT_INDEX" + str(sock_count)))
+
+
+            if sock_count == 0:
+
+                local_port = port1
+                wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+                wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=local_port)
+
+            else:
+
+                socket_port = 8883
+                # local_port = randint(20001, 40000)
+                local_port = randint(40001, 50000)
+                wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+                result = wifi_dut.interfaces.wifi.dns_get(4, domain_name, "NULL",
+                                                          "NULL")
+                logger.info(f"dns response is {result}")
+                server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+                for count in range(0, 3):
+                    try:
+                        wifi_dut.interfaces.wifi.connect(sock, server_ip, socket_port)
+                        break
+                    except:
+                        logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                        time.sleep(1)
+                logger.info(f"Connection to AWS server on socket id->{sock} is successful")
+
+
+        for sock_count in range(3):
+            logger.info(f"Closing socket_id->{sock_count}")
+            result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop Sniffer finally")
+        validation = True
+        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
+                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+        logger.info(f"PS-POLL packets are captured in the sniffer")
+
+        pwr = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+        assert pwr, "packets are not captured in the sniffer"
