@@ -3,15 +3,17 @@ import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
 from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116CoexMode, RS9116Band, RS9116FeatureBitMap, \
-    RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116ExtCustomFeatureBitMap,\
-    RS9116ExtTCPIPFeatureBitMap,RS9116AsyncEventType, SocketParams,RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes, DeviceConstants
+    RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116ExtCustomFeatureBitMap, \
+    RS9116ExtTCPIPFeatureBitMap, RS9116AsyncEventType, SocketParams, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
+    RS9116PowerSaveProcedureTypes, DeviceConstants
 import time
+from typing import Dict
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from datetime import datetime
 import uuid
-from typing import Dict
+
 
 
 
@@ -46,8 +48,8 @@ def logger():
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19314", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
@@ -61,54 +63,61 @@ def logger():
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19314", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                        execute_number):
+def test_device_as_sta_and_ap_c_19314(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      execute_number):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19314')
+    time.sleep(3)
+
     # preparing wifi_dut as access point - AP Mode
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    ap_mac = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19314", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
     wifi_client.interfaces.wifi.join()
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
-    logger().info("fetching p address of 3rd party sta")
+    logger().info("fetching ip address of 3rd party sta")
     wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
-    status = ping(wifi_client_ip, ping_iterations)
-    assert status == 1
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(wifi_client_ip))
+    logger().info("wifi_client ip: " + wifi_client_ip)
+    status = ping(wifi_client_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
 
     logger().info("Disconnecting 3rd party station from RS9116 AP")
     wifi_client.interfaces.wifi.leave()
@@ -124,7 +133,7 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
     logger().info("DHCP decryption is in progress")
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -134,7 +143,7 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-######c19315##########
+# #####c19315##########
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -147,8 +156,8 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19315", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
@@ -162,52 +171,59 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19315", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c_19315(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19315')
+    time.sleep(3)
+
     # preparing wifi_dut as access point - AP Mode
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    ap_mac = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+ 
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19315", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
     wifi_client.interfaces.wifi.join()
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
-    logger().info("fetching p address of 3rd party sta")
+    logger().info("fetching ip address of 3rd party sta")
     wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
-    status = ping(wifi_client_ip, ping_iterations)
-    assert status == 1
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(wifi_client_ip))
+    logger().info("wifi_client ip: " + wifi_client_ip)
+    status = ping(wifi_client_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
     packet_filter1 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
 
     logger().info("Disconnecting DUT station from 3rd party AP")
     wifi_dut.interfaces.wifi.leave()
@@ -215,10 +231,12 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
     logger().info("reconnecting DUT station from 3rd party AP")
     wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                   security=wifi_access_point.interfaces.wifi.security,
-                                  passphrase=wifi_access_point.interfaces.wifi.passphrase)
+                                  passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                  channel=wifi_access_point.interfaces.wifi.channel)
 
+    time.sleep(5)
     logger().info("fetching ip address through DHCP")
-    wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    wifi_dut.interfaces.wifi.start_ip()
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -227,7 +245,7 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
@@ -249,8 +267,8 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
                           | RS9116TCPIPFeatureBitMap.Ping | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19324", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
@@ -264,69 +282,68 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19324", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c_19324(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+    ping_iterations = 10
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19324')
-    # preparing wifi_dut as access point - AP Mode
-    logger().info("fetching DUT mac address")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    time.sleep(3)
 
-    logger().info("fetching 3rd party  mac address")
-    ap_mac = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    # preparing wifi_dut as access point - AP Mode
+
 
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
-
-    time.sleep(10)
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19324", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
     wifi_client.interfaces.wifi.join()
 
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
-    assert (
-            wifi_client.interfaces.wifi.ping(
-                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
-            )
-            < 0.1
-    )
+
 
     logger().info("fetching ip address of 3rd party sta")
     wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
-    time.sleep(5)
-    logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(wifi_client_ip))
 
-     # preparing wifi_dut as STA - STA Mode
+    logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
+    logger().info("wifi_client ip: " + wifi_client_ip)
+    status = ping(wifi_client_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
+
+    # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
-
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(access_point_ip)
 
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(acces_point_ip)
+    logger().info("fetching DUT mac address")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info("fetching 3rd party  mac address")
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
     packet_filter1 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
 
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
     logger().info("Disconnecting DUT station from 3rd party AP")
 
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -336,7 +353,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
@@ -348,11 +365,15 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 
         logger().info("reconnecting DUT station from 3rd party AP")
         time.sleep(10)
-        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,security=wifi_access_point.interfaces.wifi.security,\
-                                      passphrase=wifi_access_point.interfaces.wifi.passphrase)
-
-        logger().info("fetching ip address through DHCP")
-        wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        time.sleep(5)
+        for i in range(3):
+            try:
+                logger().info("fetching ip address through DHCP")
+                wifi_dut.interfaces.wifi.start_ip()
+            except:
+                logger().info(f"Get IP address through dhcp process is failed. retry count -> {i+1}")
+                time.sleep(5)
 
         logger().info(f'connected and disconnected for {count} times')
 
@@ -371,8 +392,8 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19313", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
@@ -386,7 +407,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19313", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -394,36 +415,40 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-
-def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                            protocol, net_perf_client, execute_number):
+def test_device_as_sta_and_ap_c_19313(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      protocol, net_perf_client, execute_number):
+    ping_iterations = 10
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19313')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC: {dut_mac_address}")
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
 
     # packet_filter3 = f'dhcp.hw.mac_addr == {dut_mac_address}'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
-
+    logger().info("access point ip: " + str(access_point_ip))
 
     # preparing wifi_dut as access point - AP Mode
 
@@ -431,7 +456,7 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19313", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
     time.sleep(5)
     wifi_client.interfaces.wifi.join()
@@ -440,8 +465,9 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info("fetching p address of 3rd party sta")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(host_ip))
-
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
     logger().info("setting eth0 interface on raspi ")
     wifi_client.interfaces.wifi.interface = "eth0"
     logger().info("fetching eth0 interface ip of raspi wifi connected to 3rd party ap over ethernet")
@@ -472,7 +498,7 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -481,8 +507,9 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
 
-#######19322-5Ghz########
+# ######19322-5Ghz########
 
+# @pytest.mark.skip()
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
@@ -495,7 +522,8 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "band": RS9116Band.FiveGHz,
-        "security": "WPA2", "ssid": "RS9116_5Ghz", "passphrase": "1234567890", "channel": 161,
+        "security": "WPA2", "ssid": "RS9116_5Ghz_C19322", "passphrase": "1234567890", "channel": 149,
+        # changed to channel 149 because raspi is not supporting channel 161
     }
 )
 @pytest.mark.config(
@@ -504,13 +532,14 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
         'ssid': 'Concurent_ap',
         'security': 'WPA2',
         'passphrase': 'test1234',
-        'channel': 161,
+        'channel': 149,
     }
 
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_5Ghz", "passphrase": "1234567890", "channel": 161}
+    wifi={"security": "WPA2", "ssid": "RS9116_5Ghz_C19322", "passphrase": "1234567890", "channel": 149,
+          "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -518,35 +547,40 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                            protocol, net_perf_client, execute_number):
+def test_device_as_sta_and_ap_c_19322(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      protocol, net_perf_client, execute_number):
+    ping_iterations = 10
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19322')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC: {dut_mac_address}")
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
 
     # packet_filter3 = f'dhcp.hw.mac_addr == {dut_mac_address}'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
-
+    logger().info("access point ip: " + str(access_point_ip))
 
     # preparing wifi_dut as access point - AP Mode
 
@@ -554,20 +588,19 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info("Bringing up DUT in AP mode")
-
-    wifi_dut.interfaces.wifi.start_ap()
-    time.sleep(10)
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_5Ghz_C19322", security="WPA2", passphrase="1234567890", channel=149)
+    time.sleep(15)
     logger().info("joining 3rd party client to DUT ap")
-    wifi_client.interfaces.wifi.join(ssid="RS9116_5Ghz")
-
-    # wifi_client.interfaces.wifi.join()
+    wifi_client.interfaces.wifi.join()
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
     logger().info("fetching p address of 3rd party sta")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
 
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(host_ip))
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
 
     wifi_client.interfaces.wifi.interface = "eth0"
 
@@ -601,8 +634,9 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
 
-###############19312###############
 
+
+# ##############19312###############
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -616,8 +650,8 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19312", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
@@ -631,7 +665,7 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19312", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -639,34 +673,38 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                            protocol, net_perf_client, execute_number):
+def test_device_as_sta_and_ap_c_19312(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      protocol, net_perf_client, execute_number):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
+    ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19312')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
 
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC: {dut_mac_address}")
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
 
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
 
     # preparing wifi_dut as access point - AP Mode
 
@@ -674,7 +712,7 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19312", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
     time.sleep(10)
     wifi_client.interfaces.wifi.join()
@@ -684,8 +722,9 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
 
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(host_ip))
-
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
 
     # starting iperf server at raspi client
     logger().info("configured iperf server")
@@ -711,7 +750,7 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -721,9 +760,8 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-
-####################19319#########################
-###Connectivity of concurrent mode in WPA2 security#######
+# ###################19319#########################
+# ##Connectivity of concurrent mode in WPA2 security#######
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 8})
@@ -735,8 +773,8 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19319", "passphrase": "12345678", "channel": 8
     }
 )
 @pytest.mark.config(
@@ -750,51 +788,61 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 8}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19319", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c_19319(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
+    ping_iterations = 10
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19319')
+    time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
-    ping_iterations = 10
+    logger().info("access point ip: " + str(access_point_ip))
+
     # preparing wifi_dut as access point - AP Mode
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     ap_mac = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    logger().info("Bringing up DUT in AP mode")
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19319", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
+    time.sleep(5)
     wifi_client.interfaces.wifi.join()
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
     logger().info("fetching p address of 3rd party sta")
-    wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
-    status = ping(device_ip_dut_as_ap, ping_iterations)
-    assert status == 1
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(wifi_client_ip))
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
+
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
 
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -804,7 +852,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -814,8 +862,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-###############19318###############
-
+# ##############19318###############
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -828,8 +875,8 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": 'WPA2', "ssid": "ABCD", "channel": 8,"passphrase": "12345678"
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": 'WPA2', "ssid": "RS9116_AP_C19318", "channel": 8, "passphrase": "12345678"
     }
 )
 @pytest.mark.config(
@@ -843,55 +890,64 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "ABCD", "channel": 8, "passphrase": "12345678"}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19318", "channel": 8, "passphrase": "12345678", "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(1))
+@pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                            protocol, net_perf_client, execute_number):
+def test_device_as_sta_and_ap_c_19318(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      protocol, net_perf_client, execute_number):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
+    ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19318')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    time.sleep(3)
+
     # preparing wifi_dut as access point - AP Mode
-    ap_mac = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19318", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
-    time.sleep(20)
-    wifi_client.interfaces.wifi.join(ssid="ABCD")
+    time.sleep(5)
+    wifi_client.interfaces.wifi.join()
+
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
     logger().info("fetching p address of 3rd party sta")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(host_ip))
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
 
     # starting iperf server at raspi client with  DUT as AP
     logger().info("configured iperf server")
@@ -917,7 +973,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -926,9 +982,9 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
 
-###########19320#########
 
 
+# ##########19320#########
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
@@ -940,14 +996,14 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
-        "security": 'WPA2', "ssid": "RASPI_AP", "channel": 8,"passphrase": "12345678"
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": 'WPA2', "ssid": "RS9116_AP_C19320", "channel": 8, "passphrase": "12345678"
     }
 )
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
-        'ssid': 'DUT_AP',
+        'ssid': 'Concurrent_AP',
         'security': 'WPA2',
         'passphrase': 'test1234',
         'channel': 8,
@@ -955,7 +1011,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RASPI_AP", "channel": 8, "passphrase": "12345678"}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19320", "channel": 8, "passphrase": "12345678", "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -963,47 +1019,56 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                            protocol, net_perf_client, execute_number):
+def test_device_as_sta_and_ap_c_19320(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      protocol, net_perf_client, execute_number):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
+    ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19320')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    time.sleep(3)
+
     # preparing wifi_dut as access point - AP Mode
-    ap_mac = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19320", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
-    time.sleep(20)
-    wifi_client.interfaces.wifi.join(ssid="RASPI_AP")
+    time.sleep(10)
+    wifi_client.interfaces.wifi.join()
+
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
     logger().info("fetching p address of 3rd party sta")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi client ip: " + str(host_ip))
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status == 1, "failed to ping to client"
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
 
     # starting iperf server at raspi client with  DUT as AP
     logger().info("configured iperf server")
@@ -1053,7 +1118,7 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -1075,7 +1140,7 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "band": RS9116Band.Default,
-        "security": 'WPA2', "ssid": "RASPI_AP", "channel": 8,"passphrase": "12345678"
+        "security": 'WPA2', "ssid": "RASPI_AP", "channel": 8, "passphrase": "12345678"
     }
 )
 @pytest.mark.config(
@@ -1095,13 +1160,15 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.skip()
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.config('wifi_access_point', wifi={"dhcp_start": "192.168.50.12", "dhcp_end": "192.168.50.20", "dhcp_lease":"180"})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"dhcp_start": "192.168.50.12", "dhcp_end": "192.168.50.20", "dhcp_lease": "180"})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                            protocol, net_perf_client, execute_number):
+def test_device_as_sta_and_ap_c_19316(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                      protocol, net_perf_client, execute_number):
     validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1129,20 +1196,20 @@ def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-    acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
-    wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
+    access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+    wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b)))'
     logger().info("DUT Station Mode")
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
-    logger().info("access point ip: " + str(acces_point_ip))
+    logger().info("access point ip: " + str(access_point_ip))
     wifi_access_point.interfaces.wifi.enable_dhcp_ap(
-        dhcp_start= "192.168.50.50",
-        dhcp_end= "192.168.50.60",
+        dhcp_start="192.168.50.50",
+        dhcp_end="192.168.50.60",
         dhcp_lease=120)
     time.sleep(120)
 
@@ -1154,7 +1221,7 @@ def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    assert status == True,"DUT mac not found in DHCP packet"
+    assert status, "DHCP packets not found"
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
@@ -1164,9 +1231,10 @@ def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-################C19321########################
+# ###############C19321########################
 
-def get_igmp_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layers: list, capture_filename, mode=0) -> Dict[str, int]:
+def get_igmp_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layers: list, capture_filename, mode=0) -> \
+        Dict[str, int]:
     igmp_capture_list = []
     current_time = time.time()
     updated_capture_file = 'filter_' + capture_filename + '_' + str(
@@ -1268,29 +1336,34 @@ def join_get_ip(wifi_access_point, utf_constants, wifi_dut):
     return mac_address, device_ip
 
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": RS9116OperatingMode.ConcurrentMode,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-            "set_send_feature_frame": True,
-            "band":  RS9116Band.Default,
-        }
-    )
-]
+# pytestmark = [
+#     pytest.mark.config(
+#         "wifi_dut",
+#         wifi=
+#         {
+#             "oper_mode": RS9116OperatingMode.ConcurrentMode,
+#             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+#             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+#             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+#             "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+#             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+#             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+#             "set_send_feature_frame": True,
+#             "band": RS9116Band.Default,
+#         }
+#     )
+# ]
+
+
+
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_constants, wifi_client, wifi_dut, multicast_client):
+def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_constants, wifi_client, wifi_dut,
+                                      multicast_client):
     capture_file = 'test_device_as_sta_and_ap_C19321'
     ping_count = utf_constants.get("ping_count")
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -1342,7 +1415,7 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    igmp_list = get_igmp_list(wifi_sniffer, dut_mac_address,  decryption_key, ["igmp"], capture_file)
+    igmp_list = get_igmp_list(wifi_sniffer, dut_mac_address, decryption_key, ["igmp"], capture_file)
     assert len(igmp_list) > 0, "IGMP packets or one of the 4-way handshake packets are not captured in the sniffer"
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
