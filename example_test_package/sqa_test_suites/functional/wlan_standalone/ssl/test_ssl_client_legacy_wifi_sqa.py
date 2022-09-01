@@ -146,7 +146,8 @@ def test_ssl_client_testcase_TC19109(
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
-
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -202,6 +203,10 @@ def test_ssl_client_testcase_TC19109(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 @pytest.mark.parametrize("repeat", [100])
@@ -213,6 +218,8 @@ def test_ssl_client_connect_close_sequence_testcase133(
 ):
     capture_filename = "test_ssl_client_connect_close_sequence_testcase133"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -278,6 +285,10 @@ def test_ssl_client_connect_close_sequence_testcase133(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -292,6 +303,8 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     port2 = ssl_server.interfaces.ssl.config['device_port2']
     bytes_sent = (pkt_count * buffer_length)
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -365,6 +378,10 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 # BIT_TLS_RSA_WITH_AES_256_CBC_SHA256 -> Supported with current python version
@@ -389,6 +406,8 @@ def test_ssl_client_cipher_list_testcase_TC19133(
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -465,6 +484,10 @@ def test_ssl_client_cipher_list_testcase_TC19133(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -476,6 +499,8 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
 ):
     capture_filename = "test_ssl_client_ciphersuite_mismatch_testcase_TC19133"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -510,6 +535,10 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -519,7 +548,8 @@ def test_ssl_socket_limit_testcase_TC19121(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
     capture_filename = "test_ssl_socket_limit_testcase_TC19121"
-
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -581,6 +611,10 @@ def test_ssl_socket_limit_testcase_TC19121(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -591,6 +625,8 @@ def test_ssl_client_version_1_2_testcase_TC19119(
 ):
     capture_filename = "test_ssl_client_version_1_2_testcase_TC19119"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -626,6 +662,10 @@ def test_ssl_client_version_1_2_testcase_TC19119(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
 
 
 @pytest.mark.parametrize("cert1, cert2",
@@ -643,7 +683,8 @@ def test_ssl_max_sockets_testcaseTC19128(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2
 ):
     capture_filename = "test_ssl_max_sockets_testcaseTC19128"
-
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -727,3 +768,7 @@ def test_ssl_max_sockets_testcaseTC19128(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
+    logger.info(f"SSL packets are captured in the sniffer")
