@@ -19,11 +19,10 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                label 'LAB0014503'
+                node "infraswHyderabadNode"
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
-                PYTHON3 = "t:\\python_3_9_2_x64\\python.exe"
                 HWMUX_GROUP_LABEL = "utf_dev_team_hyd_integration_test"
                 HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_3_hwmux_group.json"
                 HARNESS_NAME= "__hwmux__integration_tests_3.yaml"
@@ -32,12 +31,14 @@ pipeline {
             stages {
                 stage('Setup Environment') {
                     steps {
-                        bat """
-                            if not EXIST venv\\pyvenv.cfg (
-                               %PYTHON3%  -m venv venv
-                            )
-                            call workspace_setup.bat skip_gui
-                        """
+                        sh '''
+                        ./workspace_setup.sh
+                        if ! command -v ./yq &> /dev/null
+                        then
+                           curl -k -L https://nexus.silabs.net/repository/TCMGR/yq/yq_linux_amd64 --output yq
+                           chmod +x yq
+                        fi
+                        '''
                     }
                 }
                 stage('Launch Tests') {
@@ -45,32 +46,28 @@ pipeline {
                         hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
                             timeout(time: 120, unit: 'MINUTES') {
                                 writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
-                                bat(label: "Run UTF Launcher", script: """
-                                    type %HWMUX_GROUP_JSON_FILE_NAME% | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
-                                    set /p UTF_DOCKER_TARGET= < tmp_host_ip
-                                    del tmp_host_ip
+                                sh(label: "Run UTF Launcher", script: '''
+                                    UTF_DOCKER_TARGET=$(echo $HWMUX_GROUP_JSON_FILE_NAME | ./yq -r .metadata.host_ip)
 
-                                    if not exist yq.exe (
-                                        curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
-                                    )
-                                    type %HWMUX_GROUP_JSON_FILE_NAME%  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
+                                    echo $HWMUX_GROUP_JSON_FILE_NAME  | ./yq .metadata.harness -P > config/harnesses/$HARNESS_NAME
 
-                                    rd /s /q reports
+                                    rm -rf reports
 
-                                    call venv\\scripts\\activate
-                                    copy utf_core\\unit_tests\\.coveragerc integration_test\\.coveragerc
-                                    pushd executor
+                                    . $PYTHON3_VENV_DIR/bin/activate
+                                    cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
+                                    cd executor
 
-                                    set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
+                                    PYTEST_COMMAND="pytest --tb=native --tmconfig integration_test/$TEST_CONFIG_FILE --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
 
-                                    call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
-                                    set exitcode=%ERRORLEVEL%
+                                    set +e
+                                    ./launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
+                                    exitcode=$?
 
-                                    ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
+                                    ssh -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
                                     :: wait a bit for reboot, otherwise next job may fail
-                                    ping -n 15 %UTF_DOCKER_TARGET%
-                                    exit /b %exitcode%
-                                """)
+                                    ping -n 15 $UTF_DOCKER_TARGET
+                                    exit $exitcode
+                                ''')
                                 dir('integration_test') {
                                     archiveArtifacts artifacts: env.TEST_CONFIG_FILE
                                 }
