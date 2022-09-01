@@ -47,8 +47,8 @@ pipeline {
                             timeout(time: 120, unit: 'MINUTES') {
                                 writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
                                 sh(label: "Run UTF Launcher", script: '''
-                                    UTF_DOCKER_TARGET=$(echo $HWMUX_GROUP_JSON_FILE_NAME | ./yq --unwrapScalar .metadata.host_ip)
-
+                                    UTF_DOCKER_TARGET=$(echo $HWMUX_GROUP_JSON_FILE_NAME | ./yq --unwrapScalar '.metadata.host_ip')
+                                    
                                     echo $HWMUX_GROUP_JSON_FILE_NAME  | ./yq .metadata.harness -P > config/harnesses/$HARNESS_NAME
 
                                     rm -rf reports
