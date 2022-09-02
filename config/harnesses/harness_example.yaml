@@ -871,11 +871,11 @@ devices:
         interfaces:
             wcf_sniffer_ellysis_bluetooth_analyzer_service:
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.121.128:8735/Design_Time_Addresses/utf_wcf_service_library/SnifferEllisysBluetoothAnalyzerService/?wsdl'
+                wsdl: 'http://10.207.18.87:8735/Design_Time_Addresses/utf_wcf_service_library/SnifferEllisysBluetoothAnalyzerService/?wsdl'
                 timeout: 120000
             wcf_file_transfer_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.121.128:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                wsdl: 'http://10.207.18.87:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
             sniffer:
                 type: 'sniffer.ellisys.ellisys_bluetooth_analyzer_win_wcf'
@@ -1087,6 +1087,7 @@ defaults:
         elapsed_time: 20000
         device_filter_mode: 'KeepInvolving'
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
+        device_filter_addresses : ''
 
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
