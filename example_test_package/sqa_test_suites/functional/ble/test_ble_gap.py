@@ -524,24 +524,32 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
     )
-    assert bt_client_address,"failed to initiate ble in remote device"
+    assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client addr..{bt_client_address}")
-    time.sleep(1)
+    time.sleep(5)
     logger().info("Start scanning....")
     result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
-    assert result, "no bt device found"
+    scan_results = result.splitlines()
+    logger().info(f"scan_results: **********{scan_results}**********")
+    scan_status = False
+    for line in scan_results:
+        line = str(line)
 
+        logger().info("checking for remote device Advertisement type and BD address")
+        if "rsi_ble_simple_central_on_adv_report_event" in line:
+            logger().info(f"**************Advertise report :{line}**********")
+            if (bt_client_address in line) and ("report_type:0" in line):
+                logger().info("Advertisement type found 0x0 in adv report")
+                scan_status = True
+                break
+    assert scan_status, "no bt device found with adv type 0x0"
     logger().info("enabling the power save modes ")
     enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps,"failed to enable wifi power save"
+    assert enable_wifi_ps, "failed to enable wifi power save"
     enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps,"failed to enable bt power save"
+    assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
-
-    logger().info("verifying client addr is available in scan list...")
-    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
-    logger().info("found BT client address in dut scan list")
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
@@ -563,7 +571,7 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
@@ -580,7 +588,7 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
         bt_dut_address=bt_dut_address,
             hci_adv_params="0x40 0x00 "
                            "0x40 0x00 "
-                           "0x01 "
+                           "0x01 "# Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
                            "0x00 "
                            "0x00 "
                            +peer_address+
@@ -589,11 +597,24 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     )
     assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
-    time.sleep(1)
+    time.sleep(5)
     logger().info("Start scanning....")
     result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
-    assert result, "no ble device found"
+    scan_results = result.splitlines()
+    logger().info(f"scan_results: **********{scan_results}**********")
+    scan_status = False
+    for line in scan_results:
+        line = str(line)
+
+        logger().info("checking for remote device Advertisement type and BD address")
+        if "rsi_ble_simple_central_on_adv_report_event" in line:
+            logger().info(f"**************Advertise report :{line}**********")
+            if (bt_client_address in line) and ("report_type:1" in line):
+                logger().info("Advertisement type found 0x01 in adv report")
+                scan_status = True
+                break
+    assert scan_status, "no bt device found with adv type 0x01"
 
     logger().info("enabling the power save modes ")
     enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -602,9 +623,7 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
-    logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result), "failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
+
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
 
@@ -644,23 +663,30 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
                        "0x07 "
                        "0x00"
     )
-    assert bt_client_address,"failed to initiate ble in remote device"
+    assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
-    time.sleep(1)
+    time.sleep(5)
     logger().info("Start scanning....")
     result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
-    assert result, "no bt device found"
-
+    scan_results = result.splitlines()
+    logger().info(f"scan_results: **********{scan_results}**********")
+    scan_status = False
+    for line in scan_results:
+        line = str(line)
+        logger().info("checking for remote device Advertisement type and BD address")
+        if "rsi_ble_simple_central_on_adv_report_event" in line:
+            logger().info(f"**************Advertise report :{line}**********")
+            if (bt_client_address in line) and ("report_type:3" in line):
+                logger().info("Advertisement type found 0x03 in adv report")
+                scan_status = True
+                break
+    assert scan_status, "no bt device found with adv type 0x03"
     logger().info("enabling the power save modes ")
     enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
     enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
@@ -681,7 +707,7 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
@@ -700,23 +726,31 @@ def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
                        "0x07 "
                        "0x00"
     )
-    assert bt_client_address,"failed to initiate ble in remote device"
+    assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
-    time.sleep(1)
+    time.sleep(5)
     logger().info("Start scanning....")
     result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=30)
     logger().info(f" scan result '{result}")
-    assert result, "no bt device found"
+    scan_results = result.splitlines()
+    logger().info(f"scan_results: **********{scan_results}**********")
+    scan_status = False
+    for line in scan_results:
+        line = str(line)
+        logger().info("checking for remote device Advertisement type and BD address")
+        if "rsi_ble_simple_central_on_adv_report_event" in line:
+            logger().info(f"**************Advertise report :{line}**********")
+            if (bt_client_address in line) and ("report_type:2" in line):
+                logger().info("Advertisement type found 0x02 in adv report")
+                scan_status = True
+                break
+    assert scan_status, "no bt device found with adv type 0x02"
 
     logger().info("enabling the power save modes ")
     enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
     enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("verifying client addr, is available in scan list...")
-    assert str(bt_client_address) in str(result),"failed to find client bt addr in scan list...."
-    logger().info("found BT client address")
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
@@ -756,7 +790,7 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
                        "0x07 "  # Advertising_Channel_Map
                        "0x00"  # Advertising_Filter_Policy
     )
-    assert bt_client_address,"failed to initiate ble in remote device"
+    assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
     logger().info("Start scanning....")
@@ -785,7 +819,8 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
     ble_client.interfaces.bluetooth.stop_scanning()
 
     found_devices = ble_client.interfaces.bluetooth.get_devices()
-    assert ble_dut.interfaces.bluetooth.ble_address in found_devices,"dut is not listed in scan results"
+    logger().info(f"scan results from remote device:*********{found_devices}*****************")
+    assert ble_dut.interfaces.bluetooth.ble_address in found_devices, "dut is not listed in scan results"
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
