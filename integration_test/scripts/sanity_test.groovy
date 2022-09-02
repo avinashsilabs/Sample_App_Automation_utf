@@ -67,7 +67,7 @@ pipeline {
 
                                     ssh -i $MWLABUSER_JENKINS_SSH -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
                                     # wait a bit for reboot, otherwise next job may fail
-                                    ping -n 15 $UTF_DOCKER_TARGET
+                                    sleep 15
                                     exit $exitcode
                                 ''')
                                 dir('integration_test') {
