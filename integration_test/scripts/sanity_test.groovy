@@ -42,6 +42,9 @@ pipeline {
                     }
                 }
                 stage('Launch Tests') {
+                    environment {
+                        MWLABUSER_JENKINS_SSH = credentials("mwlabuser_jenkins_ssh")
+                    }
                     steps {
                         hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
                             timeout(time: 120, unit: 'MINUTES') {
@@ -62,7 +65,7 @@ pipeline {
                                     ./launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
                                     exitcode=$?
 
-                                    ssh -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
+                                    ssh -i $MWLABUSER_JENKINS_SSH -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
                                     # wait a bit for reboot, otherwise next job may fail
                                     ping -n 15 $UTF_DOCKER_TARGET
                                     exit $exitcode
