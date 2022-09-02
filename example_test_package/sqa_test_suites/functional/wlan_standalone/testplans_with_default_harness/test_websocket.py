@@ -233,6 +233,7 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
         data_final = "".join(data)
         wifi_dut.interfaces.wifi.send_data_over_websocket(0, opcode=129, message=data_final)
         logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
         time.sleep(2)
         assert ws_handler.message_received == data_final
 
@@ -350,7 +351,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     time.sleep(0.1)
     assert ws_handler.client_connected
     wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=137, message="!")
-    logger().info("opcode 9 sent")
+    logger().info("opcode 137 sent")
     iter_count = 30
     data = []
     for i in range(iter_count):
@@ -358,6 +359,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
         data_final = "".join(data)
         wifi_dut.interfaces.wifi.send_data_over_websocket(0, opcode=129, message=data_final)
         logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
         time.sleep(2)
         assert ws_handler.message_received == data_final
 
@@ -500,6 +502,7 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
         data_final = "".join(data)
         wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=129, message=data_final)
         logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
         time.sleep(2)
         assert ws_handler.message_received == data_final
 
@@ -642,10 +645,12 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
         data_final = "".join(data)
         wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=129, message=data_final)
         logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
         time.sleep(2)
         assert ws_handler.message_received == data_final
 
     wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=8, message="!")
+    logger().info("opcode 8 sent")
     time.sleep(0.1)
 
     logger().info("Stop Sniffer finally")
@@ -779,6 +784,7 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
         data_final = "".join(data)
         wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=1, message=data_final)
         logger().info("send_data_over_websocket")
+        logger().info("opcode 1 sent")
         time.sleep(2)
         assert ws_handler.message_received == data_final
 
@@ -905,6 +911,7 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
             data_final = "".join(data)
             wifi_dut.interfaces.wifi.send_data_over_websocket(sockets, opcode=129, message=data_final)
             logger().info(f"send_data_over_websocket{sockets}")
+            logger().info("opcode 129 sent")
             time.sleep(3)
             assert ws_handler.message_received == data_final
         port = port + 1
