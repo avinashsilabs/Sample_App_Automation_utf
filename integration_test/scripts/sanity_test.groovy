@@ -63,7 +63,7 @@ pipeline {
                                     exitcode=$?
 
                                     ssh -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
-                                    :: wait a bit for reboot, otherwise next job may fail
+                                    # wait a bit for reboot, otherwise next job may fail
                                     ping -n 15 $UTF_DOCKER_TARGET
                                     exit $exitcode
                                 ''')
