@@ -5,6 +5,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116PowerSaveModes,
     RS9116TCPIPFeatureBitMap,
     RS9116CustomFeatureBitMap,
+    RS9116PowerSaveProcedureTypes
 )
 import time
 import pytest
@@ -14,6 +15,7 @@ from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict, logger
+
 
 # from utf_wifi.utf_pytest.utf.devices.rs911x import RS9116TCPIPFeatureBitMap
 
@@ -36,9 +38,9 @@ def __print_throughput(iperf_throughput: dict):
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-        
+
     Author: Benazeer K
-        
+
 """
 
 ping_count = 10
@@ -55,13 +57,13 @@ ping_count = 10
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation
-        | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+                    | RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_verify_static_ip_allocation_to_dut(
-    wifi_sniffer, wifi_dut, wifi_access_point
+        wifi_sniffer, wifi_dut, wifi_access_point
 ):
     """=============================Verify Static IP allocation to DUT=========================="""
     validation = True
@@ -109,15 +111,15 @@ def test_verify_static_ip_allocation_to_dut(
     packet_filter3 = f"((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0x0024)) && (wlan.fc.pwrmgt == 1)"
 
     logger().info(f"*****Initiating power save in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(2)
 
     status = ping(device_ip, ping_count)
     assert (
-        status is True
+            status is True
     ), "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
 
@@ -148,13 +150,13 @@ def test_verify_static_ip_allocation_to_dut(
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation
-        | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+                    | RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_dhcp_renewal_time_to_2_min_renewal_func(
-    wifi_sniffer, wifi_dut, wifi_access_point
+        wifi_sniffer, wifi_dut, wifi_access_point
 ):
     """============Configure DHCP renewal time to 2 min and verify DHCP renewal functionality============="""
     validation = True
@@ -205,15 +207,15 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
     packet_filter3 = f"dhcp.ip.client == {device_ip}"
 
     logger().info(f"*****Initiating power save in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(5)
 
     status = ping(device_ip, ping_count)
     assert (
-        status is True
+            status is True
     ), "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
 
@@ -242,7 +244,7 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
 # @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 # @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# @pytest.mark.config('wifi_access_point', wifi={"dhcp_start": "192.168.50.30","dhcp_end": "192.168.50.33","dhcp_lease": "120"})
+# @pytest.mark.config('wifi_access_point', wifi={"dhcp_start": "192.168.50.60","dhcp_end": "192.168.50.90","dhcp_lease": "120"})
 # @pytest.mark.config(
 #     "wifi_dut",
 #     wifi=
@@ -250,7 +252,8 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
 #         "oper_mode": 0,
 #         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
 #         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+#         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+#         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
 #         "custom_features":RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
 #         # "band": 0
 #     }
@@ -294,10 +297,10 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
 #     packet_filter1 = f'dhcp.hw.mac_addr == {mac_address}'
 #
 #     logger().info(f"*****Initiating power save in DUT******")
-#     wifi_dut.interfaces.wifi.power_save(2, 0)
-#     wifi_dut.interfaces.wifi.bt_power_save(
-#         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-#     )
+#     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+#                                     RS9116PowerSaveProcedureTypes.FastPowerSave)
+#     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+#                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
 #     time.sleep(2)
 #
 #     status = ping(device_ip, ping_count)
@@ -309,19 +312,19 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
 #
 #     wifi_access_point.interfaces.wifi.enable_dhcp_ap()
 #     logger().info(f"Enabling DHCP lease time")
-#     time.sleep(5)
-#     logger().info('***** Disable the AP radio *****')
-#     wifi_access_point.interfaces.wifi.stop_ap()
-#     time.sleep(10)
-#     wifi_access_point.interfaces.wifi.start_ap()
-#     time.sleep(255)
+#     time.sleep(180)
+#     # logger().info('***** Disable the AP radio *****')
+#     # wifi_access_point.interfaces.wifi.stop_ap()
+#     # time.sleep(10)
+#     # wifi_access_point.interfaces.wifi.start_ap()
+#     # time.sleep(255)
 #     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 #     logger().info(f'Device is {device_ip}')
 #     logger().info(f"DUT going to leave")
 #     wifi_dut.interfaces.wifi.leave()
 #
-#     # wifi_access_point.interfaces.wifi.disable_dhcp_ap()
-#     # logger().info(f"Disable the dhcp lease time")
+#     wifi_access_point.interfaces.wifi.disable_dhcp_ap()
+#     logger().info(f"Disable the dhcp lease time")
 #
 #     logger().info("Sniffer going to stop")
 #     wifi_sniffer.interfaces.capture.stop_capture()
@@ -346,13 +349,13 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation
-        | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+                    | RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_tcp_tx_functionality_while_dhcp_renewal(
-    wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
+        wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
 ):
     """============Verify TCP-Tx functionality while DHCP renewal============="""
     validation = True
@@ -398,21 +401,21 @@ def test_tcp_tx_functionality_while_dhcp_renewal(
 
     time.sleep(5)
     logger().info(f"*****Initiating power save in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(10)
     status = ping(device_ip, ping_count)
     assert (
-        status is True
+            status is True
     ), "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
     time.sleep(10)
 
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     assert (
-        wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+            wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 10
     ), "fail to ping host"
     logger().info("Ping successful to host")
     time.sleep(10)
@@ -478,13 +481,13 @@ def test_tcp_tx_functionality_while_dhcp_renewal(
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation
-        | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.PSKSecurity,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+                    | RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_udp_tx_functionality_while_dhcp_renewal(
-    wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
+        wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
 ):
     """============Verify TCP-Tx functionality while DHCP renewal============="""
     validation = True
@@ -529,20 +532,20 @@ def test_udp_tx_functionality_while_dhcp_renewal(
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
     logger().info(f"*****Initiating power save in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(10)
     status = ping(device_ip, ping_count)
     assert (
-        status is True
+            status is True
     ), "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
     time.sleep(10)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     assert (
-        wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+            wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 10
     ), "fail to ping host"
     logger().info("Ping successful to host")
     time.sleep(10)
