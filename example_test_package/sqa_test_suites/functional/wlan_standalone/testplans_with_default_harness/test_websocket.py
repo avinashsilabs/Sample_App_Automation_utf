@@ -1,3 +1,4 @@
+import string
 from typing import Dict
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
@@ -17,7 +18,10 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116PowerSaveProcedureTypes,
     )
 import time
+import random
+import string
 import pytest
+import re
 from utf.utils import get_tls_certificate_dir
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
@@ -37,6 +41,43 @@ def logger():
     Description : Websocket testcases
     Reported by : CG-Team,Anusha
 """
+
+def text_generator(size=50):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
+def packet_check_pingpong(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
+                    capture_filename,
+                    mode=0) -> Dict[str, int]:
+    cipher_suite = []
+    count = 0
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'(wlan.addr == {mac_address})'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
+    for packet in wifi_sniffer.interfaces.capture.iter_packets(
+            decrypt_packets=True,
+            encryption_type="WPA-PWD",
+            decryption_key=decryption_key,
+            capture_file_filter=local_capture_file
+            ):
+        for layer in packet.layers:
+            layer_name = layer.layer_name.lower()
+            if layer_name == "websocket":
+                http_layer = str(layer)
+                if (re.search(".*Opcode: Ping",http_layer)):
+                    logger().info(f"PING PACKET {http_layer}")
+                elif (re.search(".*Opcode: Pong",http_layer)):
+                    logger().info(f"PONG PACKET {http_layer}")
+
+    return cipher_suite
 
 def packet_check(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
                     capture_filename,
@@ -91,7 +132,7 @@ class WebsocketEventHandler:
 
 
 # configure ping_count to ping dut
-ping_count = 40
+ping_count = 20
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -105,8 +146,8 @@ ping_count = 40
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "config_features": RS9116ConfigFeatureBitMap.Default,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         }
     )
@@ -150,10 +191,15 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f"enabling wifi power save mode in DUT......")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info(f"enabling bt power save mode in DUT......")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -180,13 +226,20 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
     assert ws_handler.client_connected
-    wifi_dut.interfaces.wifi.send_data_over_websocket(0, opcode=129, message="Howdy!")
-    logger().info("send_data_over_websocket")
-    time.sleep(10)
-    assert ws_handler.message_received == "Howdy!"
+    iter_count = 30
+    data = []
+    for i in range(iter_count):
+        data.append(text_generator(size=5))
+        data_final = "".join(data)
+        wifi_dut.interfaces.wifi.send_data_over_websocket(0, opcode=129, message=data_final)
+        logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
+        time.sleep(2)
+        assert ws_handler.message_received == data_final
+
     wifi_dut.interfaces.wifi.websocket_close(0)
     logger().info("websocket_close")
-    time.sleep(0.1)
+    time.sleep(2)
     assert ws_handler.client_disconnected
 
     logger().info("Stop Sniffer finally")
@@ -225,8 +278,8 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "config_features": RS9116ConfigFeatureBitMap.Default,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         }
     )
@@ -265,16 +318,19 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f"enabling wifi power save mode in DUT......")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info(f"enabling bt power save mode in DUT......")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-
-    # Initiate ping from third party wifi-client to DUT
     logger().info(f'DUT ip {device_ip}')
     logger().info("pinging to dut.....")
     status = ping(device_ip, ping_count)
@@ -294,10 +350,23 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
     time.sleep(0.1)
     assert ws_handler.client_connected
-    wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=137, message="Howdy!")
+    wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=137, message="!")
+    logger().info("opcode 137 sent")
+    iter_count = 30
+    data = []
+    for i in range(iter_count):
+        data.append(text_generator(size=5))
+        data_final = "".join(data)
+        wifi_dut.interfaces.wifi.send_data_over_websocket(0, opcode=129, message=data_final)
+        logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
+        time.sleep(2)
+        assert ws_handler.message_received == data_final
 
     wifi_dut.interfaces.wifi.websocket_close(sock)
-    time.sleep(0.1)
+    logger().info("websocket_close")
+    time.sleep(2)
+    assert ws_handler.client_disconnected
 
     logger().info("Stop Sniffer finally")
     time.sleep(5)
@@ -320,6 +389,17 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
 
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+
+    websocket_pktcheckpingpong = packet_check_pingpong(wifi_sniffer, logger, decryption_key, dut_mac_address, ["websocket"], capture_filename,
+                                 mode=0)
+
+    packet_filter3 = f'(websocket) && (websocket.opcode==9)'
+    ping_pkt = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+    assert ping_pkt, "Ping packet is not captured in the sniffer"
+    packet_filter4 = f'(websocket) && (websocket.opcode==10)'
+    pong_pkt = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)
+    assert pong_pkt, "Pong packet is not captured in the sniffer"
 
 
 
@@ -334,8 +414,8 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "config_features": RS9116ConfigFeatureBitMap.Default,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         }
     )
@@ -380,10 +460,15 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f"enabling wifi power save mode in DUT......")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info(f"enabling bt power save mode in DUT......")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -410,13 +495,20 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
     assert ws_handler.client_connected
-    wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=129, message="Howdy!")
-    logger().info("send_data_over_websocket")
-    time.sleep(10)
-    assert ws_handler.message_received == "Howdy!"
+    iter_count = 30
+    data = []
+    for i in range(iter_count):
+        data.append(text_generator(size=5))
+        data_final = "".join(data)
+        wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=129, message=data_final)
+        logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
+        time.sleep(2)
+        assert ws_handler.message_received == data_final
+
     wifi_dut.interfaces.wifi.websocket_close(sock)
     logger().info("websocket_close")
-    time.sleep(0.1)
+    time.sleep(2)
     assert ws_handler.client_disconnected
 
     logger().info("Stop Sniffer finally")
@@ -441,9 +533,15 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
 
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-
     websocket_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ["http"], capture_filename,
-                                   mode=0)
+                                 mode=0)
+
+    websocket_pktcheckpingpong = packet_check_pingpong(wifi_sniffer, logger, decryption_key, dut_mac_address,
+                                                       ["websocket"], capture_filename,
+                                                       mode=0)
+    packet_filter3 = f'(websocket) && (websocket.opcode==8)'
+    socket_close = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+    assert socket_close, "websocket close packet check is not found in sniffer"
 
 
 
@@ -458,8 +556,8 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "config_features": RS9116ConfigFeatureBitMap.Default,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         }
     )
@@ -504,10 +602,15 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f"enabling wifi power save mode in DUT......")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info(f"enabling bt power save mode in DUT......")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -532,17 +635,24 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
     wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
 
     logger().info("connect_to_websocket_server")
+
     time.sleep(0.1)
     assert ws_handler.client_connected
-    status = wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=8, message="How")
-    logger().info(f"send_data_over_websocket {status}")
-    time.sleep(10)
+    iter_count = 30
+    data = []
+    for i in range(iter_count):
+        data.append(text_generator(size=5))
+        data_final = "".join(data)
+        wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=129, message=data_final)
+        logger().info("send_data_over_websocket")
+        logger().info("opcode 129 sent")
+        time.sleep(2)
+        assert ws_handler.message_received == data_final
 
-    # with pytest.raises(WlanError) as exc_info:
-    #     # ssl socket opened in DUT connects to the server
-    #     wifi_dut.interfaces.wifi.websocket_close(sock)
-    # assert exc_info.value.error_code == 0xffffffff
-    # logger().info("checked socket close with api")
+    wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=8, message="!")
+    logger().info("opcode 8 sent")
+    time.sleep(0.1)
+
     logger().info("Stop Sniffer finally")
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -562,7 +672,17 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
         'packet_count'], 'Unable to find tcp , authentication ,association, eapol packet ' \
                          'in sniffer'
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
+    websocket_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ["http"], capture_filename,
+                                 mode=0)
+
+    websocket_pktcheckpingpong = packet_check_pingpong(wifi_sniffer, logger, decryption_key, dut_mac_address,
+                                                       ["websocket"], capture_filename,
+                                                       mode=0)
+    packet_filter3 = f'(websocket) && (websocket.opcode==8)'
+    socket_close = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+    assert socket_close, "websocket close packet check is not found in sniffer"
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -575,8 +695,8 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "config_features": RS9116ConfigFeatureBitMap.Default,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         }
     )
@@ -621,10 +741,15 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
     ), f"Failed to get IP address. Result = {result}"
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+    logger().info(f"enabling wifi power save mode in DUT......")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info(f"enabling bt power save mode in DUT......")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -651,16 +776,25 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
     assert ws_handler.client_connected
-    wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=1, message="!")
-    logger().info("send_data_over_websocket")
-    time.sleep(10)
-    assert ws_handler.message_received == "!"
-    wifi_dut.interfaces.wifi.websocket_close(sock)
+
+    iter_count = 30
+    data = []
+    for i in range(iter_count):
+        data.append(text_generator(size=5))
+        data_final = "".join(data)
+        wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=1, message=data_final)
+        logger().info("send_data_over_websocket")
+        logger().info("opcode 1 sent")
+        time.sleep(2)
+        assert ws_handler.message_received == data_final
+
     logger().info("websocket_close")
+    wifi_dut.interfaces.wifi.websocket_close(sock)
+    time.sleep(2)
+    assert ws_handler.client_disconnected
 
 
     logger().info("Stop Sniffer finally")
-    time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
 
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -695,10 +829,10 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid| RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
             "ca_cert": ["ca-chain.cert.pem"],
         }
     )
@@ -740,11 +874,15 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
     logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
     ping(device_ip, ping_count)
 
-    logger().info("enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(2)
+    logger().info(f"enabling wifi power save mode in DUT......")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
 
-    logger().info("enabling bt power save mode in DUT......")
-    wifi_dut.interfaces.wifi.bt_power_save(2)
+    logger().info(f"enabling bt power save mode in DUT......")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -761,41 +899,50 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
     )
 
     port = 5001
-    for i in range(0,2):
+    for sockets in range(2):
         wifi_dut.interfaces.wifi.connect_to_websocket_server(2, http_server.interfaces.http, server_port=443, local_port=port)
-        logger().info("connect_to_websocket_server")
+        logger().info(f"connect_to_websocket_server{sockets}")
         time.sleep(0.1)
         assert ws_handler.client_connected
-        wifi_dut.interfaces.wifi.send_data_over_websocket(i, opcode=129, message="Howdy!")
-        logger().info("send_data_over_websocket")
-        time.sleep(10)
-        assert ws_handler.message_received == "Howdy!"
+        iter_count = 30
+        data = []
+        for j in range(iter_count):
+            data.append(text_generator(size=5))
+            data_final = "".join(data)
+            wifi_dut.interfaces.wifi.send_data_over_websocket(sockets, opcode=129, message=data_final)
+            logger().info(f"send_data_over_websocket{sockets}")
+            logger().info("opcode 129 sent")
+            time.sleep(3)
+            assert ws_handler.message_received == data_final
         port = port + 1
 
 
-    for i in range(0, 2):
-        wifi_dut.interfaces.wifi.websocket_close(i)
+    for sockets in range(2):
+        wifi_dut.interfaces.wifi.websocket_close(sockets)
         logger().info("websocket_close")
-        logger().info("websocket_close")
-        time.sleep(0.1)
+        time.sleep(2)
         assert ws_handler.client_disconnected
 
-        logger().info("Stop Sniffer finally")
-        time.sleep(5)
-        wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
+    time.sleep(5)
+    wifi_sniffer.interfaces.capture.stop_capture()
 
-        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
 
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-        logger().info(f"PS-POLL packets are captured in the sniffer")
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger().info(f"PS-POLL packets are captured in the sniffer")
 
-        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-        packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
-                         f'(wlan.fc.type_subtype == 0x0028) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
+    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+    packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0028) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
-        logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-            'packet_count'], 'Unable to find tcp , authentication ,association, eapol packet ' \
-                             'in sniffer'
+    logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find tcp , authentication ,association, eapol packet ' \
+                         'in sniffer'
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+
+    websocket_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ["http"], capture_filename,
+                                 mode=0)
