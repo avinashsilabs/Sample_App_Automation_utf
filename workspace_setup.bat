@@ -18,6 +18,7 @@ if not EXIST venv\pyvenv.cfg (
 call venv\scripts\activate
 
 python -m pip install --upgrade pip
+pip install --upgrade setuptools
 pip install wheel pyyaml
 python utf_core\tools\workspace_setup.py %CD% config\workspace.yaml
 if %errorlevel% neq 0 (
