@@ -472,7 +472,7 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
