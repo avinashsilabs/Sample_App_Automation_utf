@@ -1,0 +1,12 @@
+id: 70ad2fbd-ec6e-4b9d-bc5d-db58dd42ee06
+name: socket
+description: ''
+test_cases:
+  - test_case_id: ec502278ec2f7fd76e913868331fa8fe852523bd
+    iterations: 1
+  - test_case_id: f9ac7b90be9fd12186de271c539cdbf319eaf866
+    iterations: 1
+  - test_case_id: 7ababbe792d9b11615a79062ede0928dfffb75dd
+    iterations: 1
+  - test_case_id: 681ec660f8dc60022e98a3db72b2d2dd02e82079
+    iterations: 1

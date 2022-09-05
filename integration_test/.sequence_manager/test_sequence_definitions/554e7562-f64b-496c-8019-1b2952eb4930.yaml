@@ -1,0 +1,18 @@
+id: 554e7562-f64b-496c-8019-1b2952eb4930
+name: integration_test_2
+description: integration_test_2
+test_suite_infos:
+  - test_suite_id: e3aedb2e-98fd-4d8a-9a99-543306ad59b0
+    iterations: 1
+  - test_suite_id: ceb3e60e-d8a1-424d-a3d8-7bdeffbae97c
+    iterations: 1
+  - test_suite_id: 5b21c35a-e04b-4e9d-952b-a484acccdef1
+    iterations: 1
+  - test_suite_id: e2f9b6d0-345b-47c9-808c-ad3667b89a81
+    iterations: 1
+  - test_suite_id: e25dcae8-812a-4eeb-a004-edb33a7b2cb3
+    iterations: 1
+  - test_suite_id: 542e6d3b-c3c4-4a83-ac75-132d2c7e6273
+    iterations: 1
+  - test_suite_id: dd544fff-5a31-4a76-b505-6076a6efd7ce
+    iterations: 1

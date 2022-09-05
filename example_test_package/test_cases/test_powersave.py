@@ -1,6 +1,6 @@
 import pytest
-from utils.stopwatch import Stopwatch
-from devices.rs911x import RS9116FeatureBitMap
+from utf.utils.stopwatch import Stopwatch
+from utf_wiseconnect.devices.rs911x import RS9116FeatureBitMap
 
 @pytest.mark.parametrize(
     "wifi_dut",

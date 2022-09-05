@@ -1,0 +1,12 @@
+id: 0ff25722-8512-482e-b633-a6331406bc9e
+name: asus_rt_ax3000_ap
+description: ''
+test_cases:
+  - test_case_id: c3106ffb-208c-4380-a422-31c399bacc9e
+    iterations: 1
+  - test_case_id: f3eaefed-bdcf-420f-8257-d632652111e1
+    iterations: 1
+  - test_case_id: 78bea853-6a22-4fc2-b09c-858b2eadb347
+    iterations: 1
+  - test_case_id: f055740d-4419-4541-a087-5f2b88f7e128
+    iterations: 1

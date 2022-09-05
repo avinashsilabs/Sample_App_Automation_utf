@@ -1,0 +1,42 @@
+devices:
+  guest_ap:
+    interfaces:
+      wifi:
+        type: 'wifi.access_points.static'
+        ssid: 'SLA_Test'
+        passphrase: 'itsdifficulttoremember'
+        supports: 'wifi_ap'
+
+  rs9116_abcd1234:
+    type: 'rs911x'
+    defaults:
+      cli_transport: 'uart1'
+    interfaces:
+      uart1:
+        port: 'COM37'
+      wifi:
+        type: 'cli.rs_at_commands'
+
+  rpi4_1234:
+    type: 'raspberry_pi'
+    interfaces:
+      wifi:
+        type: 'linux_wifi'
+        supports: ['wifi_client', 'wifi_ap']
+        device: 'wlan0'
+      shell:
+        type: 'ssh_shell'
+        remote: '10.6.32.26'
+
+defaults:
+  dut: 'rs9116_abcd1234'
+  wifi_access_point: 'guest_ap'
+
+  serial:
+    baud: 115200
+
+  wifi:
+    ssid: 'SLA_Test'
+    security: 6
+    channel: 6
+    passphrase: 'itsdifficulttoremember'

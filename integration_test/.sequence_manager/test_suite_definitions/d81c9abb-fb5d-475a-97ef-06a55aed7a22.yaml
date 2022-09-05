@@ -1,0 +1,8 @@
+id: d81c9abb-fb5d-475a-97ef-06a55aed7a22
+name: sanity_test
+description: ''
+test_cases:
+  - test_case_id: fb1256f2a3b05820535277be1343c17a4f6740b2
+    iterations: 1
+  - test_case_id: cc409444-de36-4faa-b27f-90d24cdff3ff
+    iterations: 1

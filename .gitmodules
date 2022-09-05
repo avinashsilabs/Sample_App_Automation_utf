@@ -1,12 +1,9 @@
-[submodule "rs911x"]
-	path = rs911x
-	url = ../../Redpine/utf
-[submodule "mini_gecko_sdk"]
-	path = mini_gecko_sdk
-	url = ../../Redpine/mini_gecko_sdk
-[submodule "utf_pytest"]
-	path = utf_pytest
-	url = ../utf_python_core
 [submodule "tcmgr"]
 	path = tcmgr
 	url = ../../toolchain_internal/tcmgr.git
+[submodule "utf_core"]
+	path = utf_core
+	url = ../../utf/utf_core
+[submodule "utf_wiseconnect"]
+	path = utf_wiseconnect
+	url = ../../utf/utf_wiseconnect

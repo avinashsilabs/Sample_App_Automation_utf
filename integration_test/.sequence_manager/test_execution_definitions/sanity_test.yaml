@@ -1,0 +1,40 @@
+root_path: integration_test
+test_sequence:
+  - id: fb1256f2a3b05820535277be1343c17a4f6740b2
+    test_case_id: test_version
+    test_function: test_version
+    test_id: test_version::1
+    test_module: test_cases/test_version.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_sapi',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 0
+    enabled: true
+    labels:
+      - cases
+      - version
+    iterations: 1
+    visible: true
+  - id: cc409444-de36-4faa-b27f-90d24cdff3ff
+    test_case_id: test_version-at
+    test_function: test_version
+    test_id: test_version-at::1
+    test_module: test_cases/test_version.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.dut('rs9116_at',)
+    test_params: []
+    test_class: null
+    description: null
+    library_name: ''
+    version: 1
+    enabled: true
+    labels:
+      - cases
+      - version
+    iterations: 1
+    visible: true

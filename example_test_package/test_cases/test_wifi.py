@@ -1,16 +1,42 @@
-from devices.rs911x import RS9116OperatingMode, RS9116Band
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.rs911x_version import parse_version
-from utils.time_measurer import TimeMeasurer
 import time
+from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS9116CoexMode, RS9116FeatureBitMap, \
+    RS9116ConfigFeatureBitMap, RS9116PowerSaveModes
+from utf_wiseconnect.utils.rs911x_version import parse_version, extract_version
+from utf.utils.time_measurer import TimeMeasurer
 import pytest
-from utils.logger import get_logger
+from utf.utils.logger import get_logger
+from utf import UtfDatabaseProperties
 
 
 def logger():
     return get_logger(__name__)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='wifi_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
+                                                       test_case_name='test_version1',
+                                                       test_case_id='test_version1::1',
+                                                       notes='test notes'))
 def test_version(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
@@ -60,9 +86,7 @@ def test_wifi_leave(wifi_networked_dut):
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
-        "oper_mode": RS9116OperatingMode.AccessPoint
-    },
+    wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
 )
 def test_wifi_start_ap(wifi_dut):
     wifi_dut.interfaces.wifi.start_ap()
@@ -70,48 +94,16 @@ def test_wifi_start_ap(wifi_dut):
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
-        "oper_mode": RS9116OperatingMode.AccessPoint
-    },
+    wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
 )
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
-    assert wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip) < 0.1
-
-
-@pytest.mark.config(
-    "wifi_access_points",
-    wifi={
-        # Here, indexing (starts with 0) applies as per order defined in harness.
-        0: {
-             'ssid': 'TESTTESTTEST2'
-        },
-        1: {
-             'ssid': 'Codecom123'
-        }
-    }
-)
-def test_multiple_access_points_config_override(wifi_dut, wifi_access_points):
-    for wifi_ap in wifi_access_points:
-        result = wifi_dut.interfaces.wifi.join_ap(wifi_ap)
-        assert result
-        wifi_dut.interfaces.wifi.leave()
-
-
-@pytest.mark.config(
-    "wifi_access_points",
-    wifi={
-        # Here, no need to provide respective index if there are no test case level config.
-        1: {
-             'ssid': 'Alia_2G'
-        }
-    }
-)
-def test_multiple_access_points(wifi_dut, wifi_access_points):
-    for wifi_ap in wifi_access_points:
-        result = wifi_dut.interfaces.wifi.join_ap(wifi_ap)
-        assert result
-        wifi_dut.interfaces.wifi.leave()
+    assert (
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
+    )
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -120,14 +112,38 @@ def test_multiple_access_points(wifi_dut, wifi_access_points):
     wifi={
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "band": RS9116Band.FiveGHz,
-        "security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36
-    }
+        "security": "WPA",
+        "ssid": "RS9116_AP",
+        "passphrase": "12345678",
+        "channel": 36,
+    },
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 36}
+    wifi={
+        "security": "WPA",
+        "ssid": "RS9116_AP",
+        "passphrase": "12345678",
+        "channel": 36,
+    },
 )
 def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
-    assert wifi_client.interfaces.wifi.ping(server_ip=wifi_client.interfaces.wifi.client_gateway_ip) < 0.1
+    assert (
+            wifi_client.interfaces.wifi.ping(
+                server_ip=wifi_client.interfaces.wifi.client_gateway_ip
+            )
+            < 0.1
+    )
+
+
+def test_parse_verion_from_web_server(http_server, http_client):
+    server_stat = http_server.interfaces.http.started
+    assert server_stat, "server not started"
+    status, content = http_client.interfaces.http.http_request(
+        http_server.interfaces.http, "GET", '/RS9116.2.5.0.4.rps'
+    )
+    assert status == 200
+    version = extract_version(content)
+    assert version == '1610.2.5.0.0.4'

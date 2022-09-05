@@ -1,0 +1,14 @@
+id: 9b1246bd-56d3-4ca9-872d-47b4473aac8c
+name: http_server_linux_client
+description: ''
+test_cases:
+  - test_case_id: c2351d8a0a01883540b6606e765005a170cac80b
+    iterations: 1
+  - test_case_id: ba60c41e56cdb747f708e4a72763d0c7e4ccef45
+    iterations: 1
+  - test_case_id: e032cfa53c846df7bc336e92edc56112f9a206e1
+    iterations: 1
+  - test_case_id: 07546eb3-9a79-4a1d-8b24-8eb509058a09
+    iterations: 1
+  - test_case_id: e63ea760-48e7-4f37-9d81-cb74f6e34d4d
+    iterations: 1

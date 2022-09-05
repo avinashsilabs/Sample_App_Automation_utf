@@ -1,7 +1,7 @@
-from interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
+from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 import pytest
-from interfaces.iperf.iperf_device_output_parser import Result
-from utils.iperf.iperf_utils import print_dict
+from utf.interfaces.iperf.iperf_device_output_parser import Result
+from utf.utils.iperf.iperf_utils import print_dict
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -49,7 +49,7 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
     __print_throughput(tp)
 
 
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video, "mss_value": '32k', "tcp_window_size": '32k'})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut

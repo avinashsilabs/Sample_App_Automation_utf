@@ -1,19 +1,17 @@
 # import pytest
-from interfaces.wifi import WlanError
+from utf.interfaces.wifi import WlanError
 
-from interfaces.iperf.iperf_constants import IperfConstants
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 import pytest
-from utils.logger import get_logger
+from utf.utils.logger import get_logger
 
-from integration_tests.common import logger
-
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.thread_base import ThreadBase
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils.thread_base import ThreadBase
 import time
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from interfaces.bluetooth import BTSocketRole
-from devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap
-from interfaces.iperf.iperf_device_output_parser import Result
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.interfaces.bluetooth import BTSocketRole
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap
+from utf.interfaces.iperf.iperf_device_output_parser import Result
 
 
 def logger():

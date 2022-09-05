@@ -1,79 +1,57 @@
-import pytest as pytest
+import pytest
 
-from interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utils.iperf import iperf_utils
-from interfaces.iperf.iperf_constants import IperfConstants
-from utils.logger import get_logger
-from utils.subprocess_manager import SubprocessManager
+from utf_wiseconnect.devices.rs911x import DeviceConstants
 
 
-def logger():
-    return get_logger(__name__)
+def test_socket(wifi_networked_dut, remote_socket, logger):
+    device_ip = wifi_networked_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    remote_socket.interfaces.socket.start_server()
+
+    sock = wifi_networked_dut.interfaces.wifi.open_tcp_client_socket()
+
+    assert sock == 0, f"socket id received is wrong, expected is 0"
+
+    wifi_networked_dut.interfaces.wifi.bind(sock, device_ip, 5001)
+    wifi_networked_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    wifi_networked_dut.interfaces.wifi.send(sock, 50)
+
+    wifi_networked_dut.interfaces.wifi.close_socket(sock)
+    remote_socket.interfaces.socket.socket_close_indication(1)
+    wifi_networked_dut.interfaces.wifi.leave()
 
 
-@pytest.mark.skip
-def test_sapi_socket(wifi_networked_dut):
-    if isinstance(wifi_networked_dut.interfaces.wifi, RSSAPICommands):
-        tcp_socket_id = wifi_networked_dut.interfaces.wifi.open_tcp_client_socket()
-        logger().info(f"tcp_socket_id : {tcp_socket_id}")
+def test_wifi_tcp_recv_data(wifi_dut, wifi_access_point, remote_socket, logger):
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
 
-        bind_response = wifi_networked_dut.interfaces.wifi.bind(1234,
-                                                                iperf_utils.get_device_ip(
-                                                                    wifi_networked_dut.interfaces.wifi.ip,
-                                                                    IperfConstants.SAPI), tcp_socket_id)
-        logger().info(f"bind_response: {bind_response}")
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
-        SubprocessManager.simple_execute("iperf -s -p 5001")
-        connect_response = wifi_networked_dut.interfaces.wifi.connect(socket_id=tcp_socket_id,
-                                                                      server_ip=iperf_utils.get_host_ip(),
-                                                                      server_port=5001)
-        logger().info(f"connect_response: {connect_response}")
+    # Open tcp socket in remote device(Raspberry pi or static device)
+    remote_socket.interfaces.socket.start_server(port=5000)
+    # DUT opens tcp client socket
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+    assert sock == 0, f"socket id received is wrong, expected is 0"
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5000)
+    # tcp socket opened in DUT connects to the tcp server
 
-        send_response = wifi_networked_dut.interfaces.wifi.send(tcp_socket_id, 1024)
-        logger().info(f"send_response: {send_response}")
+    wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket)
+    # DUT sends 20 bytes of data over tcp socket
+    data_len = 20
+    wifi_dut.interfaces.wifi.send(sock, data_len)
 
-        send_to_response = wifi_networked_dut.interfaces.wifi.send_to(tcp_socket_id, 1024, iperf_utils.get_host_ip(),
-                                                                      5001)
-        logger().info(f"send_to_response: {send_to_response}")
+    logger.info("Start receiving the packets...")
+    data = remote_socket.interfaces.socket.recv_data_tcp(data_len)
 
-        close_response = wifi_networked_dut.interfaces.wifi.close_socket(tcp_socket_id)
-        logger().info(f"close_tcp_socket_response: {close_response}")
+    logger.info(f"{data}")
+    assert data is not None
+    assert len(data) == data_len
 
-        udp_socket_id = wifi_networked_dut.interfaces.wifi.open_udp_client_socket()
-        logger().info(f"udp_socket_id: {udp_socket_id}")
-
-        close_response = wifi_networked_dut.interfaces.wifi.close_socket(udp_socket_id)
-        logger().info(f"close_udp_socket_response: {close_response}")
-
-        tcp_socket_id = wifi_networked_dut.interfaces.wifi.open_tcp_client_socket()
-        logger().info(f"tcp_socket_id : {tcp_socket_id}")
-
-        bind_response = wifi_networked_dut.interfaces.wifi.bind(1234,
-                                                                iperf_utils.get_device_ip(
-                                                                    wifi_networked_dut.interfaces.wifi.ip,
-                                                                    IperfConstants.SAPI), tcp_socket_id)
-        logger().info(f"bind_response: {bind_response}")
-
-        listen_response = wifi_networked_dut.interfaces.wifi.listen(tcp_socket_id)
-        logger().info(f"listen_response : {listen_response}")
-        device_ip = iperf_utils.get_device_ip(wifi_networked_dut.interfaces.wifi.ip, IperfConstants.SAPI)
-
-        SubprocessManager.simple_execute(f"iperf -c {device_ip} -p 5001")
-
-        new_socket = wifi_networked_dut.interfaces.wifi.accept(tcp_socket_id)
-        logger().info(f"accept_response : {new_socket}")
-
-        receive_response = wifi_networked_dut.interfaces.wifi.receive(new_socket, 1024)
-        logger().info(f"receive_response : {receive_response}")
-
-
-@pytest.mark.skip
-def test_at_socket(wifi_networked_dut):
-    if isinstance(wifi_networked_dut.interfaces.wifi, RSSAPICommands):
-        socket_id = wifi_networked_dut.interfaces.wifi.open_tcp_client_socket(server_ip='192.168.0.132',
-                                                                              server_port=5001,
-                                                                              local_port=1235)
-        wifi_networked_dut.interfaces.wifi.open_udp_client_socket(server_ip='192.168.0.132',
-                                                                  server_port=5002,
-                                                                  local_port=1234)
-        logger().info(f"AT: socketID: {socket_id}")
+    # DUT closes the tcp socket
+    result = wifi_dut.interfaces.wifi.close_socket(sock)
+    assert b"success" in result, "unable to close opened tcp socket"
+    remote_socket.interfaces.socket.socket_close_indication(1)

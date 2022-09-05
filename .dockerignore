@@ -1,8 +1,32 @@
-#ignore everything by default
-**
+venv/
+*.bat
+.git/
+.gitattributes
+.gitignore
+*.html
+*.pyc
+reports/
+.idea/
+*.pyo
+docs/
+tcmgr/
+utf_wiseconnect/test_agent/
 
-!rs911x/Host_MCU/test/**
-!rs911x/Host_MCU/component/**
-!rs911x/Host_MCU/sapi/**
-!rs911x/Host_MCU/third_party/**
-!mini_gecko_sdk/**
+# old submodules that may be left around
+utf_pytest/
+rs911x/
+mini_gecko_sdk/
+
+# on a raspberry pi we don't need the AMD64 commander binaries
+utf_core/src/utf/utils/commander_AMD64/
+
+# test case definitions are not required inside docker
+example_test_package/.sequence_manager/test_case_definitions
+example_test_package/.sequence_manager/test_sequence_definitions
+example_test_package/.sequence_manager/test_suite_definitions
+example_test_package/base_test_case_definitions.yaml
+
+integration_test/.sequence_manager/test_case_definitions
+integration_test/.sequence_manager/test_sequence_definitions
+integration_test/.sequence_manager/test_suite_definitions
+integration_test/base_test_case_definitions.yaml

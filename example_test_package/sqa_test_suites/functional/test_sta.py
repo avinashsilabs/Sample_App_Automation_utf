@@ -1,5 +1,5 @@
 import pytest
-from devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap,
+from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap,
                             RS9116CustomFeatureBitMap,
                             RS9116ConfigFeatureBitMap,
                             RS9116TCPIPFeatureBitMap,
@@ -7,12 +7,12 @@ from devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureB
                             RS9116ExtTCPIPFeatureBitMap,
                             RS9116CertificateType, RS9116SecurityMode
                             )
-from interfaces import wifi
-from utils.logger import get_logger
-from utils.time_measurer import TimeMeasurer
+from utf.interfaces import wifi
+from utf.utils.logger import get_logger
+from utf.utils.time_measurer import TimeMeasurer
 import time
-from interfaces.wifi import SecurityMode, WlanError
-import interfaces.cli.rs_commands_base
+from utf.interfaces.wifi import SecurityMode, WlanError
+import utf_wiseconnect.interfaces.cli.rs_commands_base
 
 
 def logger():

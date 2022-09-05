@@ -1,0 +1,12 @@
+id: e65e0295-38c8-4c01-ba13-d12c784a00fb
+name: http_server_dut_client
+description: ''
+test_cases:
+  - test_case_id: 8242af35187720ad234954fc436910e6247179b3
+    iterations: 1
+  - test_case_id: 30fdf2fe-6fed-4502-a867-5eeed15e2c90
+    iterations: 1
+  - test_case_id: 19cd774cf468552990550bda9d13b24733fc41bd
+    iterations: 1
+  - test_case_id: f64bd88a-77ea-4d43-aa87-70654322e109
+    iterations: 1
