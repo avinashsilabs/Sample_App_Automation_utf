@@ -1088,6 +1088,7 @@ defaults:
         device_filter_mode: 'KeepInvolving'
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
         device_filter_addresses : ''
+        stop_after_elapsed_time: false
 
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
