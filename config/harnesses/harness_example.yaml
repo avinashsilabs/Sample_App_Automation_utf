@@ -861,7 +861,7 @@ devices:
             linux_shell:
                 type: 'shell.shell'
             sniffer:
-                type: 'sniffer.nrf.nrf_52840'
+                type: 'bluetooth.sniffer.nrf.nrf_52840'
                 shell: 'linux_shell'
                 vid: 0x1915
                 pid: 0x522A
@@ -879,7 +879,7 @@ devices:
                 wsdl: 'http://10.207.18.87:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
             sniffer:
-                type: 'sniffer.ellisys.ellisys_bluetooth_analyzer_win_wcf'
+                type: 'bluetooth.sniffer.ellisys.ellisys_bluetooth_analyzer_win_wcf'
                 sniffer_ellysis_bluetooth_analyzer_service: 'wcf_sniffer_ellysis_bluetooth_analyzer_service'
                 file_transfer_service: 'wcf_file_transfer_service'
 
@@ -918,9 +918,9 @@ defaults:
 
     wifi_sniffer: 'airpcap'
 
-    #ble_sniffer: 'nrf_5280_sniffer'
+    ble_sniffer: 'nrf_5280_sniffer'
 
-    ble_sniffer: 'ellisys_bt_tracker_win_wcf'
+    bt_sniffer: 'ellisys_bt_tracker_win_wcf'
 
     logic_analyzer: 'saleae_logic_analyzer'
 
