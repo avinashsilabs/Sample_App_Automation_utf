@@ -62,7 +62,7 @@ ping_count = 10
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_verify_static_ip_allocation_to_dut(
+def test_verify_static_ip_allocation_to_dut_c19292(
         wifi_sniffer, wifi_dut, wifi_access_point
 ):
     """=============================Verify Static IP allocation to DUT=========================="""
@@ -155,7 +155,7 @@ def test_verify_static_ip_allocation_to_dut(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_dhcp_renewal_time_to_2_min_renewal_func(
+def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
         wifi_sniffer, wifi_dut, wifi_access_point
 ):
     """============Configure DHCP renewal time to 2 min and verify DHCP renewal functionality============="""
@@ -218,8 +218,8 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
             status is True
     ), "DUT is not responding to ping request from third party device"
     logger().info(f"ping is successful")
-
-    time.sleep(600)
+    logger().info(f"***####30 minutes duration***###")
+    time.sleep(1800)
     logger().info(f"DUT going to leave")
     wifi_dut.interfaces.wifi.leave()
 
@@ -260,7 +260,7 @@ def test_dhcp_renewal_time_to_2_min_renewal_func(
         # "band": 0
     }
 )
-def test_dhcp_ip_change_notification(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_point):
     """============Configure DHCP renewal time to 2 min and verify DHCP renewal functionality============="""
     validation = True
 
@@ -356,7 +356,7 @@ def test_dhcp_ip_change_notification(wifi_sniffer, wifi_dut, wifi_access_point):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_tcp_tx_functionality_while_dhcp_renewal(
+def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
 ):
     """============Verify TCP-Tx functionality while DHCP renewal============="""
@@ -470,9 +470,9 @@ def test_tcp_tx_functionality_while_dhcp_renewal(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.config(
-    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+    "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
@@ -488,7 +488,7 @@ def test_tcp_tx_functionality_while_dhcp_renewal(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_udp_tx_functionality_while_dhcp_renewal(
+def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
 ):
     """============Verify TCP-Tx functionality while DHCP renewal============="""
@@ -551,25 +551,30 @@ def test_udp_tx_functionality_while_dhcp_renewal(
     ), "fail to ping host"
     logger().info("Ping successful to host")
     time.sleep(10)
-    logger().info(f"*******##starting iperf****")
-    net_perf_client.interfaces.net_perf.init_server(
-        host_ip=host_ip, device_ip=device_ip, protocol=protocol
-    )
-    net_perf_client.interfaces.net_perf.client_options["time"] = 70
-    net_perf_client.interfaces.net_perf.start()
+    logger().info(f"*******##preparing iperf***")
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
-    logger().info(f"******open socket and send traffic****")
-    wifi_dut.interfaces.wifi.send_traffic_from_device(
-        host_ip,
-        device_ip,
-        net_perf_client.interfaces.net_perf.server_port,
-        net_perf_client.interfaces.net_perf.protocol,
-        net_perf_client.interfaces.net_perf.client_options,
-    )
+    # creating results object for sharing between host and dut
+    result = Result(net_perf_client.interfaces.net_perf.protocol)
 
-    logger().info(f"******get and print throughput****")
-    tp = net_perf_client.interfaces.net_perf.process_output()
-    assert tp, "failed to get throughtput..."
+    # open socket and start listening
+    with wifi_dut.interfaces.wifi.start_socket_reader(
+            log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
+            result=result,
+            protocol=net_perf_client.interfaces.net_perf.protocol,
+            port=net_perf_client.interfaces.net_perf.client_port,
+            device_ip=device_ip,
+            data_len=net_perf_client.interfaces.net_perf.client_data_len,
+            time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
+        # start iperf
+        net_perf_client.interfaces.net_perf.client_options["time"] = 70
+        net_perf_client.interfaces.net_perf.start()
+        # capture device output
+        wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output(result)
+    assert tp is not None
     __print_throughput(tp)
 
     packet_filter1 = f"dhcp.hw.mac_addr == {mac_address}"
