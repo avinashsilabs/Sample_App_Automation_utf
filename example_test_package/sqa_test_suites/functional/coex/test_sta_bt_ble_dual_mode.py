@@ -136,7 +136,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         if not found:
             logger().warning(f"Dut unable to find the bt client device. The test case may fail.")
         bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
-        # with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
+
         # SPP Connection
         with wifi_dut.interfaces.wifi.run_bt_task():
             bt_client_socket.create_client()
@@ -415,7 +415,7 @@ class connect_disconnect_bt_thread(Thread):
         for i in range(1, self.iter_count):
             logger().info(f"Initiating BT disconnection on DUT...iteration: '{i}'")
             self.bt_client.interfaces.bluetooth.disconnect(self.bt_address)
-            # self.wifi_dut.interfaces.wifi.bt_disconnect(self.bt_address)
+
             time.sleep(3)
             logger().info(f"BT disconnection success...iteration: '{i}'")
 
@@ -468,8 +468,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_sniffer, wifi_du
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
-    # with bt_spp_master_slave_thread(wifi_dut, bt_client, mode="bt_slave"), ble_master_slave_thread(wifi_dut, ble_client, mode="ble_slave"):
-    #     time.sleep(15)
+
     testcase = "test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -522,7 +521,6 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_sniffer, wifi_du
 
 # Verify STA_BT_BLE functionality when BT and BLE in MASTER mode and Wi-Fi in STA mode
 # Need to re-look as bt_master mode test is failing.
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -586,7 +584,6 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
 # C20075 ---> one BT client and BLE-client is required. [So one is primary and other is secondary raspi]
 # C20077 ---> required 2 ble clients itself [ble_client1 is primary raspi and ble_client2 is secondary raspi]
 # In this case , for C20077 test case getting issue while Creating RPC server.
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -724,7 +721,6 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_sniffer, wifi_dut, bt_clien
 
 
 # Verify the http download functionality of STA while BT and BLE are connected with remote devices and data transfer (SPP Rx and notifications are enabled).
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -808,7 +804,6 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_sniffer, wifi_dut,
 
 
 # Verify the DUAL_MODE functionality if STA_BT_BLE while all the devices are connected and data transfer is in progress
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -884,7 +879,6 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_sniffer,
 
 
 # Verify STA connect and disconnect functionality while BT and BLE are connected with remote devices and data transfer is happening.
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -969,7 +963,6 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_sniffer, 
 
 
 # Verify BT connect and disconnect multiple times while STA and BLE are connected with remote devices and data transfer is in progress.
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1048,7 +1041,6 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_sniffer, w
 
 
 # Verify BLE connect and disconnect multiple times while STA and BT are connected with remote devices and data transfer is in progress
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1130,7 +1122,6 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_sniffer, 
 
 
 # Verify Power save 2 functionality of DUT when configured in STA_BT_BLE mode. Check if connectivity and data transfer is functional.
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1209,7 +1200,6 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
 
 
 # Verify the BG-SCAN functionality of STA when BT and BLE are connected to remote devices and data transfer is happening in STA_BT_BLE mode
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1297,7 +1287,6 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
 
 
 # Verify the functionality of DUT when we bringup and connect RSI_BT and RSI_BLE with remote devices first and then initiate RSI_STA scan and connect to AP in STA_BT_BLE mode.
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_C20086'})
@@ -1374,11 +1363,6 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_sniffer, wifi_dut,
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
         'Unable to find ps polls in sniffer capture'
 
-    # logger().info("Initiating BLE disconnection on DUT")
-    # ble_disconnect(wifi_dut, ble_address)
-
-    # logger().info("Initiating BT disconnection on DUT")
-    # bt_disconnect(wifi_dut, bt_address, bt_socket)
 
 
 # Verify the Deep Sleep functionality of DUT when configured in STA_BT_BLE mode
