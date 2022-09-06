@@ -133,7 +133,7 @@ devices:
                 # Both of these (or any interface of type 'cli') require a 'cli_transport' property
                 # to be defined in the defaults section for specifying the
                 # communication interface to the device
-                type: 'cli.rs_sapi_commands'
+                type: 'cli.rs_sapi_stm32_commands'
                 src_dir: 'utf_wiseconnect'
 
     efr32_4180b:
@@ -789,7 +789,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-#        device: 'reset'
+        device: 'reset'
         wifi: 'init'
 
 end_state:
