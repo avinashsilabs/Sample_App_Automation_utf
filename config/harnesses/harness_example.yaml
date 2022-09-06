@@ -866,6 +866,7 @@ devices:
                 vid: 0x1915
                 pid: 0x522A
                 follow_device: 'DMPFBD6'
+                max_tries: 10
 
     ellisys_bt_tracker_win_wcf:
         interfaces:
