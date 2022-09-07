@@ -856,6 +856,13 @@ devices:
                 username: 'user1'
                 password: '12345678'
 
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -890,6 +897,8 @@ defaults:
         - 'raspi_wifi_ssh'
 
     wifi_sniffer: 'airpcap'
+
+    openssl: 'openssl_socket'
 
     logic_analyzer: 'saleae_logic_analyzer'
 
@@ -962,6 +971,14 @@ defaults:
         aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
         aws_secret_access_key: "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"
         region: "us-east-1"
+
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
