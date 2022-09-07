@@ -14,9 +14,6 @@ from utf.utils.iperf.iperf_utils import ping
 from datetime import datetime
 import uuid
 
-
-
-
 """
     setup requirement:
         1. DUT(RS9116)
@@ -34,9 +31,11 @@ import uuid
     Author: Aravind 
 """
 
+
 def logger():
     return get_logger(__name__)
-@pytest.mark.firmware_app("test_concurrent_mode")
+
+
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
@@ -69,7 +68,7 @@ def logger():
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19314(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       execute_number):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -82,7 +81,6 @@ def test_device_as_sta_and_ap_c_19314(wifi_access_point, wifi_dut, wifi_client, 
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
-
     logger().info("Bringing up DUT in AP mode")
     wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19314", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
@@ -143,7 +141,7 @@ def test_device_as_sta_and_ap_c_19314(wifi_access_point, wifi_dut, wifi_client, 
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-# #####c19315##########
+#######c19315##########
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -176,7 +174,7 @@ def test_device_as_sta_and_ap_c_19314(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19315(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -188,7 +186,6 @@ def test_device_as_sta_and_ap_c_19315(wifi_access_point, wifi_dut, wifi_client, 
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
- 
     logger().info("Bringing up DUT in AP mode")
     wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19315", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
@@ -254,6 +251,7 @@ def test_device_as_sta_and_ap_c_19315(wifi_access_point, wifi_dut, wifi_client, 
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
 
+
 ######c19324##########
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -287,7 +285,7 @@ def test_device_as_sta_and_ap_c_19315(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19324(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     ping_iterations = 10
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -299,8 +297,6 @@ def test_device_as_sta_and_ap_c_19324(wifi_access_point, wifi_dut, wifi_client, 
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
-
-
     logger().info("Bringing up DUT in AP mode")
     wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19324", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
@@ -308,7 +304,6 @@ def test_device_as_sta_and_ap_c_19324(wifi_access_point, wifi_dut, wifi_client, 
 
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
-
 
     logger().info("fetching ip address of 3rd party sta")
     wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -372,13 +367,14 @@ def test_device_as_sta_and_ap_c_19324(wifi_access_point, wifi_dut, wifi_client, 
                 logger().info("fetching ip address through DHCP")
                 wifi_dut.interfaces.wifi.start_ip()
             except:
-                logger().info(f"Get IP address through dhcp process is failed. retry count -> {i+1}")
+                logger().info(f"Get IP address through dhcp process is failed. retry count -> {i + 1}")
                 time.sleep(5)
 
         logger().info(f'connected and disconnected for {count} times')
 
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
+
 
 ##########19313###########
 @pytest.mark.wifi_client("raspi_wifi")
@@ -415,7 +411,7 @@ def test_device_as_sta_and_ap_c_19324(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19313(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     ping_iterations = 10
     validation = True
@@ -451,7 +447,6 @@ def test_device_as_sta_and_ap_c_19313(wifi_access_point, wifi_dut, wifi_client, 
     logger().info("access point ip: " + str(access_point_ip))
 
     # preparing wifi_dut as access point - AP Mode
-
     ap_mac = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -507,6 +502,7 @@ def test_device_as_sta_and_ap_c_19313(wifi_access_point, wifi_dut, wifi_client, 
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
 
+
 # ######19322-5Ghz########
 
 # @pytest.mark.skip()
@@ -547,7 +543,7 @@ def test_device_as_sta_and_ap_c_19313(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19322(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     ping_iterations = 10
     validation = True
@@ -583,7 +579,6 @@ def test_device_as_sta_and_ap_c_19322(wifi_access_point, wifi_dut, wifi_client, 
     logger().info("access point ip: " + str(access_point_ip))
 
     # preparing wifi_dut as access point - AP Mode
-
     ap_mac = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -635,7 +630,6 @@ def test_device_as_sta_and_ap_c_19322(wifi_access_point, wifi_dut, wifi_client, 
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-
 # ##############19312###############
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -673,7 +667,7 @@ def test_device_as_sta_and_ap_c_19322(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19312(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -707,7 +701,6 @@ def test_device_as_sta_and_ap_c_19312(wifi_access_point, wifi_dut, wifi_client, 
     logger().info("access point ip: " + str(access_point_ip))
 
     # preparing wifi_dut as access point - AP Mode
-
     ap_mac = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -793,7 +786,7 @@ def test_device_as_sta_and_ap_c_19312(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19319(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
@@ -898,7 +891,7 @@ def test_device_as_sta_and_ap_c_19319(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19318(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -983,7 +976,6 @@ def test_device_as_sta_and_ap_c_19318(wifi_access_point, wifi_dut, wifi_client, 
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-
 # ##########19320#########
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -1019,7 +1011,7 @@ def test_device_as_sta_and_ap_c_19318(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19320(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -1032,7 +1024,6 @@ def test_device_as_sta_and_ap_c_19320(wifi_access_point, wifi_dut, wifi_client, 
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
-
     logger().info("Bringing up DUT in AP mode")
     wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19320", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
@@ -1126,6 +1117,8 @@ def test_device_as_sta_and_ap_c_19320(wifi_access_point, wifi_dut, wifi_client, 
                          'in sniffer'
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
+
+
 #################################################################################
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -1165,7 +1158,7 @@ def test_device_as_sta_and_ap_c_19320(wifi_access_point, wifi_dut, wifi_client, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19316(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -1175,6 +1168,7 @@ def test_device_as_sta_and_ap_c_19316(wifi_access_point, wifi_dut, wifi_client, 
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19316')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+
     # preparing wifi_dut as access point - AP Mode
     ap_mac = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'ap mac is {ap_mac}')
@@ -1212,7 +1206,6 @@ def test_device_as_sta_and_ap_c_19316(wifi_access_point, wifi_dut, wifi_client, 
         dhcp_end="192.168.50.60",
         dhcp_lease=120)
     time.sleep(120)
-
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
@@ -1356,7 +1349,6 @@ def join_get_ip(wifi_access_point, utf_constants, wifi_dut):
 # ]
 
 
-
 @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1424,11 +1416,3 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
     logger().info(f"PS-POLL packets are captured in the sniffer")
     logger().info("device reset")
     wifi_dut.interfaces.wifi.reset()
-
-
-
-
-
-
-
-
