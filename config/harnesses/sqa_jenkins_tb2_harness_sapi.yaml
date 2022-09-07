@@ -214,7 +214,7 @@ devices:
                 type: 'wifi.access_points.static'
                 security: WPA
                 ssid: 'Codecom123'
-                passphrase: 'thisisatestnework'
+                passphrase: '12345678'
 
 
     # This represents another access point configuration.
@@ -229,9 +229,10 @@ devices:
                 ip_address: '10.207.18.57'
                 web_ui_port: 8080
                 admin_password: 'test123'
+                skip_assertion_failure : True
                 security: WPA
-                ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                ssid: 'Jenkins-TB2'
+                passphrase: '12345678'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -244,9 +245,14 @@ devices:
                 ip_address: '10.207.18.107'
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
-                ssid: "TESTTEST-ASUS"
+                ssid: "Jenkins-TB2"
+                passphrase: '12345678'
                 protected_management_frame: 'Disable'
-
+                skip_assertion_failure: True
+                # radius server configuration
+                radius_ip: "10.207.18.110"
+                radius_port: "1812"
+                channel: 11
     switched_ap:
         interfaces:
             wifi:
@@ -286,7 +292,7 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                interface: 'wlan0'
+                interface: 'eth0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -369,7 +375,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.1.142'
+                ip_address: '10.207.18.128'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -528,7 +534,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'wlan0'
+                interface: 'eth0'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
@@ -545,7 +551,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'wlan0'
+                interface: 'eth0'
                 # (optional) username and password credentials for authentication to the broker
                 #            Defaults to authentication disabled
                 username: 'testuser'
@@ -564,7 +570,7 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'wlan0'
+                interface: 'eth0'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: true
@@ -834,7 +840,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "192.168.0.152"
+                host_ip: "10.207.18.128"
                 host_username: "pi"
                 host_password: "raspberry"
 
@@ -898,7 +904,7 @@ devices:
             radius_server:
                 type: 'radius_server.freeradius.static'
                 shell: 'ssh_shell'
-                ap_ip_address: '192.168.50.34'
+                ap_ip_address: '10.207.18.107'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
@@ -952,7 +958,7 @@ defaults:
 
     logic_analyzer: 'saleae_logic_analyzer'
 
-    power_meter: 'keysight_power_analyzer'
+    power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
 
     ble_client: 'raspi_ble_client'
 
@@ -962,11 +968,11 @@ defaults:
         - 'secondary_raspi_ble_client_2'
         - 'secondary_raspi_ble_client_3'
 
-    bt_client: 'raspi_bt_client'
+    bt_client: 'secondary_raspi_bt_client'
 
     mqtt_server: 'raspi_mosquitto'
 
-    mqtt_client: 'raspi_wifi'
+    mqtt_client: 'paho_client'
 
     http_server: 'raspi_lighttpd'
 
@@ -978,16 +984,19 @@ defaults:
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
     multicast_client: 'raspi_multicast'
+    remote_socket_factory: "ip_socket_factory"
+
+    switch: 'switched_ap'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTESTTEST'
+        ssid: "Jenkins-TB2"
         security: WPA2
-        channel: 1
-        passphrase: 'thisisatestnetwork'
+        channel: 11
+        passphrase: '12345678'
         server_ip: '192.168.50.1'
         sniffer_validation: True
 
@@ -1058,7 +1067,7 @@ defaults:
             time: 30
         client_options:
             # used only for UDP as there is no limit imposed while TCP
-            bandwidth: 0.1M
+            bandwidth: 70.0M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30

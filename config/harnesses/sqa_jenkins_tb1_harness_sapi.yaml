@@ -230,8 +230,8 @@ devices:
                 web_ui_port: 8080
                 admin_password: 'Jenkins@123'
                 security: WPA
-                ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                ssid: 'Jenkins-TB1'
+                passphrase: '12345678'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -244,9 +244,10 @@ devices:
                 ip_address: '10.207.18.105'
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
-                ssid: "TESTTEST-ASUS"
+                ssid: "Jenkins-TB1"
+                passphrase: '12345678'
                 protected_management_frame: 'Disable'
-                skip_assertion_failure : True
+                skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "10.207.18.109"
                 radius_port: "1812"
@@ -292,6 +293,7 @@ devices:
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
+#                interface: 'eth0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -843,7 +845,7 @@ devices:
             radius_server:
                 type: 'radius_server.freeradius.static'
                 shell: 'ssh_shell'
-                ap_ip_address: '192.168.50.34'
+                ap_ip_address: '10.207.18.105'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
@@ -930,7 +932,7 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTEST-ASUS'
+        ssid: "Jenkins-TB1"
         security: WPA2
         channel: 11
         passphrase: '12345678'
