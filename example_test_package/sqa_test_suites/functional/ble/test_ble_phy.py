@@ -44,19 +44,16 @@ def ble_connection(ble_dut, ble_client):
     # Get the state of the dut
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
-    assert state_int >= BLEDeviceState.Connected,"device is in disconnection state"
+    assert state_int == BLEDeviceState.Connected,"device is in disconnection state"
     rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.read_phy(bt_dut_address)
     logger().info(result)
     return ble_client_address,bt_dut_address
 
 def ble_phy_events(ble_dut,ble_client_address):
     events = ble_dut.interfaces.wifi.get_async_events()
-    if len(events):
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.BLE_PHY_UPDATE_COMPLETE:
-                async_timestamp = event.timestamp
+    assert "BLE_PHY_UPDATE_COMPLETE" in [event.event_type for event in events],"phy update event not received"
     result = ble_dut.interfaces.bluetooth.ble_read_phy(ble_remote_dev_address=ble_client_address)
-    logger().info(result)
+    logger().info(f"tx phy {result[0]}, rx phy {result[1]}")
     time.sleep(2)
     # Disconnect
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
