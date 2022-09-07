@@ -22,6 +22,10 @@ import string
 import random
 from utf.utils.iperf.iperf_utils import ping
 import time
+import re
+import uuid
+from datetime import datetime
+from typing import Dict
 from threading import Thread
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -40,6 +44,60 @@ from threading import Thread
         4. Access Point(Third Party AP's)
 """
 
+
+def packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_bssid,  print_layers: list,
+                    capture_filename,
+                    mode=0) -> Dict[str, int]:
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    result = []
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
+    for packet in wifi_sniffer.interfaces.capture.iter_packets(
+            decrypt_packets=True,
+            encryption_type="WPA-PWD",
+            decryption_key=decryption_key,
+            capture_file_filter=local_capture_file
+            ):
+
+        for layer in packet.layers:
+            layer_name = layer.layer_name.lower()
+            if layer_name == "tls":
+                tls_layer = str(layer)
+                filtered_packet = str(packet)
+                filtered_packet = filtered_packet.split("Layer ")
+                tls_layer_pkt = ""
+                ra_address = ""
+                ta_address = ""
+                logger.info(f"DUT_MAC_ADDRESS: {dut_mac_address},AP_BSSID: {ap_bssid}")
+                for layerp in filtered_packet:
+                    if (((re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:", layerp))) or (re.search(".*TLS:", layerp))):
+                        if (re.search(".*TLS:", layerp)):
+                            tls_layer_pkt = layerp
+                        if (re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:", layerp)):
+                            Received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
+                            receiver_address = re.search(Received,layerp).group()
+                            ra_address = (re.search(Received,layerp).group(1)).lower()
+                            Transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
+                            Transmitter_address= re.search(Transmit, layerp).group()
+                            ta_address= (re.search(Transmit, layerp).group(1)).lower()
+                            dut_mac_address_mod = dut_mac_address.lower()
+                            ap_bssid_mod = ap_bssid.lower()
+
+                        if ((ra_address == dut_mac_address_mod or ra_address == ap_bssid_mod) and (ta_address == dut_mac_address_mod or ta_address == ap_bssid_mod)) and tls_layer_pkt:
+                            logger.info(f">>>>>>{receiver_address}>>>>>>{Transmitter_address}")
+                            logger.info(f"TLS HANDSHAKE PACKET{tls_layer_pkt}")
+
+    return result
 
 def connect_to_server(client_socket, device_ip, logger, server_port=5001):
     time.sleep(5)
@@ -208,10 +266,11 @@ def test_ssl_server_testcase_TC19110(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
-    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
-    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
-    logger.info(f"SSL packets are captured in the sniffer")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger.info(f"DECRYPTION KEY-->{decryption_key}")
+
+    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
+                           mode=0)
 
 
 @pytest.mark.parametrize("cipher_list", [
@@ -273,10 +332,11 @@ def test_ssl_server_diff_cipher_suite_testcase_TC19132(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
-    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
-    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
-    logger.info(f"SSL packets are captured in the sniffer")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger.info(f"DECRYPTION KEY-->{decryption_key}")
+
+    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
+                           mode=0)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -327,10 +387,11 @@ def test_ssl_server_1_0version_client_1_2_testcase_TC19115(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
-    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
-    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
-    logger.info(f"SSL packets are captured in the sniffer")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger.info(f"DECRYPTION KEY-->{decryption_key}")
+
+    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
+                           mode=0)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -376,10 +437,11 @@ def test_ssl_server_no_server_cert_testcase_TC19111(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
-    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
-    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
-    logger.info(f"SSL packets are captured in the sniffer")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger.info(f"DECRYPTION KEY-->{decryption_key}")
+
+    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
+                           mode=0)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -423,7 +485,8 @@ def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
-    packet_filter2 = f'(ssl) && (wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
-    ssl_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
-    assert ssl_pkt_count, "SSL packets are not captured in the sniffer"
-    logger.info(f"SSL packets are captured in the sniffer")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger.info(f"DECRYPTION KEY-->{decryption_key}")
+
+    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
+                           mode=0)
