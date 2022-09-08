@@ -15,9 +15,9 @@ def __print_throughput(throughput: dict):
 def test_ble_sniffer_using_nrf(ble_sniffer):
     ble_sniffer.interfaces.sniffer.init_sniffer()
     ble_sniffer.interfaces.sniffer.start_capture()
-    for _ in range(1000):
+    for _ in range(30):
         logger().info("Do Some Thing")
-    time.sleep(15)
+        time.sleep(1)
     ble_sniffer.interfaces.sniffer.stop_capture()
     file_size = os.path.getsize(ble_sniffer.interfaces.sniffer.capture_file)
     assert file_size > 0
@@ -25,9 +25,9 @@ def test_ble_sniffer_using_nrf(ble_sniffer):
 def test_bt_sniffer_using_ellisys(bt_sniffer):
     bt_sniffer.interfaces.sniffer.init_sniffer()
     bt_sniffer.interfaces.sniffer.start_capture()
-    for _ in range(1000):
+    for _ in range(30):
         logger().info("Do Some Thing")
-    time.sleep(15)
+        time.sleep(1)
     bt_sniffer.interfaces.sniffer.stop_capture()
     assert bt_sniffer.interfaces.sniffer.result is not None
     __print_throughput(bt_sniffer.interfaces.sniffer.result)
