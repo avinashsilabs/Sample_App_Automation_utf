@@ -48,9 +48,4 @@ COPY manifest/ ./manifest/
 COPY executor/docker_startup.sh .
 ENV MANIFEST_FILE=/app/manifest/manifest.yaml
 
-USER root
-RUN apt-get update -y
-RUN apt install -y openocd
-USER dockerUser
-
 CMD ["./docker_startup.sh"]
