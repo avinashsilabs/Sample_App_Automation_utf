@@ -26,7 +26,7 @@ def logger():
 """
 
 def ble_connection(ble_dut, ble_client):
-    logger().info("start ble in dut")
+    logger().info("======== start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address,"failed to initiate ble in dut"
 
