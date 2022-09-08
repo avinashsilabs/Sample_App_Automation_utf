@@ -37,6 +37,9 @@ def logger():
     Author: RaviNemali
 """
 
+# Otaf timeout for deinit
+timeout = 60
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -163,7 +166,7 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -250,7 +253,7 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -338,7 +341,7 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -424,7 +427,7 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -499,7 +502,7 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -570,7 +573,7 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -653,7 +656,7 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -733,7 +736,7 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -815,7 +818,7 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -944,7 +947,7 @@ def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wi
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -1087,7 +1090,7 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
     time.sleep(5)
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
@@ -1224,7 +1227,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
 
     # API does soft reset on DUT
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization
