@@ -523,7 +523,7 @@ devices:
         interfaces:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
-            docker_host:
+            sniffer:
                 type: 'bluetooth.sniffer.sweyntooth.ble_vulnerable_sniffer'
                 ip_address: '127.0.0.1'
                 container_name: "utf_sweyntooth_1"
