@@ -2,7 +2,7 @@ import time
 import pytest
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116AsyncEventType,RS9116FeatureBitMap,RS9116TCPIPFeatureBitMap,\
-    RS9116CustomFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116ConfigFeatureBitMap
+    RS9116CustomFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116ConfigFeatureBitMap,RS9116PowerSaveModes,RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 
 
@@ -36,7 +36,17 @@ def ble_connection(ble_dut, ble_client):
 
     time.sleep(1)
     logger().info(" ======= start scanning in dut")
-    ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=40)
+    ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=50)
+    time.sleep(5)
+
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
+
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address, timeout=timeout)
@@ -44,17 +54,16 @@ def ble_connection(ble_dut, ble_client):
     # Get the state of the dut
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
-    assert state_int >= BLEDeviceState.Connected,"device is in disconnection state"
+    assert state_int == BLEDeviceState.Connected,"device is in disconnection state"
     rc, result = ble_client.interfaces.bluetooth.hci_tool_manager.read_phy(bt_dut_address)
     logger().info(result)
     return ble_client_address,bt_dut_address
 
 def ble_phy_events(ble_dut,ble_client_address):
     events = ble_dut.interfaces.wifi.get_async_events()
-    if len(events):
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.BLE_PHY_UPDATE_COMPLETE:
-                async_timestamp = event.timestamp
+    assert "BLE_PHY_UPDATE_COMPLETE" in [event.event_type for event in events], "phy update event not received"
+    result = ble_dut.interfaces.bluetooth.ble_read_phy(ble_remote_dev_address=ble_client_address)
+    logger().info(f"tx phy {result[0]}, rx phy {result[1]}")
     result = ble_dut.interfaces.bluetooth.ble_read_phy(ble_remote_dev_address=ble_client_address)
     logger().info(result)
     time.sleep(2)
