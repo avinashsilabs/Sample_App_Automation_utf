@@ -230,8 +230,8 @@ devices:
                 web_ui_port: 8080
                 admin_password: 'test123'
                 security: WPA
-                ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                ssid: 'Jenkins-TB3'
+                passphrase: '12345678'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -244,11 +244,12 @@ devices:
                 ip_address: '10.207.18.122'
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
-                ssid: "TESTTEST-ASUS"
+                ssid: "Jenkins-TB4"
+                passphrase: '12345678'
                 protected_management_frame: 'Disable'
-                skip_assertion_failure : True
+                skip_assertion_failure: True
                 # radius server configuration
-                radius_ip: "10.207.18.121"
+                radius_ip: "10.207.18.124"
                 radius_port: "1812"
                 channel: 11
 
@@ -291,7 +292,8 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                interface: 'wlan0'
+#                interface: 'wlan0'
+                interface: 'eth0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -300,7 +302,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 192.168.50.40
+                remote: 10.207.18.173
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -312,7 +314,7 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
-                ip_address: '192.168.50.40'
+                ip_address: '10.207.18.173'
 
     raspi_ble_client:
         interfaces:
@@ -374,7 +376,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.50.40'
+                ip_address: '10.207.18.173'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -434,7 +436,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.50.40'
+                ip_address: '10.207.18.173'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -771,7 +773,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
-
+    
     secondary_raspi_iperf:
         interfaces:
             net_perf:
@@ -779,7 +781,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "192.168.50.40"
+                host_ip: "10.207.18.173"
                 host_username: "pi"
                 host_password: "raspberry"
 
@@ -790,13 +792,13 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.109"
+                host_ip: "10.207.18.121"
                 host_username: "test"
                 host_password: "test123"
 
     raspi_ftp_server:
         interfaces:
-            vsftpd_ftp_server:
+            ftp_server:
                 type: 'ftp.server.vsftpd_ftp_server'
                 tls_enabled: false
 
@@ -827,7 +829,7 @@ devices:
             radius_server:
                 type: 'radius_server.freeradius.freeradius_linux'
                 shell: 'linux_shell'
-                ap_ip_address: '10.207.18.121'
+                ap_ip_address: '10.207.18.122'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
@@ -836,14 +838,14 @@ devices:
         interfaces:
             ssh_shell: 
                 type: 'shell.ssh_shell'
-                remote: '10.207.18.109'  # configure Free Radius Server NUC IP
+                remote: '10.207.18.121'  # configure Free Radius Server NUC IP
                 username: test       # NUC username
                 password: test123    # NUC password
                 use_paramiko_expect: false
             radius_server:
                 type: 'radius_server.freeradius.static'
                 shell: 'ssh_shell'
-                ap_ip_address: '192.168.50.34'
+                ap_ip_address: '10.207.18.122'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
@@ -882,8 +884,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
+        - 'asus_rt_ax3000_ap'
+        - 'dlink_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -930,7 +932,7 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTEST-ASUS'
+        ssid: "Jenkins-TB3"
         security: WPA2
         channel: 11
         passphrase: '12345678'
@@ -1003,7 +1005,7 @@ defaults:
             time: 30
         client_options:
             # used only for UDP as there is no limit imposed while TCP
-            bandwidth: 0.1M
+            bandwidth: 70.0M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30
