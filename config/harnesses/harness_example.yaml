@@ -856,6 +856,33 @@ devices:
                 username: 'user1'
                 password: '12345678'
 
+    nrf_5280_sniffer:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sniffer:
+                type: 'bluetooth.sniffer.nrf.nrf_52840'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0x522A
+                follow_device: 'DMPFBD6'
+                max_tries: 10
+
+    ellisys_bt_tracker_win_wcf:
+        interfaces:
+            wcf_sniffer_ellysis_bluetooth_analyzer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.18.87:8735/Design_Time_Addresses/utf_wcf_service_library/SnifferEllisysBluetoothAnalyzerService/?wsdl'
+                timeout: 120000
+            wcf_file_transfer_service: 
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.18.87:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.ellisys.ellisys_bluetooth_analyzer_win_wcf'
+                sniffer_ellysis_bluetooth_analyzer_service: 'wcf_sniffer_ellysis_bluetooth_analyzer_service'
+                file_transfer_service: 'wcf_file_transfer_service'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -890,6 +917,10 @@ defaults:
         - 'raspi_wifi_ssh'
 
     wifi_sniffer: 'airpcap'
+
+    ble_sniffer: 'nrf_5280_sniffer'
+
+    bt_sniffer: 'ellisys_bt_tracker_win_wcf'
 
     logic_analyzer: 'saleae_logic_analyzer'
 
@@ -1048,6 +1079,17 @@ defaults:
         scope_trigger_mode: 'Auto'
         scope_trigger_source: 'ScopeRunButton'
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
+
+    sniffer_ellysis_bt_tracker:
+        remote_settings_folder_location: 'C:\\UTF\\Ellisys_Sniffer\\Settings\\'
+        remote_settings_file_name: 'dev_only_ble.bttse'
+        remote_capture_folder_location: 'C:\\UTF\\Ellisys_Sniffer\\Capture\\'
+        remote_capture_file_name: 'utf_ellisys_sniffer'
+        elapsed_time: 20000
+        device_filter_mode: 'KeepInvolving'
+        log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
+        device_filter_addresses : ''
+        stop_after_elapsed_time: false
 
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
