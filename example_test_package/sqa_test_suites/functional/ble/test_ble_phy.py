@@ -62,11 +62,9 @@ def ble_connection(ble_dut, ble_client):
 def ble_phy_events(ble_dut,ble_client_address):
     events = ble_dut.interfaces.wifi.get_async_events()
     assert "BLE_PHY_UPDATE_COMPLETE" in [event.event_type for event in events], "phy update event not received"
+    time.sleep(2)
     result = ble_dut.interfaces.bluetooth.ble_read_phy(ble_remote_dev_address=ble_client_address)
     logger().info(f"tx phy {result[0]}, rx phy {result[1]}")
-    result = ble_dut.interfaces.bluetooth.ble_read_phy(ble_remote_dev_address=ble_client_address)
-    logger().info(result)
-    time.sleep(2)
     # Disconnect
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
     time.sleep(5)
