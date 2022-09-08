@@ -14,6 +14,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtCustomFeatureBitMap,
     RS9116PowerSaveModes,
     RS9116PowerSaveProcedureTypes,
+    RS9116JoinFeatureBitMap,
     SocketOptions,
     SocketType,
     Cipher,
@@ -27,6 +28,9 @@ from random import randint
 from datetime import datetime
 from typing import Dict
 import uuid
+from threading import Thread
+import threading
+from utf.utils import get_tls_certificate_dir
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -174,6 +178,84 @@ def packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_
                                 logger.info(f"TLS HANDSHAKE PACKET{tls_layer_pkt}")
 
     return result
+
+
+def pdu_switch(switch, logger):
+    logger.info("Turning off the AP")
+    switch.interfaces.pdu_switch.turn_off()
+    logger.info("Successfully powered off AP")
+    time.sleep(10)
+    logger.info("Again turning on the AP")
+    switch.interfaces.pdu_switch.turn_on()
+
+def join_get_ip_ssl(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger, cert1=None, cert2=None,
+                cert3=None, listen_interval_feature=False, listen_interval=1600, rejoin_params=None):
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+    )
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+
+    if not rejoin_params:
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
+                                        scan_interval=6,
+                                        beacon_missedcount=40,
+                                        first_time_retry=0)
+    else:
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_params[0],
+                                        scan_interval=rejoin_params[1],
+                                        beacon_missedcount=rejoin_params[2],
+                                        first_time_retry=rejoin_params[3])
+    if listen_interval_feature:
+        # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                         join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromPowerSave,
+                                         )
+    else:
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    if cert1:
+        # The below API loads ca-cert into DUT at cert index 0
+        wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                     str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                     cert_index=0,
+                                                     )
+    if cert2:
+        # The below API loads ca-cert into DUT at cert index 1
+        wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                     str(get_tls_certificate_dir().joinpath(cert2[0])),
+                                                     cert_index=1,
+                                                     )
+    if cert3:
+        # The below API loads ca-cert into DUT at cert index 2
+        wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                     str(get_tls_certificate_dir().joinpath(cert3[0])),
+                                                     cert_index=2,
+                                                     )
+
+    # DUT gets ipaddress through DHCP process after start_ip API is executed
+    wifi_dut.interfaces.wifi.start_ip()
+    if listen_interval_feature:
+        # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+        # DUT to power save in Wifi+bluetooth mode
+        wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
+                                                            RS9116PowerSaveProcedureTypes.FastPowerSave,
+                                                            listen_interval=listen_interval)
+
+    else:
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+    ping(device_ip, 10)
+    return mac_address
 
 pytestmark = [
     pytest.mark.config(
@@ -842,3 +924,178 @@ def test_ssl_max_sockets_testcaseTC19128(
 
     ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
                            mode=0)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": ["ca-chain.cert.pem"],
+        "set_tx_wait_time": True,
+        "tx_wait_time": 160000,
+        "rejoin_max_retry": 40,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        }
+    )
+@pytest.mark.parametrize("cert1",
+                         [
+                             ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
+def test_ssl_client_tx_rejoin_length_1460_20_C19134(
+        wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, switch, cert1, logger):
+    capture_filename = "test_ssl_client_tx_rejoin_length_1460_C19134"
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length0 = ssl_server.interfaces.ssl.config['buffer_length']
+    buffer_length1 = 20
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    pkt_count = 10000
+
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+    # DUT connects to AP after join_ap API is executed
+    rejoin_params = [40, 6, 40, 0]
+    dut_mac_address = join_get_ip_ssl(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  rejoin_params=rejoin_params)
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    logger.info(f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               SocketOptions.TCP_MAX_RETRY)
+
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX0)
+
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    for i in range(2):
+        buffer_length = eval("buffer_length" + str(i))
+        logger.info(f"************************{buffer_length}")
+        bytes_sent = (pkt_count * buffer_length)
+        socket_no = [1]
+        pkt_rcv_timeout = 90
+        for socket in socket_no:
+            ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout)
+        sleep_time = 10
+        thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
+        thread.start()
+        result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=1, data_len=buffer_length, time_interval=550,
+                                                                     number_of_pkts=pkt_count, timeout=600)
+        bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
+        assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                             f"not matched on socket {1} "
+
+    wifi_dut.interfaces.wifi.close_socket(sock)
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": ["ca-chain.cert.pem"],
+        "set_tx_wait_time": True,
+        "tx_wait_time": 160000,
+        }
+    )
+@pytest.mark.parametrize("cert1",
+                         [
+                             ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                             ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "wifi_powersave_disable", "close_sockets"])
+def test_ssl_client_rx_while_rejoining_C19135(
+        wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, switch, cert1, logger
+        ):
+    capture_filename = "test_ssl_client_rx_while_rejoining_C19135"
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length0 = ssl_server.interfaces.ssl.config['buffer_length']
+    buffer_length1 = 20
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+    # DUT connects to AP after join_ap API is executed
+    rejoin_params = [20, 6, 40, 0]
+    # rejoin_params = [40, 6, 40, 0]
+    dut_mac_address = join_get_ip_ssl(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  rejoin_params=rejoin_params)
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    logger.info(f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               SocketOptions.TCP_MAX_RETRY)
+
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                               SocketOptions.CERT_INDEX0)
+
+    # Socket binds at (device_ip, 5001) in DUT
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, port1)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+
+    for i in range(2):
+        buffer_length = eval("buffer_length" + str(i))
+        logger.info(f"************************buffer_length{buffer_length}")
+        bytes_sent = (pkt_count * buffer_length)
+        socket_no = [1]
+        for socket in socket_no:
+            ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
+        sleep_time = 10
+        thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
+        thread.start()
+        buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length,
+                                                                            timeout=20)
+        logger.info(f"bytes received on socket {sock} -> {buffer_length_rx}")
+        assert buffer_length == buffer_length_rx, "Packet loss observed while receive test"
+
+    wifi_dut.interfaces.wifi.close_socket(sock)
+    wifi_dut.interfaces.wifi.leave()
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
