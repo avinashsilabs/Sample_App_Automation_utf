@@ -1066,14 +1066,15 @@ def test_http_post_func_with_http_abort_C19228(wifi_sniffer, http_server, wifi_d
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_post_func_with_http_abort_C19228')
     time.sleep(2)
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
-
     for count in range(0, iter_count):
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
 
         join_get_ip(wifi_dut, wifi_access_point, ping_count)
+
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
+
         wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
         logger().info("API used to post the http data")
