@@ -541,6 +541,7 @@ class connect_disconnect_ble_master_thread(ThreadBase):
                                       expected=self.expected,
                                       skip_scan=self.skip_scan)
 
+
         logger().info("BLE master connect_disconnect_thread completed")
 
 
@@ -616,13 +617,16 @@ class stop_ap_thread(ThreadBase):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(wifi_dut, bt_dut, wifi_access_point,
-                                                                               net_perf_client, wifi_client,
-                                              ble_client, protocol, ssid):
+def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(wifi_dut, bt_dut, wifi_access_point,net_perf_client, wifi_client,ble_client, protocol, ssid, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     bt_local_name = "rs911x_bt_spp"
-
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20324.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(scan_results)
@@ -657,6 +661,9 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(w
     ble_master_slave(wifi_dut, ble_client, ble_mode)
 
     t1.wait_for_exit(True)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -685,7 +692,7 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_
                                                                    protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
-    validation = True
+
     iter_count = 5
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20310.txt')
@@ -800,13 +807,10 @@ def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, w
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_client, wifi_access_point,
-                                                                 net_perf_client,
-                                                          wifi_client, protocol, wifi_sniffer):
+def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
-    validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20312.txt')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -825,14 +829,9 @@ def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_
                                                                                          iperf_time=100):
         time.sleep(15)
 
-    # validate NULL data frame with PM bit set to '1'
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                     f'and (wlan.da == {bssid}))'
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info('Validation for NULL packet with pm bit 1')
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -855,11 +854,18 @@ def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_client, wifi_access_point, net_perf_client,
-                                                             wifi_client, protocol, ssid):
+def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol, ssid):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20313.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(scan_results)
@@ -891,6 +897,29 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_clien
         time.sleep(15)
     wifi_dut.interfaces.wifi.bt_deinit()
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    # validate PS-POLL frame with pwrmgt bit set to '1'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
+                     f'and (wlan.ra == {bssid}))'
+
+    # validate QOS data frame with more data bit set to '1'
+    packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
+                     f'and (wlan.ta == {bssid}))'
+    # validate probe request
+    packet_filter3 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+    logger().info('Validating PS Poll frames are sent from the device with power management bit')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
+
+    logger().info('Validating more data bit in QOS data frames')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Sniffer validation failed for QOS data frame with more data bit 1'
+
+    logger().info('Validating probe request')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to found probe request in sniffer capture'
+
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -914,7 +943,7 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_clien
 def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
-    validation = True
+
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20315.txt')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -938,7 +967,6 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_address)
     logger().info("Stop Sniffer finally")
-
     wifi_sniffer.interfaces.capture.stop_capture()
     verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
@@ -963,9 +991,17 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
     },
 )
 @pytest.mark.config("net_perf_client")
-def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, ble_client, wifi_access_point, ssid):
+def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, ble_client, wifi_access_point, ssid, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20314.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1004,6 +1040,29 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, b
 
     wifi_dut.interfaces.wifi.bt_deinit()
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    # validate PS-POLL frame with pwrmgt bit set to '1'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
+                     f'and (wlan.ra == {bssid}))'
+
+    # validate QOS data frame with more data bit set to '1'
+    packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
+                     f'and (wlan.ta == {bssid}))'
+    # validate probe request
+    packet_filter3 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+    logger().info('Validating PS Poll frames are sent from the device with power management bit')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
+
+    logger().info('Validating more data bit in QOS data frames')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Sniffer validation failed for QOS data frame with more data bit 1'
+
+    logger().info('Validating probe request')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to found probe request in sniffer capture'
+
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1025,11 +1084,17 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, b
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(wifi_dut, ble_client, wifi_access_point,
-                                                                 net_perf_client, wifi_client, protocol, ssid):
+def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol, ssid):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20319.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1066,6 +1131,10 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(w
                                                                                  skip_scan=False):
         time.sleep(15)
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
+
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1086,9 +1155,16 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(w
 )
 @pytest.mark.config("net_perf_client")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, wifi_access_point, ssid):
+def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, wifi_access_point, ssid, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20320.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1124,6 +1200,9 @@ def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, w
                                                                          ble_client_address=ble_client_address,
                                                                          scan_count=2):
         time.sleep(15)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1147,11 +1226,18 @@ def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, w
     },
 )
 @pytest.mark.config( "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, ble_client, wifi_access_point,
-                                                        net_perf_client, wifi_client, protocol, ssid):
+def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, ssid, wifi_sniffer):
+
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20328.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1187,6 +1273,9 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, b
 
     t1.wait_for_exit(True)
     wifi_dut.interfaces.wifi.bt_deinit()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1210,11 +1299,18 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, b
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut, ble_client, wifi_access_point,
-                                                            net_perf_client, wifi_client,protocol, ssid):
+def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, ssid ,wifi_sniffer):
+
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C20329.txt')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1257,7 +1353,9 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut
     wifi_dut.interfaces.wifi.bt_deinit()
     wifi_dut.interfaces.wifi.ble_initialized = False
     ble_client.interfaces.bluetooth.close()
-
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 ################## PR3 ###################################
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1277,15 +1375,13 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_access_point,
-                                                   net_perf_client, wifi_client, wifi_sniffer, protocol):
+def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_access_point, net_perf_client, wifi_client, wifi_sniffer, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
-
-    validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='msg_based_power_save_C20277')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1312,15 +1408,6 @@ def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_a
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip)
 
-    # validate NULL data frame with PM bit set to '1'
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                     f'and (wlan.da == {bssid}))'
-    logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info('Validation for NULL packet with pm bit 1')
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
-
     logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
 
@@ -1331,6 +1418,9 @@ def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_a
 
     time.sleep(2)
     wifi_dut.interfaces.wifi.bt_deinit()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1352,16 +1442,14 @@ def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_a
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_access_point,
-                                                    net_perf_client, wifi_client, wifi_sniffer, protocol):
+def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_access_point, net_perf_client, wifi_client, wifi_sniffer, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
     assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
-
-    validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='gpio_based_power_save_C20279')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1386,15 +1474,6 @@ def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip)
 
-    # validate NULL data frame with PM bit set to '1'
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                     f'and (wlan.da == {bssid}))'
-    logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info('Validation for NULL packet with pm bit 1')
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
-
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_address1)
 
@@ -1403,6 +1482,9 @@ def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_
 
     time.sleep(3)
     wifi_dut.interfaces.wifi.bt_deinit()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1425,8 +1507,7 @@ def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316(wifi_dut, ble_clients,
-                                wifi_access_point, net_perf_client,wifi_client, protocol, ssid):
+def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316(wifi_dut, ble_clients, wifi_access_point, wifi_sniffer, net_perf_client,wifi_client, protocol, ssid):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -1434,7 +1515,12 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316
     assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
-
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='scan_connect_disconnect_C20316')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(scan_results)
@@ -1479,6 +1565,9 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_address)
     wifi_dut.interfaces.wifi.bt_deinit()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1502,11 +1591,18 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_dut, ble_client,
-                                            wifi_access_point, net_perf_client, wifi_client, protocol, ssid):
+def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_dut, ble_client,wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol, ssid):
+
     iter_count = 5
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='scan_connect_disconnect_C20330')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1611,6 +1707,10 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_
 
     wifi_dut.interfaces.wifi.bt_deinit()
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
+
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1633,8 +1733,8 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, wifi_access_point,
-                                            net_perf_client, wifi_client, wifi_sniffer, protocol):
+def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, wifi_access_point,net_perf_client, wifi_client, wifi_sniffer, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1642,7 +1742,6 @@ def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, w
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
 
-    validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='C20336_wpa2_dual_role')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1672,6 +1771,10 @@ def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, w
     logger().info("Initiating BLE disconnection from Raspi, since Raspberrypi is master")
     ble_client2.interfaces.bluetooth.disconnect(ble_dut_address)
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
+
 
 ############# PR4 #############################################
 
@@ -1696,8 +1799,7 @@ def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, w
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_dut, ble_clients, wifi_access_point,
-                                                    net_perf_client,wifi_client, protocol, ssid):
+def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_dut, ble_clients, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer, ssid):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -1706,6 +1808,12 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_du
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
 
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='scan_connect_disconnect_C20333')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
         logger().info(scan_results)
@@ -1734,6 +1842,9 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_du
     check_connection_status(wifi_dut, ble=True)
 
     t1.wait_for_exit(True)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1757,16 +1868,21 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_du
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C20334(wifi_dut, ble_clients,
-                                                             wifi_access_point, net_perf_client, wifi_client,
+def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C20334(wifi_dut, ble_clients, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol, ssid):
 
-                                                protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
     assert len(ble_clients) >= 2, "Minimum 2 raspi required to run this test"
     ble_client1 = ble_clients[1]
     ble_client2 = ble_clients[0]
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='scan_connect_disconnect_C20334')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=wifi_access_point.interfaces.wifi.channel)
@@ -1834,6 +1950,9 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C2
     ble_disconnect(wifi_dut, ble_client_address1)
     ble_disconnect(wifi_dut, ble_client_address2)
     wifi_dut.interfaces.wifi.bt_deinit()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1855,10 +1974,17 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C2
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_scan_func_of_ble_while_sta_data_transfer_inprogress_C20335(wifi_dut, ble_client, wifi_access_point,
-                                              net_perf_client, wifi_client, protocol):
+def test_scan_func_of_ble_while_sta_data_transfer_inprogress_C20335(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='scan_connect_disconnect_C20334')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
@@ -1883,6 +2009,9 @@ def test_scan_func_of_ble_while_sta_data_transfer_inprogress_C20335(wifi_dut, bl
     t1.wait_for_exit(True)
     logger().info("Checking connection status of Wi-Fi")
     check_connection_status(wifi_dut, wlan=True)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1943,10 +2072,12 @@ def test_sta_connection_with_ble_connect_disconnect_C20280(wifi_dut, ble_client,
         logger().info(f"Device mac address: {dut_mac_address}")
 
         # QOS data Packets should be observed with More data Bit set to 1
-        packet_filter1 = f'wlan.ta == {bssid} && wlan.da == {dut_mac_address} && wlan.fc.moredata==1'
+        packet_filter1 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
+                         f'and (wlan.ta == {bssid}))'
 
         # PS Polls with Power Management Bit set to 1 should be sent from the device
-        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        packet_filter2 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
+                         f'and (wlan.ra == {bssid}))'
 
         time.sleep(2)
         logger().info("Stop Sniffer finally")
@@ -1992,10 +2123,17 @@ def test_sta_connection_with_ble_connect_disconnect_C20280(wifi_dut, ble_client,
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble_client, wifi_access_point,
-                                                                   net_perf_client, wifi_client, protocol):
+def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='scan_connect_disconnect_C20325')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     ssid = wifi_access_point.interfaces.wifi.ssid
     channel = wifi_access_point.interfaces.wifi.channel
@@ -2050,6 +2188,9 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_address)
 
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 ########################### PR5 ##################################
 
@@ -2073,11 +2214,17 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, wifi_access_point,
-                                                          net_perf_client, wifi_client, protocol):
+def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='sta_connection_C20317')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     ssid = wifi_access_point.interfaces.wifi.ssid
     channel = wifi_access_point.interfaces.wifi.channel
     with TimeMeasurer() as t:
@@ -2130,6 +2277,9 @@ def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, 
     t1.wait_for_exit(True)
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_addr)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2153,10 +2303,17 @@ def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, 
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_client, wifi_access_point,
-                                                                 net_perf_client, wifi_client, protocol):
+def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='sta_connection_C20318')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
 
     ssid = wifi_access_point.interfaces.wifi.ssid
     channel = wifi_access_point.interfaces.wifi.channel
@@ -2208,6 +2365,9 @@ def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_c
     t1.wait_for_exit(True)
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_addr)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2230,8 +2390,8 @@ def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_c
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,
-                                           net_perf_client, wifi_client, protocol):
+def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -2356,10 +2516,10 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
             wifi_dut.interfaces.wifi.init()
 
         # QOS data Packets should be observed with More data Bit set to 1
-        packet_filter1 = f'wlan.ta == {bssid} && wlan.da == {dut_mac_address} && wlan.fc.moredata==1'
+        packet_filter1 = f'wlan.ta == {bssid} && wlan.ra == {dut_mac_address} && wlan.fc.moredata==1'
 
         # PS Polls with Power Management Bit set to 1 should be sent from the device
-        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        packet_filter2 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) and (wlan.ra == {bssid}))'
 
         time.sleep(2)
         logger().info("Stop Sniffer finally")
@@ -2401,12 +2561,17 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, ble_client, wifi_access_point,
-                                                    net_perf_client, wifi_client, protocol):
+def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
+
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     # global ble_dut_address
-
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='sta_data_transfer_C20323')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     ssid = wifi_access_point.interfaces.wifi.ssid
     channel = wifi_access_point.interfaces.wifi.channel
     with TimeMeasurer() as t:
@@ -2444,10 +2609,12 @@ def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, b
 
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_client_address)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
 # =====================================================================================
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")

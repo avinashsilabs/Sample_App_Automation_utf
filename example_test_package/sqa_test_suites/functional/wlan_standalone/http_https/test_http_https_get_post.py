@@ -564,8 +564,8 @@ def test_https_get_with_wrong_certificate_C19211(http_server, wifi_sniffer, http
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"AP MAC: {bssid}")
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("fetching https data using get method")
     with pytest.raises(WlanError) as exc_info:
@@ -577,8 +577,8 @@ def test_https_get_with_wrong_certificate_C19211(http_server, wifi_sniffer, http
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 @pytest.mark.config(
@@ -745,8 +745,8 @@ def test_https_post_functionality_port10_C19227_case1(wifi_sniffer, http_server,
     assert status, "failed to post data"
     logger().info(status)
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("disconnecting ap")
     wifi_dut.interfaces.wifi.leave()
@@ -755,8 +755,8 @@ def test_https_post_functionality_port10_C19227_case1(wifi_sniffer, http_server,
     logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 @pytest.mark.config(
@@ -801,8 +801,8 @@ def test_https_post_functionality_port200_C19227_case2(wifi_sniffer, http_server
     assert status, "failed to post data"
     logger().info(status)
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("disconnecting ap")
     wifi_dut.interfaces.wifi.leave()
@@ -811,8 +811,8 @@ def test_https_post_functionality_port200_C19227_case2(wifi_sniffer, http_server
     logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 @pytest.mark.config(
@@ -856,8 +856,8 @@ def test_https_post_functionality_port2000_C19227_case3(wifi_sniffer, http_serve
     assert status, "failed to post data"
     logger().info(status)
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("disconnecting ap")
     wifi_dut.interfaces.wifi.leave()
@@ -866,8 +866,8 @@ def test_https_post_functionality_port2000_C19227_case3(wifi_sniffer, http_serve
     logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 @pytest.mark.config(
@@ -912,8 +912,8 @@ def test_https_post_functionality_port20000_C19227_case4(wifi_sniffer, http_serv
     assert status, "failed to post data"
     logger().info(status)
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("disconnecting ap")
     wifi_dut.interfaces.wifi.leave()
@@ -922,8 +922,8 @@ def test_https_post_functionality_port20000_C19227_case4(wifi_sniffer, http_serv
     logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 @pytest.mark.config(
@@ -967,8 +967,8 @@ def test_https_post_functionality_port443_C19227_case5(wifi_sniffer, http_server
     assert status, "failed to post data"
     logger().info(status)
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     logger().info("disconnecting ap")
     wifi_dut.interfaces.wifi.leave()
@@ -977,8 +977,8 @@ def test_https_post_functionality_port443_C19227_case5(wifi_sniffer, http_server
     logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 pytest.mark.config(
@@ -1024,19 +1024,19 @@ def test_http_get_func_with_extend_header_C19217(wifi_sniffer, http_server, wifi
     logger().info(status)
     logger().info(content)
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
-    # packet_filter3 = f'wlan.addr == {mac_address} && http'
+    packet_filter3 = f'wlan.addr == {mac_address} && http'
 
     logger().info(f"DUT going to leave")
     wifi_dut.interfaces.wifi.leave()
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3), ['packet_count']
 
 
 pytest.mark.config(
@@ -1066,14 +1066,15 @@ def test_http_post_func_with_http_abort_C19228(wifi_sniffer, http_server, wifi_d
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_post_func_with_http_abort_C19228')
     time.sleep(2)
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
-
     for count in range(0, iter_count):
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
 
         join_get_ip(wifi_dut, wifi_access_point, ping_count)
+
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
+
         wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
         logger().info("API used to post the http data")
@@ -1089,8 +1090,8 @@ def test_http_post_func_with_http_abort_C19228(wifi_sniffer, http_server, wifi_d
         logger().info(status)
         logger().info(content)
 
-        # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-        #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+        packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                         f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
         logger().info(f"DUT going to leave")
         wifi_dut.interfaces.wifi.leave()
@@ -1100,8 +1101,8 @@ def test_http_post_func_with_http_abort_C19228(wifi_sniffer, http_server, wifi_d
     logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
 
 
 @pytest.mark.config(
@@ -1137,8 +1138,8 @@ def test_http_server_closes_conn_before_C19230(http_server, wifi_dut, wifi_sniff
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
-    # packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
-    #                  f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
 
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
@@ -1158,5 +1159,5 @@ def test_http_server_closes_conn_before_C19230(http_server, wifi_dut, wifi_sniff
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info("Sniffer validation for power save packets")
-    # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']

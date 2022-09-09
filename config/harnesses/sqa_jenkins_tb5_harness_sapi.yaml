@@ -214,7 +214,7 @@ devices:
                 type: 'wifi.access_points.static'
                 security: WPA
                 ssid: 'Codecom123'
-                passphrase: 'thisisatestnework'
+                passphrase: '12345678'
 
 
     # This represents another access point configuration.
@@ -226,13 +226,13 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '192.168.0.1'
-                web_ui_port: 80
-                admin_password: '12345678'
+                ip_address: '10.207.18.57'
+                web_ui_port: 8080
+                admin_password: 'test123'
                 skip_assertion_failure : True
                 security: WPA
-                ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwork11'
+                ssid: 'Jenkins-TB5'
+                passphrase: '12345678'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -245,12 +245,14 @@ devices:
                 ip_address: '10.207.18.137'
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
-                ssid: "TESTTEST-ASUS"
+                ssid: "Jenkins-TB5"
+                passphrase: '12345678'
                 protected_management_frame: 'Disable'
                 skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "10.207.18.127"
                 radius_port: "1812"
+                channel: 11
     switched_ap:
         interfaces:
             wifi:
@@ -881,8 +883,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
+        - 'asus_rt_ax3000_ap'
+        - 'dlink_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -929,9 +931,9 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTEST-ASUS'
+        ssid: "Jenkins-TB5"
         security: WPA2
-        channel: 1
+        channel: 11
         passphrase: '12345678'
         server_ip: '192.168.50.1'
         sniffer_validation: True
@@ -1003,7 +1005,7 @@ defaults:
             time: 30
         client_options:
             # used only for UDP as there is no limit imposed while TCP
-            bandwidth: 0.1M
+            bandwidth: 70.0M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30

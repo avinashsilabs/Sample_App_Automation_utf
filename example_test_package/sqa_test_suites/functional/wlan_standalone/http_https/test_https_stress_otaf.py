@@ -34,6 +34,9 @@ def logger():
 # Configure below time parameter to run the test case for specific time lapse # below is the 30 mins given as default
 time_lapse = 30
 
+# Otaf timeout for deinit
+timeout = 60
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -110,7 +113,7 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         # API does soft reset on DUT
         time.sleep(5)
         logger().info("resetting DUT....")
-        wifi_dut.interfaces.wifi.wireless_deinit()
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
         time.sleep(10)
 
         # performs the wifi initialization
@@ -183,7 +186,7 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         # API does soft reset on DUT
         time.sleep(5)
         logger().info("resetting DUT....")
-        wifi_dut.interfaces.wifi.wireless_deinit()
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
         time.sleep(10)
 
         # performs the wifi initialization
@@ -262,7 +265,7 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         # API does soft reset on DUT
         time.sleep(5)
         logger().info("resetting DUT....")
-        wifi_dut.interfaces.wifi.wireless_deinit()
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
         time.sleep(10)
 
         # performs the wifi initialization
