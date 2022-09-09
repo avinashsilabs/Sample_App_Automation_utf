@@ -427,7 +427,6 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         logger().info("Found DNS packet")
         assert True
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -486,7 +485,6 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
     elif result is True:
         logger().info("Found DNS packet")
         assert True
-
 
 @pytest.mark.config(
     "wifi_dut",
