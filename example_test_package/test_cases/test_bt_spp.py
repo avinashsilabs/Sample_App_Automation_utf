@@ -27,8 +27,7 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
-
-def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
+def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client, bt_braktooth):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
     with TimeMeasurer() as t:
@@ -44,6 +43,12 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
         if not found:
             logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
+
+        logger().info(f"bt_dut_address**************************** {bt_dut_address} *******************")
+        bt_braktooth.interfaces.docker_host.init()
+        result = bt_braktooth.interfaces.docker_host.telink_key_size_overflow(bt_dut_address, time_limit=time_limit)
+        bt_braktooth.interfaces.docker_host.close()
+        assert result
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
