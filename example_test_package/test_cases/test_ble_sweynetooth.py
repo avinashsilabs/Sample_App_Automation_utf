@@ -17,7 +17,7 @@ from utf.utils.logger import get_logger
         "script": "Telink_key_size_overflow.py"
     },
 )
-@pytest.mark.config("time_limit", [60, 120])
+@pytest.mark.parametrize("time_limit", [60, 120])
 def test_ble_vulnerability_sniffer(
     wifi_dut, wifi_access_point, ble_vulnerability_sniffer, time_limit, logger
 ):
