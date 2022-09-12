@@ -1051,7 +1051,7 @@ defaults:
     radius_server: 'raspi_radius_server'
 
     ble_vul_sniffer:
-        time_limit: 10
+        time_limit: 60
         log_file: "some_log_file.log"
         stop_capture_on: ["crash", "error", "exception", "oops"]
         script: "some_script.py"
