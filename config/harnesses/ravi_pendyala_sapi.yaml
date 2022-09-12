@@ -494,19 +494,16 @@ devices:
             socket:
                 type: 'socket.ip_socket_factory'
 
-    ble_sweynetooth:
+
+    ble_sweyntooth:
         interfaces:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
-            docker_host:
-                type: 'docker.ble_sweyntooth'
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
                 ip_address: '127.0.0.1'
-                container_name: "utf_sweyntooth_1"
-                image: 'utf_sweyntooth'
-                volume:
-                    - '/dev:/dev'
-                devices:
-                    - '/dev/ttyACM0:/dev/ttyACM0'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
                 is_prune: false
                 is_execute_raspi_manager_scripts: false
                 username: pi
@@ -515,33 +512,6 @@ devices:
                 port: 'auto'
                 vid: 0x239a
                 pid: 0x8029
-            linux_shell:
-                type: 'shell.shell'
-
-
-    ble_vulnerable_sniffer:
-        interfaces:
-            # the docker_host interface specifies which device to connect to, login credentials, and
-            # the docker image to run
-            sniffer:
-                type: 'bluetooth.sniffer.sweyntooth.ble_vulnerable_sniffer'
-                ip_address: '127.0.0.1'
-                container_name: "utf_sweyntooth_1"
-                image: 'utf_sweyntooth'
-                volume:
-                    - '/dev:/dev'
-                devices:
-                    - '/dev/ttyACM0:/dev/ttyACM0'
-                is_prune: false
-                is_execute_raspi_manager_scripts: false
-                username: pi
-                password: 'raspberry'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x239a
-                pid: 0x8029
-                script:
-                    telink_key_size_overflow: "Telink_key_size_overflow.py"
             linux_shell:
                 type: 'shell.shell'
 
@@ -559,9 +529,7 @@ defaults:
         - 'rs9116_sapi'
         - 'efr32_4180b'
 
-    ble_sweynetooth: 'ble_sweynetooth'
-
-    ble_vulnerable_sniffer: 'ble_vulnerable_sniffer'
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
@@ -597,6 +565,12 @@ defaults:
     remote_socket_factory: "ip_socket_factory"
 
     aws_iot_client: 'python_aws_iot_thing'
+
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
