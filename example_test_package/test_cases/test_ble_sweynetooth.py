@@ -17,16 +17,15 @@ from utf.utils.logger import get_logger
         "script": "Telink_key_size_overflow.py"
     },
 )
-@pytest.mark.parametrize("time_limit", [60, 120])
 def test_ble_vulnerability_sniffer(
-    wifi_dut, wifi_access_point, ble_vulnerability_sniffer, time_limit, logger
+    wifi_dut, wifi_access_point, ble_vulnerability_sniffer, logger
 ):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
-    wifi_dut.interfaces.wifi.ble_start_advertising()
-    ble_sniffer_result = ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
-        dut_address=bt_dut_address, time_limit=time_limit
+    started = ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
+        dut_address=bt_dut_address
     )
-    logger.info(f"ble_sniffer_result : {ble_sniffer_result}")
-    assert ble_sniffer_result
+    assert started
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+

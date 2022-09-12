@@ -595,7 +595,7 @@ defaults:
         cafile: "AWS-IoT-root-CA.crt"
 
     ble_vul_sniffer:
-        time_limit: 60
+        time_limit: 10
         log_file: "some_log_file.log"
         stop_capture_on: ["crash", "error", "exception", "oops"]
         script: "some_script.py"
