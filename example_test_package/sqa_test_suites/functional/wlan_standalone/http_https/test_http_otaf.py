@@ -1566,8 +1566,12 @@ def test_http_fw_upgrade_in_rejoin_and_measure_time_C19783(http_server, wifi_dut
     # Joins the AP with given ssid and passphrase
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    logger().info("starting dhcp....")
-    wifi_dut.interfaces.wifi.start_ip()
+    result = wifi_dut.interfaces.wifi.start_ip()
+    ap_ip_address = result.gateway.decode()
+    logger().info(f"AP ip address : {ap_ip_address}")
+
+    device_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {device_ip}")
 
     # performs the firmware upgrade on DUT over the http port
     wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
@@ -1630,6 +1634,12 @@ def test_http_fw_upgrade_in_rejoin_and_measure_time_C19783(http_server, wifi_dut
     finally:
         if state == 'true':
             logger().info('\n\n Access point is available')
+            # Initiate ping to check AP Availability
+            status = ping(ap_ip_address, ping_count)
+            assert (
+                    status is True
+            ), "AP is not responding to ping request from third party device"
+            logger().info(f"ping is successful")
         else:
             logger().info('\n\n Turn on the Access Point')
             switch.interfaces.pdu_switch.turn_on()
