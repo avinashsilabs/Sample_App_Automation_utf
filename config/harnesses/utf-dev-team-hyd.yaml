@@ -513,6 +513,13 @@ devices:
                 pid: 0x8029
             linux_shell:
                 type: 'shell.shell'
+                
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
 
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
@@ -565,6 +572,8 @@ defaults:
     aws_iot_client: 'python_aws_iot_thing'
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
+    
+    openssl: 'openssl_socket'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -599,6 +608,14 @@ defaults:
         log_file: "some_log_file.log"
         stop_capture_on: ["crash", "error", "exception", "oops"]
         script: "some_script.py"
+        
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
 
     net_perf:
         server_options:
