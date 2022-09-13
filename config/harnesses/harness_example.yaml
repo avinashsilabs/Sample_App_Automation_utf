@@ -881,7 +881,7 @@ devices:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.18.87:8735/Design_Time_Addresses/utf_wcf_service_library/SnifferEllisysBluetoothAnalyzerService/?wsdl'
                 timeout: 120000
-            wcf_file_transfer_service: 
+            wcf_file_transfer_service:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.18.87:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
@@ -1131,3 +1131,5 @@ constants:
         value: 10
     iter_count:
         value: 5
+
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']
