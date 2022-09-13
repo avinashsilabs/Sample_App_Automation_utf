@@ -924,6 +924,7 @@ defaults:
         static_subnet: '255.255.255.0'
         static_gateway: '192.168.50.1'
         sniffer_validation: True
+        disable_sniffer_validation: false
 
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
