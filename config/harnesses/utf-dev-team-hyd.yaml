@@ -494,6 +494,26 @@ devices:
             socket:
                 type: 'socket.ip_socket_factory'
 
+    ble_sweyntooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                ip_address: '10.207.16.89'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            linux_shell:
+                type: 'shell.shell'
+                
     openssl_socket:
         interfaces:
             server:
@@ -551,6 +571,8 @@ defaults:
 
     aws_iot_client: 'python_aws_iot_thing'
 
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
+    
     openssl: 'openssl_socket'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
@@ -581,6 +603,12 @@ defaults:
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
 
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
+        
     openssl_config:
         certfile: "mosquitto-utf.silabs.com.cert.pem"
         keyfile: "mosquitto-utf.silabs.com.key.pem"
