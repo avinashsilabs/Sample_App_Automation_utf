@@ -494,6 +494,13 @@ devices:
             socket:
                 type: 'socket.ip_socket_factory'
 
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
+
     # this represents an brakttoth docker running on the NUC machine using sniffer
     bt_braktooth:
         interfaces:
@@ -565,6 +572,8 @@ defaults:
     aws_iot_client: 'python_aws_iot_thing'
     
     bt_vulnerability_sniffer: 'bt_braktooth'
+
+    openssl: 'openssl_socket'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
