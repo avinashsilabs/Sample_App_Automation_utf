@@ -1241,3 +1241,143 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+                          | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
+        "ca_cert": "ca-chain.cert.pem"
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_https_fw_upgrade_in_rejoin_and_measure_time_C19766(http_server, wifi_dut, wifi_access_point,
+                                                           wifi_sniffer, switch):
+    ''' Verify Rejoin Functionality in otaf functionality'''
+    ping_count = 10
+    state = switch.interfaces.pdu_switch.get_state()
+    logger().info("pdu switch state : " + str(state))
+    if state == 'true':
+        logger().info('PDU is ready for use')
+    else:
+        logger().info(f'\n\n Please check the AP & PDU current state')
+        assert False
+
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, ping_count)
+    assert status == 1, "unable to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_https_fw_upgrade_in_rejoin_and_measure_time_C19766')
+
+    logger().info(f"Enabling the rejoin parameters")
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+
+    logger().info("Fetching DUT fw version before upgrade...")
+    wifi_dut.interfaces.wifi.version()
+
+    # Joins the AP with given ssid and passphrase
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    ap_ip_address = result.gateway.decode()
+    logger().info(f"AP ip address : {ap_ip_address}")
+
+    device_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {device_ip}")
+
+    # performs the firmware upgrade on DUT over the http port
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    if state == 'true':
+        switch.interfaces.pdu_switch.turn_off()
+    time.sleep(60)
+    logger().info("get http otaf status success")
+    wifi_dut.interfaces.wifi.get_http_otaf_status()
+
+    # fetches the async events generated from the DUT
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    if len(events):
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
+                async_timestamp = event.timestamp
+
+    if not async_timestamp:
+        logger().info(f"Asynchronous message is not received after otaf over http")
+    else:
+        time_duration = (async_timestamp - start_time) / 1000000000
+        logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    logger().info('##### Turn on Access point #####')
+    state = switch.interfaces.pdu_switch.get_state()
+    logger().info(f"checking status: {state}")
+    if state == 'false':
+        switch.interfaces.pdu_switch.turn_on()
+        logger().info(f"PDU was off, trying to turn on using PDU, Please wait for 120 seconds ........")
+        time.sleep(120)
+
+    try:
+        # API does soft reset on DUT
+        logger().info("resetting DUT....")
+        wifi_dut.interfaces.wifi.wireless_deinit()
+        time.sleep(10)
+
+        # performs the wifi initialization
+        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.dut_init()
+
+        # gets DUT fw version
+        logger().info("fetching fw version after init....")
+        wifi_dut.interfaces.wifi.version()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(10)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        result = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = result.ip.decode()
+        logger().info(f"DUT ip address : {dut_ip}")
+        status = ping(dut_ip, ping_count)
+        if status == 1:
+            logger().info('#### Ping successful ####')
+        else:
+            logger().info('#### Ping unsuccessful ####')
+    except (AssertionError, IndexError, CLITransportException):
+        assert False, 'Find exception'
+    finally:
+        if state == 'true':
+            logger().info('\n\n Access point is available')
+            status = ping(ap_ip_address, ping_count)
+            assert (
+                    status is True
+            ), "AP is not responding to ping request from third party device"
+            logger().info(f"ping is successful")
+        else:
+            logger().info('\n\n Turn on the Access Point')
+            switch.interfaces.pdu_switch.turn_on()
+            logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
+            time.sleep(30)
