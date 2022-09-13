@@ -1063,7 +1063,7 @@ def test_connectivity_in_WPA2_EAP_TLS_PMF_C19026(wifi_sniffer, wifi_access_point
 )
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678'})
+                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
@@ -1072,7 +1072,6 @@ def test_GTK_Renewal_WPA_EAP_Multicast_C19029(radius_server, multicast_client, n
                                                   wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
     testcase = "test_GTK_Renewal_WPA_EAP_Multicast_C19029"
 
-    wifi_access_point.interfaces.wifi.set_group_key_renewal_period_ap(gtk=30)
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -1117,7 +1116,7 @@ def test_GTK_Renewal_WPA_EAP_Multicast_C19029(radius_server, multicast_client, n
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
         | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
@@ -1133,7 +1132,7 @@ def test_GTK_Renewal_WPA_EAP_Multicast_C19029(radius_server, multicast_client, n
 )
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
@@ -1141,8 +1140,6 @@ def test_GTK_Renewal_WPA_EAP_Multicast_C19029(radius_server, multicast_client, n
 def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(radius_server, multicast_client, net_perf_client, protocol,
                                                   wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,utf_constants):
     testcase = "test_GTK_Renewal_WPA2_EAP_TTLS_C19030"
-
-    wifi_access_point.interfaces.wifi.set_group_key_renewal_period_ap(gtk=30)
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -1189,7 +1186,7 @@ def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(radius_server, multicast_client, net_p
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
         | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
@@ -1205,7 +1202,7 @@ def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(radius_server, multicast_client, net_p
 )
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678'})
+                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
@@ -1213,8 +1210,6 @@ def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(radius_server, multicast_client, net_p
 def test_GTK_Renewal_WPA_EAP_unicast_C70607(radius_server, net_perf_client, protocol,
                                              wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
     testcase = "test_GTK_Renewal_WPA_EAP_unicast_C70607"
-
-    wifi_access_point.interfaces.wifi.set_group_key_renewal_period_ap(gtk=30)
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -1258,7 +1253,7 @@ def test_GTK_Renewal_WPA_EAP_unicast_C70607(radius_server, net_perf_client, prot
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
         | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
@@ -1274,7 +1269,7 @@ def test_GTK_Renewal_WPA_EAP_unicast_C70607(radius_server, net_perf_client, prot
 )
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
@@ -1283,7 +1278,6 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(radius_server, net_perf_client, pro
                                              wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
     testcase = "test_GTK_Renewal_WPA2_EAP_unicast_C70609"
 
-    wifi_access_point.interfaces.wifi.set_group_key_renewal_period_ap(gtk=30)
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -1327,7 +1321,7 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(radius_server, net_perf_client, pro
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
         | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
@@ -1343,7 +1337,7 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(radius_server, net_perf_client, pro
 )
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
@@ -1351,8 +1345,6 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(radius_server, net_perf_client, pro
 def test_GTK_Renewal_WPA2_EAP_Multicast_C70608(radius_server, multicast_client, net_perf_client, protocol,
                                                wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
     testcase = "test_GTK_Renewal_WPA2_EAP_Multicast_C70608"
-
-    wifi_access_point.interfaces.wifi.set_group_key_renewal_period_ap(gtk=30)
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
