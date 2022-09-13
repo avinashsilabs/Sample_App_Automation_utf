@@ -494,6 +494,26 @@ devices:
             socket:
                 type: 'socket.ip_socket_factory'
 
+    # this represents an brakttoth docker running on the NUC machine using sniffer
+    bt_braktooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            bt_vul_sniffer:
+                type: 'bluetooth.sniffer.braktooth'
+                ip_address: '10.207.18.161'
+                container_name: "bt_braketooth"
+                image: 'jeevan7302/utf_braktooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: 'test'
+                password: 'test123'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            linux_shell:
+                type: 'shell.shell'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -543,6 +563,8 @@ defaults:
     remote_socket_factory: "ip_socket_factory"
 
     aws_iot_client: 'python_aws_iot_thing'
+    
+    bt_vulnerability_sniffer: 'bt_braktooth'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -571,6 +593,12 @@ defaults:
         certfile: "python-thing-certificate.pem.crt"
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
+
+    bt_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops",]
+        script: "some_script.py"
 
     net_perf:
         server_options:
