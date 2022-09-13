@@ -94,6 +94,70 @@ class tx_rx:
         logger.info(f"Total bytes sent on socket opened remotely -> {self.sent_data}")
 
 
+def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename):
+    result = wifi_dut.interfaces.wifi.version()
+    logger().info(f"DUT firmware version: {result}")
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+    )
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger().info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger().info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
+    logger().info("Start the sniffer")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap"
+    )
+
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
+                                    scan_interval=6,
+                                    beacon_missedcount=40,
+                                    first_time_retry=0)
+    for count in range(1, 3):
+        try:
+            join_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger().info("Joining to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
+            break
+        except:
+            logger().info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
+            time.sleep(1)
+    if join_fail:
+        logger().info(f"Joining to the AP has failed")
+        assert join_fail == 0, "Joining to the AP is failed"
+    for count in range(1, 3):
+        ip_fail = 1
+        try:
+            # DUT gets ipaddress through DHCP process after start_ip API is executed
+            logger().info("DUT gets ipaddress through DHCP ")
+            ip_address = wifi_dut.interfaces.wifi.start_ip(timeout=60)
+            ip_fail = 0
+            break
+        except:
+            logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            time.sleep(1)
+    if ip_fail:
+        logger().info(f"DUT unable to get IP address")
+        assert ip_fail == 0, "ip setting in DUT has failed"
+    return mac_address, ip_address
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -192,17 +256,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
                                                             wifi_client,
                                                             protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"Fetched the device ip address,{device_ip}")
     logger().info(f"*****Enable  Max Power save in DUT******")
@@ -237,10 +292,9 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
         # capture device output
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
 
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        if tp is not None:
-            print_dict("## ", tp)
-        logger().info(f"Iperf data transfer completed successfully")
+        tp = net_perf_client.interfaces.net_perf.process_output(result)
+        assert tp is not None
+        __print_throughput(tp)
 
     logger().info("validate NULL data frame with PM bit set to '1'")
     packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
@@ -282,20 +336,10 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
                                                                wifi_client,
                                                                protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file="test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488")
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+    capture_filename = "test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
-    time.sleep(2)
-    # Connect to the AP
-    logger().info("Connecting to the Access point")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     # preparing wifi_client
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -371,20 +415,10 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
                                                                wifi_client,
                                                                protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
-    result_scan = wifi_dut.interfaces.wifi.scan()
-    assert result_scan is not None, "No AP found"
-    # Connect to the AP
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"Fetched the device ip address, {device_ip}")
 
@@ -467,20 +501,10 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
                                                                wifi_client,
                                                                protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+    capture_filename = "test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
-
-    logger().info("Connecting to the Access point")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     # preparing wifi_client
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -554,18 +578,10 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
                                                                wifi_client,
                                                                protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
-
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"Fetched the device ip address, {device_ip}")
 
@@ -648,21 +664,10 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
                                                             wifi_client,
                                                             protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+    capture_filename = "test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
-    time.sleep(2)
-    # Connect to the AP
-    logger().info("Connecting to the Access point")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     # preparing wifi_client
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -728,18 +733,10 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
                                                             wifi_client,
                                                             protocol):
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
-
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger().info(f"Fetched the device ip address, {device_ip}")
     result = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -813,20 +810,10 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
-    capture_file1 = "test_powersave_disable_functionality_powersave1_C19501" + "powersave_enable"
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_file1)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+    capture_filename = "test_powersave_disable_functionality_powersave1_C19501"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     bssid = wifi_access_point.interfaces.wifi.bssid
-    # scan the AP
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    # Connect to the AP
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # Get IP over DHCP
-    wifi_dut.interfaces.wifi.start_ip()
+    logger().info(f'AP BSSID = {bssid}')
     logger().info(f"*****Enable Powersave2 in  DUT******")
     # Initiating power save2
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode1,
@@ -885,19 +872,10 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
-    capture_file1 = "test_powersave_disable_functionality_case2_C19501" + "powersave_enable"
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_file1)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+    capture_filename = "test_powersave_disable_functionality_powersave2_C19501"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     bssid = wifi_access_point.interfaces.wifi.bssid
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    # Connect to the AP
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # Get IP over DHCP
-    wifi_dut.interfaces.wifi.start_ip()
+    logger().info(f'AP BSSID = {bssid}')
     logger().info(f"*****Enable Powersave2 in  DUT******")
     # Initiating power save2
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -957,19 +935,10 @@ def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer):
     validation = True
-    capture_file1 = "test_powersave_disable_functionality_case3_C19501" + "powersave_enable"
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_file1)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+    capture_filename = "test_powersave_disable_functionality_powersave3_C19501"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
     bssid = wifi_access_point.interfaces.wifi.bssid
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    # Connect to the AP
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # Get IP over DHCP
-    wifi_dut.interfaces.wifi.start_ip()
+    logger().info(f'AP BSSID = {bssid}')
     logger().info(f"*****Enable Powersave2 in  DUT******")
     # Initiating power save2
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -1037,17 +1006,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
     data_size = 1460
     remote_socket.interfaces.socket.time_limit = 1800
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1176,17 +1138,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(wifi_sniffer, remot
     data_size = 1460
     remote_socket.interfaces.socket.time_limit = 1800
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1315,17 +1270,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(wifi_sniffer, remot
     data_size = 1460
     remote_socket.interfaces.socket.time_limit = 1800
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1452,17 +1400,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
     data_size = 1460
     remote_socket.interfaces.socket.time_limit = 1800
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")
@@ -1590,17 +1531,10 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(wifi_sniffer, remo
     data_size = 1460
     remote_socket.interfaces.socket.time_limit = 1800
     validation = True
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file='test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497')
-    result_scan = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-    assert result_scan is not None, "No AP found"
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    result_ap = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    assert result_ap is not None, "Could not connect to the AP"
-    # preparing wifi_dut
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
+    capture_filename = "test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497"
+    dut_mac_address, ip_config = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     logger.info(f"Fetched the device ip address,{device_ip}")
     logger.info(f"*****Enable  Max Power save in DUT******")

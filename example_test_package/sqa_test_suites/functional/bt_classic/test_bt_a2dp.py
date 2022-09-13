@@ -25,7 +25,7 @@ pytestmark = [
         "wifi_dut",
         wifi={
             "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "bt_features": RS9116BTFeatureBitMap.Default
             | RS9116BTFeatureBitMap.A2DPProfileEnable
             | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,

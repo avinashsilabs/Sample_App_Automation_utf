@@ -94,13 +94,19 @@ class ApWirelessOff(ThreadBase):
     "first_time_retry": 0,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init']) #'load_default_fw',
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-#@pytest.mark.firmware_app("wifitest")
-def test_fw_upgrade_UART_C19376(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
+def test_fw_upgrade_UART_C19376(wifi_sniffer, wifi_dut, wifi_access_point, wiseconnect_web):
 
     testcase = "test_fw_upgrade_UART_C19376"
     logger().info(f"testcase : {testcase}")
+
+    logger().info("loading firmware through uart")
+    fw_mgr = FirmwareManager.get_instance()
+    fw_mgr.load_default_firmware()
+    time.sleep(10)
+    logger().info("Firmware upgradation is successful")
+    wifi_dut.interfaces.wifi.reset_soft()
     wifi_dut.interfaces.wifi.init()
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

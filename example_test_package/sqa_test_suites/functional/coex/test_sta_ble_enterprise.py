@@ -14,7 +14,7 @@ from utf.utils.thread_base import ThreadBase
 import threading
 from threading import *
 import time
-
+lock = threading.RLock()
 
 """
     setup requirement:
@@ -42,13 +42,12 @@ def logger():
 ping_count = 120
 
 
-
 # this thread used for wifi join
 class traffic_generator:
 
     def __init__(self, wifi_dut=None, \
                  wifi_access_point=None, wifi_client=None, \
-                 net_perf_client=None, protocol=None, device_ip=None, host_ip=None):
+                 net_perf_client=None, protocol=None, device_ip=None, host_ip=None, timeout=60):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -57,6 +56,7 @@ class traffic_generator:
         self.protocol = protocol
         self.device_ip = device_ip
         self.host_ip = host_ip
+        self.timeout = timeout
         self.dut_mac_address = None
         self.ap_bssid = None
 
@@ -68,7 +68,7 @@ class traffic_generator:
         # preparing iperf
         self.net_perf_client.interfaces.net_perf.init_client(host_ip=self.host_ip, device_ip=self.device_ip,
                                                              host_role="C", protocol=self.protocol,
-                                                             time_out=60)
+                                                             time_out=self.timeout)
 
         # creating results object for sharing between host and dut
         result = Result(self.net_perf_client.interfaces.net_perf.protocol)
@@ -97,7 +97,7 @@ class traffic_generator:
     def run_tx(self):
         self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip, device_ip=self.device_ip,
                                                              host_role="S", protocol=self.protocol,
-                                                             time_out=60)
+                                                             time_out=self.timeout)
         self.net_perf_client.interfaces.net_perf.start()
 
         logger().info("sending data from DUT")
@@ -127,39 +127,11 @@ class eap_join:
 
     # Join Wi-Fi Access Point
     def join_ap(self):
-        ap_user_name = "\\\"user1\\\""
-        ap_password = f"\\\"{self.wifi_access_point.interfaces.wifi.passphrase}\\\""
-        dut_ssid = self.wifi_access_point.interfaces.wifi.ssid
-        dut_security = self.wifi_access_point.interfaces.wifi.security
-
         if self.eap_type != "TLS":
             self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
 
-        logger().info("Setting roam parameters")
-        # enable Roaming
-        self.wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=60, roaming_hysterisis=4)
-
-        logger().info("scanning for AP")
-
-        # enables the scan in dut on channel
-        scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-        logger().info(f"scan results : {scan_results}")
-        assert (len(scan_results) > 0), "scan failed"
-        time.sleep(2)
-        # test_scan
-        scan_results = self.wifi_dut.interfaces.wifi.scan(channel=self.wifi_access_point.interfaces.wifi.channel,
-                                                          ssid=dut_ssid)
-        logger().info(scan_results)
-
-        logger().info("enable rejoin")
-        self.wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40,
-                                             first_time_retry=0)
-
-        # test_wifi_join
-        self.wifi_dut.interfaces.wifi.eap_method(eap_method=self.eap_type, eap_inner_method="\\\"auth=MSCHAPV2\\\"",
-                                                 private_key="\"\"")
-        self.wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
-
+        self.wifi_dut.interfaces.wifi.eap_join_ap(self.wifi_access_point, eap_method=self.eap_type,
+                                                  timeout=40)
 
 
 
@@ -207,42 +179,47 @@ class WifiThread(ThreadBase):
 
         logger().info("data transfer is successful")
 
-
     def run(self):
-        ej = eap_join(self.wifi_dut, self.wifi_access_point, self.eap_type)
-        ej.join_ap()
-        # Get IP through DHCP
-        result = self.wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, self.wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info(f"Found device ip :{self.device_ip}")
+        with lock:
+            ej = eap_join(self.wifi_dut, self.wifi_access_point, self.eap_type)
+            ej.join_ap()
+            # Get IP through DHCP
+            result = self.wifi_dut.interfaces.wifi.start_ip()
+            assert isinstance(
+                result, self.wifi_dut.interfaces.wifi.IPConfig
+            ), f"Failed to get IP address. Result = {result}"
+            self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info("Getting the DUT mac")
-        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
+            logger().info(f"Found device ip :{self.device_ip}")
 
-        self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP bssid {self.ap_bssid}")
+            logger().info("Getting the DUT mac")
+            self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
 
-        logger().info("Initiating powersave")
-        # Initiating power save
-        # This API Enables the wifi power save mode in DUT
+            self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+            logger().info(f"AP bssid {self.ap_bssid}")
 
-        self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
-        # # Enables the bt power save in DUT
+            logger().info("Initiating powersave")
+            # Initiating power save
+            # This API Enables the wifi power save mode in DUT
 
-        self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-        time.sleep(2)
+            self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                     RS9116PowerSaveProcedureTypes.FastPowerSave)
+            # # Enables the bt power save in DUT
+
+            self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+            time.sleep(2)
+        if self.net_perf_client:
+            ping_count = 10
+        else:
+            ping_count = 100
 
         logger().info("Initiating ping")
         # Initiate ping from third party wifi-client to DUT
         status = ping(self.device_ip, ping_count)
-        assert status is True, "DUT is not responding to ping request from third party device"
+        assert status, "DUT is not responding to ping request from third party device"
         logger().info("ping is successful")
 
         if self.net_perf_client:
@@ -315,21 +292,35 @@ class WifiThread(ThreadBase):
 
 # this thread used for sta+ble as a slave
 class BleThread_Advertise(ThreadBase):
-    def __init__(self, wifi_dut, ble_client):
+    def __init__(self, wifi_dut=None, ble_client=None, adv_int=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
-        # Set up DUT for BLE advertising
-        logger().info("Initialising BLE")
-        self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-        assert self.bt_dut_address is not None, "Unable to fetch bluetooth address from DUT"
-        logger().info(f"bt_dut_address : {self.bt_dut_address}")
-        time.sleep(5)
+        self.adv_int = adv_int
+        self.bt_dut_address = None
+
+
+    def stop_adv_scan(self):
+        logger().info("Initiating stop advertise from DUT")
+        self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+        logger().info("Initiating stop scan from Remote device")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
 
     def run(self):
-
-        logger().info(f"Advertising the DUT")
-        self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=30)
+        with lock:
+            # Set up DUT for BLE advertising
+            logger().info("Initialising BLE")
+            self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            assert self.bt_dut_address is not None, "Unable to fetch bluetooth address from DUT"
+            logger().info(f"bt_dut_address : {self.bt_dut_address}")
+            time.sleep(5)
+            logger().info(f"Advertising the DUT")
+            if self.adv_int:
+                self.adv_int = int(self.adv_int / 0.625)
+                self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=self.adv_int,
+                                                                    ble_adv_int_max=self.adv_int, timeout=30)
+            else:
+                self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
         logger().info("Initiating scan from Remote device")
         # Begin Scanning for BLE devices
@@ -337,8 +328,8 @@ class BleThread_Advertise(ThreadBase):
         assert bt_client_address is not None, "Unable to fetch bluetooth address from Remote device"
         logger().info(f"Started scan from remote BLE device")
         logger().info("\n***********{}**********\n".format(bt_client_address))
-        for i in range(0, 3):
-            time.sleep(15)
+        for i in range(0, 4):
+            time.sleep(20)
             # See that we found our device
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
             logger().info("\n***scan results:{}**********\n".format(found_devices))
@@ -352,10 +343,8 @@ class BleThread_Connection(ThreadBase):
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
         self.mode = mode
-
-        # Set up DUT for BLE advertising
-        self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-        assert self.bt_dut_address is not None, "Unable to fetch bluetooth address from DUT"
+        self.bt_dut_address = None
+        self.bt_client_address = None
 
     def disconnect(self):
 
@@ -363,6 +352,8 @@ class BleThread_Connection(ThreadBase):
             logger().info(f"Initiating disconnect...")
             # Disconnect
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.bt_client_address)
+            logger().info("Initiating stop scan from Remote device")
+            self.ble_client.interfaces.bluetooth.stop_scanning()
 
         if self.mode == "ble_slave":
             logger().info("Initiating disconnect from remote device")
@@ -370,46 +361,61 @@ class BleThread_Connection(ThreadBase):
             logger().info(f"*****BLE sniffer validation is pending*******")
 
     def run(self):
-        if self.mode == "ble_master":
-            # Start DUT
 
-            # Start ble client
-            self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-                bt_dut_address=self.bt_dut_address,
-                hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                               "0x40 0x00 "  # Advertising_Interval_Max
-                               "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                               "0x00 "  # Own_Address_Type
-                               "0x00 "  # Peer_Address_Type
-                               "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                               "0x07 "  # Advertising_Channel_Map
-                               "0x00"  # Advertising_Filter_Policy
-            )
-            assert self.bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
-            time.sleep(1)
-            # Start scanning and connect to ble client
-            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.bt_client_address, timeout=20)
-            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        with lock:
+            # Set up DUT for BLE advertising
+            self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            assert self.bt_dut_address is not None, "Unable to fetch bluetooth address from DUT"
 
-            logger().info(f"Initiating connection...")
-            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=self.bt_client_address, timeout=120)
+            if self.mode == "ble_master":
+                # Start DUT
 
-        if self.mode == "ble_slave":
+                # Start ble client
+                self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                    bt_dut_address=self.bt_dut_address,
+                    hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                                   "0x40 0x00 "  # Advertising_Interval_Max
+                                   "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                                   "0x00 "  # Own_Address_Type
+                                   "0x00 "  # Peer_Address_Type
+                                   "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                                   "0x07 "  # Advertising_Channel_Map
+                                   "0x00"  # Advertising_Filter_Policy
+                )
+                assert self.bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
+                time.sleep(1)
+                # Start scanning and connect to ble client
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.bt_client_address, timeout=30)
+                self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
-            logger().info("Initiating advertise from DUT")
-            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+                logger().info(f"Initiating connection...")
+                self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=self.bt_client_address, timeout=120)
+                time.sleep(60)
+                # Get the state of the dut
+                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                logger().info(f"Getting device state : {state} ")
+                # state_int = int(state) if state.isdigit() else -1
+                # assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in slave mode"
+                # logger().info(f"Dut is in connected state {state_int}")
 
-            logger().info("Initiating BLE scan from remote device")
-            # Begin Scanning for BLE devices
-            self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
-            assert self.bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
-            time.sleep(5)
-            # See that we found our device
-            found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
+            if self.mode == "ble_slave":
 
-            logger().info("Initiating connection from remote device")
-            self.ble_client.interfaces.bluetooth.connect(self.bt_dut_address)
+                logger().info("Initiating advertise from DUT")
+                self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+                logger().info("Initiating BLE scan from remote device")
+                # Begin Scanning for BLE devices
+                self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
+                assert self.bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
+                time.sleep(5)
+                # See that we found our device
+                found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+                assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
+
+                logger().info("Initiating connection from remote device")
+                self.ble_client.interfaces.bluetooth.connect(self.bt_dut_address)
+                time.sleep(60)
+
 
 
 
@@ -441,7 +447,7 @@ class BleThread_Connection(ThreadBase):
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
-def test_sta_ble_TLS_BLE_adv_C20215(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+def test_sta_ble_TLS_BLE_adv_C20215(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_sta_ble_TLS_BLE_adv_C20215"
     logger().info("testcase : test_sta_ble_TLS_BLE_adv_C20215")
     validation = True
@@ -451,16 +457,17 @@ def test_sta_ble_TLS_BLE_adv_C20215(wifi_sniffer, wifi_access_point, wifi_dut, b
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Advertise(wifi_dut, ble_client)
     wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                             eap_type="TLS", testcase=testcase)
+                          eap_type="TLS", testcase=testcase)
     ble_obj.start()
     wifi_obj.start()
-    ble_obj.wait_for_exit()
     wifi_obj.wait_for_exit()
-    logger().info("Initiating stop scan from Remote device")
-    ble_client.interfaces.bluetooth.stop_scanning()
+    ble_obj.wait_for_exit()
+    ble_obj.stop_adv_scan()
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
+    wifi_obj.stop()
+    ble_obj.stop()
 
 
 @pytest.mark.config(
@@ -491,7 +498,7 @@ def test_sta_ble_TLS_BLE_adv_C20215(wifi_sniffer, wifi_access_point, wifi_dut, b
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
-def test_sta_ble_TTLS_BLE_adv_C20216(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+def test_sta_ble_TTLS_BLE_adv_C20216(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_sta_ble_TTLS_BLE_adv_C20216"
     logger().info("testcase : test_sta_ble_TTLS_BLE_adv_C20216")
     validation = True
@@ -501,16 +508,17 @@ def test_sta_ble_TTLS_BLE_adv_C20216(wifi_sniffer, wifi_access_point, wifi_dut, 
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Advertise(wifi_dut, ble_client)
     wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                             eap_type="TTLS", testcase=testcase)
+                          eap_type="TTLS", testcase=testcase)
     ble_obj.start()
     wifi_obj.start()
-    ble_obj.wait_for_exit()
     wifi_obj.wait_for_exit()
-    logger().info("Initiating stop scan from Remote device")
-    ble_client.interfaces.bluetooth.stop_scanning()
+    ble_obj.wait_for_exit()
+    ble_obj.stop_adv_scan()
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
+    wifi_obj.stop()
+    ble_obj.stop()
 
 
 @pytest.mark.config(
@@ -541,7 +549,7 @@ def test_sta_ble_TTLS_BLE_adv_C20216(wifi_sniffer, wifi_access_point, wifi_dut, 
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
-def test_sta_ble_PEAP_BLE_adv_C20217(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+def test_sta_ble_PEAP_BLE_adv_C20217(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_sta_ble_PEAP_BLE_adv_C20217"
     logger().info("testcase : test_sta_ble_PEAP_BLE_adv_C20217")
     logger().info("configuring the Sniffer with the channel")
@@ -550,16 +558,17 @@ def test_sta_ble_PEAP_BLE_adv_C20217(wifi_sniffer, wifi_access_point, wifi_dut, 
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Advertise(wifi_dut, ble_client)
     wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                             eap_type="PEAP", testcase=testcase)
+                          eap_type="PEAP", testcase=testcase)
     ble_obj.start()
     wifi_obj.start()
-    ble_obj.wait_for_exit()
     wifi_obj.wait_for_exit()
-    logger().info("Initiating stop scan from Remote device")
-    ble_client.interfaces.bluetooth.stop_scanning()
+    ble_obj.wait_for_exit()
+    ble_obj.stop_adv_scan()
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
+    wifi_obj.stop()
+    ble_obj.stop()
 
 
 
@@ -593,7 +602,7 @@ def test_sta_ble_PEAP_BLE_adv_C20217(wifi_sniffer, wifi_access_point, wifi_dut, 
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
-def test_sta_ble_TCP_UDP_TLS_C20205(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client):
+def test_sta_ble_TCP_UDP_TLS_C20205(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client):
     testcase = "test_sta_ble_TCP_UDP_TLS_C20205"
     logger().info("testcase : test_sta_ble_TCP_UDP_TLS_C20205")
     validation = True
@@ -605,21 +614,20 @@ def test_sta_ble_TCP_UDP_TLS_C20205(wifi_sniffer, wifi_access_point, wifi_dut, w
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Connection(wifi_dut, ble_client, mode="ble_master")
     wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                             eap_type="TLS", testcase=testcase,
-                             wifi_client=wifi_client, net_perf_client=net_perf_client, protocols=protocols,
-                             traffic_types=traffic_types)
+                          eap_type="TLS", testcase=testcase,
+                          wifi_client=wifi_client, net_perf_client=net_perf_client, protocols=protocols,
+                          traffic_types=traffic_types)
     ble_obj.start()
     wifi_obj.start()
-    ble_obj.wait_for_exit()
     wifi_obj.wait_for_exit()
-    logger().info(f"Initiating disconnect...")
+    ble_obj.wait_for_exit()
     # Disconnect
     ble_obj.disconnect()
-    logger().info("Initiating stop scan from Remote device")
-    ble_client.interfaces.bluetooth.stop_scanning()
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
+    wifi_obj.stop()
+    ble_obj.stop()
 
 
 
@@ -644,16 +652,16 @@ def test_sta_ble_TCP_UDP_TLS_C20205(wifi_sniffer, wifi_access_point, wifi_dut, w
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
-        "eap_cert": "wifi-user.pem"
+        #"eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TLS mode
+ #EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
-def test_sta_ble_TCP_UDP_TTLS_C20206(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
+def test_sta_ble_TCP_UDP_TTLS_C20206(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
                                      net_perf_client):
     testcase = "test_sta_ble_TCP_UDP_TTLS_C20206"
     logger().info("testcase : test_sta_ble_TCP_UDP_TTLS_C20206")
@@ -666,18 +674,19 @@ def test_sta_ble_TCP_UDP_TTLS_C20206(wifi_sniffer, wifi_access_point, wifi_dut, 
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Connection(wifi_dut, ble_client, mode="ble_master")
     wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                             eap_type="TTLS", testcase=testcase,
-                             wifi_client=wifi_client, net_perf_client=net_perf_client, protocols=protocols,
-                             traffic_types=traffic_types)
+                          eap_type="TTLS", testcase=testcase,
+                          wifi_client=wifi_client, net_perf_client=net_perf_client, protocols=protocols,
+                          traffic_types=traffic_types)
     ble_obj.start()
     wifi_obj.start()
-    ble_obj.wait_for_exit()
     wifi_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
     logger().info(f"Initiating disconnect...")
     # Disconnect
     ble_obj.disconnect()
-    logger().info("Initiating stop scan from Remote device")
-    ble_client.interfaces.bluetooth.stop_scanning()
+
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
+    wifi_obj.stop()
+    ble_obj.stop()

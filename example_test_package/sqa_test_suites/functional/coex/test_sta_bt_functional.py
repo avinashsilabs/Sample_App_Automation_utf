@@ -737,7 +737,7 @@ def test_sta_bt_C20092_C20093_C20110_C20117(wifi_sniffer, wifi_dut, bt_client, w
 def test_sta_bt_C20104(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
     testcase = "test_sta_bt_C20104"
     wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase=testcase)
-    bt_obj = Bt_spp_dut_as_master_wrong_pin(wifi_dut, bt_client)
+    bt_obj = Bt_spp_dut_as_slave_wrong_pin(wifi_dut, bt_client)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
     bt_obj.start()
@@ -756,7 +756,7 @@ def test_sta_bt_C20104(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
 def test_sta_bt_C20106(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
     testcase = "test_sta_bt_C20106"
     wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase=testcase)
-    bt_obj = Bt_spp_dut_as_slave_wrong_pin(wifi_dut, bt_client)
+    bt_obj = Bt_spp_dut_as_master_wrong_pin(wifi_dut, bt_client)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
     bt_obj.start()

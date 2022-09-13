@@ -1,6 +1,3 @@
-[submodule "mini_gecko_sdk"]
-	path = test_agent/mini_gecko_sdk
-	url = ../../Redpine/mini_gecko_sdk
 [submodule "tcmgr"]
 	path = tcmgr
 	url = ../../toolchain_internal/tcmgr.git

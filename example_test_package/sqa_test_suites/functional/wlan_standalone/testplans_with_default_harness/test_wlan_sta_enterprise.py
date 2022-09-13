@@ -183,7 +183,7 @@ class sniffer_validation_process:
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TLS_C19018(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_in_WPA2_EAP_TLS_C19018(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_C19018"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -284,7 +284,7 @@ def test_connectivity_in_WPA2_EAP_TLS_C19018(wifi_sniffer, wifi_dut, wifi_access
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TTLS_C19019"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -381,7 +381,7 @@ def test_connectivity_in_WPA2_EAP_TTLS_C19019(wifi_sniffer, wifi_dut, wifi_acces
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_PEAPv0_C19020"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -479,7 +479,7 @@ def test_connectivity_in_WPA2_EAP_PEAPv0_C19020(wifi_sniffer, wifi_dut, wifi_acc
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -557,7 +557,7 @@ def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C19022(wifi_sniffer, wifi_dut
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 # EAP Connection in TTS mode with no certificate
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -637,7 +637,7 @@ def test_connectivity_with_WPA2_EAP_with_expired_cert_TLS_C19023(wifi_sniffer, w
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 # EAP Connection in TTS mode with no certificate
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_with_WPA2_EAP_with_valid_and_expired_cert_TLS_C19025(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_with_WPA2_EAP_with_valid_and_expired_cert_TLS_C19025(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
 
     ap_user_name = "\\\"user1\\\""
     ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
@@ -769,7 +769,7 @@ def test_connectivity_with_WPA2_EAP_with_valid_and_expired_cert_TLS_C19025(wifi_
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -829,10 +829,13 @@ def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client |  RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
-        | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.TLS_V1,
         "band": 0,
@@ -843,7 +846,7 @@ def test_connectivity_in_WPA2_EAP_TLS_when_wrong_cert_C19024(wifi_sniffer, wifi_
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027(wifi_sniffer, wifi_access_point, wifi_dut, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -950,7 +953,7 @@ def test_connectivity_in_WPA2_EAP_TLS_v_1_0_C19027(wifi_sniffer, wifi_access_poi
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', \
                           'protected_management_frame': 'Capable'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TLS_PMF_C19026(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_connectivity_in_WPA2_EAP_TLS_PMF_C19026(wifi_sniffer, wifi_access_point, wifi_dut, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_PMF_C19026"
     validation = True
     logger().info("configuring the Sniffer with the channel")

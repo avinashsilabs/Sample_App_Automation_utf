@@ -19,7 +19,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116MqttQos,
     DeviceConstants,
     RS9116PowerSaveProcedureTypes,
-    )
+)
 from utf.utils.iperf.iperf_utils import get_host_ip
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -54,13 +54,13 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     wifi_dut.interfaces.wifi.scan(ssid=None)
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger.info(f"DUT MAC_Address: {mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=capture_filename
-        )
+    )
 
     if not rejoin_params:
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
@@ -118,7 +118,7 @@ class wifiJoinThread(ThreadBase):
                 self.net_perf_client.interfaces.net_perf.server_port,
                 self.net_perf_client.interfaces.net_perf.protocol,
                 self.net_perf_client.interfaces.net_perf.client_options,
-                )
+            )
         # starting iperf as Client
         else:
             self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip)
@@ -351,8 +351,8 @@ def test_firmware_version_testcase18(wifi_dut):
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 def test_threading_sta_ble_data_udp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
@@ -373,8 +373,8 @@ def test_threading_sta_ble_data_udp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_a
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 def test_threading_sta_ble_data_udp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
@@ -395,8 +395,8 @@ def test_threading_sta_ble_data_udp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_a
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 def test_threading_sta_ble_data_tcp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
@@ -417,8 +417,8 @@ def test_threading_sta_ble_data_tcp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_a
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 def test_threading_sta_ble_data_tcp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
@@ -494,8 +494,8 @@ def test_threading_sta_ble_data_tcp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_a
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 def test_throughput_wifi_alone_tcp_tx_testcase1(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                                 run_iperf1,
@@ -516,8 +516,8 @@ def test_throughput_wifi_alone_tcp_tx_testcase1(wifi_dut, wifi_networked_dut, wi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 def test_throughput_wifi_alone_tcp_rx_testcase1(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                                 run_iperf1,
@@ -538,8 +538,8 @@ def test_throughput_wifi_alone_tcp_rx_testcase1(wifi_dut, wifi_networked_dut, wi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 def test_throughput_wifi_alone_udp_tx_testcase3(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
@@ -561,8 +561,8 @@ def test_throughput_wifi_alone_udp_tx_testcase3(wifi_dut, wifi_networked_dut, wi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.
             OpenMode | RS9116FeatureBitMap.PSKSecurity,
         "band": 2
-        }
-    )
+    }
+)
 @pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
@@ -580,8 +580,8 @@ def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wi
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut",
@@ -593,7 +593,7 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
@@ -684,8 +684,8 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan mode
 @pytest.mark.skip()
@@ -694,7 +694,7 @@ def test_http_otaf_testcase53(wifi_sniffer, http_server, wifi_access_point, wifi
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
@@ -778,8 +778,8 @@ def test_http_otaf_testcase53(wifi_sniffer, http_server, wifi_access_point, wifi
         "ca_cert": "ca-chain.cert.pem",
         "set_tx_wait_time": True,
         "tx_wait_time": 160000,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated"])
@@ -787,7 +787,7 @@ def test_http_otaf_testcase53(wifi_sniffer, http_server, wifi_access_point, wifi
 @pytest.mark.skip()
 def test_ssl_client_tx_rejoin_testcase2(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_client_tx_rejoin_testcase2"
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -854,15 +854,15 @@ def test_ssl_client_tx_rejoin_testcase2(
         "ca_cert": ["ca-chain.cert.pem"],
         "set_tx_wait_time": True,
         "tx_wait_time": 160000,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated"])
 @pytest.mark.skip()
 def test_ssl_client_tx_rejoin_testcase4(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_client_tx_rejoin_testcase4"
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -923,8 +923,8 @@ def test_ssl_client_tx_rejoin_testcase4(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
-        },
-    )
+    },
+)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -932,7 +932,7 @@ def test_ssl_client_tx_rejoin_testcase4(
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
 def test_mqtt_qos1_connect_sub_publish_testcase_42(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
-        ):
+):
     topic1 = "mytesttopic/1"
     topic2 = "mytesttopic/2"
     # The api returns 100 bytes of random data
@@ -946,7 +946,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     for count in range(1, 3):
         try:
             wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -1007,7 +1007,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, qos=RS9116MqttQos.QOS1)
@@ -1046,12 +1046,6 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
                                                  "message " \
                                                  "received is wrong"
 
-    # The API returns asynchronous messages received by DUT
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 1
-    # The API returns asynchronous messages received by DUT
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 0
     validation = True
     packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -1070,8 +1064,8 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1080,7 +1074,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
 def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
-        ):
+):
     topic1 = "mytesttopic/1"
     topic2 = "mytesttopic/2"
     # The api returns 100 bytes of random data
@@ -1094,7 +1088,7 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     for count in range(1, 3):
         try:
             wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -1155,7 +1149,7 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
@@ -1195,12 +1189,6 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
                                                  "message " \
                                                  "received is wrong"
 
-    # The API returns asynchronous messages received by DUT
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 1
-    # The API returns asynchronous messages received by DUT
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    assert len(events) == 0
     validation = True
     packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -1220,12 +1208,17 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["start_field.pem"],
+        "client_cert": ["client-certificate.crt"],
+        "client_key": ["private-key.key"],
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.firmware_app("test_aws")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_AWS_SDK_cloud_connectivity_testcase45(wifi_access_point, wifi_dut):
+def test_AWS_SDK_cloud_connectivity_testcase45(firmware_loader, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
     message = '{"message": "my payload"}'
 
@@ -1237,23 +1230,50 @@ def test_AWS_SDK_cloud_connectivity_testcase45(wifi_access_point, wifi_dut):
     # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces.wifi.aws_iot_connect()
+    for count in range(0, 3):
+        try:
+            aws_fail = 1
+            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+            aws_fail = 0
+            break
+        except:
+            logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+            time.sleep(1)
+    if aws_fail:
+        logger.info(f"Connecting to AWS server is failed")
+        assert aws_fail == 0, "JConnecting to AWS server is failed"
+    logger.info(f"Connecting to AWS server is successful")
     time.sleep(2)
     wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, 0)
 
-    wifi_dut.interfaces.wifi.aws_iot_publish(
-        topic_1, message, 0
+    for msg in message:
+        logger.info(f"Sending message {msg} on topic {topic_1}")
+        wifi_dut.interfaces.wifi.aws_iot_publish(
+            topic_1, msg, 0
         )
+        time.sleep(1)
     time.sleep(10)
     events = wifi_dut.interfaces.wifi.get_async_events()
 
+    count = 0
     if len(events):
         for event in events:
-            assert topic_1 == event.event_data.topic, "message is not received on subscribed topic"
-            assert message == event.event_data.payload, "sent and received messages are not matching"
+            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                assert topic_1 == event.event_data.topic, "message is not received on subscribed topic"
+                assert message[count] == event.event_data.payload, "sent and received messages are not matching"
+                count = count + 1
+                logger.info(
+                    f"Message->{count} received on topic {event.event_data.topic} -> {event.event_data.payload}")
     wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1)
     wifi_dut.interfaces.wifi.aws_iot_disconnect()
+    wifi_dut.interfaces.wifi.leave()
+    # wifi_sniffer.interfaces.capture.stop_capture()
+    # logger.info("Stop Sniffer finally")
+    # validation = True
+    # packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    # snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    # assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    # logger.info(f"PS-POLL packets are captured in the sniffer")
 
 
 @pytest.mark.config(
@@ -1269,8 +1289,8 @@ def test_AWS_SDK_cloud_connectivity_testcase45(wifi_access_point, wifi_dut):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "skip_radio_init": True,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_get_rtc_before_init_testcase47(wifi_dut, logger):
@@ -1308,18 +1328,18 @@ def test_get_rtc_before_init_testcase47(wifi_dut, logger):
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_get_rtc_testcase47(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_get_rtc_testcase47"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
     set_seconds = 30
     set_minutes = 6
@@ -1462,8 +1482,8 @@ def test_get_rtc_testcase47(
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger):
@@ -1473,7 +1493,7 @@ def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger)
     logger.info(f"Firmware version-> {firmware_version}")
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
                                     scan_interval=6,
@@ -1515,7 +1535,7 @@ def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger)
     wifi_dut.interfaces.wifi.power_save(2, 0)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+    )
     result = wifi_dut.interfaces.wifi.dns_get(4, "www.google.com")
     logger.info(f"dns response -> {result}")
     server_ip = result.split(b"\n")[1].split(b":")[1].decode()
