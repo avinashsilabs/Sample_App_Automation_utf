@@ -603,6 +603,14 @@ defaults:
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
 
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
+
     bt_vul_sniffer:
         time_limit: 60
         log_file: "some_log_file.log"
