@@ -1,5 +1,4 @@
 import pytest
-import datetime
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, get_host_ip
@@ -26,7 +25,6 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap
 )
 from utf.utils.thread_base import ThreadBase
-import threading
 import time
 import string
 import random
@@ -52,8 +50,6 @@ def logger():
 
     Author: Jyothi Nagireddy
 """
-def text_generator(size=200):
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
 def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
     ble_dut_address = ble_dut_address
@@ -130,97 +126,21 @@ def check_connection_status(wifi_dut, ble=False, wlan=False):
         assert len(disconnect_events) == 0
         logger().info(f"DUT is not disconnected from Wi-Fi during traffic run for long duration")
 
-class Blethread(ThreadBase):
-    def __init__(self, wifi_dut, ble_client,  ble_mode=None, ble_dut_address=None, ble_address=None):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.ble_client = ble_client
-        self.ble_dut_address = ble_dut_address
-        self.ble_mode = ble_mode
-        self.ble_address = ble_address
-
-    def run(self):
-        ble_master_slave(self.wifi_dut, self.ble_client, self.ble_mode, ble_dut_address=None)
-        ble_disconnect(self.wifi_dut, self.ble_address)
-
-class Bledatatransfer(ThreadBase):
-    def __init__(self, wifi_dut, ble_client, ble_address=None):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.ble_client = ble_client
-        self.ble_address = ble_address
-
-    def run(self):
-        data = []
-        data.append(text_generator(size=4))
-        self.ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-        logger().info("start ble on DUT")
-        self.ble_address = self.wifi_dut.interfaces.wifi.ble_start()
-        assert self.ble_address, "Unable to get ble_dut_address"
-        logger().info("Creating new custom gatt service in DUT")
-        self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-        logger().info("Adding custom characteristic declaration to the custom service")
-        self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-        logger().info("Adding characteristic value attribute to the service")
-        self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[0])
-        logger().info("Start ble advertising on DUT")
-        self.wifi_dut.interfaces.wifi.ble_start_advertising()
-        logger().info(f"Begin Scanning for BLE devices")
-        self.ble_client.interfaces.bluetooth.close()
-        time.sleep(2)
-        ble_client_addr = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.ble_address)
-        assert ble_client_addr, "ble client address not found"
-        time.sleep(5)
-        self.ble_client.interfaces.bluetooth.stop_scanning()
-        logger().info(f"See that we found our device")
-        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-        assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
-        assert (found_devices[
-                        self.wifi_dut.interfaces.wifi.ble_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data)
-        connect_state = self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_address, timeout=500)
-        assert connect_state, "unable to connect to the given address"
-        logger().info("BLE Connection success")
-        time.sleep(2)
-        logger().info("Configuring remote device to receive notifications from DUT")
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-        bus = self.ble_client.interfaces.bluetooth.bus
-        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
-        assert len(services) > 0, "Unable to fetch services"
-        assert len(chars) > 0, "Unable to get characteristics list from ble_client"
-        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                   services=services,
-                                                                                                   service_uid=service_uid,
-                                                                                                   char_uid=char_uid)
-        assert char is not None, "Unable to resolve custom service characteristic from ble_client"
-        assert len(char_props) > 0, "Unable to get char_props"
-        logger().info("Subscribing to notifications on ble_client")
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
-                                                                                    char_uid=char_uid)
-        logger().info("Sending notifications from DUT")
-        self.wifi_dut.interfaces.wifi.ble_notify_value()
-        logger().info("Validating received notifications on ble_client")
-        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-        logger().info(f"Notifications: {notifications}")
-
-    def disconnect(self):
-        self.ble_client.interfaces.bluetooth.disconnect(self.ble_address)
-
-
-
 class WifiThread(ThreadBase):
-    def __init__(self, wifi_dut, wifi_access_point, wifi_Sniffer, utf_constants, bssid=None, dut_mac_address=None):
+    def __init__(self, wifi_dut, wifi_access_point, wifi_Sniffer, utf_constants, bssid=None, dut_mac_address=None, testcase=None, device_ip=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.utf_constants = utf_constants
         self.wifi_sniffer = wifi_Sniffer
         self.bssid = bssid
+        self.device_ip = device_ip
         self.dut_mac_address = dut_mac_address
+        self.testcase = testcase
 
     def join_get_ip(self):
-        for count in range(1, 3):
+        count_i = 4
+        for count in range(1, count_i):
             try:
                 scan_fail = 1
                 logger().info("Scanning to the Wifi Access Point")
@@ -238,7 +158,7 @@ class WifiThread(ThreadBase):
         logger().info(f"AP bssid {self.bssid}")
         self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
-        for count in range(1, 3):
+        for count in range(1, count_i):
             try:
                 join_fail = 1
                 logger().info("***************Joining to the Wifi Access Point*****************")
@@ -253,7 +173,7 @@ class WifiThread(ThreadBase):
             assert join_fail == 0, "Joining to the AP is failed"
 
         ip_fail = 1
-        for count in range(1, 4):
+        for count in range(1, count_i):
             try:
                 result = self.wifi_dut.interfaces.wifi.start_ip()
                 assert isinstance(result,
@@ -268,8 +188,8 @@ class WifiThread(ThreadBase):
 
     def powersave_ping(self):
         ping_count = self.utf_constants.get("ping_count")
-        device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip:{device_ip}")
+        self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"device ip:{self.device_ip}")
         logger().info(
             f"The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put")
         logger().info(f"DUT to power save in Wifi+bluetooth mode")
@@ -279,26 +199,37 @@ class WifiThread(ThreadBase):
         enable_btps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_btps, f"unable to enable the btps"
-        logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-        ping(device_ip, ping_count)
+        logger().info(f"Initiating ping to DUT ip {self.device_ip} after power save")
+        ping(self.device_ip, ping_count)
         time.sleep(5)
 
     def sniffer_validation(self):
         validation = True
-
-        logger().info(f"Validate association request and association response packets")
-        packet_filter1 = f'((wlan.addr == {self.dut_mac_address} && wlan.fc.type_subtype == 0) || eapol) and ((wlan.addr == {self.bssid} && wlan.fc.type_subtype == 1) || eapol)'
-
-        packet_filter2 = f"(dhcp) && (wlan.addr == {self.bssid}) && (wlan.addr == {self.dut_mac_address})"
+        packet_filter1 = f"wlan.addr=={self.dut_mac_address} && wlan.fc.type_subtype == 0 ||eapol"
+        packet_filter2 = f"wlan.addr=={self.bssid} && wlan.fc.type_subtype == 1 ||eapol"
+        packet_filter3 = f"(dhcp) && (wlan.addr == {self.bssid}) && (wlan.addr == {self.dut_mac_address})"
         logger().info(f"validate PS-POLL frame with PM bit set to '1'")
-        packet_filter3 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {self.dut_mac_address}) ' \
+        packet_filter4 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {self.dut_mac_address}) ' \
                          f'and (wlan.ra == {self.bssid}))'
         logger().info(f"validate QOS data frame with more data bit set to '1'")
-        packet_filter4 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {self.dut_mac_address}) ' \
+        packet_filter5 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {self.dut_mac_address}) ' \
                          f'and (wlan.ta == {self.bssid}))'
-        logger().info("Validating association request and association response packets")
+        logger().info(
+            f"Validating association, eapol from DUT"
+        )
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'], 'Unable to find association request and association response packets'
+            'packet_count'], 'Unable to find association, eapol sent from DUT in sniffer '
+        logger().info(
+            f"Validating association, eapol from AP"
+        )
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find association, eapol sent from AP in sniffer '
+        logger().info('Validating PS Poll frames are sent from the device with power management bit')
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+            'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
+        logger().info('Validating more data bit in QOS data frames')
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+            'packet_count'], 'Sniffer validation failed for QOS data frame with more data bit 1'
         logger().info(
             f"Validating DHCP frames from AP & DUT"
         )
@@ -309,38 +240,36 @@ class WifiThread(ThreadBase):
         dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(self.dut_mac_address, decryption_key, ["dhcp"])
         logger().info(f"dhcp_list : {dhcp_list}")
         assert dhcp_list, "DHCP packets not found"
-        logger().info('Validating PS Poll frames are sent from the device with power management bit')
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-            'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
-
-        logger().info('Validating more data bit in QOS data frames')
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-            'packet_count'], 'Sniffer validation failed for QOS data frame with more data bit 1'
 
 
 class DnsThread(ThreadBase):
-    def __init__(self, wifi_dut, dns_mode=None):
+    def __init__(self, wifi_dut, utf_constants, dns_mode=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.dns_mode = dns_mode
+        self.utf_constants = utf_constants
 
     def dns_request_with_server(self):
-        if (self.dns_mode == "dnsquery"):
-           with pytest.raises(WlanError) as exc_info:
-             logger().info("=======DNS SERVER WITH DHCP========")
-             result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
-             logger().info(result.decode())
-           assert exc_info.value.error_code == 0xFF74 or 0xBBA1
-        elif (self.dns_mode == "dnswrongip"):
-           with pytest.raises(WlanError) as exc_info:
-             logger().info("=======DNS SERVER WITH DHCP========")
-             result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.210.110.11", "10.89.41.10")
-             logger().info(result.decode())
-           assert exc_info.value.error_code == 0xbba3 or 0xBBA1 or 0xaf
-        elif (self.dns_mode == "dnsstatic"):
-             logger().info("=======DNS SERVER WITH DHCP========")
-             result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "10.207.110.11", "NULL")
-             logger().info(result.decode())
+        if self.dns_mode == "dnsquery":
+            logger().info("=======DNS SERVER WITH DHCP========")
+            result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", "NULL", "NULL")
+            logger().info(result.decode())
+        elif self.dns_mode == "wrong_dnsserver":
+            with pytest.raises(WlanError) as exc_info:
+                 logger().info("=======DNS SERVER WITH DHCP========")
+                 result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.abcd.com", "NULL", "NULL")
+                 logger().info(result.decode())
+            assert exc_info.value.error_code == 0xbba3 or 0xBBA1 or 0xaf
+        elif self.dns_mode == "dnsstatic":
+            ping_count = self.utf_constants.get("ping_count")
+            logger().info("=======DNS SERVER WITH DHCP========")
+            static_ip = "10.207.110.11"
+            result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", static_ip, "NULL")
+            logger().info(f"ip :{result.decode()}")
+            logger().info(f"Initiating ping to DUT ip {static_ip} after power save")
+            logger().info(f"ping_count:{ping_count}")
+            ping(static_ip, ping_count)
+            time.sleep(15)
 
 
 class ConnectionStatus(ThreadBase):
@@ -371,15 +300,17 @@ class ConnectionStatus(ThreadBase):
         "bt_features": RS9116BTFeatureBitMap.Default
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after_BLE_connection_as_slave_C20233(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, ble_client):
     logger().info("*******************C20233************************")
     validation = True
-    ping_count = utf_constants.get("ping_count")
+    testcase = "dns_static + ble"
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file="dns_static + ble")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"AP bssid {bssid}")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -388,11 +319,10 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
     logger().info(f"ble mode : {ble_mode}")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
     logger().info(f"**********wifi*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
-                          )
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
     dns_mode = "dnsstatic"
     logger().info(f"dns_mode : '{dns_mode}'")
-    dns_obj = DnsThread(wifi_dut, dns_mode=dns_mode)
+    dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
     wifi_obj.join_get_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info(f"device ip:{device_ip}")
@@ -406,10 +336,6 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
     assert enable_btps, f"unable to enable the btps"
     packet_filter1 = f"wlan.addr == {dut_mac_address} && dns"
     dns_obj.dns_request_with_server()
-    time.sleep(5)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    logger().info(f"ping_count:{ping_count}")
-    ping(device_ip, ping_count)
     time.sleep(5)
     wifi_leave(wifi_dut)
     logger().info("Initiating BLE disconnection from ble_client")
@@ -427,6 +353,7 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         logger().info("Found DNS packet")
         assert True
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -438,34 +365,33 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "band": 0,
     }
 )
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_connection_C20234(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, ble_client):
     logger().info("*******************C20234************************")
     validation = True
+    testcase = "wrong_dnsserver + ble"
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file="dns_wrongip + ble")
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP bssid {bssid}")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info(f"**********wifi*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
-    dns_mode = "dnswrongip"
-    logger().info(f"wrong ip :  '{dns_mode}'")
-    dns_obj = DnsThread(wifi_dut, dns_mode=dns_mode)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+    dns_mode = "wrong_dnsserver"
+    logger().info(f"wrong_dnsserver :  '{dns_mode}'")
+    dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
     wifi_obj.join_get_ip()
+    wifi_obj.powersave_ping()
     ble_mode = "ble_slave"
     logger().info(f"ble mode : {ble_mode}")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
-    wifi_obj.powersave_ping()
     packet_filter1 = f'wlan.addr == {dut_mac_address} && dns'
     dns_obj.dns_request_with_server()
     check_connection_status(wifi_dut, wlan=True)
@@ -486,33 +412,44 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
         logger().info("Found DNS packet")
         assert True
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features":  RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "features":  RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client,
-        "custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "bt_features": RS9116BTFeatureBitMap.Default
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "band": 0,
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_state_C20360(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client):
     logger().info("*******************C20360************************")
+    validation = True
+    testcase = "dns_query+ble"
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file="dns_query+ble")
-    ble_obj = Bledatatransfer(wifi_dut, ble_client)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    ble_mode = "ble_slave"
+    logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+    ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"**********wifi*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
     dns_mode = "dnsquery"
-    logger().info(f" dns_mode : {dns_mode}")
-    dns_obj = DnsThread(wifi_dut, dns_mode=dns_mode)
-    ble_obj.start()
+    logger().info(f"dns_mode : {dns_mode}")
+    dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    packet_filter1 = f'wlan.addr == {dut_mac_address} && dns'
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
     dns_obj.dns_request_with_server()
@@ -520,10 +457,22 @@ def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_s
     check_connection_status(wifi_dut, ble=True)
     logger().info(f"Clean up activity")
     wifi_leave(wifi_dut)
-    ble_obj.disconnect()
+    logger().info("Initiating BLE disconnection on DUT")
+    ble_disconnect(wifi_dut, ble_client_address)
+    time.sleep(4)
+    logger().info("Successfully disconnected from BLE SLAVE Device")
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.sniffer_validation()
+    result = wifi_sniffer.interfaces.capture.sniffer_validation(
+        validation, packet_filter1
+    )["packet_count"]
+    if result is False:
+        logger().info("Unable to find DNS packet")
+        assert True
+    elif result is True:
+        logger().info("Found DNS packet")
+        assert True
 
 
 
