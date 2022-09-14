@@ -31,6 +31,9 @@ def logger():
     Author: Ravinemali  
 """
 
+# Otaf timeout for deinit
+timeout = 60
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -205,7 +208,7 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     # API does soft reset on DUT
     time.sleep(5)
     logger().info("resetting DUT....")
-    wifi_dut.interfaces.wifi.wireless_deinit()
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     # performs the wifi initialization

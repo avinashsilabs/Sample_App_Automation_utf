@@ -16,6 +16,7 @@ from threading import *
 import time
 import test_sta_ble_enterprise as sbe
 
+
 def logger():
     return get_logger(__name__)
 
@@ -92,10 +93,15 @@ class WifiThread(ThreadBase):
 
             logger().info("Initiating getting dhcp ip")
             # This API Enables the DHCP in DUT
-            ip_config = self.wifi_dut.interfaces.wifi.start_ip()
-            self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-            logger().info(f"Found device ip: {self.device_ip}")
-
+            for count in range(3):
+                try:
+                    ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
+                    self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                    logger().info(f"Found device ip: {self.device_ip}")
+                    break
+                except:
+                    logger().info(f"Get IP address through dhcp process is failed...retry count -> {count}")
+                    time.sleep(1)
             # Fetches the DUT mac address
             self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"Device mac address: {self.dut_mac_address}")
@@ -111,17 +117,28 @@ class WifiThread(ThreadBase):
                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
             time.sleep(5)
 
-            if self.net_perf_client or self.http_server:
-                # Initiate ping from third party wifi-client to DUT
-                status = ping(self.device_ip, ping_count)
-                assert status, "DUT is not responding to ping request from third party device"
-                logger().info(f"ping is successful")
+            for count in range(3):
+                try:
+                    ping_success = 0
+                    if self.net_perf_client or self.http_server:
+                        # Initiate ping from third party wifi-client to DUT
+                        status = ping(self.device_ip, ping_count)
+                        assert status is True, "DUT is not responding to ping request from third party device"
+                        logger().info(f"ping is successful")
+                        ping_success = 1
 
-        if not (self.net_perf_client or self.http_server):
-                # Initiate ping from third party wifi-client to DUT
-                status = ping(self.device_ip, ping_count)
-                assert status, "DUT is not responding to ping request from third party device"
-                logger().info(f"ping is successful")
+                    if not (self.net_perf_client or self.http_server):
+                        # Initiate ping from third party wifi-client to DUT
+                        status = ping(self.device_ip, ping_count)
+                        assert status is True, "DUT is not responding to ping request from third party device"
+                        logger().info(f"ping is successful")
+                        ping_success = 1
+
+                    if ping_success:
+                        break
+                except:
+                    logger().info(f"ping to dut is failed...retry count->{count + 1}")
+                    time.sleep(1)
 
         if self.net_perf_client:
             self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -170,8 +187,10 @@ class WifiThread(ThreadBase):
         logger().info(
             f"Validating DHCP frames from AP & DUT"
         )
+        logger().info("passing passphrase and ssid to decrypt dhcp packets")
         decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
         logger().info(f"decryption_key : {decryption_key}")
+        logger().info("DHCP decryption is in progress...this may take some time")
         dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(self.dut_mac_address, decryption_key, ["dhcp"])
         logger().info(f"dhcp_list : {dhcp_list}")
         assert dhcp_list, "DHCP packets not found"
@@ -240,9 +259,7 @@ class ScanThread(ThreadBase):
         self.testcase = testcase
 
     def run(self):
-
         with lock:
-
             for count in range(0, 3):
                 logger().info("Initiating wlan scan")
                 # enables the scan in dut on channel
@@ -252,7 +269,6 @@ class ScanThread(ThreadBase):
                 time.sleep(5)
             self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
             logger().info(f"Device mac address: {self.dut_mac_address}")
-
 
     def verify_sniffer_validation(self):
         validation = True
@@ -267,6 +283,7 @@ class ScanThread(ThreadBase):
             'packet_count'], 'Unable to find Probe req(Broadcast) in sniffer'
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -367,7 +384,7 @@ def test_AP_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
-def test_Wifi_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, \
+def test_Wifi_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       net_perf_client, ble_client, protocol):
     testcase = "test_Wifi_Data_BLE_AI_20ms_C20166"
     logger().info(f"testcase : test_Wifi_Data_BLE_AI_20ms_C20166")
@@ -387,6 +404,8 @@ def test_Wifi_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_dut,
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
 
+
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -427,6 +446,7 @@ def test_Wifi_scan_BLE_AI_10240ms_C20167(wifi_sniffer, wifi_access_point, wifi_d
     wifi_scan_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -467,6 +487,7 @@ def test_AP_connection_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point, wi
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -511,6 +532,7 @@ def test_Wifi_Data_BLE_AI_10240ms_C20169(wifi_sniffer, wifi_access_point, wifi_d
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -559,6 +581,7 @@ def test_Wifi_http_dwnld_BLE_AI_20ms_C20176(wifi_sniffer, http_server, wifi_acce
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -605,6 +628,7 @@ def test_Wifi_http_dwnld_BLE_AI_10240ms_C20177(wifi_sniffer, http_server, wifi_a
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -644,6 +668,7 @@ def test_Wifi_scan_BLE_SI_10240ms_SW_3440ms_C20173(wifi_sniffer, wifi_access_poi
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -683,6 +708,7 @@ def test_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(wifi_sniffer, wifi_access_point
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -726,6 +752,7 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(wifi_sniffer, wifi_access_poi
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -773,6 +800,7 @@ def test_Wifi_http_dwnld_BLE_SI_10240ms_SW_3440ms_C20179(wifi_sniffer, http_serv
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -812,6 +840,7 @@ def test_Wifi_scan_BLE_SI_7point5ms_SW_2point5ms_C20170(wifi_sniffer, wifi_acces
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -851,6 +880,7 @@ def test_AP_conn_BLE_SI_7point5ms_SW_2point5ms_C20171(wifi_sniffer, wifi_access_
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -875,7 +905,7 @@ def test_AP_conn_BLE_SI_7point5ms_SW_2point5ms_C20171(wifi_sniffer, wifi_access_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, \
-                                                  net_perf_client, protocol, ble_client):
+                                                        net_perf_client, protocol, ble_client):
     testcase = "test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172"
     logger().info("testcase : test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172")
     logger().info("configuring the Sniffer with the channel")
@@ -894,6 +924,7 @@ def test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172(wifi_sniffer, wifi_acces
     wifi_obj.verify_sniffer_validation()
 
 
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -920,7 +951,7 @@ def test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172(wifi_sniffer, wifi_acces
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178(wifi_sniffer, http_server, wifi_access_point, wifi_dut,
-                                                        ble_client, index_path):
+                                                              ble_client, index_path):
     testcase = "test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178"
     logger().info("testcase : test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178")
     logger().info("configuring the Sniffer with the channel")
@@ -938,5 +969,3 @@ def test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178(wifi_sniffer, http
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
-
-

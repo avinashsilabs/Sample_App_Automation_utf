@@ -25,9 +25,8 @@ from utf.utils.iperf.iperf_utils import ping
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 def test_get_rtc_deep_sleep_TC19052(
-        wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, logger
         ):
     capture_filename = "test_get_rtc_deep_sleep_TC19052"
     # configure interface for the channel of the access point
@@ -79,18 +78,22 @@ def test_get_rtc_deep_sleep_TC19052(
 
     idle_time = wait_time_after_scan + scan_time + scan_logger_time1
     time_dif = get_time_sec - set_time_sec - idle_time
-
+    logger.info(f"Time Difference after the idle time is {time_dif}")
     with TimeMeasurer() as t:
         logger.info(f"idle time after initiating set rtc after scan -> {idle_time}")
-        assert (time_dif >= tolerance_threshold[0]) and (time_dif <= tolerance_threshold[1]), f"get time updated is " \
-                                                                                              f"not in tolerance " \
-                                                                                              f"level. Time " \
-                                                                                              f"difference observed is {time_dif} after scan "
+        difference = get_time_sec - set_time_sec
+        if get_time_sec > set_time_sec:
+            if difference >= 2:
+                assert logger.info(f"Difference between Set RTC and Get RTC Timer is greater than or equal to 2")
+            else:
+                logger.info(f"Get RTC and Set RTC Timer is not matching but the difference is less than 2")
+                logger.info(f"Difference between Get and Set RTC Timer is {difference}")
+        if get_time_sec == set_time_sec:
+                logger.info(f"Get RTC and Set RTC Timer are matching ")
+                logger.info(f"Difference between Get and Set RTC Timer is {difference}")
 
         logger.info(
-            f"Time difference observed between set time and get time is {time_dif} seconds,which is in tolerance level ")
-
-        logger.info("get_rtc is working fine after scan")
+            f"Time difference observed between set time and get time is {difference} seconds, which is expected before scan")
 
 
 @pytest.mark.config(

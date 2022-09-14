@@ -920,6 +920,9 @@ defaults:
         channel: 1
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
+        static_ip: '192.168.50.199'
+        static_subnet: '255.255.255.0'
+        static_gateway: '192.168.50.1'
         sniffer_validation: True
 
         # firmware path for http/https otaf
