@@ -52,8 +52,6 @@ def logger():
 
     Author: Jyothi Nagireddy
 """
-def text_generator(size=200):
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
 def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
     ble_dut_address = ble_dut_address
@@ -142,52 +140,6 @@ class Blethread(ThreadBase):
     def run(self):
         ble_master_slave(self.wifi_dut, self.ble_client, self.ble_mode, ble_dut_address=None)
         ble_disconnect(self.wifi_dut, self.ble_address)
-
-class Bledatatransfer(ThreadBase):
-    def __init__(self, wifi_dut, ble_client, ble_address=None):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.ble_client = ble_client
-        self.ble_address = ble_address
-
-    def run(self):
-        data = []
-        data.append(text_generator(size=4))
-        self.ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-        logger().info("start ble on DUT")
-        self.ble_address = self.wifi_dut.interfaces.wifi.ble_start()
-        assert self.ble_address, "Unable to get ble_dut_address"
-        logger().info("Creating new custom gatt service in DUT")
-        self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-        logger().info("Adding custom characteristic declaration to the custom service")
-        self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-        logger().info("Adding characteristic value attribute to the service")
-        self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[0])
-        logger().info("Configuring remote device to receive notifications from DUT")
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-        bus = self.ble_client.interfaces.bluetooth.bus
-        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
-        assert len(services) > 0, "Unable to fetch services"
-        assert len(chars) > 0, "Unable to get characteristics list from ble_client"
-        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                   services=services,
-                                                                                                   service_uid=service_uid,
-                                                                                                   char_uid=char_uid)
-        assert char is not None, "Unable to resolve custom service characteristic from ble_client"
-        assert len(char_props) > 0, "Unable to get char_props"
-        logger().info("Subscribing to notifications on ble_client")
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
-                                                                                    char_uid=char_uid)
-        logger().info("Sending notifications from DUT")
-        self.wifi_dut.interfaces.wifi.ble_notify_value()
-        logger().info("Validating received notifications on ble_client")
-        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-        logger().info(f"Notifications: {notifications}")
-        notification_len = len(notifications)
-        for i in range(0, notification_len):
-            assert notifications[i] == data[i], "Received wrong data in ble_client"
 
 
 class WifiThread(ThreadBase):
@@ -457,6 +409,7 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
     packet_filter1 = f'wlan.addr == {dut_mac_address} && dns'
     dns_obj.dns_request_with_server()
+    time.sleep(5)
     check_connection_status(wifi_dut, wlan=True)
     check_connection_status(wifi_dut, ble=True)
     wifi_leave(wifi_dut)
@@ -516,6 +469,7 @@ def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_s
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
     dns_obj.dns_request_with_server()
+    time.sleep(5)
     check_connection_status(wifi_dut, wlan=True)
     check_connection_status(wifi_dut, ble=True)
     logger().info(f"Clean up activity")
