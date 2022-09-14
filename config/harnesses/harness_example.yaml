@@ -929,7 +929,7 @@ devices:
             client:
                 type: 'openssl.client'
 
-    nrf_5280_sniffer:
+    nrf_52840_sniffer:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
@@ -1015,7 +1015,7 @@ defaults:
 
     openssl: 'openssl_socket'
 
-    ble_sniffer: 'nrf_5280_sniffer'
+    ble_sniffer: 'nrf_52840_sniffer'
 
     bt_sniffer: 'ellisys_bt_tracker_win_wcf'
 
