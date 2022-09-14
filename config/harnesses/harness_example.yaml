@@ -935,6 +935,7 @@ defaults:
         enable_ppp: 0
         afe_type: 1
         features_enable: 0
+        enable_async_socket: 0
 
     wiseconnect_web: 'wiseconnect_web'
 
