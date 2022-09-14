@@ -610,7 +610,7 @@ class FilterPacket:
             return True
 
     def validate_time_delta(self, ps_poll_packets_time_delta_list, time_delta_for_listen_interval):
-        '''It returns the count of when DUT didn't send the ps_poll at listen interval'''
+        '''Validates DUT is waking at listen inteval time or not and it returns the count of when DUT didn't send the ps_poll at listen interval'''
         unable_to_send_ps_poll_at_li =0
         listen_interval_beacon = int(time_delta_for_listen_interval / 100)
 
@@ -628,6 +628,8 @@ class FilterPacket:
 
     def validate_pspoll_data_packet_with_more_bit_enable(self, frame_list, frame_number, listen_interval_time,
                                                          current_beacon_time):
+        '''Validate whether DUT is able to receive data after sending ps-poll, and it returns failed count when
+        DUT didn't send ps-poll even though moredata bit set'''
         first_beacon_time = current_beacon_time
         beacon = int('0x0008', 16)
         ps_poll = int('0x001a', 16)
@@ -706,6 +708,162 @@ class FilterPacket:
                         break
         return frame_number, case2, first_beacon_time
 
+    def dtim_based_validation(self, assoc_id):
+        ''' Validation of DTIM based power save functionality: DUT should send ps_poll at DTIM beacons when TIM bit set, and it
+        returns the count of failed scenario's'''
+        frame_list = []
+        count = 0
+        assoc_id = int(assoc_id, 16)
+        tim_aid = 0
+        beacon = int('0x0008', 16)
+        null_frame = int('0x0024', 16)
+        ps_poll = int('0x001a', 16)
+        ''' Validation of power save and data along with more data bit '''
+        filter_file = open(f'./reports/Powersave_capture.txt', 'r')
+        lines = filter_file.readlines()
+        case1 = 0  # DUT should not send PS-POLL to retrieve data if TIM is not set
+        case2 = 0  # DUT shouldn't wait to send PS-POLL at next DTIM beacon even though more data bit set
+        case3 = 0  # DUT shouldn't skip to send PS-POLL at DTIM beacon if TIM set
+        case4 = 0  # DUT should not send PS-POLL to retrieve data at non DTIM beacons
+        for line in lines:
+            frame_list.append(line.strip().split('\t'))
+        filter_file.close()
+        no_of_filtered_packets = len(frame_list)
+        no_of_filtered_packets = no_of_filtered_packets - 10 # removing last packets from capture
+        for frame_number in range(no_of_filtered_packets):
+            if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
+                logger().info("found Null frame with PM '1'")
+                logger().info(frame_list[frame_number])
+                frame_number = count + 1
+                break
+            else:
+                count = count + 1
+
+        while frame_number < no_of_filtered_packets:
+            if frame_list[frame_number][2] == str(beacon):
+                if len(frame_list[frame_number]) == 8:
+                    if len(frame_list[frame_number][7]) == 10:
+                        # get the assoc id from beacon frame when TIM set
+                        tim_aid = int(frame_list[frame_number][7], 16)
+                    else:
+                        tim_aid = frame_list[frame_number][7].split(',')
+                        for j in range(len(tim_aid)):
+                            if int(tim_aid[j], 16) == assoc_id:
+                                tim_aid = int(tim_aid[j], 16)
+                if frame_list[frame_number][6] == '0' and len(frame_list[frame_number]) == 8:
+                    '''Validation of ps_poll when DTIM beacon with TIM set condition'''
+                    logger().info(frame_list[frame_number])
+                    dtim_flag = 0 # if TIM set at DTIM beacon and it is unable to send ps_poll to retrieve the data
+                    if tim_aid == assoc_id:
+                        '''Comparing  the DUT assoc id from beacon with assoc id from assoc response'''
+                        while 1:
+                            if frame_number < no_of_filtered_packets:
+                                frame_number = frame_number + 1
+                            else:
+                                break
+                            if frame_list[frame_number][2] == str(ps_poll):
+                                if dtim_flag == 1:
+                                    case3 = case3 + 1
+                                    logger().info(
+                                        "DUT is not sending PS-POLL to retrieve the DATA at DTIM beacon even though TIM is set")
+                                logger().info(frame_list[frame_number])
+                                packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                    frame_list, frame_number,
+                                    listen_interval_time=0,
+                                    current_beacon_time=0)
+                                case2 = case2 + failed_case
+                                frame_number = packet_number
+                                break
+                            else:
+                                if frame_list[frame_number][2] == str(beacon):
+                                    logger().info(frame_list[frame_number])
+                                    dtim_flag = 1
+                                    continue
+                                else:
+                                    frame_number = frame_number - 1
+                                    logger().info(
+                                        "On-air ps-poll miss at DTIM beacon")
+                                    packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                        frame_list, frame_number,
+                                        listen_interval_time=0,
+                                        current_beacon_time=0)
+                                    case2 = case2 + failed_case
+                                    frame_number = packet_number
+                                    break
+                elif frame_list[frame_number][6] != '0' and len(frame_list[frame_number]) == 8:
+                    '''-ve scenario: Validation of ps_poll at non dtim beacons with TIM set condition'''
+                    logger().info(frame_list[frame_number])
+                    beacon_time = float(frame_list[frame_number][1])
+                    if tim_aid == assoc_id:
+                        if frame_number < no_of_filtered_packets:
+                            frame_number = frame_number + 1
+                        else:
+                            break
+                        if frame_list[frame_number][2] == str(ps_poll):
+                            ps_poll_time = float(frame_list[frame_number][1])
+                            time_diff = int((beacon_time - ps_poll_time) * 1000)
+                            logger().info(frame_list[frame_number])
+                            if time_diff > 100:
+                                '''If the time difference between before beacon and current beacon is more than 100ms 
+                                                                    then only we are counting as failed scenario'''
+                                case4 = case4 + 1
+                                logger().info("DUT is sending PS-POLL at non DTIM beacons")
+                            packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                frame_list, frame_number,
+                                listen_interval_time=0,
+                                current_beacon_time=0)
+                            case2 = case2 + failed_case
+                            frame_number = packet_number
+                        else:
+                            if frame_list[frame_number][2] != str(beacon):
+                                ps_poll_time = float(frame_list[frame_number][1])
+                                time_diff = int((beacon_time - ps_poll_time) * 1000)
+                                frame_number = frame_number - 1
+                                if time_diff > 100:
+                                    '''If the time difference between before beacon and current beacon is more than 100ms 
+                                    then only we are counting as failed scenario'''
+                                    case4 = case4 + 1
+                                    logger().info(
+                                        "On-air ps-poll miss at non DTIM beacon")
+                                packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                    frame_list, frame_number,
+                                    listen_interval_time=0,
+                                    current_beacon_time=0)
+                                case2 = case2 + failed_case
+                                frame_number = packet_number
+                            else:
+                                frame_number = frame_number - 1
+                else:
+                    '''-ve scenario: Validation of ps_poll when TIM is not set condition'''
+                    if len(frame_list[frame_number]) != 8:
+                        beacon_time = float(frame_list[frame_number][1])
+                        logger().info(frame_list[frame_number])
+                        if frame_number < no_of_filtered_packets:
+                            frame_number = frame_number + 1
+                        else:
+                            break
+                        if frame_list[frame_number][2] == str(ps_poll):
+                            ps_poll_time = float(frame_list[frame_number][1])
+                            time_diff = int((beacon_time - ps_poll_time) * 1000)
+                            logger().info(frame_list[frame_number])
+                            if time_diff > 100:
+                                '''If the time difference between before beacon and current beacon is more than 100ms 
+                                                                    then only we are counting as failed scenario'''
+                                case1 = case1 + 1
+                                logger().info("DUT is sending PS-POLL even though TIM is not set")
+                            packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                frame_list, frame_number,
+                                listen_interval_time=0,
+                                current_beacon_time=0)
+                            case2 = case2 + failed_case
+                            frame_number = packet_number
+                        else:
+                            frame_number = frame_number - 1
+
+            if frame_number < no_of_filtered_packets:
+                frame_number = frame_number + 1
+        return case1, case2, case3, case4
+
     def listen_interval_based_validation(self, listen_interval_period, assoc_id):
         """Validation of listen interval based power-save functionality, and it returns time interval
         b/w ps_poll, count of failed conditions """
@@ -733,12 +891,13 @@ class FilterPacket:
             if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
                 logger().info("found Null frame with PM '1'")
                 logger().info(frame_list[frame_number])
+                frame_number = count + 1
                 break
             else:
                 count = count + 1
 
         first_beacon_time = float(frame_list[frame_number][1])
-        frame_number = count + 1
+
         while frame_number < no_of_filtered_packets:
             if frame_list[frame_number][2] == str(beacon):
                 logger().info(f'beacon_count={beacon_count}')
@@ -952,6 +1111,262 @@ class FilterPacket:
                 frame_number = frame_number + 1
         return dut_wake_interval, case1, case2
 
+    def dtim_skip_based_validation(self, dtim, dtim_skip, assoc_id):
+        """Validation of dtim skip based functionality, and it returns time interval
+        b/w ps_poll, count of failed conditions """
+        beacon_count = 0
+        dtim_skip_validation = 0
+        frame_list = []
+        count = 0
+        assoc_id = int(assoc_id, 16)
+        tim_aid = 0
+        beacon = int('0x0008', 16)
+        null_frame = int('0x0024', 16)
+        ps_poll = int('0x001a', 16)
+        ''' Validation of power save and data along with more data bit '''
+        filter_file = open(f'./reports/Powersave_capture.txt', 'r')
+        lines = filter_file.readlines()
+        case1 = 0  # DUT should not send PS-POLL to retrieve data if TIM is not set
+        case2 = 0  # DUT shouldn't wait to send PS-POLL at next LI beacon even though more data bit set
+        for line in lines:
+            frame_list.append(line.strip().split('\t'))
+        filter_file.close()
+        no_of_filtered_packets = len(frame_list)
+        no_of_filtered_packets = no_of_filtered_packets - 10 #removing last 10 frames from the capture
+        for frame_number in range(no_of_filtered_packets):
+            if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
+                logger().info("found Null frame with PM '1'")
+                logger().info(frame_list[frame_number])
+                frame_number = count + 1
+                break
+            else:
+                count = count + 1
+
+        while frame_number < no_of_filtered_packets:
+            logger().info(frame_list[frame_number])
+            if frame_list[frame_number][2] == str(beacon):
+                logger().info(f'beacon_count={beacon_count}')
+                beacon_count = beacon_count + 1
+                # dtim_skip_validation = int(dtim) * dtim_skip
+                if beacon_count == 1:
+                    # logger().info(frame_list[frame_number])
+                    dtim_period = int(dtim) - 1
+                    first_beacon_validation = dtim_period - int(frame_list[frame_number][6])
+                    dtim_skip_validation = (int(dtim) * dtim_skip) - first_beacon_validation
+                    logger().info(f'dtim_skip_validation={dtim_skip_validation}')
+
+            if frame_number < no_of_filtered_packets:
+                frame_number = frame_number + 1
+                if beacon_count == dtim_skip_validation:
+                    beacon_count = 0
+
+        #         '''To get the DUT assoc id from beacon frame'''
+        #         if len(frame_list[frame_number]) == 8:
+        #             if len(frame_list[frame_number][7]) == 10:
+        #                 tim_aid = int(frame_list[frame_number][7], 16)
+        #             else:
+        #                 tim_aid = frame_list[frame_number][7].split(',')
+        #                 for j in range(len(tim_aid)):
+        #                     if int(tim_aid[j], 16) == assoc_id:
+        #                         tim_aid = int(tim_aid[j], 16)
+        #         current_beacon_time = float(frame_list[frame_number][1])
+        #         tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #         '''Comparison of DUT assoc id from beacon and assoc response'''
+        #         if tim_aid == assoc_id:
+        #             current_beacon_time = float(frame_list[frame_number][1])
+        #             tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #             '''Validation of PS-POLL at listen interval beacon with TIM set'''
+        #             if beacon_count == max_beacon and len(frame_list[frame_number]) == 8:
+        #                 while 1:
+        #                     if frame_number < no_of_filtered_packets:
+        #                         frame_number = frame_number + 1
+        #                     else:
+        #                         break
+        #                     if frame_list[frame_number][2] == str(ps_poll):
+        #                         current_beacon_time = float(frame_list[frame_number][1])
+        #                         tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #                         if beacon_count > max_beacon:
+        #                             logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                             dut_wake_interval.append(tim_diff_bw_beacon)
+        #                         packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                             frame_list, frame_number,
+        #                             listen_interval_period,
+        #                             current_beacon_time)
+        #                         case2 = case2 + failed_case
+        #                         if beacon_time == current_beacon_time:
+        #                             first_beacon_time = current_beacon_time
+        #                         else:
+        #                             first_beacon_time = beacon_time
+        #                             tim_diff_bw_beacon = 0
+        #                         frame_number = packet_number
+        #                         break
+        #                     else:
+        #                         if frame_list[frame_number][2] == str(beacon):
+        #                             beacon_count = beacon_count + 1
+        #                             current_beacon_time = float(frame_list[frame_number][1])
+        #                             logger().info(
+        #                                 "DUT wake at more than the LI beacon")
+        #                             continue
+        #
+        #                         else:
+        #                             frame_number = frame_number - 1
+        #                             tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #                             if beacon_count > max_beacon:
+        #                                 dut_wake_interval.append(tim_diff_bw_beacon)
+        #                                 logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                             logger().info(
+        #                                 "On-air ps-poll miss at LI beacon")
+        #                             packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                                 frame_list, frame_number,
+        #                                 listen_interval_period,
+        #                                 current_beacon_time)
+        #                             case2 = case2 + failed_case
+        #                             if beacon_time == current_beacon_time:
+        #                                 first_beacon_time = current_beacon_time
+        #                             else:
+        #                                 first_beacon_time = beacon_time
+        #                                 tim_diff_bw_beacon = 0
+        #                             frame_number = packet_number
+        #                             break
+        #                 beacon_count = 0
+        #                 tim_aid = 0
+        #             elif ((tim_diff_bw_beacon >= (listen_interval_period - 30)) and (
+        #                     tim_diff_bw_beacon <= listen_interval_period + 40)) and len(
+        #                     frame_list[frame_number]) == 8:
+        #                 '''Validation of PS-POLL at listen interval time with TIM set incase on-air beacon loss'''
+        #                 while 1:
+        #                     if frame_number < no_of_filtered_packets:
+        #                         frame_number = frame_number + 1
+        #                     else:
+        #                         break
+        #                     if frame_list[frame_number][2] == str(ps_poll):
+        #                         current_beacon_time = float(frame_list[frame_number][1])
+        #                         tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #                         dut_wake_interval.append(tim_diff_bw_beacon)
+        #                         logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                         packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                             frame_list, frame_number,
+        #                             listen_interval_period,
+        #                             current_beacon_time)
+        #                         case2 = case2 + failed_case
+        #                         if beacon_time == current_beacon_time:
+        #                             first_beacon_time = current_beacon_time
+        #                         else:
+        #                             first_beacon_time = beacon_time
+        #                             tim_diff_bw_beacon = 0
+        #                         frame_number = packet_number
+        #                         break
+        #                     else:
+        #                         if frame_list[frame_number][2] == str(beacon):
+        #                             current_beacon_time = float(frame_list[frame_number][1])
+        #                             logger().info(
+        #                                 "DUT wake at more than the LI beacon-tb")
+        #                             continue
+        #                         else:
+        #                             frame_number = frame_number - 1
+        #                             tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #                             dut_wake_interval.append(tim_diff_bw_beacon)
+        #                             logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                             logger().info(
+        #                                 "On-air ps-poll miss at LI beacon-time difference")
+        #                             packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                                 frame_list, frame_number,
+        #                                 listen_interval_period,
+        #                                 current_beacon_time)
+        #                             case2 = case2 + failed_case
+        #                             if beacon_time == current_beacon_time:
+        #                                 first_beacon_time = current_beacon_time
+        #                             else:
+        #                                 first_beacon_time = beacon_time
+        #                                 tim_diff_bw_beacon = 0
+        #                             frame_number = packet_number
+        #                             break
+        #                 beacon_count = 0
+        #                 tim_aid = 0
+        #             else:
+        #                 if frame_number < no_of_filtered_packets:
+        #                     frame_number = frame_number + 1
+        #                     if frame_list[frame_number][2] == str(ps_poll):
+        #                         beacon_count = 0
+        #                         tim_aid = 0
+        #                         current_beacon_time = float(frame_list[frame_number][1])
+        #                         tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #                         dut_wake_interval.append(tim_diff_bw_beacon)
+        #                         logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                         logger().info("DUT is sending PS-POLL at before/after LI beacon-time-difference")
+        #                         packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                             frame_list, frame_number,
+        #                             listen_interval_period,
+        #                             current_beacon_time)
+        #                         case2 = case2 + failed_case
+        #                         if beacon_time == current_beacon_time:
+        #                             first_beacon_time = current_beacon_time
+        #                         else:
+        #                             first_beacon_time = beacon_time
+        #                             tim_diff_bw_beacon = 0
+        #                         frame_number = packet_number
+        #                     else:
+        #                         if frame_list[frame_number][2] != str(beacon):
+        #                             beacon_count = 0
+        #                             tim_aid = 0
+        #                             dut_wake_interval.append(tim_diff_bw_beacon)
+        #                             logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                             logger().info(
+        #                                 "DUT is waking at before LI beacon-time-difference & on-air ps-poll miss ")
+        #                             packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                                 frame_list, frame_number,
+        #                                 listen_interval_period,
+        #                                 current_beacon_time)
+        #                             case2 = case2 + failed_case
+        #                             if beacon_time == current_beacon_time:
+        #                                 first_beacon_time = current_beacon_time
+        #                             else:
+        #                                 first_beacon_time = beacon_time
+        #                                 tim_diff_bw_beacon = 0
+        #                             frame_number = packet_number
+        #                         else:
+        #                             frame_number = frame_number - 1
+        #         else:
+        #             '''Validation of -ve scenario where DUT is sending ps-poll even though TIM is not set'''
+        #             if frame_number < no_of_filtered_packets:
+        #                 frame_number = frame_number + 1
+        #             else:
+        #                 break
+        #             if frame_list[frame_number][2] == str(ps_poll):
+        #                 beacon_count = 0
+        #                 current_beacon_time = float(frame_list[frame_number][1])
+        #                 tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
+        #                 dut_wake_interval.append(tim_diff_bw_beacon)
+        #                 logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
+        #                 logger().info("DUT is sending PS-POLL even though tim is not set")
+        #                 case1 = case1 + 1
+        #                 packet_number, failed_case, beacon_time = self.validate_pspoll_data_packet_with_more_bit_enable(
+        #                     frame_list, frame_number,
+        #                     listen_interval_period,
+        #                     current_beacon_time)
+        #                 case2 = case2 + failed_case
+        #                 if beacon_time == current_beacon_time:
+        #                     first_beacon_time = current_beacon_time
+        #                 else:
+        #                     first_beacon_time = beacon_time
+        #                     tim_diff_bw_beacon = 0
+        #                 frame_number = packet_number
+        #             else:
+        #                 frame_number = frame_number - 1
+        #     else:
+        #         if (frame_list[frame_number][2] == str(null_frame)) and ((frame_list[frame_number][4] == '1') and (frame_list[frame_number][3] == '1')):
+        #             logger().info("found Retried Null frame with PM '1'")
+        #             first_beacon_time = float(frame_list[frame_number][1])
+        #         frame_number = frame_number + 1
+        #         continue
+        #     if frame_number < no_of_filtered_packets:
+        #         '''We are setting to zero for 1st beacon time and beacon count incase of TIM not set at Listen interval time'''
+        #         if beacon_count == max_beacon or tim_diff_bw_beacon > listen_interval_period:
+        #             first_beacon_time = current_beacon_time
+        #             beacon_count = 0
+        #         frame_number = frame_number + 1
+        # return dut_wake_interval, case1, case2
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -978,6 +1393,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
     validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     ping_count = 60
+    powersave_validation = True
 
     '''Validate listen interval from DUT side, DUT should wake up and receive data after listen interval beacons'''
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
@@ -1005,7 +1421,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
     time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
     # Assoc resp frame in sniffer
@@ -1029,7 +1445,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
                      f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter4)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     ps_poll_packets_time_delta_list, case1, case2 = ps_poll_time_delta_obj.listen_interval_based_validation(
         listen_interval,
         association_id)
@@ -1046,7 +1462,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
                 f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1068,6 +1484,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
 )
 def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    powersave_validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     assoc_obj = FilterPacket()
     ps_packet_exchange_obj = FilterPacket()
@@ -1097,7 +1514,7 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
@@ -1124,7 +1541,7 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
                      f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
 
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter4)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
     if case1 != 0 or case2 != 0 or case3 != 0 or case4 != 0:
         if case1 != 0:
@@ -1141,9 +1558,9 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
                 f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
 
-
+# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1163,17 +1580,18 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    powersave_validation = True
     dtim_beacon_obj = FilterPacket()
     assoc_obj = FilterPacket()
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
-    dtim_skip = 4
+    dtim_skip = 3
     ping_count = 60
-
+    dtim = '2'
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
     if More data bit is set to 1'''
-    wifi_access_point.interfaces.wifi.config['dtim'] = '2'
+    wifi_access_point.interfaces.wifi.config['dtim'] = dtim
     wifi_access_point.interfaces.wifi.start_ap()
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
@@ -1199,7 +1617,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     #  DUT Assoc ID from Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -1221,7 +1639,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter3 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {ap_bssid}))'
 
-    # validate data(0x28), Null(0x24), PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c)
+    # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
     packet_filter4 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
                      f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && ' \
                      f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
@@ -1229,10 +1647,10 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
         'packet_count'], 'No packet found for Power save mode 1/Null frame'
-
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter4)[
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)[
         'packet_count'], 'Unable to find any  PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
-
+    dtim_beacon_obj.dtim_skip_based_validation(dtim, dtim_skip, association_id)
+    '''
     logger().info('-----------Parse the sniffer packet and store in dictionary for DTIM beacon-----------------\n\n ')
     sniffer_dict = dtim_beacon_obj.parse_sniffer_packet_dtim_beacon()
 
@@ -1254,7 +1672,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info('-----------Validation for more data bit----------------\n\n ')
     assert dtim_beacon_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
         'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
-
+    '''
 
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1282,6 +1700,7 @@ def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point
     filter_pack_obj = FilterPacket()
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     validation = True
+    powersave_validation = True
     ping_count = 60
 
     '''Validate listen interval from DUT side, DUT should wake up and send data after listen interval consecutive beacons'''
@@ -1313,7 +1732,7 @@ def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
     wifi_sniffer.interfaces.capture.stop_capture()
     #  DUT Assoc ID from Assoc resp frame in sniffer
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0001) and (wlan.sa == {ap_bssid} and wlan.da == {dut_mac_address})'
@@ -1336,7 +1755,7 @@ def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
         'packet_count'], 'Unable to find PM bit 1 in sniffer packet'
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3,None, powersave_validation)['packet_count']
 
     ps_poll_packets_time_delta_list, case1, case2 = filter_pack_obj.listen_interval_based_validation(
         listen_interval,
@@ -1356,7 +1775,7 @@ def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point
 
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1413,7 +1832,7 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     logger().info('\n\n Time sleep ! Wait for 60 seconds......')
     time.sleep(60)
@@ -1438,22 +1857,8 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter3 = f'(wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
                      f'and (wlan.da == {ap_bssid}))'
 
-    # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
-    packet_filter4 = f'wlan.fc.type_subtype == 0x001a'
-
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
         'Unable to find PM bit 1 in packets'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter11)[
-        'packet_count'], 'Unable to find PS-Poll packet'
-
-    time.sleep(5)
-    # Validate the time delta between PS-poll packet
-    ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
-    logger().info(ps_poll_packets_time_delta_list)
-
-    # Validate the time delta between PS-poll packet
-    assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, time_delta_for_listen_interval)
-
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -1477,6 +1882,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
     ps_poll_time_delta_obj = FilterPacket()
     assoc_obj = FilterPacket()
     validation = True
+    powersave_validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     ping_count = 60
 
@@ -1513,7 +1919,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
     wifi_sniffer.interfaces.capture.stop_capture()
     # Assoc resp frame in sniffer to get the DUT assoc id
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -1538,7 +1944,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
                      f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter3)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3,None, powersave_validation)['packet_count']
     ps_poll_packets_time_delta_list, case1, case2 = ps_poll_time_delta_obj.listen_interval_based_validation(
         listen_interval,
         association_id)
@@ -1556,7 +1962,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
 
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1579,6 +1985,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
 )
 def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    powersave_validation = True
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
     ps_packet_exchange_obj = FilterPacket()
     assoc_obj = FilterPacket()
@@ -1613,7 +2020,7 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     # Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -1637,7 +2044,7 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
                      f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
                      f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
 
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter4)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     # ps_poll_packets_time_delta_list, case1, case2 = assoc_obj.DTIM_Based_validation(association_id)
     case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
     if case1 != 0 or case2 != 0 or case3 != 0 or case4 != 0:
@@ -1655,9 +2062,9 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
                 f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1714,7 +2121,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     # broadcast probe requests from DUT
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
@@ -1839,7 +2246,7 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
 
             # Initiate ping from third party wifi-client to DUT
             status = ping(device_ip, ping_count)
-            assert status
+            assert status, "DUT is not responding to ping request from third party device"
 
             logger().info(f"*****Disable Max PSP in DUT******")
             wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled,
@@ -1850,7 +2257,7 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
             time.sleep(2)
 
             status = ping(device_ip, ping_count)
-            assert status
+            assert status, "DUT is not responding to ping request from third party device"
     except():
         assert False, "Power save enable disable failure"
     finally:
@@ -1922,7 +2329,7 @@ def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wi
     time.sleep(30)
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     wifi_sniffer.interfaces.capture.stop_capture()
     # time.sleep(2)
@@ -1986,7 +2393,7 @@ def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wi
     time.sleep(30)
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     wifi_sniffer.interfaces.capture.stop_capture()
     # time.sleep(2)
@@ -2018,6 +2425,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
     ps_poll_time_delta_obj = FilterPacket()
     assoc_obj = FilterPacket()
     validation = True
+    powersave_validation = True
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     ping_count = 60
 
@@ -2052,7 +2460,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
     )
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     # Applying PS-poll filter to find the time delta between 2 PS-poll packets(in between 12 consecutive beacon packets)
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -2075,7 +2483,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
                      f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
                      f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter4)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     ps_poll_packets_time_delta_list, case1, case2 = ps_poll_time_delta_obj.listen_interval_based_validation(
         listen_interval,
         association_id)
@@ -2094,7 +2502,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
 
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
 
 
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
@@ -2117,6 +2525,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
 )
 def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
+    powersave_validation = True
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
     ps_packet_exchange_obj = FilterPacket()
     ping_count = 60
@@ -2147,7 +2556,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
     )
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
     wifi_sniffer.interfaces.capture.stop_capture()
     # Assoc resp frame in sniffer
     packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
@@ -2167,7 +2576,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
     else:
         logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
-    assert wifi_sniffer.interfaces.capture.powersave_sniffer_capture(validation, packet_filter4)['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
     if case1 != 0 or case2 != 0 or case3 != 0 or case4 != 0:
         if case1 != 0:
@@ -2184,10 +2593,10 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
                 f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
         assert False
     else:
-        assert True
+        assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
 
-
-@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
+@pytest.mark.skip()
+@pytest.mark.firmware_app("test_wlan_power-save_mode3_ulp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2241,7 +2650,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
 
     # Initiate ping from third party wifi-client to DUT
     status = ping(device_ip, ping_count)
-    assert status
+    assert status, "DUT is not responding to ping request from third party device"
 
     # broad cast probe requests from DUT
     packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} and ' \
@@ -2356,9 +2765,6 @@ def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_a
             wifi_dut.interfaces.wifi.bt_power_save(
                 power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
             )
-            # Initiate ping from third party wifi-client to DUT
-            status = ping(device_ip, ping_count)
-            assert status
 
             logger().info(f"*****Disable Max PSP in DUT******")
             wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled,
@@ -2367,8 +2773,9 @@ def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_a
                 power_save_mode=RS9116PowerSaveModes.PowerSaveDisabled
             )
             time.sleep(2)
+            #Initiate ping from third party wifi-client to DUT
             status = ping(device_ip, ping_count)
-            assert status
+            assert status, "DUT is not responding to ping request from third party device"
     except():
         assert False, "Power save enable disable failure"
     finally:

@@ -18,12 +18,12 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.bluetooth.bluetooth_interface import (BTRole, BTProfile, BTEvents, )
 
-
 ping_count = 30
 
 
 def logger():
     return get_logger(__name__)
+
 
 """
     Setup Requirement: DUT(RS9116) , EFR32, 3 Raspberry PI required ,
@@ -48,10 +48,10 @@ def wifi_join(wifi_dut, wifi_access_point):
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_ps, "failed to enable power save"
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_ps, "failed to enable WLAN power save"
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
 
     logger().info(f'DUT ip {device_ip}')
@@ -78,70 +78,56 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
         if not found:
             logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
-        with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server) as bt_server_socket:
-            # SPP Connection
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                bt_server_socket.create_server()
-                logger().info(f"DUT initiating bt connection with SLAVE device, this can take some time....")
-                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
-                assert connected
-            logger().info(f"bt_client:' {bt_client_address}' Successfully connected to DUT: '{bt_dut_address}'")
+        bt_server_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server)
+        # with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server) as bt_server_socket:
+        # SPP Connection
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            bt_server_socket.create_server()
+            logger().info(f"DUT initiating bt connection with SLAVE device, this can take some time....")
+            connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+            assert connected
+        logger().info(f"bt_client:' {bt_client_address}' Successfully connected to DUT: '{bt_dut_address}'")
 
-            # Initiating power save
-            logger().info("Initiating power save on DUT")
-            if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-                wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-                enable_ps = wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_ps, "Unable to enable power save"
-                enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-                assert enable_bt_ps, "Unable to enable bt power save"
-                logger().info("DUT is on power save mode")
-
-            # Send data from bt_client to dut
-            logger().info("Sending data from bt_client to DUT.")
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                sent = bt_server_socket.send(recv_text)  # SQA Agent is programmed to send back data
-                logger().info(f"Data: '{recv_text}' sent from bt_client to DUT.....'{sent}'")
-                assert sent, f"Not sent data from bt_client to DUT"
-                data = bt_server_socket.recv()
-                logger().info(f"Data received back from DUT is......'{data.decode()}'")
-                assert data, f"Data not received back from DUT "
-                assert data.decode() == recv_text
-                logger().info(f"Send data from bt_client to dut is successful")
-
-            # Send data from dut to bt_client
-            logger().info("Sending data from DUT to bt_client.")
-            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+        # Send data from bt_client to dut
+        logger().info("Sending data from bt_client to DUT.")
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            sent = bt_server_socket.send(recv_text)  # SQA Agent is programmed to send back data
+            logger().info(f"Data: '{recv_text}' sent from bt_client to DUT.....'{sent}'")
+            assert sent, f"Not sent data from bt_client to DUT"
             data = bt_server_socket.recv()
-            logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
-            logger().info(f"Data received back from bt_client is......'{data.decode()}'")
-            assert data, f"Data not received back from bt_client"
-            assert data.decode() == send_text
-            logger().info(f"Send data from dut to bt_client is successful")
+            logger().info(f"Data received back from DUT is......'{data.decode()}'")
+            assert data, f"Data not received back from DUT "
+            assert data.decode() == recv_text
+            logger().info(f"Send data from bt_client to dut is successful")
 
-            # Ping dut
-            logger().info("Pinging to DUT from bt_client")
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-            logger().info("Successfully pinged to DUT from bt_client")
+        # Send data from dut to bt_client
+        logger().info("Sending data from DUT to bt_client.")
+        wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+        data = bt_server_socket.recv()
+        logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
+        logger().info(f"Data received back from bt_client is......'{data.decode()}'")
+        assert data, f"Data not received back from bt_client"
+        assert data.decode() == send_text
+        logger().info(f"Send data from dut to bt_client is successful")
 
-            # returning value for closing the connection
-            return bt_client_address, bt_server_socket, bt_dut_address
+        # Ping dut
+        logger().info("Pinging to DUT from bt_client")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+        logger().info("Successfully pinged to DUT from bt_client")
+
+        # returning value for closing the connection
+        return bt_client_address, bt_server_socket, bt_dut_address
 
     if mode == "bt_master":
         # Initiating power save
         bt_client.interfaces.bluetooth.close()
         logger().info("Initiating power save on DUT")
-        if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-            wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-            wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-
         logger().info("Setting DUT as bt_master....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
         assert bt_dut_address, f"Unable to get bt_dut_address"
         logger().info("Started BT in MASTER device....DUT")
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
-        assert bt_client_address,  f"Unable to get bt_client_address"
+        assert bt_client_address, f"Unable to get bt_client_address"
         logger().info("Advertising started on SLAVE device....bt_client")
         time.sleep(3)
 
@@ -149,48 +135,48 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
                                                                inquiry_duration_ms=20000, timeout=22, retry_counts=6)
         if not found:
             logger().warning(f"Dut unable to find the bt client device. The test case may fail.")
+        bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
 
-        with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
-            # SPP Connection
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                bt_client_socket.create_client()
-                logger().info(f"DUT Initiating bt connection with SLAVE device, this can take some time....")
-                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=120)
-                assert addr == bt_dut_address
-            logger().info(f"DUT: '{bt_dut_address}' Successfully connected to bt_client: '{bt_client_address}'")
+        # SPP Connection
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            bt_client_socket.create_client()
+            logger().info(f"DUT Initiating bt connection with SLAVE device, this can take some time....")
+            wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
+            addr = bt_client_socket.accept(timeout=120)
+            assert addr == bt_dut_address
+        logger().info(f"DUT: '{bt_dut_address}' Successfully connected to bt_client: '{bt_client_address}'")
 
-            # Send data from bt_client to dut
-            time.sleep(20)
-            logger().info("Sending data from bt_client to DUT.")
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                sent = bt_client_socket.send(recv_text)  # Dut is programmed to send back data
-                logger().info(f"Data: '{recv_text}' sent from bt_client to DUT.....'{sent}'")
-                assert sent
-                time.sleep(2)
-                data = bt_client_socket.recv()
-                logger().info(f"Data received back from DUT is......'{data.decode()}'")
-                assert data, f"Data not received back from DUT "
-                assert data.decode() == recv_text
-                logger().info(f"Send data from bt_client to dut is successful")
-
-            # Send data from dut to bt_client
-            logger().info("Sending data from DUT to bt_client.")
-            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+        # Send data from bt_client to dut
+        time.sleep(20)
+        logger().info("Sending data from bt_client to DUT.")
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            sent = bt_client_socket.send(recv_text)  # Dut is programmed to send back data
+            logger().info(f"Data: '{recv_text}' sent from bt_client to DUT.....'{sent}'")
+            assert sent
+            time.sleep(2)
             data = bt_client_socket.recv()
-            logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
-            logger().info(f"Data received back from bt_client is......'{data.decode()}'")
-            assert data, f"Data received back from bt_client"
-            assert data.decode() == send_text
-            logger().info("Send data from DUT to bt_client is successful.")
+            logger().info(f"Data received back from DUT is......'{data.decode()}'")
+            assert data, f"Data not received back from DUT "
+            assert data.decode() == recv_text
+            logger().info(f"Send data from bt_client to dut is successful")
 
-            # Ping dut
-            logger().info("Pinging to DUT from bt_client")
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-            logger().info("Successfully pinged to DUT from bt_client")
+        # Send data from dut to bt_client
+        logger().info("Sending data from DUT to bt_client.")
+        wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+        data = bt_client_socket.recv()
+        logger().info(f"Data: '{send_text}' sent from DUT to bt_client.")
+        logger().info(f"Data received back from bt_client is......'{data.decode()}'")
+        assert data, f"Data received back from bt_client"
+        assert data.decode() == send_text
+        logger().info("Send data from DUT to bt_client is successful.")
 
-            # returning value for closing the connection
-            return bt_client_address, bt_client_socket, bt_dut_address
+        # Ping dut
+        logger().info("Pinging to DUT from bt_client")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+        logger().info("Successfully pinged to DUT from bt_client")
+
+        # returning value for closing the connection
+        return bt_client_address, bt_client_socket, bt_dut_address
 
 
 def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_needed=True):
@@ -384,7 +370,8 @@ class wifi_traffic_thread(Thread):
         self.iperf_time = iperf_time
 
     def run(self):
-        run_iperf_server(self.net_perf_client, self.wifi_access_point, self.wifi_dut, self.wifi_client, self.protocol, self.device_ip,
+        run_iperf_server(self.net_perf_client, self.wifi_access_point, self.wifi_dut, self.wifi_client, self.protocol,
+                         self.device_ip,
                          self.iperf_time)
         logger().info("Wi-Fi traffic thread completed")
 
@@ -428,7 +415,7 @@ class connect_disconnect_bt_thread(Thread):
         for i in range(1, self.iter_count):
             logger().info(f"Initiating BT disconnection on DUT...iteration: '{i}'")
             self.bt_client.interfaces.bluetooth.disconnect(self.bt_address)
-            #self.wifi_dut.interfaces.wifi.bt_disconnect(self.bt_address)
+
             time.sleep(3)
             logger().info(f"BT disconnection success...iteration: '{i}'")
 
@@ -457,7 +444,6 @@ class connect_disconnect_ble_thread(Thread):
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -467,24 +453,33 @@ class connect_disconnect_ble_thread(Thread):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, ble_client, wifi_access_point,
+def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                           wifi_access_point,
                                                            net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
-    # with bt_spp_master_slave_thread(wifi_dut, bt_client, mode="bt_slave"), ble_master_slave_thread(wifi_dut, ble_client, mode="ble_slave"):
-    #     time.sleep(15)
 
+    testcase = "test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
-
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
     bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
@@ -504,6 +499,15 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find Null frame with pm bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find ps polls in sniffer capture'
+
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
@@ -517,13 +521,11 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
 
 # Verify STA_BT_BLE functionality when BT and BLE in MASTER mode and Wi-Fi in STA mode
 # Need to re-look as bt_master mode test is failing.
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -533,11 +535,16 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(wifi_dut, bt_client, 
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect", "bt_disconnect"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect",
+                             "bt_disconnect"])
 def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client, ble_client, wifi_access_point,
                                                             net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -577,13 +584,11 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
 # C20075 ---> one BT client and BLE-client is required. [So one is primary and other is secondary raspi]
 # C20077 ---> required 2 ble clients itself [ble_client1 is primary raspi and ble_client2 is secondary raspi]
 # In this case , for C20077 test case getting issue while Creating RPC server.
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -593,8 +598,11 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(wifi_dut, bt_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", ])
@@ -614,12 +622,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
     bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
-
-    logger().info("Initiating power save on DUT")
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-        wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info(f"bt_address: '{bt_address}', bt_socket: '{bt_socket}'")
 
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
@@ -627,7 +630,8 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
 
     ble_mode = "ble_master"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
-    ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address, start_needed=False)
+    ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address,
+                                                    start_needed=False)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
@@ -648,7 +652,6 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -658,21 +661,31 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(wifi_dut, bt_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-
-def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client, wifi_access_point, net_perf_client,
+def test_sta_bt_ble_connection_stability_C20078(wifi_sniffer, wifi_dut, bt_client, ble_client, wifi_access_point,
+                                                net_perf_client,
                                                 wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+    testcase = "test_sta_bt_ble_connection_stability_C20078"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
-
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
     bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
@@ -691,6 +704,15 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find Null frame with pm bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find ps polls in sniffer capture'
+
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
@@ -699,7 +721,6 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
 
 
 # Verify the http download functionality of STA while BT and BLE are connected with remote devices and data transfer (SPP Rx and notifications are enabled).
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -711,7 +732,7 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": "ca-chain.cert.pem"
     },
 )
@@ -719,13 +740,23 @@ def test_sta_bt_ble_connection_stability_C20078(wifi_dut, bt_client, ble_client,
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, ble_client, wifi_access_point,
+def test_sta_bt_ble_connection_with_http_download_C20079(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                         wifi_access_point,
                                                          http_server, http_client, index_path):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    testcase = "test_sta_bt_ble_connection_with_http_download_C20079"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
     logger().info("Joining into Wi-Fi")
     wifi_join(wifi_dut, wifi_access_point)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     # starts the dhcp in dut
     time.sleep(5)
@@ -741,13 +772,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"ble_address: '{ble_address}'")
 
-    logger().info("Enabling the wifi power save in dut")
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
-    logger().info("Enabling the bt power save in dut")
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-
     # API used to get the https data
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
@@ -762,6 +787,15 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Null frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
+
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
@@ -770,13 +804,11 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
 
 
 # Verify the DUAL_MODE functionality if STA_BT_BLE while all the devices are connected and data transfer is in progress
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -786,19 +818,32 @@ def test_sta_bt_ble_connection_with_http_download_C20079(wifi_dut, bt_client, bl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_client, ble_client, wifi_access_point,
+def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                                   wifi_access_point,
                                                                    net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    testcase = "test_sta_bt_ble_connection_with_dual_mode_functionality_C20080"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -817,6 +862,15 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Null frame with PM bi set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
+
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
@@ -825,13 +879,11 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
 
 
 # Verify STA connect and disconnect functionality while BT and BLE are connected with remote devices and data transfer is happening.
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -841,19 +893,33 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(wifi_dut, bt_
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_client, ble_client, wifi_access_point,
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                                  wifi_access_point,
                                                                   net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    testcase = "test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -864,7 +930,8 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}' and Wi-Fi Connect-Disconnect thread")
-    t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
+    t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip,
+                             iperf_time=100)
     t2 = connect_disconnect_wifi_thread(wifi_dut, wifi_access_point, iter_count=5)
 
     t1.start()
@@ -879,6 +946,15 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find NULL frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
+
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
@@ -887,13 +963,11 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
 
 
 # Verify BT connect and disconnect multiple times while STA and BLE are connected with remote devices and data transfer is in progress.
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -903,19 +977,33 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(wifi_dut, bt_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_client, ble_client, wifi_access_point,
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                                 wifi_access_point,
                                                                  net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    testcase = "test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -926,7 +1014,8 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}' and BT Connect-Disconnect thread")
-    t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
+    t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip,
+                             iperf_time=100)
     t2 = connect_disconnect_bt_thread(wifi_dut, bt_client, bt_mode, bt_address, bt_dut_address, bt_socket, iter_count=5)
     # ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
     t1.start()
@@ -941,15 +1030,22 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find NULL Frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
+
 
 # Verify BLE connect and disconnect multiple times while STA and BT are connected with remote devices and data transfer is in progress
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -959,19 +1055,33 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(wifi_dut, bt_cl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_client, ble_client, wifi_access_point,
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                                  wifi_access_point,
                                                                   net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
+    testcase = "test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -982,7 +1092,8 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}' and BLE Connect-Disconnect thread")
-    t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip, iperf_time=200)
+    t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip,
+                             iperf_time=200)
     t1.start()
     logger().info(f"Initiating BLE Connect-Disconnect thread")
     connect_disconnect_ble(wifi_dut, ble_client, ble_address, iter_count=5)
@@ -994,6 +1105,15 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find NULL frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
+
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
 
@@ -1002,13 +1122,11 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
 
 
 # Verify Power save 2 functionality of DUT when configured in STA_BT_BLE mode. Check if connectivity and data transfer is functional.
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1018,8 +1136,11 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(wifi_dut, bt_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1031,14 +1152,15 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C4004.txt')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"Device mac address: {dut_mac_address}")
+
     bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {bssid}')
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     # Get IP over DHCP
     wifi_dut.interfaces.wifi.start_ip()
@@ -1050,13 +1172,6 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
-
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    # Initiating power save2
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    result = wifi_dut.interfaces.wifi.power_save(2, 0)
-    assert result, "Power save is not enabled"
-    time.sleep(3)
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
@@ -1085,14 +1200,12 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
 
 
 # Verify the BG-SCAN functionality of STA when BT and BLE are connected to remote devices and data transfer is happening in STA_BT_BLE mode
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1102,8 +1215,11 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(wifi_dut, bt_client, 
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1144,20 +1260,21 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0004 ' \
                      f'and wlan.da == ff:ff:ff:ff:ff:ff'
-
+    packet_filter2 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter3 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
     time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find probe request broadcast packet'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find NULL frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
 
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
@@ -1170,7 +1287,6 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
 
 
 # Verify the functionality of DUT when we bringup and connect RSI_BT and RSI_BLE with remote devices first and then initiate RSI_STA scan and connect to AP in STA_BT_BLE mode.
-#@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_C20086'})
@@ -1178,7 +1294,6 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
 @pytest.mark.parametrize("ssid", ['test_C20086'])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1188,15 +1303,25 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(wifi_dut, wifi_sniffer, bt_cl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, ble_client, wifi_access_point,
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "bt_disconnect", "ble_disconnect"])
+def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                         wifi_access_point,
                                                          net_perf_client, wifi_client, protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+    testcase = "test_sta_bt_ble_connection_with_sta_scan_mode_C20086"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -1217,6 +1342,8 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
     run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
@@ -1227,19 +1354,23 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
 
-    logger().info("Initiating BLE disconnection on DUT")
-    ble_disconnect(wifi_dut, ble_address)
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Null frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
 
-    logger().info("Initiating BT disconnection on DUT")
-    bt_disconnect(wifi_dut, bt_address, bt_socket)
 
 
 # Verify the Deep Sleep functionality of DUT when configured in STA_BT_BLE mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
-    "net_perf_client",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
@@ -1249,18 +1380,48 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(wifi_dut, bt_client, bl
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
+)
+@pytest.mark.config(
+    "net_perf_client",
     net_perf={"host_role": IperfConstants.SERVER_MODE},
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt_client, ble_client, wifi_access_point):
+def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_sniffer, wifi_dut, bt_client, ble_client,
+                                                                    wifi_access_point, net_perf_client,
+                                                                    wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    testcase = "test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+
+    # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    logger().info("Initiating scan from dut...")
+    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+    logger().info(f'Scan results are : {scan_results}')
+    logger().info("Disabling WLAN Power Save in DUT...")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
+    # # Enables the bt power save in DUT
+    logger().info("Disabling BT Power Save in DUT...")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled)
 
     logger().info("Joining into Wi-Fi")
     device_ip = wifi_join(wifi_dut, wifi_access_point)
     assert device_ip, "Failed to fetch device ip"
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -1272,18 +1433,25 @@ def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(wifi_dut, bt
     ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"ble_address: '{ble_address}'")
 
-    logger().info("Initiating power-save2 on DUT")
-    result = wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-    assert result, "Device has not gone to powersave mode"
+    logger().info(f"Initiating '{protocol}' traffic with client '{wifi_client.name}'")
+    run_iperf_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip)
+
+    logger().info("Checking connection status of BT, BLE, Wi-Fi")
+    check_connection_status(wifi_dut)
 
     logger().info("Initiating BT disconnection on DUT")
     bt_disconnect(wifi_dut, bt_address, bt_socket)
 
     logger().info("Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address})) '
+    packet_filter2 = f'(wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0x001a)'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find NULL Frame with PM bit set in sniffer capture'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find ps polls in sniffer capture'
 
     logger().info("Initiating BLE disconnection on DUT")
     ble_disconnect(wifi_dut, ble_address)
-
-

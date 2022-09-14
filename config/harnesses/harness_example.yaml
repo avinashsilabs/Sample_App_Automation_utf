@@ -439,8 +439,8 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.1.142'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                ip_address: '10.207.18.146'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
 
@@ -500,7 +500,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.1.154'       #configure secondary Rpi rd_1 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -981,7 +981,7 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
@@ -1061,7 +1061,11 @@ defaults:
         channel: 1
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
+        static_ip: '192.168.50.199'
+        static_subnet: '255.255.255.0'
+        static_gateway: '192.168.50.1'
         sniffer_validation: True
+        disable_sniffer_validation: false
 
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
@@ -1072,6 +1076,7 @@ defaults:
         enable_ppp: 0
         afe_type: 1
         features_enable: 0
+        enable_async_socket: 0
 
     wiseconnect_web: 'wiseconnect_web'
 

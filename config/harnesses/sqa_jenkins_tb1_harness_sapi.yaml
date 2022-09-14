@@ -25,7 +25,7 @@ devices:
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
             cli_transport: 'uart'
-            #gpio_transport: 'gpio_uart'
+            gpio_transport: 'gpio_uart'
 
         # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
         interfaces:
@@ -230,8 +230,8 @@ devices:
                 web_ui_port: 8080
                 admin_password: 'Jenkins@123'
                 security: WPA
-                ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                ssid: 'Jenkins-TB1'
+                passphrase: '12345678'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -244,9 +244,10 @@ devices:
                 ip_address: '10.207.18.105'
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
-                ssid: "TESTTEST-ASUS"
+                ssid: "Jenkins-TB1"
+                passphrase: '12345678'
                 protected_management_frame: 'Disable'
-                skip_assertion_failure : True
+                skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "10.207.18.109"
                 radius_port: "1812"
@@ -292,6 +293,7 @@ devices:
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
+#                interface: 'eth0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -375,7 +377,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.50.40'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
 
@@ -435,7 +437,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.50.40'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -637,13 +639,13 @@ devices:
                 username: 'test'
                 password: 'test123'
 
-    keysight_power_analyzer:
+    keysight_N6705_power_analyzer:
         interfaces:
             power_meter:
                 type: 'power_meter.keysight_N6705'
                 instrument_lan_ip_address: '10.207.19.83'
 
-    keysight_power_analyzer_benchvue_win_rm:
+    keysight_benchvue_power_analyzer_win_rm:
         interfaces:
             windows_shell: 
                 type: 'rem_mgmt.win_rm'
@@ -656,8 +658,8 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-
-    keysight_power_analyzer_benchvue_win_wcf:
+    
+    keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
@@ -762,7 +764,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
+                firmware_file_path: '/app/manifest/RS9116W.2.7.0.5.rps'
 
     raspi_iperf:
         interfaces:
@@ -796,13 +798,13 @@ devices:
 
     raspi_ftp_server:
         interfaces:
-            vsftpd_ftp_server:
+            ftp_server:
                 type: 'ftp.server.vsftpd_ftp_server'
                 tls_enabled: false
 
     raspi_ftp_server_tls:
         interfaces:
-            vsftpd_ftp_server:
+            ftp_server:
                 type: 'ftp.server.vsftpd_ftp_server'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
@@ -810,16 +812,43 @@ devices:
 
     raspi_ftp_client:
         interfaces:
-            ftplib_ftp_client:
+            ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
-
+    
     raspi_ftp_client_tls:
         interfaces:
-            ftplib_ftp_client:
+            ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: true
 
+    raspi_radius_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '10.207.18.105'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+
+    static_radius_server:
+        interfaces:
+            ssh_shell: 
+                type: 'shell.ssh_shell'
+                remote: '10.207.18.109'  # configure Free Radius Server NUC IP
+                username: test       # NUC username
+                password: test123    # NUC password
+                use_paramiko_expect: false
+            radius_server:
+                type: 'radius_server.freeradius.static'
+                shell: 'ssh_shell'
+                ap_ip_address: '10.207.18.105'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
 
     paho_client:
         interfaces:
@@ -834,7 +863,6 @@ devices:
                 type: 'wifi.access_points.linux'
                 shell: 'linux_shell'
                 interface: 'eth0'
-
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -853,10 +881,11 @@ defaults:
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
     wifi_access_point: 'asus_rt_ax3000_ap'
+
     # To connect the multiple access points
     wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
+        - 'asus_rt_ax3000_ap'
+        - 'dlink_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -870,13 +899,13 @@ defaults:
 
     logic_analyzer: 'saleae_logic_analyzer'
 
-    power_meter: 'keysight_power_analyzer'
+    power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
 
     ble_client: 'raspi_ble_client'
 
     ble_clients:
-        - 'raspi_ble_client'
         - 'secondary_raspi_ble_client'
+        - 'raspi_ble_client'
 
     bt_client: 'secondary_raspi_bt_client'
 
@@ -903,15 +932,14 @@ defaults:
         baud: 115200
 
     wifi:
-        ssid: 'TESTTEST-ASUS'
+        ssid: "Jenkins-TB1"
         security: WPA2
         channel: 11
         passphrase: '12345678'
         server_ip: '192.168.50.1'
         sniffer_validation: True
-
         # firmware path for http/https otaf
-        http_url: '/RS9116W.2.6.0.20.rps'
+        http_url: '/RS9116W.2.7.0.13.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -919,10 +947,6 @@ defaults:
         enable_ppp: 0
         afe_type: 1
         features_enable: 0
-
-        static_ip: '192.168.18.123'
-        static_subnet: '255.255.255.0'
-        static_gateway: '192.168.18.1'
 
     wiseconnect_web: 'wiseconnect_web'
 
@@ -970,6 +994,8 @@ defaults:
     ftp_server: 'raspi_ftp_server'
 
     ftp_client: 'raspi_ftp_client'
+
+    radius_server: 'raspi_radius_server'
 
     net_perf:
         server_options:
@@ -1038,3 +1064,11 @@ start_state:
 #end_state:
 #    wifi_access_point:
 #        wifi: 'ap_disabled'
+
+constants:
+    time_duration:
+        value: 5
+    ping_count:
+        value: 10
+    iter_count:
+        value: 5
