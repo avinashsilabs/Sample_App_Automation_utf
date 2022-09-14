@@ -138,6 +138,61 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    rs9116_stm32_sapi:
+
+        # The 'type' attribute is optional.  If it is present, the device will be created via a
+        # create_device() function located in the corresponding python module under the 'devices'
+        # folder.
+        # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
+        # In the case of a 9116 device, the type 'rs911x' should be used
+        type: 'rs911x'
+        subtype: 'rs9116'
+        src_dir: 'utf_wiseconnect'
+
+        # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+
+            # Like the top level device names, the interface names are also arbitrary, but must be unique for a
+            # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x0483
+                pid: 0x374b
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+
+            wifi:
+                # the wifi interface type for the 9116 must be either
+                # 'cli.rs_at_commands' or 'cli.rs_sapi_commands'
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'cli.rs_sapi_stm32_commands'
+                src_dir: 'utf_wiseconnect'
+
     rs9117_sapi:
 
         # The 'type' attribute is optional.  If it is present, the device will be created via a
@@ -203,6 +258,17 @@ devices:
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+
+    stm32_nucleo_f411re:
+        type: 'stm32'
+        subtype: 'stm32'
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x0483
+                pid: 0x374b
+
 
     # This represents an access point configuration.
     static_ap:
@@ -856,6 +922,60 @@ devices:
                 username: 'user1'
                 password: '12345678'
 
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
+
+    nrf_5280_sniffer:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sniffer:
+                type: 'bluetooth.sniffer.nrf.nrf_52840'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0x522A
+                follow_device: 'DMPFBD6'
+                max_tries: 10
+
+    ellisys_bt_tracker_win_wcf:
+        interfaces:
+            wcf_sniffer_ellysis_bluetooth_analyzer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.18.87:8735/Design_Time_Addresses/utf_wcf_service_library/SnifferEllisysBluetoothAnalyzerService/?wsdl'
+                timeout: 120000
+            wcf_file_transfer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.18.87:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.ellisys.ellisys_bluetooth_analyzer_win_wcf'
+                sniffer_ellysis_bluetooth_analyzer_service: 'wcf_sniffer_ellysis_bluetooth_analyzer_service'
+                file_transfer_service: 'wcf_file_transfer_service'
+
+    ble_sweyntooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                ip_address: '10.207.16.89'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            linux_shell:
+                type: 'shell.shell'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -864,6 +984,8 @@ defaults:
     dut: 'rs9116'
 
     efx32: 'efr32_4180b'
+
+    stm32: 'stm32_nucleo_f411re'
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
@@ -890,6 +1012,12 @@ defaults:
         - 'raspi_wifi_ssh'
 
     wifi_sniffer: 'airpcap'
+
+    openssl: 'openssl_socket'
+
+    ble_sniffer: 'nrf_5280_sniffer'
+
+    bt_sniffer: 'ellisys_bt_tracker_win_wcf'
 
     logic_analyzer: 'saleae_logic_analyzer'
 
@@ -924,6 +1052,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
+
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
 
     wifi:
         ssid: 'TESTTESTTEST'
@@ -963,6 +1093,14 @@ defaults:
         aws_secret_access_key: "MQttSpE4cbMyoOmPR071x/rLjtwQAIOxBZsFzxf+"
         region: "us-east-1"
 
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
+
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
         ble_advertising_data: 'HELLO'
@@ -996,6 +1134,12 @@ defaults:
     ftp_client: 'raspi_ftp_client'
 
     radius_server: 'raspi_radius_server'
+
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
 
     net_perf:
         server_options:
@@ -1049,6 +1193,17 @@ defaults:
         scope_trigger_source: 'ScopeRunButton'
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
 
+    sniffer_ellysis_bt_tracker:
+        remote_settings_folder_location: 'C:\\UTF\\Ellisys_Sniffer\\Settings\\'
+        remote_settings_file_name: 'dev_only_ble.bttse'
+        remote_capture_folder_location: 'C:\\UTF\\Ellisys_Sniffer\\Capture\\'
+        remote_capture_file_name: 'utf_ellisys_sniffer'
+        elapsed_time: 20000
+        device_filter_mode: 'KeepInvolving'
+        log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
+        device_filter_addresses : ''
+        stop_after_elapsed_time: false
+
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
@@ -1072,3 +1227,5 @@ constants:
         value: 10
     iter_count:
         value: 5
+
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']

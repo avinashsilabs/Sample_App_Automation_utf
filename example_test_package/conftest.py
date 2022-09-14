@@ -10,6 +10,7 @@ from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
+from utf.interfaces.bluetooth.fixtures import *
 
 last_loaded_custom_app_name = None
 
