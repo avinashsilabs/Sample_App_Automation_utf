@@ -18,7 +18,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - ram_dump
@@ -42,7 +42,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - ram_dump
@@ -66,7 +66,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - ram_dump
@@ -90,7 +90,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - ram_dump
@@ -112,7 +112,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -132,7 +132,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - websocket
@@ -154,7 +154,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - iperf
@@ -176,7 +176,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - iperf
@@ -200,7 +200,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - iperf
@@ -224,7 +224,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - iperf
@@ -244,7 +244,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -264,7 +264,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -284,7 +284,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -303,7 +303,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - cases
       - version
@@ -323,7 +323,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 1
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -343,7 +343,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 1
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -363,7 +363,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 1
-    enabled: true
+    enabled: false
     labels:
       - cases
       - wifi
@@ -382,7 +382,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 1
-    enabled: true
+    enabled: false
     labels:
       - cases
       - version
