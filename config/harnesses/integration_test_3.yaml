@@ -235,7 +235,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.14.3'
+                ip_address: '10.207.18.146'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 container_name: 'secondary_raspi_bt_client'
                 username: pi
