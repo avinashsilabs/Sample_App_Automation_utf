@@ -1,4 +1,5 @@
 import pytest
+import datetime
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, get_host_ip
@@ -25,6 +26,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap
 )
 from utf.utils.thread_base import ThreadBase
+import threading
 import time
 import string
 import random
@@ -50,6 +52,8 @@ def logger():
 
     Author: Jyothi Nagireddy
 """
+def text_generator(size=200):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
 def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
     ble_dut_address = ble_dut_address
@@ -125,6 +129,66 @@ def check_connection_status(wifi_dut, ble=False, wlan=False):
             assert False, f"DUT is not connected to Wi-Fi"
         assert len(disconnect_events) == 0
         logger().info(f"DUT is not disconnected from Wi-Fi during traffic run for long duration")
+
+class Blethread(ThreadBase):
+    def __init__(self, wifi_dut, ble_client,  ble_mode=None, ble_dut_address=None, ble_address=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.ble_dut_address = ble_dut_address
+        self.ble_mode = ble_mode
+        self.ble_address = ble_address
+
+    def run(self):
+        ble_master_slave(self.wifi_dut, self.ble_client, self.ble_mode, ble_dut_address=None)
+        ble_disconnect(self.wifi_dut, self.ble_address)
+
+class Bledatatransfer(ThreadBase):
+    def __init__(self, wifi_dut, ble_client, ble_address=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.ble_address = ble_address
+
+    def run(self):
+        data = []
+        data.append(text_generator(size=4))
+        self.ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
+        logger().info("start ble on DUT")
+        self.ble_address = self.wifi_dut.interfaces.wifi.ble_start()
+        assert self.ble_address, "Unable to get ble_dut_address"
+        logger().info("Creating new custom gatt service in DUT")
+        self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
+        logger().info("Adding custom characteristic declaration to the custom service")
+        self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
+        logger().info("Adding characteristic value attribute to the service")
+        self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[0])
+        logger().info("Configuring remote device to receive notifications from DUT")
+        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+        bus = self.ble_client.interfaces.bluetooth.bus
+        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+        assert len(services) > 0, "Unable to fetch services"
+        assert len(chars) > 0, "Unable to get characteristics list from ble_client"
+        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
+                                                                                                   services=services,
+                                                                                                   service_uid=service_uid,
+                                                                                                   char_uid=char_uid)
+        assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+        assert len(char_props) > 0, "Unable to get char_props"
+        logger().info("Subscribing to notifications on ble_client")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+                                                                                    char_uid=char_uid)
+        logger().info("Sending notifications from DUT")
+        self.wifi_dut.interfaces.wifi.ble_notify_value()
+        logger().info("Validating received notifications on ble_client")
+        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+        logger().info(f"Notifications: {notifications}")
+        notification_len = len(notifications)
+        for i in range(0, notification_len):
+            assert notifications[i] == data[i], "Received wrong data in ble_client"
+
 
 class WifiThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point, wifi_Sniffer, utf_constants, bssid=None, dut_mac_address=None, testcase=None, device_ip=None):
@@ -207,12 +271,11 @@ class WifiThread(ThreadBase):
         validation = True
         packet_filter1 = f"wlan.addr=={self.dut_mac_address} && wlan.fc.type_subtype == 0 ||eapol"
         packet_filter2 = f"wlan.addr=={self.bssid} && wlan.fc.type_subtype == 1 ||eapol"
-        packet_filter3 = f"(dhcp) && (wlan.addr == {self.bssid}) && (wlan.addr == {self.dut_mac_address})"
         logger().info(f"validate PS-POLL frame with PM bit set to '1'")
-        packet_filter4 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {self.dut_mac_address}) ' \
+        packet_filter3 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {self.dut_mac_address}) ' \
                          f'and (wlan.ra == {self.bssid}))'
         logger().info(f"validate QOS data frame with more data bit set to '1'")
-        packet_filter5 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {self.dut_mac_address}) ' \
+        packet_filter4 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {self.dut_mac_address}) ' \
                          f'and (wlan.ta == {self.bssid}))'
         logger().info(
             f"Validating association, eapol from DUT"
@@ -225,10 +288,10 @@ class WifiThread(ThreadBase):
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find association, eapol sent from AP in sniffer '
         logger().info('Validating PS Poll frames are sent from the device with power management bit')
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
         logger().info('Validating more data bit in QOS data frames')
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Sniffer validation failed for QOS data frame with more data bit 1'
         logger().info(
             f"Validating DHCP frames from AP & DUT"
@@ -239,8 +302,6 @@ class WifiThread(ThreadBase):
         logger().info("DHCP decryption is in progress...this may take some time")
         dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(self.dut_mac_address, decryption_key, ["dhcp"])
         logger().info(f"dhcp_list : {dhcp_list}")
-        assert dhcp_list, "DHCP packets not found"
-
 
 class DnsThread(ThreadBase):
     def __init__(self, wifi_dut, utf_constants, dns_mode=None):
@@ -336,7 +397,9 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
     assert enable_btps, f"unable to enable the btps"
     packet_filter1 = f"wlan.addr == {dut_mac_address} && dns"
     dns_obj.dns_request_with_server()
-    time.sleep(5)
+    time.sleep(10)
+    check_connection_status(wifi_dut, wlan=True)
+    check_connection_status(wifi_dut, ble=True)
     wifi_leave(wifi_dut)
     logger().info("Initiating BLE disconnection from ble_client")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
