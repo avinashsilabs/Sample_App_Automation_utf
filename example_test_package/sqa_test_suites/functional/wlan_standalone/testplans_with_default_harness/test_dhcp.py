@@ -106,8 +106,6 @@ def test_verify_static_ip_allocation_to_dut_c19292(
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
     logger().info(f"Device is {device_ip}")
 
-    packet_filter1 = f"dhcp.hw.mac_addr == {mac_address}"
-
     packet_filter3 = f"((wlan.addr == {mac_address}) && (wlan.fc.type_subtype == 0x0024)) && (wlan.fc.pwrmgt == 1)"
 
     logger().info(f"*****Initiating power save in DUT******")
@@ -128,14 +126,9 @@ def test_verify_static_ip_allocation_to_dut_c19292(
     wifi_dut.interfaces.wifi.leave()
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Sniffer validation for dhcp packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter1
-    ), ["packet_count"]
     logger().info("Sniffer validation for ps poll and null packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter3
-    ), ["packet_count"]
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)["packet_count"], \
+        'Unable to find sniffer packets for power save'
 
 
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -187,8 +180,8 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
         assert scan_fail == 0, "Scanning to the AP is failed"
     time.sleep(2)
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
@@ -202,16 +195,14 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
     logger().info(f"Device is {device_ip}")
 
-    packet_filter1 = f"dhcp.hw.mac_addr == {mac_address}"
-
-    packet_filter3 = f"dhcp.ip.client == {device_ip}"
+    packet_filter1 = f"((wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype == 0x0024)) && (wlan.fc.pwrmgt == 1)"
 
     logger().info(f"*****Initiating power save in DUT******")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
-    time.sleep(5)
+    time.sleep(2)
 
     status = ping(device_ip, ping_count)
     assert (
@@ -229,15 +220,16 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    logger().info("Sniffer validation for dhcp packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter1
-    ), ["packet_count"]
+    logger().info("passing passphrase and ssid to decrypt dhcp packets")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info("DHCP decryption is in progress")
+    status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
+    logger().info(f'DHCP packet from DUT found: {status}')
+    assert status == True, "DUT mac not found in DHCP packet"
 
-    logger().info("Sniffer validation for dhcp renewal request packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter3
-    ), ["packet_count"]
+    logger().info("Sniffer validation for dhcp packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"], \
+        'Unable to find the power save sniffer packets'
 
 
 ### still some enchancements has to done for it, because dut has not sending IP change notification.
@@ -332,7 +324,8 @@ def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_
     wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info("Sniffer validation for dhcp packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find the dhcp sniffer packets'
 
 
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -388,8 +381,8 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
         assert scan_fail == 0, "Scanning to the AP is failed"
     time.sleep(2)
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
@@ -425,7 +418,7 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
     net_perf_client.interfaces.net_perf.init_server(
         host_ip=host_ip, device_ip=device_ip, protocol=protocol
     )
-    net_perf_client.interfaces.net_perf.client_options["time"] = 70
+    net_perf_client.interfaces.net_perf.client_options["time"] = 90
     net_perf_client.interfaces.net_perf.start()
 
     logger().info(f"*******open socket and send traffic********")
@@ -442,9 +435,7 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
     assert tp, "failed to get throughtput..."
     __print_throughput(tp)
 
-    packet_filter1 = f"dhcp.hw.mac_addr == {mac_address}"
-
-    packet_filter3 = f"dhcp.ip.client == {device_ip}"
+    packet_filter1 = f"((wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype == 0x0024)) && (wlan.fc.pwrmgt == 1)"
 
     time.sleep(10)
 
@@ -456,15 +447,17 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
 
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    logger().info("Sniffer validation for dhcp packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter1
-    ), ["packet_count"]
 
-    logger().info("Sniffer validation for dhcp renewal request packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter3
-    ), ["packet_count"]
+    logger().info("passing passphrase and ssid to decrypt dhcp packets")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info("DHCP decryption is in progress")
+    status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
+    logger().info(f'DHCP packet from DUT found: {status}')
+    assert status == True, "DUT mac not found in DHCP packet"
+
+    logger().info("Sniffer validation for dhcp packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"], \
+        'Unable to find the power save sniffer packets'
 
 
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -520,8 +513,8 @@ def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
         assert scan_fail == 0, "Scanning to the AP is failed"
     time.sleep(2)
 
-    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {mac_address}")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f" DUT_Version: {result}")
@@ -567,7 +560,7 @@ def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
             data_len=net_perf_client.interfaces.net_perf.client_data_len,
             time=net_perf_client.interfaces.net_perf.client_timeout) as obj:
         # start iperf
-        net_perf_client.interfaces.net_perf.client_options["time"] = 70
+        net_perf_client.interfaces.net_perf.client_options["time"] = 90
         net_perf_client.interfaces.net_perf.start()
         # capture device output
         wifi_dut.interfaces.wifi.read_from_device(obj, net_perf_client.interfaces.net_perf.client_timeout)
@@ -577,9 +570,7 @@ def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
     assert tp is not None
     __print_throughput(tp)
 
-    packet_filter1 = f"dhcp.hw.mac_addr == {mac_address}"
-
-    packet_filter3 = f"dhcp.ip.client == {device_ip}"
+    packet_filter1 = f"((wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype == 0x0024)) && (wlan.fc.pwrmgt == 1)"
 
     time.sleep(10)
 
@@ -592,12 +583,13 @@ def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
     logger().info("Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    logger().info("Sniffer validation for dhcp packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter1
-    ), ["packet_count"]
+    logger().info("passing passphrase and ssid to decrypt dhcp packets")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info("DHCP decryption is in progress")
+    status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
+    logger().info(f'DHCP packet from DUT found: {status}')
+    assert status == True, "DUT mac not found in DHCP packet"
 
-    logger().info("Sniffer validation for dhcp renewal request packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(
-        validation, packet_filter3
-    ), ["packet_count"]
+    logger().info("Sniffer validation for dhcp packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"], \
+        'Unable to find power save sniffer packets'
