@@ -313,7 +313,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.1.142'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: ',lpmkonji'
 
@@ -373,7 +373,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.1.154'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
             shell:
