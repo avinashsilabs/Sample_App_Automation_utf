@@ -1435,7 +1435,8 @@ def test_socket_select_tcp_server_bidirectional_TC19337(
             data_length = len(data_sent)
             wifi_dut.interfaces.wifi.send_data((socket_no + 4), data_length, data_sent)
             data_receive = client_socket[socket_no].recv_data_tcp(data_length, True)
-            assert data_sent == data_receive.decode(), "Data sent by DUT and received on remote peer is not matched"
+            logger.info(f"Data Received:{data_receive}")
+            assert data_sent == data_receive, "Data sent by DUT and received on remote peer is not matched"
             logger.info(f"Data sent by DUT and received on remote peer is matched")
             wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=4)
             socket_id = 7
