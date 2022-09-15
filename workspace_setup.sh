@@ -7,7 +7,7 @@ if [[ -z "${PYTHON3_VENV_DIR}" ]]; then
   if [ ! -f $PYTHON3_VENV_DIR/bin/activate ]; then
     echo "creating virtual environment"
     python3 -m venv $PYTHON3_VENV_DIR
-    python3 -m pip install --upgrade pip
+    $PYTHON3_VENV_DIR/bin/python3 -m pip install --upgrade pip
     $PYTHON3_VENV_DIR/bin/pip3 install wheel pyyaml
   fi
 fi
