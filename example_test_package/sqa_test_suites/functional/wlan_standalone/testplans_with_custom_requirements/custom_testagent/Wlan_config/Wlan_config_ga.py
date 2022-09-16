@@ -6,7 +6,7 @@ from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.wifi import WlanError
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes
 from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 
 def logger():
@@ -80,8 +80,9 @@ def test_rts_c19511(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rts_c19511')
 
         logger().info("scan for the ap's.....")
-        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
-        ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info("connecting to access point.....")
@@ -97,11 +98,14 @@ def test_rts_c19511(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info("enabling wifi power save mode in DUT......")
-        wifi_dut.interfaces.wifi.power_save(2)
+        logger().info("enabling the power save modes ")
+        enable_wifi_ps = wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "failed to enable wifi power save"
+        enable_bt_ps = wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "failed to enable bt power save"
 
-        logger().info("enabling bt power save mode in DUT......")
-        wifi_dut.interfaces.wifi.bt_power_save(2)
 
         # wlan.addr == 80:c9:55:5e:3f:80 && (wlan.fc.type_subtype == 0x0028) || (wlan.fc.type_subtype == 0x001b || wlan.fc.type_subtype == 0x001c)
 
@@ -180,9 +184,8 @@ def test_rts_c19512(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rts_c19511')
 
         logger().info("scan for the ap's.....")
-        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
-        ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
-        logger().info(f'AP BSSID = {ap_bssid}')
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
 
         logger().info("connecting to access point.....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -197,11 +200,13 @@ def test_rts_c19512(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info("enabling wifi power save mode in DUT......")
-        wifi_dut.interfaces.wifi.power_save(2,1)
-
-        logger().info("enabling bt power save mode in DUT......")
-        wifi_dut.interfaces.wifi.bt_power_save(2,1)
+        logger().info("enabling the power save modes ")
+        enable_wifi_ps = wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "failed to enable wifi power save"
+        enable_bt_ps = wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "failed to enable bt power save"
 
         # wlan.addr == 80:c9:55:5e:3f:80 && (wlan.fc.type_subtype == 0x0028) || (wlan.fc.type_subtype == 0x001b || wlan.fc.type_subtype == 0x001c)
 
@@ -279,9 +284,8 @@ def test_rts_c19513(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rts_c19511')
 
         logger().info("scan for the ap's.....")
-        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
-        ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
-        logger().info(f'AP BSSID = {ap_bssid}')
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
 
         logger().info("connecting to access point.....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -296,11 +300,13 @@ def test_rts_c19513(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         ), f"Failed to get IP address. Result = {result}"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info("enabling wifi power save mode in DUT......")
-        wifi_dut.interfaces.wifi.power_save(2,1)
-
-        logger().info("enabling bt power save mode in DUT......")
-        wifi_dut.interfaces.wifi.bt_power_save(2,1)
+        logger().info("enabling the power save modes ")
+        enable_wifi_ps = wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "failed to enable wifi power save"
+        enable_bt_ps = wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "failed to enable bt power save"
 
         # wlan.addr == 80:c9:55:5e:3f:80 && (wlan.fc.type_subtype == 0x0028) || (wlan.fc.type_subtype == 0x001b || wlan.fc.type_subtype == 0x001c)
 
