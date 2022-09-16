@@ -12,7 +12,7 @@ from utf.utils.thread_base import ThreadBase
 
 def logger():
     return get_logger(__name__)
-
+time_lapse = 48
 """
     setup requirement:
         1. DUT(RS9116)
@@ -1406,7 +1406,7 @@ def test_BLE_continuousscanning_for_48_hours_C19829(wifi_dut, ble_client):
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert bt_client_address, "ble initialization failed in remote device_1"
     time.sleep(2)
-    t_end = time.time() + 60 * time_lapse
+    t_end = time.time() + 60 * 60 * time_lapse
     while time.time() < t_end:
         scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address,
                                                                        ble_scan_interval=int(500 / 0.625),
