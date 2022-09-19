@@ -380,6 +380,7 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature192kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "band": 0,
     }
@@ -440,6 +441,7 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature192kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "band": 0,
     }
