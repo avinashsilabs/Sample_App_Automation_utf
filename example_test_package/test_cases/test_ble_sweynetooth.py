@@ -28,10 +28,10 @@ def test_ble_vulnerability_sniffer(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
-    wifi_dut.interfaces.wifi.ble_start_advertising()
     ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
         dut_address=bt_dut_address
     )
+    wifi_dut.interfaces.wifi.ble_start_advertising()
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
