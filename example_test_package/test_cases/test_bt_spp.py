@@ -27,6 +27,7 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
+
 def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"

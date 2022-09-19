@@ -642,8 +642,8 @@ defaults:
     bt_vul_sniffer:
         time_limit: 60
         log_file: "some_log_file.log"
-        stop_capture_on: ["crash", "error", "exception", "oops",]
-        script: "some_script.py"
+        stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
+        bt_exploit_type: "au_rand_flooding"
 
     net_perf:
         server_options:

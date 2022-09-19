@@ -19,7 +19,7 @@ from utf.utils.logger import get_logger
     "bt_vulnerability_sniffer",
     bt_vulnerability_sniffer={
         "log_file": "test_config_for_bt_vulnerability_sniffer.log",
-        "script": "Telink_key_size_overflow.py"
+        "bt_exploit_type": "au_rand_flooding"
     },
 )
 def test_bt_vulnerability_sniffer(
