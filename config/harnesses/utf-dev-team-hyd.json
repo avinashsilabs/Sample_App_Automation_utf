@@ -192,7 +192,7 @@
                "docker_host": {
                   "type": "docker",
                   "ip_address": "192.168.14.3",
-                  "image": "utfsilabs/rpi_ubuntu_secondary",
+                  "image": "utfsilabs/rpi_ubuntu_secondary:2022_09_14",
                   "container_name": "secondary_raspi_bt_client",
                   "username": "pi",
                   "password": "raspberry"
@@ -253,7 +253,7 @@
                "docker_host": {
                   "type": "docker",
                   "ip_address": "192.168.14.3",
-                  "image": "utfsilabs/rpi_ubuntu_secondary",
+                  "image": "utfsilabs/rpi_ubuntu_secondary:2022_09_14",
                   "username": "pi",
                   "password": "raspberry"
                },
@@ -470,6 +470,37 @@
                   "type": "socket.ip_socket_factory"
                }
             }
+         },
+         "ble_sweyntooth": {
+            "interfaces": {
+               "ble_vul_sniffer": {
+                  "type": "bluetooth.sniffer.sweyntooth",
+                  "ip_address": "10.207.16.89",
+                  "container_name": "utf_sweyntooth",
+                  "image": "utfsilabs/utf_sweyntooth",
+                  "is_prune": false,
+                  "is_execute_raspi_manager_scripts": false,
+                  "username": "pi",
+                  "password": "raspberry",
+                  "shell": "linux_shell",
+                  "port": "auto",
+                  "vid": 9114,
+                  "pid": 32809
+               },
+               "linux_shell": {
+                  "type": "shell.shell"
+               }
+            }
+         },
+         "openssl_socket": {
+            "interfaces": {
+               "server": {
+                  "type": "openssl.server"
+               },
+               "client": {
+                  "type": "openssl.client"
+               }
+            }
          }
       },
       "defaults": {
@@ -496,6 +527,8 @@
          "remote_socket": "raspi_ip_socket",
          "remote_socket_factory": "ip_socket_factory",
          "aws_iot_client": "python_aws_iot_thing",
+         "ble_vulnerability_sniffer": "ble_sweyntooth",
+         "openssl": "openssl_socket",
          "serial": {
             "baud": 115200
          },
@@ -521,6 +554,25 @@
             "certfile": "python-thing-certificate.pem.crt",
             "keyfile": "python-thing-private.pem.key",
             "cafile": "AWS-IoT-root-CA.crt"
+         },
+         "ble_vul_sniffer": {
+            "time_limit": 60,
+            "log_file": "some_log_file.log",
+            "stop_capture_on": [
+               "crash",
+               "error",
+               "exception",
+               "oops"
+            ],
+            "script": "some_script.py"
+         },
+         "openssl_config": {
+            "certfile": "mosquitto-utf.silabs.com.cert.pem",
+            "keyfile": "mosquitto-utf.silabs.com.key.pem",
+            "port": 5001,
+            "host": "localhost",
+            "tls_version": "-tls1_2",
+            "http": false
          },
          "net_perf": {
             "server_options": {

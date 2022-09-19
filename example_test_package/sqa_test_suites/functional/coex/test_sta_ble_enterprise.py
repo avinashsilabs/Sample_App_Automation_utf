@@ -316,9 +316,8 @@ class BleThread_Advertise(ThreadBase):
             time.sleep(5)
             logger().info(f"Advertising the DUT")
             if self.adv_int:
-                self.adv_int = int(self.adv_int / 0.625)
-                self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=self.adv_int,
-                                                                    ble_adv_int_max=self.adv_int, timeout=30)
+                self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=int(self.adv_int / 0.625),
+                                                                    ble_adv_int_max=int(self.adv_int / 0.625), timeout=30)
             else:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
@@ -328,8 +327,10 @@ class BleThread_Advertise(ThreadBase):
         assert bt_client_address is not None, "Unable to fetch bluetooth address from Remote device"
         logger().info(f"Started scan from remote BLE device")
         logger().info("\n***********{}**********\n".format(bt_client_address))
-        for i in range(0, 4):
+        for i in range(0, 3):
             time.sleep(20)
+            if self.adv_int > 1000:
+                time.sleep(10)
             # See that we found our device
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
             logger().info("\n***scan results:{}**********\n".format(found_devices))

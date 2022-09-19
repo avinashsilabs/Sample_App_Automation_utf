@@ -425,9 +425,13 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
-def test_bt_ble_connection_stability_C19996(wifi_dut, bt_client, ble_client):
+def test_bt_ble_connection_stability_C19996(wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    assert len(ble_clients) >= 2, f"Minimum 2 raspi devices needed for this test"
+    ble_client1 = ble_clients[0]
+    ble_client2 = ble_clients[1]
 
     bt_mode = "bt_slave"
     logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
@@ -435,10 +439,12 @@ def test_bt_ble_connection_stability_C19996(wifi_dut, bt_client, ble_client):
 
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
-    ble_master_slave(wifi_dut, ble_client, ble_mode)
+    ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client1, ble_mode)
+    logger().info(f"ble_dut_address after ble_slave connection '{ble_dut_address}'")
 
-    logger().info("Checking connection status of BT, BLE")
-    check_connection_status(wifi_dut)
+    ble_mode = "ble_master"
+    logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+    ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address)
 
     # can check in loop
     logger().info("keeping the setup undisturbed for 60 seconds ")
