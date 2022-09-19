@@ -439,8 +439,8 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.1.142'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                ip_address: '10.207.18.146'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
 
@@ -500,7 +500,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.1.154'       #configure secondary Rpi rd_1 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -929,7 +929,7 @@ devices:
             client:
                 type: 'openssl.client'
 
-    nrf_5280_sniffer:
+    nrf_52840_sniffer:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
@@ -956,12 +956,32 @@ devices:
                 sniffer_ellysis_bluetooth_analyzer_service: 'wcf_sniffer_ellysis_bluetooth_analyzer_service'
                 file_transfer_service: 'wcf_file_transfer_service'
 
+    ble_sweyntooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                ip_address: '10.207.16.89'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            linux_shell:
+                type: 'shell.shell'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9116'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
 
@@ -995,7 +1015,7 @@ defaults:
 
     openssl: 'openssl_socket'
 
-    ble_sniffer: 'nrf_5280_sniffer'
+    ble_sniffer: 'nrf_52840_sniffer'
 
     bt_sniffer: 'ellisys_bt_tracker_win_wcf'
 
@@ -1033,13 +1053,19 @@ defaults:
     serial:
         baud: 115200
 
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
+
     wifi:
         ssid: 'TESTTESTTEST'
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
+        static_ip: '192.168.50.199'
+        static_subnet: '255.255.255.0'
+        static_gateway: '192.168.50.1'
         sniffer_validation: True
+        disable_sniffer_validation: false
 
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
@@ -1050,6 +1076,7 @@ defaults:
         enable_ppp: 0
         afe_type: 1
         features_enable: 0
+        enable_async_socket: 0
 
     wiseconnect_web: 'wiseconnect_web'
 
@@ -1112,6 +1139,12 @@ defaults:
     ftp_client: 'raspi_ftp_client'
 
     radius_server: 'raspi_radius_server'
+
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
 
     net_perf:
         server_options:

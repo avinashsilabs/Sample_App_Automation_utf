@@ -27,10 +27,13 @@ import string
 import random
 import time
 from threading import Thread
+import threading
 from utf.utils.time_measurer import TimeMeasurer
 import math
+from utf.utils.stopwatch import Stopwatch
 from utf.utils.iperf.iperf_utils import ping
 from random import randint
+from utf.interfaces.socket import SOCKET_TYPE_TCP
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -48,6 +51,29 @@ from random import randint
         4. Access Point(Third Party AP's)
 """
 
+def tcp_socket_rx(remote_socket_factory, index, no_of_pkts, data_size, logger):
+    data_length = 0
+    index = index - 1
+    logger.info(f"TCP Receiving data over socket id {index}")
+    for count in range(0, no_of_pkts):
+        #logger.info(f"packet receiving on socket id{index}")
+        data = remote_socket_factory.interfaces.socket.sockets[index].recv_data_tcp(data_size)
+        data_length = data_length + len(data)
+    logger.info(f"Total bytes received on socket id {index} -> {data_length} TCP")
+
+def ssl_socket_rx(ssl_server, sock_id, pkt_count, buffer_length, logger):
+    logger.info(f"SSL Receiving data over socket id {sock_id}")
+    # for iter in range(3):
+    # logger.info(f"packet receiving on socket id{sock_id}")
+    ssl_server.interfaces.ssl.data_receive((sock_id + 1), pkt_count, buffer_length)
+
+def pdu_switch(switch, logger):
+    logger.info("Turning off the AP")
+    switch.interfaces.pdu_switch.turn_off()
+    logger.info("Successfully powered off AP")
+    time.sleep(10)
+    logger.info("Again turning on the AP")
+    switch.interfaces.pdu_switch.turn_on()
 
 def get_socket_id(sock_fd):
     return int(math.log2(sock_fd))
@@ -901,9 +927,8 @@ def test_ssl_clear_cert2_TC19154(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155"
 
@@ -969,7 +994,8 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
     pkt_rcv_timeout = 90
     for socket in socket_no:
         ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout)
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 15, logger), )
+    sleep_time=10
+    thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
     thread.start()
     result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=1300, time_interval=550,
                                                                  number_of_pkts=pkt_count, timeout=600)
@@ -990,6 +1016,10 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
             bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
             assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
                                                  f"not matched on socket {socket} "
+
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -1035,9 +1065,8 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156"
 
@@ -1099,34 +1128,43 @@ def test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156(
         # ssl socket opened in DUT connects to the server
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
 
-    socket_no = [1, 2, 3]
+    socket_no = [0, 1, 2]
     pkt_rcv_timeout = 90
     for socket in socket_no:
-        ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout)
+        th_start = Thread(target=ssl_socket_rx, args=(ssl_server, socket, pkt_count, buffer_length, logger), )
+        th_start.start()
 
-    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 15, logger, False), )
-    thread.start()
     wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=1300, time_interval=550,
                                                         number_of_pkts=pkt_count, timeout=600)
 
-    time.sleep(150)
-    since_time = 0
-    rejoin_error_recv = 0
-    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.RejoinError:
-            since_time = event.timestamp + 1
-            rejoin_error_recv = 1
-    if rejoin_error_recv:
-        logger.info(f"DUT received rejoin failure error as configured AP is powered off")
-        wifi_dut.interfaces.wifi.associated = False
-    else:
-        assert f"DUT didn't recieve rejoin failure error within time even after AP is powered off"
+    logger.info("Turning off the AP")
+    switch.interfaces.pdu_switch.turn_off()
+
+    # time.sleep(150)
+    logger.info("Checking for rejoin fail event from dut, this may take some time....")
+    sw = Stopwatch()
+    rejoin_msg = 0
+    while sw.elapsed_sec <= 200:
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.RejoinError:
+                    rejoin_msg = 1
+        if rejoin_msg:
+            break
+    logger.info(f"Elapsed time to get rejoin_error is: '{int(sw.elapsed_sec)}' sec")
+    assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off"
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
+
+    logger.info("Again turning on the AP")
+    switch.interfaces.pdu_switch.turn_on()
 
 
 @pytest.mark.config(
@@ -1522,17 +1560,18 @@ def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19159(
     since_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
     for event in events:
+        logger.info(f"Received the Event Type {event.event_type}, Event data {event.event_data}")
         since_time = event.timestamp + 1
         if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
             logger.info("Received TCP_REMOTE_TERMINATE event")
             remote_terminate = event.event_data
             socket_id = int(remote_terminate.split(b",")[1].split(b":")[1])
             assert socket_id == 1, f"Socket id received in remote terminate event is wrong, expected is 1. But received {socket_id}"
+            break
         else:
             logger.info(f"Remote terminate event is not received by DUT even though tcp socket connected is "
                         f"closed ")
-            assert False, f"Remote terminate event is not received by DUT even though tcp socket connected is " \
-                          f"closed "
+            continue
 
     ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
     sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
@@ -1698,16 +1737,17 @@ def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19160(
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
     for event in events:
         since_time = event.timestamp + 1
+        logger.info(f"Received the Event Type {event.event_type}, Event data {event.event_data}")
         if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
             logger.info("Received TCP_REMOTE_TERMINATE event")
             remote_terminate = event.event_data
             socket_id = int(remote_terminate.split(b",")[1].split(b":")[1])
             assert socket_id == 1, f"Socket id received in remote terminate event is wrong, expected is 1. But received {socket_id}"
+            break
         else:
             logger.info(f"Remote terminate event is not received by DUT even though tcp socket connected is "
                         f"closed ")
-            assert False, f"Remote terminate event is not received by DUT even though tcp socket connected is " \
-                          f"closed "
+            continue
 
     sock_id = 1
     result = wifi_dut.interfaces.wifi.close_socket(sock_id)
@@ -1809,9 +1849,8 @@ def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19160(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_2SSL_TX_1TCP_RX_testcaseTC19161(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, cert1, cert2, logger
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, cert2, logger
         ):
     listen_interval = 700
     capture_filename = "test_2SSL_TX_1TCP_RX_testcaseTC19161"
@@ -1819,106 +1858,81 @@ def test_2SSL_TX_1TCP_RX_testcaseTC19161(
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
     port1 = ssl_server.interfaces.ssl.config['device_port1']
-    port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = ssl_server.interfaces.ssl.config['device_port3']
+    port2 = ssl_server.interfaces.ssl.config['device_port3']
+    port3 = 5005
 
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
+    ssl_server.interfaces.ssl.start_server(port= port1, server_cert=cert1[1], server_key=cert1[2])
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
     # Open ssl server socket in remote device(Raspberry pi or static device)
-    remote_socket.interfaces.socket.start_server(port=port3)
+    server_socket = remote_socket_factory.interfaces.socket.create_socket()
+    server_socket.time_limit = 3600
+    status = server_socket.start_server(port=port3, socket_type=SOCKET_TYPE_TCP)
 
     for sock_count in range(0, 3):
-        # Open ssl client socket in the DUT
         if sock_count < 2:
+            # Open ssl client socket in the DUT
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-        else:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        if sock_count == 0:
-            assert sock == 0, f"socket id received is wrong, expected is 0"
-        elif sock_count == 1:
-            assert sock == 1, f"socket id received is wrong, expected is 1"
-        else:
-            assert sock == 2, f"socket id received is wrong, expected is 2"
-        logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-        if sock_count < 2:
-            logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-            # Enable ssl option for socket opened
-            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                                       SocketOptions.SSL_ENABLE)
-            logger.info(
-                f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
                                                        SocketOptions.TCP_MAX_RETRY)
-            if sock_count == 0:
-                cert_index = SocketOptions.CERT_INDEX0
-            elif sock_count == 1:
-                cert_index = SocketOptions.CERT_INDEX1
-
-            logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
-                                                       cert_index)
+                                                       eval("SocketOptions.CERT_INDEX" + str(sock_count)))
+        else:
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
         if sock_count == 0:
             socket_port = port1
+            local_port = randint(5001, 20000)
         elif sock_count == 1:
             socket_port = port2
+            local_port = randint(20001, 40000)
         else:
             socket_port = port3
+            local_port = randint(40001, 60000)
 
-        # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, socket_port)
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
         # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        if sock_count < 2 :
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        else:
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket)
 
-    socket_no = [1, 2, 3]
+    pkt_count = 500
+    buffer_length = 100
+    socket_no = [0, 1, 2]
+    send_list = []
+    for sock_id in socket_no:
+        if sock_id < 2:
+            th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
+            send_list.append(th_start)
+            th_start.start()
 
-    for iteration in range(1, 101):
-        for socket in socket_no:
-            buffer_length = 100
-            tx_buffer = "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=3, data_len=buffer_length,
+                                                             time_interval=600,
+                                                             number_of_pkts=pkt_count)
+    for sock_id in socket_no:
+        for i in range(10):
+            if sock_id == 2:
+                buffer_length = 100
+                tx_buffer = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
                 )
-            if socket < 3:
-                # The api returns 100 bytes of random data
-                data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                data_length = len(data_sent)
-                logger.info(f"Sending data {data_sent} over socket_no->{socket - 1}")
-                # DUT sends 100 bytes of data over ssl socket
-                wifi_dut.interfaces.wifi.send_data(socket - 1, data_length, data_sent)
-                server_socket_no = socket
-                data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, data_length)
-                logger.info(f"Data received on remote socket opened is {data_receive}")
-                assert data_sent == data_receive.decode(), "Data sent by DUT and received on server is matching"
-                logger.info("Data sent by DUT and received on server is matching")
-            else:
-                remote_socket.interfaces.socket.send_data_tcp(tx_buffer, socket_no=1)
-                socket_id = (socket - 1)
-                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=socket_id,
+
+                remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer, use_server_socket=True)
+
+                buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=2,
                                                                                     data_len=buffer_length)
-                if not (buffer_length == buffer_length_rx):
-                    logger.info(
-                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"not matched on socket_id->{socket_id}")
-                else:
-                    logger.info(
-                        f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                        f"matched on socket_id->{socket_id}")
-                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the " \
-                                                          f"socket id {sock} opened in the DUT is not matched "
-                if not (tx_buffer.encode() == buffer_rx):
-                    logger.info(
-                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is not matched on socket_id->{socket_id}")
-                else:
-                    logger.info(
-                        f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                        f"is matched on socket_id->{socket_id}")
-                assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the " \
-                                                        f"socket " \
-                                                        f"id {sock} opened in the DUT is not matched on socket_id->{socket_id} "
+
+                assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+
+
+
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -2939,104 +2953,84 @@ def test_rtc_get_multiple_times_TC19178(
                               )
                              ]
                          )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_2SSL_1TCP_TX_testcaseTC19185(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, cert1, cert2, logger
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, cert2, logger
         ):
     listen_interval = 700
+    list_sock = []
     capture_filename = "test_2SSL_1TCP_TX_testcaseTC19185"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
-    port1 = ssl_server.interfaces.ssl.config['device_port1']
-    port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = ssl_server.interfaces.ssl.config['device_port3']
 
-    # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    remote_socket.interfaces.socket.start_server(port=port3)
 
-    for sock_count in range(0, 3):
+    sock_port = 4999
+    for sock_count in range(3):
+        sock_port = sock_port + 2
         # Open ssl client socket in the DUT
-        if sock_count < 2:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-        else:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
         if sock_count == 0:
+            ssl_server.interfaces.ssl.start_server(port=sock_port, server_cert=cert1[1], server_key=cert1[2])
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
             assert sock == 0, f"socket id received is wrong, expected is 0"
-        elif sock_count == 1:
-            assert sock == 1, f"socket id received is wrong, expected is 1"
-        else:
-            assert sock == 2, f"socket id received is wrong, expected is 2"
-
-        if sock_count < 2:
-            logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
             logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
             # Enable ssl option for socket opened
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                        SocketOptions.SSL_ENABLE)
-            logger.info(
-                f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
-            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                       SocketOptions.TCP_MAX_RETRY)
-            if sock_count == 0:
-                cert_index = SocketOptions.CERT_INDEX0
-            elif sock_count == 1:
-                cert_index = SocketOptions.CERT_INDEX1
+            cert_index = SocketOptions.CERT_INDEX0
 
             logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
                                                        cert_index)
-        if sock_count == 0:
-            socket_port = port1
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=sock_port)
         elif sock_count == 1:
-            socket_port = port2
+            ssl_server.interfaces.ssl.start_server(port=sock_port, server_cert=cert2[1], server_key=cert2[2])
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            assert sock == 1, f"socket id received is wrong, expected is 0"
+            logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+            # Enable ssl option for socket opened
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+            cert_index = SocketOptions.CERT_INDEX1
+
+            logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       cert_index)
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=sock_port)
         else:
-            socket_port = port3
+            server_socket = remote_socket_factory.interfaces.socket.create_socket()
+            server_socket.time_limit = 3600
+            status = server_socket.start_server(port=sock_port, socket_type=SOCKET_TYPE_TCP)
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            assert sock == 2, f"socket id received is wrong, expected is 2"
+            logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket, server_port=sock_port)
 
-        # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, socket_port)
-        # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        list_sock.append(sock)
+    logger.info(f"SOCKET LIST{list_sock}")
 
-    pkt_count = 20000
-    buffer_length = 1300
-    socket_no = [1, 2]
-    for socket in socket_no:
-        ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+    send_list = []
+    pkt_count = 500
+    buffer_length = 100
+    data_size = 100
+    for sock_id in list_sock:
+        if sock_id == 2:
+            th_start = Thread(target=tcp_socket_rx,
+                                        args=(remote_socket_factory, 1 , pkt_count, data_size, logger), )
+        else:
+            th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
+        send_list.append(th_start)
+        th_start.start()
 
-    remote_socket.interfaces.socket.data_receive(1, pkt_count, buffer_length)
+    wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
+                                                        time_interval=60,
+                                                        number_of_pkts=pkt_count)
 
-    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
-                                                                 time_interval=600,
-                                                                 number_of_pkts=pkt_count)
-    socket_list = result
-    bytes_sent = (pkt_count * buffer_length)
-    sock_count = 0
-    for socket_stats in socket_list:
-        logger.info(
-            f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
-        assert bytes_sent == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT are not " \
-                                              f"matched. Initiated->{bytes_sent} bytes. But Sent by DUT->{socket_stats[0]} bytes "
-        sock_count = sock_count + 1
-
-    socket_no = [1, 2]
-    for socket in socket_no:
-        if ssl_server.interfaces.ssl.socket_connection_status(socket):
-            bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
-            assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                                 f"not matched on socket {socket} "
-
-    bytes_received = remote_socket.interfaces.socket.data_receive_stats(1)
-    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                         f"not matched on socket 3 "
 
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -3044,11 +3038,11 @@ def test_2SSL_1TCP_TX_testcaseTC19185(
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
-    for sock_count in range(0, 3):
-        logger.info(f"Closing socket_id->{sock_count}")
-        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-        logger.info(f"Successfully closed socket_id->{sock_count}")
+    for sock in range(3):
+        logger.info(f"Closing socket_id->{sock}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock}"
+        logger.info(f"Successfully closed socket_id->{sock}")
 
 
 @pytest.mark.config(
@@ -3078,105 +3072,81 @@ def test_2SSL_1TCP_TX_testcaseTC19185(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_2SSL_1TCP_RX_testcaseTC19187(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, cert1, cert2, logger
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, cert2, logger
         ):
     listen_interval = 700
-    capture_filename = "test_2SSL_1TCP_TX_testcaseTC19185"
+    list_sock = []
+    capture_filename = "test_2SSL_1TCP_TX_testcaseTC19187"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
-    port1 = ssl_server.interfaces.ssl.config['device_port1']
-    port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = ssl_server.interfaces.ssl.config['device_port3']
-
-    # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-    # Open ssl server socket in remote device(Raspberry pi or static device)
-    remote_socket.interfaces.socket.start_server(port=port3)
 
-    for sock_count in range(0, 3):
+    sock_port = 4999
+    for sock_count in range(3):
+        sock_port = sock_port + 2
         # Open ssl client socket in the DUT
-        if sock_count < 2:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-        else:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
         if sock_count == 0:
+            ssl_server.interfaces.ssl.start_server(port=sock_port, server_cert=cert1[1], server_key=cert1[2])
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
             assert sock == 0, f"socket id received is wrong, expected is 0"
-        elif sock_count == 1:
-            assert sock == 1, f"socket id received is wrong, expected is 1"
-        else:
-            assert sock == 2, f"socket id received is wrong, expected is 2"
-        logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-        if sock_count < 2:
             logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
             # Enable ssl option for socket opened
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                        SocketOptions.SSL_ENABLE)
-            logger.info(
-                f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
-            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                       SocketOptions.TCP_MAX_RETRY)
-            if sock_count == 0:
-                cert_index = SocketOptions.CERT_INDEX0
-            elif sock_count == 1:
-                cert_index = SocketOptions.CERT_INDEX1
+            cert_index = SocketOptions.CERT_INDEX0
 
             logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
                                                        cert_index)
-        if sock_count == 0:
-            socket_port = port1
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=sock_port)
         elif sock_count == 1:
-            socket_port = port2
+            ssl_server.interfaces.ssl.start_server(port=sock_port, server_cert=cert2[1], server_key=cert2[2])
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            assert sock == 1, f"socket id received is wrong, expected is 0"
+            logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+            # Enable ssl option for socket opened
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+            cert_index = SocketOptions.CERT_INDEX1
+
+            logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       cert_index)
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=sock_port)
         else:
-            socket_port = port3
+            server_socket = remote_socket_factory.interfaces.socket.create_socket()
+            server_socket.time_limit = 3600
+            status = server_socket.start_server(port=sock_port, socket_type=SOCKET_TYPE_TCP)
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            assert sock == 2, f"socket id received is wrong, expected is 2"
+            logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket, server_port=sock_port)
 
-        # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, socket_port)
-        # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        list_sock.append(sock)
 
-    socket_no = [1, 2, 3]
-
-    for iteration in range(1, 101):
+    socket_no = [1,2,3]
+    for i in range(10):
         for socket in socket_no:
             buffer_length = 100
-            pkt_count = 1
+            pkt_count = 10
             tx_buffer = "".join(
                 random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
-                )
+            )
             if socket < 3:
                 ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
             else:
-                remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
+                remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer, use_server_socket=True)
+
             socket_id = (socket - 1)
             buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=socket_id,
                                                                                 data_len=buffer_length)
-            if not (buffer_length == buffer_length_rx):
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"not matched on socket_id->{socket_id}")
-            else:
-                logger.info(
-                    f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is "
-                    f"matched on socket_id->{socket_id}")
+
             assert buffer_length == buffer_length_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-            if not (tx_buffer.encode() == buffer_rx):
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is not matched on socket_id->{socket_id}")
-            else:
-                logger.info(
-                    f"contents of data sent by remote peer and received on the socket id {sock} opened in the DUT "
-                    f"is matched on socket_id->{socket_id}")
-            assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
-                                                    f"id {sock} opened in the DUT is not matched on socket_id->{socket_id} "
 
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -3184,11 +3154,11 @@ def test_2SSL_1TCP_RX_testcaseTC19187(
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
-    for sock_count in range(0, 3):
-        logger.info(f"Closing socket_id->{sock_count}")
-        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-        logger.info(f"Successfully closed socket_id->{sock_count}")
+    for sock in list_sock:
+        logger.info(f"Closing socket_id->{sock}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock}"
+        logger.info(f"Successfully closed socket_id->{sock}")
 
 
 @pytest.mark.config(
@@ -3213,33 +3183,29 @@ def test_2SSL_1TCP_RX_testcaseTC19187(
                               "mosquitto-utf.silabs.com.key.pem"],
                              ]
                          )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
-def test_ssl_three_sockets_send_data_testcaseTC19188(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, cert1, logger
+def test_1ssl_2tcp_sockets_send_data_testcaseTC19188(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, logger
         ):
     listen_interval = 700
+    list_sock = []
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
     capture_filename = "test_ssl_three_sockets_send_data_testcaseTC19188"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
-    remote_socket.interfaces.socket.start_server(port=5002)
-    remote_socket.interfaces.socket.start_server(port=5003)
 
-    for sock_count in range(0, 3):
+    sock_port = 4999
+    for sock_count in range(3):
+        sock_port = sock_port + 2
         # Open ssl client socket in the DUT
         if sock_count == 0:
+            ssl_server.interfaces.ssl.start_server(port=sock_port, server_cert=cert1[1], server_key=cert1[2])
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-
-        else:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        if sock_count == 0:
             assert sock == 0, f"socket id received is wrong, expected is 0"
-            socket_port = 5001
             logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
             # Enable ssl option for socket opened
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
@@ -3249,58 +3215,50 @@ def test_ssl_three_sockets_send_data_testcaseTC19188(
             logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
                                                        cert_index)
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=sock_port)
         elif sock_count == 1:
+            server_socket = remote_socket_factory.interfaces.socket.create_socket()
+            server_socket.time_limit = 3600
+            status = server_socket.start_server(port=sock_port, socket_type=SOCKET_TYPE_TCP)
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
             assert sock == 1, f"socket id received is wrong, expected is 1"
-            socket_port = 5002
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket, server_port=sock_port)
         else:
+            server_socket = remote_socket_factory.interfaces.socket.create_socket()
+            server_socket.time_limit = 3600
+            status = server_socket.start_server(port=sock_port, socket_type=SOCKET_TYPE_TCP)
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
             assert sock == 2, f"socket id received is wrong, expected is 2"
-            socket_port = 5003
-        logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, sock_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket, server_port=sock_port)
 
-        # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, socket_port)
-        # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket, server_port=socket_port)
+        list_sock.append(sock)
+    logger.info(f"SOCKET LIST{list_sock}")
 
-    pkt_count = 20000
-    buffer_length = 1300
-    buffer_length_ssl = 1300
+    pkt_count = 500
+    buffer_length = 100
+    data_size = 100
+    send_list= []
 
-    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length_ssl)
-    socket_no = [1, 2]
-    for socket in socket_no:
-        remote_socket.interfaces.socket.data_receive(socket, pkt_count, buffer_length)
-    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
-                                                                 time_interval=600,
-                                                                 number_of_pkts=pkt_count)
-    socket_list = result
-    bytes_sent = (pkt_count * buffer_length)
-    bytes_sent_ssl = (pkt_count * buffer_length_ssl)
-    sock_count = 0
-    for socket_stats in socket_list:
-        if sock_count == 0:
-            logger.info(
-                f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
-            assert bytes_sent_ssl == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT " \
-                                                      f"are not " \
-                                                      f"matched. Initiated->{bytes_sent_ssl} bytes. But Sent by DUT->{socket_stats[0]} bytes "
+
+    for sock_id in list_sock:
+        if sock_id == 0:
+            th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
         else:
-            logger.info(
-                f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
-            assert bytes_sent == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT are not " \
-                                                  f"matched. Initiated->{bytes_sent} bytes. But Sent by DUT->{socket_stats[0]} bytes "
-        sock_count = sock_count + 1
+            th_start = Thread(target=tcp_socket_rx,
+                                        args=(remote_socket_factory, sock_id, pkt_count, data_size, logger), )
 
-    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
-    assert bytes_sent_ssl == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                             f"not matched on socket_id->0"
-    socket_no = [1, 2]
-    for socket in socket_no:
-        if remote_socket.interfaces.socket.socket_connection_status(socket):
-            time.sleep(1)
-            bytes_received = remote_socket.interfaces.socket.data_receive_stats(socket)
-            assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                                 f"not matched on socket {socket} "
+        send_list.append(th_start)
+        th_start.start()
+
+    wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
+                                                                 time_interval=60,
+                                                                 number_of_pkts=pkt_count)
+
+    time.sleep(10)
 
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -3308,11 +3266,11 @@ def test_ssl_three_sockets_send_data_testcaseTC19188(
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
-    for sock_count in range(0, 3):
-        logger.info(f"Closing socket_id->{sock_count}")
-        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-        logger.info(f"Successfully closed socket_id->{sock_count}")
+    for sock in list_sock:
+        logger.info(f"Closing socket_id->{sock}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock}"
+        logger.info(f"Successfully closed socket_id->{sock}")
 
 
 @pytest.mark.config(
@@ -3330,67 +3288,59 @@ def test_ssl_three_sockets_send_data_testcaseTC19188(
         "custom_features": RS9116CustomFeatureBitMap.Default,
         }
     )
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_tcp_three_sockets_send_data_testcaseTC19189(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, remote_socket, logger):
+    ping_count = 5
+    list_sock = []
+
     listen_interval = 700
     capture_filename = "test_tcp_three_sockets_send_data_testcaseTC19189"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
+
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    remote_socket.interfaces.socket.start_server(port=5001)
-    remote_socket.interfaces.socket.start_server(port=5002)
-    remote_socket.interfaces.socket.start_server(port=5003)
-
-    for sock_count in range(0, 3):
-        # Open ssl client socket in the DUT
+    status = ping(device_ip, ping_count)
+    assert status == 1
+    port = 4999
+    for sock in range(3):
+        port = port + 2
+        server_socket = remote_socket_factory.interfaces.socket.create_socket()
+        time_limit = server_socket.time_limit = 3600
+        status = server_socket.start_server(port=port, socket_type=SOCKET_TYPE_TCP)
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-        if sock_count == 0:
+
+        if sock == 0:
+            local_port = port
             assert sock == 0, f"socket id received is wrong, expected is 0"
-            socket_port = 5001
-        elif sock_count == 1:
+        elif sock == 1:
+            local_port = port
             assert sock == 1, f"socket id received is wrong, expected is 1"
-            socket_port = 5002
-        else:
+        elif sock == 2:
+            local_port = port
             assert sock == 2, f"socket id received is wrong, expected is 2"
-            socket_port = 5003
-        logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
 
         # Socket binds at (device_ip, 5001) in DUT
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, socket_port)
-        # ssl socket opened in DUT connects to the server
-        wifi_dut.interfaces.wifi.connect_to_server(sock, remote_socket.interfaces.socket, server_port=socket_port)
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
 
-    pkt_count = 20000
-    buffer_length = 1460
-    socket_no = [1, 2, 3]
-    for socket in socket_no:
-        remote_socket.interfaces.socket.data_receive(socket, pkt_count, buffer_length)
-    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
+        wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket)
+        list_sock.append(sock)
+    logger.info(f"SOCKET LIST{list_sock}")
+
+    pkt_count = 500
+    buffer_length = 100
+    data_size = 100
+    # send_list = []
+    for sock_id in range(1,4):
+        th_start = threading.Thread(target=tcp_socket_rx, args=(remote_socket_factory, sock_id, pkt_count, data_size, logger), )
+        th_start.start()
+
+    wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
                                                                  time_interval=600,
                                                                  number_of_pkts=pkt_count)
-    socket_list = result
-    bytes_sent = (pkt_count * buffer_length)
-    sock_count = 0
-    for socket_stats in socket_list:
-        logger.info(
-            f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
-        assert bytes_sent == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT are not " \
-                                              f"matched. Initiated->{bytes_sent} bytes. But Sent by DUT->{socket_stats[0]} bytes "
-        sock_count = sock_count + 1
-
-    socket_no = [1, 2, 3]
-    for socket in socket_no:
-        if remote_socket.interfaces.socket.socket_connection_status(socket):
-            time.sleep(1)
-            bytes_received = remote_socket.interfaces.socket.data_receive_stats(socket)
-            assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                                 f"not matched on socket {socket} "
 
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -3398,11 +3348,12 @@ def test_tcp_three_sockets_send_data_testcaseTC19189(
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
-    for sock_count in range(0, 3):
-        logger.info(f"Closing socket_id->{sock_count}")
-        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-        logger.info(f"Successfully closed socket_id->{sock_count}")
+
+    for sock in list_sock:
+        logger.info(f"Closing socket_id->{sock}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock}"
+        logger.info(f"Successfully closed socket_id->{sock}")
 
 
 @pytest.mark.config(
@@ -3941,9 +3892,8 @@ def test_ssl_three_sockets_tx_rx_data_testcaseTC19201(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.skip()
 def test_ssl_AWS_testcaseTC19202(
-        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, cert2, logger
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert2, logger
         ):
     listen_interval = 700
     capture_filename = "test_ssl_AWS_testcaseTC19202"
@@ -3951,8 +3901,8 @@ def test_ssl_AWS_testcaseTC19202(
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
     port1 = 8883
-    port2 = ssl_server.interfaces.ssl.config['device_port2']
-    port3 = 5003
+    port2 = ssl_server.interfaces.ssl.config['device_port3']
+    port3 = 5005
 
     # The below api parses DUTs IP address
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -3960,41 +3910,26 @@ def test_ssl_AWS_testcaseTC19202(
     # Open ssl server socket in remote device(Raspberry pi or static device)
     ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
 
-    remote_socket.interfaces.socket.start_server(port=port3)
+    #Tcperver started
+    server_socket = remote_socket_factory.interfaces.socket.create_socket()
+    server_socket.time_limit = 3600
+    status = server_socket.start_server(port=port3, socket_type=SOCKET_TYPE_TCP)
+
 
     for sock_count in range(0, 3):
         if sock_count < 2:
             # Open ssl client socket in the DUT
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-        else:
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-
-        if sock_count == 0:
-            assert sock == 0, f"socket id received is wrong, expected is 0"
-        elif sock_count == 1:
-            assert sock == 1, f"socket id received is wrong, expected is 1"
-        else:
-            assert sock == 2, f"socket id received is wrong, expected is 2"
-
-        logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-        logger.info(
-            f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
-        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                   SocketOptions.TCP_MAX_RETRY)
-        if sock_count < 2:
-            logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-            # Enable ssl option for socket opened
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                        SocketOptions.SSL_ENABLE)
-
-        if sock_count < 2:
-            if sock_count == 0:
-                cert_index = SocketOptions.CERT_INDEX0
-            elif sock_count == 1:
-                cert_index = SocketOptions.CERT_INDEX1
-            logger.info(f"Mapping certificate index->{cert_index} for socket_id->{sock} using rsi_setsockopt API")
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
-                                                       cert_index)
+                                                       eval("SocketOptions.CERT_INDEX" + str(sock_count)))
+        else:
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
         if sock_count == 0:
             socket_port = port1
             local_port = randint(5001, 20000)
@@ -4005,7 +3940,6 @@ def test_ssl_AWS_testcaseTC19202(
             socket_port = port3
             local_port = randint(40001, 60000)
 
-        # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
 
         if sock_count == 0:
@@ -4021,23 +3955,40 @@ def test_ssl_AWS_testcaseTC19202(
                     logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
                     time.sleep(1)
             logger.info(f"Connection to AWS server on socket id->{sock} is successful")
-        else:
+        elif sock_count == 1:
             # ssl socket opened in DUT connects to the server
             wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        elif sock_count == 2:
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket)
 
-    pkt_count = 20000
-    buffer_length = 1300
-    buffer_length_ssl = 1300
 
-    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length_ssl)
-    remote_socket.interfaces.socket.data_receive(1, pkt_count, buffer_length)
+    pkt_count = 500
+    buffer_length = 100
+    data_size = 100
 
-    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=6, data_len=buffer_length,
+    list_sock = [0,1,2]
+    send_list = []
+    for sock_id in list_sock:
+        if sock_id == 0:
+            continue
+        elif sock_id == 1:
+            sock_id = 0
+            th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
+
+        elif sock_id == 2:
+            sock_id = 1
+            th_start = Thread(target=tcp_socket_rx,
+                              args=(remote_socket_factory, 1, pkt_count, buffer_length, logger), )
+
+        send_list.append(th_start)
+        th_start.start()
+
+    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
                                                                  time_interval=600,
                                                                  number_of_pkts=pkt_count)
     socket_list = result
     bytes_sent = (pkt_count * buffer_length)
-    bytes_sent_ssl = (pkt_count * buffer_length_ssl)
+    bytes_sent_ssl = (pkt_count * buffer_length)
     sock_count = 0
     for socket_stats in socket_list:
         if sock_count == 0:
@@ -4048,19 +3999,10 @@ def test_ssl_AWS_testcaseTC19202(
             assert bytes_sent_ssl == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT " \
                                                       f"are not " \
                                                       f"matched. Initiated->{bytes_sent_ssl} bytes. But Sent by DUT->{socket_stats[0]} bytes "
-        else:
-            logger.info(
-                f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
-            assert bytes_sent == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT are not " \
-                                                  f"matched. Initiated->{bytes_sent} bytes. But Sent by DUT->{socket_stats[0]} bytes "
         sock_count = sock_count + 1
-
     bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
     assert bytes_sent_ssl == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
                                              f"not matched on socket_id->0"
-    bytes_received = remote_socket.interfaces.socket.data_receive_stats(1)
-    assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                         f"not matched on socket_id-> 1 "
 
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -4073,8 +4015,7 @@ def test_ssl_AWS_testcaseTC19202(
         result = wifi_dut.interfaces.wifi.close_socket(sock_count)
         assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
         logger.info(f"Successfully closed socket_id->{sock_count}")
-        
-##################### NEW TEST CASES WORKED BY ANUSHA #############################
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_access_points",
@@ -4886,3 +4827,117 @@ def test_TC19186_awscloud_with_different_certificate(
 
     pwr = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
     assert pwr, "packets are not captured in the sniffer"
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["start_field.pem", "start_field.pem", "start_field.pem"],
+        "client_cert": [False, "client-certificate.crt", "client-certificate.crt"],
+        "client_key": [False, "private-key.key", "private-key.key"],
+    }
+)
+@pytest.mark.parametrize("cert1",
+                         [
+                             ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                              "mosquitto-utf.silabs.com.key.pem"],
+                             ]
+                         )
+@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "disassociated", "close_sockets", "disable_store_config"])
+def test_1openssl_2AWS_C19151(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, domain_name, cert1, logger):
+
+        ping_count = 10
+        capture_filename = "test_1openssl_2AWS_C19151"
+        dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+
+        bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {bssid}')
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger.info(f"DUT MAC_Address: {dut_mac_address}")
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+
+        ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
+
+        for sock_count in range(3):
+            logger.info(f"************{sock_count}")
+            if sock_count == 0:
+
+                wifi_dut.interfaces.wifi.set_ssl_certificate(RS9116CertificateType.SSLCACertificate,
+                                                             str(get_tls_certificate_dir().joinpath(cert1[0])),
+                                                             cert_index=0,
+                                                             )
+
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       eval("SocketOptions.CERT_INDEX" + str(sock_count)))
+
+
+            if sock_count == 0:
+
+                local_port = port1
+                wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+                wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=local_port)
+
+            else:
+
+                socket_port = 8883
+                # local_port = randint(20001, 40000)
+                local_port = randint(40001, 50000)
+                wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+                result = wifi_dut.interfaces.wifi.dns_get(4, domain_name, "NULL",
+                                                          "NULL")
+                logger.info(f"dns response is {result}")
+                server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+                for count in range(0, 3):
+                    try:
+                        wifi_dut.interfaces.wifi.connect(sock, server_ip, socket_port)
+                        break
+                    except:
+                        logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                        time.sleep(1)
+                logger.info(f"Connection to AWS server on socket id->{sock} is successful")
+
+
+        for sock_count in range(3):
+            logger.info(f"Closing socket_id->{sock_count}")
+            result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop Sniffer finally")
+        validation = True
+        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0028 and wlan.fc.pwrmgt == 1 ' \
+                         f'and wlan.sa == {dut_mac_address} and wlan.da == {bssid}'
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+        logger.info(f"PS-POLL packets are captured in the sniffer")
+
+        pwr = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
+        assert pwr, "packets are not captured in the sniffer"

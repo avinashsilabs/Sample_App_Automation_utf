@@ -1,5 +1,6 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap, \
+    RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 import time
 from datetime import datetime
@@ -27,25 +28,28 @@ pytestmark = [
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "bt_features": RS9116BTFeatureBitMap.Default
-            | RS9116BTFeatureBitMap.A2DPProfileEnable
-            | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+                           | RS9116BTFeatureBitMap.A2DPProfileEnable
+                           | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
         },
     ),
 ]
 
+
 def logger():
     return get_logger(__name__)
+
 
 # BT_inquiry inputs
 inquiry_type = 2
 inquiry_duration_ms = 20000
 timeout = 22
 
+
 @pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
 def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_dut_simple_play_C20054.wav" + '_' + str(
-    datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
 
     logger().info("========Configure DUT in a2dp Initiator_Role===============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
@@ -76,6 +80,13 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
     time.sleep(10)
 
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable BT power save"
+
     ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
     logger().info(f"l2ping response {ping_response}")
     assert ping_response, "dut is in inactive state..."
@@ -103,7 +114,7 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_avrcp_functional_C20060.wav" + '_' + str(
-    datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
 
     logger().info("========Configure DUT in a2dp Initiator_Role==========")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp(enable_avrcp=True)
@@ -132,6 +143,13 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
 
     time.sleep(10)
+
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable BT power save"
 
     ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
     logger().info(f"l2ping response {ping_response}")
@@ -172,10 +190,11 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     logger().info(f"captured_audio_size : {captured_audio_size}")
     assert captured_audio_size != 0, "captured size is zero"
 
+
 def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     current_time = time.time()
-    capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_repair_functionality_C20059.wav"+ '_' + str(
-    datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_repair_functionality_C20059.wav" + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
 
     logger().info("========Configure DUT in a2dp Initiator_Role===============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
@@ -184,7 +203,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
 
     logger().info("===========Configure Raspberry pi device as sink===========")
     bt_client_address = bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
-                                                                           pin_code=pin_code)
+                                                                       pin_code=pin_code)
     assert bt_client_address, "Failed to initiate sink in remote device"
     logger().info(f"BT Client address {bt_client_address}")
 
@@ -205,6 +224,14 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
 
     time.sleep(10)
+
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable BT power save"
+
     ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
     logger().info(f"l2ping response {ping_response}")
     assert ping_response, "dut is in inactive state..."
@@ -251,7 +278,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
 def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_dut_power_play_C20057.wav" + '_' + str(
-    datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
 
     logger().info("============Configure DUT in a2dp Initiator_Role=============")
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_a2dp()
@@ -280,6 +307,13 @@ def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     logger().info(f'device connection state is {connected}')
     time.sleep(10)
     # Ping dut
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable BT power save"
+
     ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
     logger().info(f"l2ping response {ping_response}")
     assert ping_response, "dut is in inactive state..."

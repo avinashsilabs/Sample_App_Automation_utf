@@ -31,6 +31,18 @@
   },
   {
     "SQA_TEST_AGENT": "",
+    "SSH_TARGET": "10.207.18.166",
+    "HARNESS_NAME": "sqa_jenkins_tb6_harness_sapi.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness  --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+  },
+  {
+    "SQA_TEST_AGENT": "",
+    "SSH_TARGET": "10.207.18.170",
+    "HARNESS_NAME": "sqa_jenkins_tb7_harness_sapi.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex  --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+  },
+  {
+    "SQA_TEST_AGENT": "",
     "SSH_TARGET": "ANY",
     "HARNESS_NAME": "ANY",
     "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/custom_testagent/ap_mode --manifest /app/manifest/manifest_ap_htcaps_enable_test_agent.yaml"

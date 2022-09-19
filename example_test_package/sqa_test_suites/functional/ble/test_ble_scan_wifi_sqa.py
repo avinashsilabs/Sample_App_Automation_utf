@@ -4,6 +4,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect.devices.rs911x import RS9116AsyncEventType
+from utf.utils.logger import get_logger
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in Wifi+Bluetooth dual mode
@@ -15,6 +16,9 @@ from utf_wiseconnect.devices.rs911x import RS9116AsyncEventType
         2. EFR32
         3. Raspberry PI4
 """
+
+def logger():
+    return get_logger(__name__)
 
 pytestmark = [
     pytest.mark.config(
@@ -35,62 +39,53 @@ pytestmark = [
             }
         )
     ]
-
-
 def test_ble_scan_testcase5(wifi_dut, ble_client):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
-    device_found = 0
+    assert bt_dut_address,"failed to load ble in dut"
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in rpi"
+    logger().info(f"client_address ==== {bt_client_address}")
 
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+    scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+    assert scan_results,"no devices found"
+    logger().info(f"scan results are {scan_results}")
+    logger().info(type(bt_client_address))
+    assert bt_client_address in str(scan_results),"device not found"
     time.sleep(30)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    if len(events):
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.BLE_ADV_REPORT:
-                if bt_client_address.encode() in event.event_data:
-                    device_found = 1
-    assert device_found == 1, "Device is not found in advertisement report"
-
 
 def test_ble_scan_multiple_times_testcase10(wifi_dut, ble_client):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    assert bt_dut_address,"failed to load ble in dut"
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in rpi"
+    logger().info(f"bt_client_address is {bt_client_address}")
     ble_client.interfaces.bluetooth.stop_advertising()
 
     for count in range(0, 2):
-        device_found = 0
         # Start scanning and connect to ble client
         ble_client.interfaces.bluetooth.start_advertising()
-        wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
+        scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=15)
         time.sleep(15)
         ble_client.interfaces.bluetooth.stop_advertising()
         wifi_dut.interfaces.wifi.ble_stop_scanning()
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        if len(events):
-            for event in events:
-                if event.event_type == RS9116AsyncEventType.BLE_ADV_REPORT:
-                    if bt_client_address.encode() in event.event_data:
-                        device_found = 1
-        assert device_found == 1, "Device is not found in advertisement report"
-
+        assert scan_results, "no devices found"
+        logger().info(f"scan results are {scan_results}")
+        logger().info(type(bt_client_address))
+        assert bt_client_address in str(scan_results), "device not found"
+        time.sleep(30)
 
 def test_ble_master_connection_testcase33(wifi_dut, ble_client, logger):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    assert bt_dut_address,"failed to initiate ble in dut"
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in rpi"
 
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
@@ -103,15 +98,14 @@ def test_ble_master_connection_testcase33(wifi_dut, ble_client, logger):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
 
-
 def test_ble_connection_request_testcase35(wifi_dut, ble_client, bt_logs, logger):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    assert bt_dut_address,"failed to initiate ble in dut"
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in rpi"
 
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
@@ -126,15 +120,14 @@ def test_ble_connection_request_testcase35(wifi_dut, ble_client, bt_logs, logger
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
 
-
 def test_ble_master_disconnect_testcase36(wifi_dut, ble_client, logger):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    assert bt_dut_address,"failed to initiate ble in dut"
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in rpi"
 
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
@@ -168,7 +161,7 @@ def test_power_save3_when_dut_Advertising(wifi_dut,ble_client,logger):
     # Set up DUT for BLE advertising
     logger.info("Initiate ble service in DUT")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address is not None
+    assert bt_dut_address,"failed to initiate ble in dut"
 
     logger.info("Set DUT in advertise mode")
     wifi_dut.interfaces.wifi.ble_start_advertising()
@@ -181,7 +174,7 @@ def test_power_save3_when_dut_Advertising(wifi_dut,ble_client,logger):
 
     logger.info("Start smp scan from the remote device")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address is not None
+    assert bt_client_address,"failed to initiate ble in rpi"
     time.sleep(5)
     logger.info("stop scanning ....")
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -196,7 +189,3 @@ def test_power_save3_when_dut_Advertising(wifi_dut,ble_client,logger):
 
     logger.info("Disconnecting the bt host....")
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
-
-
-

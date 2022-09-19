@@ -2386,3 +2386,102 @@ def test_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wi
     for socket in result_load_certificate:
         logger.info(f"Closing socket{socket}")
         wifi_dut.interfaces.wifi.close_socket(socket)
+
+@pytest.mark.firmware_app("test_concurrent_mode")
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.ConcurrentMode,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "band": RS9116Band.Default,
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1}
+)
+
+@pytest.mark.parametrize("cert1",
+                         [
+                             ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                              "mosquitto-utf.silabs.com.key.pem"],
+                         ]
+                         )
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_concurrent_mode_C19647(firmware_loader, wifi_dut, wifi_access_point, wifi_client, ssl_server, cert1, logger):
+
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    bytes_sent = (pkt_count * buffer_length)
+    #DUT as STA
+    logger.info("join AP")
+    ping_count = 10
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    logger.info(f"wifi_join status: {status}")
+    ip_fail = 1
+    for count in range(3):
+        try:
+            wifi_dut.interfaces.wifi.start_ip()
+            ip_fail = 0
+            break
+        except:
+            time.sleep(5)
+            logger.info(f"Retry_count:{count}")
+    assert ip_fail == 0, "Getting IP failed"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+    status = ping(device_ip, ping_count)
+    assert status == 1
+
+    ##############DUT as AP
+    for i in range(3):
+        try:
+            wifi_dut.interfaces.wifi.start_ap()
+            break
+        except:
+            logger.info(f"Could not start ap")
+    wifi_client.interfaces.wifi.join()
+    device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
+    wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
+    status = ping(wifi_client_ip, ping_count)
+    assert status == 1
+    logger.info("dut ap mode ip: " + device_ip_dut_as_ap)
+    logger.info("wifi client ip: " + str(wifi_client_ip))
+
+    load_cert1 = ["open", 0, port1, cert1]
+    check_td1 = load_certificates_thread(wifi_dut, ssl_server, load_cert1)
+    check_td1.start()
+    time.sleep(1)
+    # for i in range(2):
+    wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
+    status = ping(wifi_client_ip, ping_count)
+    assert status == 1
+    check_td1.wait_for_exit(True)
+    result_load_certificate = check_td1.return_value
+
+    check_td2 = data_tx_rx_pkt_thread(wifi_dut, ssl_server, result_load_certificate, pkt_count, buffer_length, bytes_sent, count=3)
+    check_td2.start()
+    time.sleep(1)
+
+    wifi_client_ip = wifi_client.interfaces.wifi.get_ip_address()
+    status = ping(wifi_client_ip, ping_count)
+    assert status == 1
+
+    time.sleep(5)
+    wifi_dut.interfaces.wifi.close_socket(0)
