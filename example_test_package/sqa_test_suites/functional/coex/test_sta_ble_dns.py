@@ -216,8 +216,9 @@ class WifiThread(ThreadBase):
                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_btps, f"unable to enable the btps"
         logger().info(f"Initiating ping to DUT ip {self.device_ip} after power save")
-        ping(self.device_ip, ping_count)
+        status = ping(self.device_ip, ping_count)
         time.sleep(5)
+        assert status == 1, "DUT not responding for ping request......"
 
     def sniffer_validation(self):
         validation = True
@@ -281,8 +282,9 @@ class DnsThread(ThreadBase):
             logger().info(f"ip :{result.decode()}")
             logger().info(f"Initiating ping to DUT ip {static_ip} after power save")
             logger().info(f"ping_count:{ping_count}")
-            ping(static_ip, ping_count)
-            time.sleep(15)
+            status = ping(static_ip, ping_count)
+            time.sleep(10)
+            assert status == 1, "DUT not responding for ping request......"
 
 
 class ConnectionStatus(ThreadBase):
