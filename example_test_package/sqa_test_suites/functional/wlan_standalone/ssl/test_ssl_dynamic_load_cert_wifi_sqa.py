@@ -446,24 +446,6 @@ class data_tx_rx_thread(ThreadBase):
                 logger().info("Data sent by DUT and received on server is matching")
                 time.sleep(5)
 
-# pytestmark = [
-#     pytest.mark.config(
-#         "wifi_dut",
-#         wifi=
-#         {
-#             "oper_mode": 0,
-#             "coex_mode": RS9116CoexMode.WLANOnly,
-#             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-#             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#             "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-#             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
-#             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-#             "set_send_feature_frame": True,
-#             }
-#         )
-#     ]
-
 
 
 @pytest.mark.config(
