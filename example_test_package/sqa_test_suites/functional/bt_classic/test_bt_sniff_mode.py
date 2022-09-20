@@ -163,8 +163,6 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
 
     found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
                                                          inquiry_duration_ms=20000, timeout=22, retry_counts=3)
-
-    logger().info(f"BT found device is {found}, found bt client address {bt_client_address}")
     if not found:
         assert found, f"BT DUT is unable to inquiry, So Could not find bt client address {bt_client_address} during inquiry, test case may fail "
 
