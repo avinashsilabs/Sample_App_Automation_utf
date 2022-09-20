@@ -182,7 +182,7 @@ def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut
 def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                              index_path):
     validation = True
-    file_name = 'test_https_put_func_with_get_cmd_c19233'
+    file_name = 'test_https_put_func_with_get_cmd_c19232'
 
     mac_address, bssid = join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                          index_path, file_name)
@@ -228,7 +228,7 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
 def test_https_put_functionality_c19234(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                         index_path):
     validation = True
-    file_name = 'test_https_put_functionality_c19231'
+    file_name = 'test_https_put_functionality_c19234'
     mac_address, bssid = join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                          index_path, file_name)
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
