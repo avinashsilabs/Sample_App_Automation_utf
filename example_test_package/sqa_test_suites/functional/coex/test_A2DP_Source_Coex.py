@@ -1,12 +1,15 @@
+import datetime
+import time
 import pytest
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 import time
 from utf.utils.thread_base import ThreadBase
-import datetime
-from utf.interfaces.wifi import WlanError
-from utf_wiseconnect.devices.rs911x import RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116CertificateType,RS9116CoexMode,RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap
+from utf.utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.devices.rs911x import RS9116BTFeatureBitMap, RS9116PowerSaveProcedureTypes, \
+    RS9116ConfigFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes
 
 
 def logger():
@@ -24,6 +27,8 @@ def logger():
                     Author: Himaja Gudluri
 ####################################################################
 """
+
+
 class wifiJoinThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point):
         super().__init__()
@@ -36,12 +41,13 @@ class wifiJoinThread(ThreadBase):
         time.sleep(15)
         # add the power save here the below enable WIFI power save in the DUT
         self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        #check the WLan connection here
-        wifi_status=self.wifi_dut.interfaces.wifi.get_wireless_info()
+        # check the WLan connection here
+        wifi_status = self.wifi_dut.interfaces.wifi.get_wireless_info()
         logger().info(f"here==================>>>>>>>>>the wifi_status is as follows:{wifi_status}")
 
+
 class A2DP_DUT_stream(ThreadBase):
-    def __init__(self, wifi_dut, bt_client,mode,codec,Test_case):
+    def __init__(self, wifi_dut, bt_client, mode, codec, Test_case):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.bt_client = bt_client
@@ -50,19 +56,22 @@ class A2DP_DUT_stream(ThreadBase):
         self.Test_case = Test_case
 
     def run(self):
-        if(self.mode == "initiator"):
-            logger().info(f"------------------>here in A2DP as initiator thread<-------------------------------------------------------------")
-            tss=str(datetime.datetime.now())
-            temp=tss.replace('.',':')
-            tss=temp.replace(' ','')
-            temp=tss.replace(':','_')
-            capture_file_path = "./reports/"+str(self.Test_case)+str(temp)+".wav"
+        if self.mode == "initiator":
+            logger().info(
+                f"------------------>here in A2DP as initiator "
+                f"thread<-------------------------------------------------------------")
+            tss = str(datetime.datetime.now())
+            temp = tss.replace('.', ':')
+            tss = temp.replace(' ', '')
+            temp = tss.replace(':', '_')
+            capture_file_path = "./reports/" + str(self.Test_case) + str(temp) + ".wav"
             with TimeMeasurer() as t:
                 bt_dut_address, pin_code = self.wifi_dut.interfaces.wifi.start_bt_master_a2dp()
                 assert bt_dut_address is not None
-                bt_client_address = self.bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address, pin_code=pin_code)
+                bt_client_address = self.bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
+                                                                                        pin_code=pin_code)
                 assert bt_client_address is not None
-                #A2DP connection
+                # A2DP connection
                 found = self.wifi_dut.interfaces.wifi.bt_inquiry_for_device(
                     bt_client_address=bt_client_address,
                     inquiry_type=2,
@@ -71,9 +80,7 @@ class A2DP_DUT_stream(ThreadBase):
                     retry_counts=3,
                 )
                 if not found:
-                    logger.error(
-                        f"Dut unable to find the bt client device. The test case may fail."
-                    )
+                    assert found, f"Unable to find device with BD address {bt_dut_address}"
                 self.wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 time.sleep(10)
 
@@ -83,43 +90,49 @@ class A2DP_DUT_stream(ThreadBase):
                 )
                 # Start capturing audio
                 self.bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-                if(self.codec == "SBC"):
+                if self.codec == "SBC":
                     # A2DP SBC Audio streaming to Raspi
                     self.wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-                    time.sleep(30)
-                elif(self.codec == "PCM"):
-                    #A2DP PCM audio streaming to RASPI
-                    #for the time being using the SBC here also
+                    time.sleep(60)
+                elif self.codec == "PCM":
+                    # A2DP PCM audio streaming to RASPI
+                    # for the time being using the SBC here also
                     self.wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-                    time.sleep(30)
-                #check the BT connection here
-                connection_status=self.wifi_dut.interfaces.wifi.ble_get_device_state()
-                if(connection_status!=0):
-                    # disconnect
-                    self.wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+                    time.sleep(60)
+
+                ping_response = self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+                logger().info(f"l2ping response {ping_response}")
+                assert ping_response, "dut is in inactive state..."
 
                 # assert the captured audio size
+                logger().info("============Capturing the size of audio file=============")
                 captured_audio_size = self.bt_client.interfaces.bluetooth.bt_service.read_file_size(capture_file_path)
                 logger().info(f"captured_audio_size : {captured_audio_size}")
-                assert int(captured_audio_size / 100000) >= 1
+                assert captured_audio_size != 0, "Captured size is zero"
             logger().info(f"BT time duration is {t.duration} seconds")
 
-        elif(self.mode == "acceptor"):
-            logger().info(f"------------------>here in A2DP as acceptor thread<-------------------------------------------------------------")
-            capture_file_path = "./reports/test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_C34675."+str(datetime.datetime.now())
+        elif self.mode == "acceptor":
+            logger().info(f"------------------>here in A2DP as acceptor "
+                          f"thread<-------------------------------------------------------------")
+            capture_file_path = "./reports/test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_C34675." + str(
+                datetime.datetime.now())
             logger().info(capture_file_path)
 
+
 class A2DP_and_AVRCP_with_Datastream(ThreadBase):
-    def __init__(self, wifi_dut, bt_client,mode,codec,Test_case):
+    def __init__(self, wifi_dut, bt_client, mode, codec, Test_case):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.bt_client = bt_client
         self.mode = mode
         self.codec = codec
         self.Test_case = Test_case
+
     def run(self):
         if self.mode == "initiator":
-            logger().info(f"------------------>here in A2DP as initiator thread<-------------------------------------------------------------")
+            logger().info(
+                f"------------------>here in A2DP as initiator "
+                f"thread<-------------------------------------------------------------")
             tss = str(datetime.datetime.now())
             temp = tss.replace('.', ':')
             tss = temp.replace(' ', '')
@@ -130,7 +143,7 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
                 bt_dut_address, pin_code = self.wifi_dut.interfaces.wifi.start_bt_master_a2dp(enable_avrcp=True)
                 assert bt_dut_address is not None
                 bt_client_address = self.bt_client.interfaces.bluetooth.start_a2dp_sink(bt_dut_address=bt_dut_address,
-                                                                                   pin_code=pin_code)
+                                                                                        pin_code=pin_code)
                 assert bt_client_address is not None
                 # A2DP Connection
                 found = self.wifi_dut.interfaces.wifi.bt_inquiry_for_device(
@@ -141,23 +154,21 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
                     retry_counts=3,
                 )
                 if not found:
-                    logger.error(
-                        f"Dut unable to find the bt client device. The test case may fail."
-                    )
+                    assert found, f"Unable to find device with BD address {bt_dut_address}"
                 self.wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 time.sleep(10)
                 # Ping dut
                 assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                     dest_addr=bt_dut_address
                 )
-                #Start capturing audio
+                # Start capturing audio
                 self.bt_client.interfaces.bluetooth.bt_service.start_capturing_audio(capture_file_path)
-                #A2DP streaming
+                # A2DP streaming
                 if self.codec == "SBC":
                     self.wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
                     time.sleep(5)
-                elif self.codec =="PCM":
-                    #for the time being set it to SBC will change it to PCM when implemented
+                elif self.codec == "PCM":
+                    # for the time being set it to SBC will change it to PCM when implemented
                     self.wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
                     time.sleep(5)
                 # Playback and volume control from Raspi
@@ -179,7 +190,7 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
 
                 # check the BT connection here
                 connection_status = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-                if (connection_status != 0):
+                if connection_status != 0:
                     # disconnect
                     self.wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
 
@@ -188,13 +199,15 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
                 logger().info(f"captured_audio_size : {captured_audio_size}")
                 assert int(captured_audio_size / 100000) >= 1
             logger().info(f"the BT audio streaming and avrcp happend for:{t.duration}seconds")
-        elif self.mode =="acceptor":
-            #further implementation
+        elif self.mode == "acceptor":
+            # further implementation
             logger().info(
-                f"------------------>here in A2DP as acceptor thread<-------------------------------------------------------------")
+                f"------------------>here in A2DP as acceptor "
+                f"thread<-------------------------------------------------------------")
             capture_file_path = "./reports/test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_C34675." + str(
                 datetime.datetime.now())
             logger().info(capture_file_path)
+
 
 # class HTTP_100mb_download(ThreadBase):
 #     def __init__(self,http_server,wifi_dut,wifi_access_point,logger,index_path):
@@ -225,9 +238,9 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "bt_features":RS9116BTFeatureBitMap.Default
-            | RS9116BTFeatureBitMap.A2DPProfileEnable
-            | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "bt_features": RS9116BTFeatureBitMap.Default
+                       | RS9116BTFeatureBitMap.A2DPProfileEnable
+                       | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -238,8 +251,10 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_cinitiator_c34674(wifi_dut, bt_client,
     mode = "initiator"
     codec = "PCM"
     Test_case = "test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_c34674"
-    with wifiJoinThread(wifi_dut,wifi_access_point),A2DP_DUT_stream(wifi_dut, bt_client,mode,codec,Test_case):
+    with wifiJoinThread(wifi_dut, wifi_access_point), A2DP_DUT_stream(wifi_dut, bt_client, mode, codec, Test_case):
         time.sleep(20)
+
+
 # @pytest.mark.config(
 #     "wifi_dut",
 #     wifi={
@@ -283,20 +298,33 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_cinitiator_c34674(wifi_dut, bt_client,
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "bt_features":RS9116BTFeatureBitMap.Default
-            | RS9116BTFeatureBitMap.A2DPProfileEnable
-            | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "bt_features": RS9116BTFeatureBitMap.Default
+                       | RS9116BTFeatureBitMap.A2DPProfileEnable
+                       | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
-def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678(wifi_dut,bt_client,wifi_access_point):
+def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678(wifi_dut, bt_client, wifi_access_point):
     mode = "initiator"
-    codec="SBC"
-    Test_case="test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678"
-    with wifiJoinThread(wifi_dut, wifi_access_point), A2DP_DUT_stream(wifi_dut, bt_client,mode,codec,Test_case):
-        time.sleep(20)
+    codec = "SBC"
+    test_case = "test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678"
+    # Enables the bt power save in DUT
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave
+    )
+    # with wifiJoinThread(wifi_dut, wifi_access_point), A2DP_DUT_stream(wifi_dut, bt_client, mode, codec, test_case):
+
+    t1 = wifiJoinThread(wifi_dut, wifi_access_point)
+    t2 = A2DP_DUT_stream(wifi_dut, bt_client, mode, codec, test_case)
+    t1.start()
+    time.sleep(2)
+    t2.start()
+
+    t1.wait_for_exit(True)
+    t2.wait_for_exit(True)
 
 
 @pytest.mark.config(
@@ -304,19 +332,25 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678(wifi_dut,bt
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "bt_features":RS9116BTFeatureBitMap.Default
-            | RS9116BTFeatureBitMap.A2DPProfileEnable
-            | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "bt_features": RS9116BTFeatureBitMap.Default
+                       | RS9116BTFeatureBitMap.A2DPProfileEnable
+                       | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
-def  test_AVRCP_DUT_when_WLAN_is_connected_and_data_transfer_is_happening_C34708(wifi_dut,bt_client,wifi_access_point):
-    mode="initiator"
-    codec="PCM"
-    Test_case="test_AVRCP_DUT_when_WLAN_is_connected_and_data_transfer_is_happening_C34708"
-    with wifiJoinThread(wifi_dut, wifi_access_point), A2DP_DUT_stream(wifi_dut, bt_client, mode, codec, Test_case):
+def test_AVRCP_DUT_when_WLAN_is_connected_and_data_transfer_is_happening_C34708(wifi_dut, bt_client, wifi_access_point):
+    mode = "initiator"
+    codec = "PCM"
+    test_case = "test_AVRCP_DUT_when_WLAN_is_connected_and_data_transfer_is_happening_C34708"
+    # Enables the bt power save in DUT
+    wifi_dut.interfaces.wifi.bt_power_save(
+        RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave
+    )
+    with wifiJoinThread(wifi_dut, wifi_access_point), A2DP_and_AVRCP_with_Datastream(wifi_dut, bt_client, mode, codec,
+                                                                                     test_case):
         time.sleep(20)
 
 # @pytest.mark.config(
