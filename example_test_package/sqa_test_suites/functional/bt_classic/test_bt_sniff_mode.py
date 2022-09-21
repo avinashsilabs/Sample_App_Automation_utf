@@ -8,6 +8,7 @@ from utf.utils.stopwatch import Stopwatch
 from datetime import datetime, timedelta
 import random
 import string
+import re
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
@@ -16,7 +17,8 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116PowerSaveModes,
     RS9116PowerSaveProcedureTypes,
     RS9116CustomFeatureBitMap,
-    RS9116ConfigFeatureBitMap
+    RS9116ConfigFeatureBitMap,
+    RS9116AsyncEventType
 )
 
 """Test Author = M.Harshitha
@@ -44,7 +46,7 @@ def logger():
 def text_generator(size=200):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
-def sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
+def sniff_mode_in_slave_role(bt_dut, bt_client,sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
 
     bt_local_name = "rs911x_bt_spp"
     bt_pin_code = "4321"
@@ -107,15 +109,20 @@ def sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_min_in
             time.sleep(2)
             logger().info("Configuring sniff mode in dut")
             bt_dut.interfaces.bluetooth.set_bt_sniff_mode(bt_client_address=bt_client_address,
-                                                                      sniff_max_interval=sniff_max_interval,
-                                                                      sniff_min_interval=sniff_min_interval,
-                                                                      sniff_attempt=sniff_attempt,
-                                                                      sniff_tout=sniff_time_out)
+                                                            sniff_max_interval=sniff_max_interval,
+                                                            sniff_min_interval=sniff_min_interval,
+                                                            sniff_attempt=sniff_attempt,
+                                                            sniff_tout=sniff_time_out)
 
+            events = bt_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_MODE_CHANGED:
+                    sniff_data = event.event_data
+                    logger().info(f"Recevied Mode Change Event {sniff_data}")
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
             enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_wifiPowersave , f"Failed to enable wifi in powersave"
+            assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
             enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -141,10 +148,11 @@ def sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_min_in
         assert found, f"device with address {bt_dut_address} not found"
 
 def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
+
     send_text = text_generator()
 
     logger().info("configuring dut in spp master role")
-    bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
+    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_master_spp()
     assert bt_dut_address, "failed to initialise bt in dut"
 
     logger().info(f"BT Dut address {bt_dut_address}")
@@ -155,8 +163,6 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
 
     found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
                                                          inquiry_duration_ms=20000, timeout=22, retry_counts=3)
-
-    logger().info(f"BT found device is {found}, found bt client address {bt_client_address}")
     if not found:
         assert found, f"BT DUT is unable to inquiry, So Could not find bt client address {bt_client_address} during inquiry, test case may fail "
 
@@ -181,6 +187,12 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
                                                           sniff_attempt=sniff_attempt,
                                                           sniff_tout=sniff_time_out)
 
+            events = bt_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_MODE_CHANGED:
+                    sniff_data = event.event_data
+                    logger().info(f"Recevied Mode Change Event {sniff_data}")
+
             logger().info("==========Enables Power Save in Wifi Mode===========")
             enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
@@ -197,7 +209,7 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
                 logger().info("=========Send the data from dut to bt client==========")
                 bt_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
                 data = bt_client_socket.recv()
-                assert data ,"failed to recevie data from dut to bt client "
+                assert data,"failed to recevie data from dut to bt client "
                 assert data.decode() == send_text
 
     logger().info("Disconnecting bt client address")
@@ -274,6 +286,11 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
                                                             sniff_attempt=sniff_attempt,
                                                             sniff_tout=sniff_time_out)
 
+            events = bt_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_MODE_CHANGED:
+                    sniff_data = event.event_data
+                    logger().info(f"Recevied Mode Change Event {sniff_data}")
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
             enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -285,6 +302,11 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
 
             logger().info("Configuring sniff exit mode in dut ")
             bt_dut.interfaces.bluetooth.set_bt_sniff_exit_mode(bt_client_address=bt_client_address)
+            events = bt_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.RSI_APP_EVENT_MODE_CHANGED:
+                    sniff_data = event.event_data
+                    logger().info(f"Recevied Mode Change Event {sniff_data}")
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
@@ -325,7 +347,7 @@ pytestmark = [
 
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(160, 160, 5, 3)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_bt_sniff_mode_act_as_slave_role_C20049(bt_dut,bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
+def test_bt_sniff_mode_act_as_slave_role_C20049(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
 
     test_case = "***********sniff mode acts as slave role****************"
     logger().info(f"{test_case}")

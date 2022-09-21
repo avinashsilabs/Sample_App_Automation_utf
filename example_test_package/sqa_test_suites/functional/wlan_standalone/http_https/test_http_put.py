@@ -36,7 +36,7 @@ def logger():
 
 
 def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point, index_path, file_name):
-    ping_count = 10
+    ping_count = 120
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
     time.sleep(3)
@@ -81,7 +81,7 @@ def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_acces
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
@@ -121,7 +121,7 @@ def test_https_put_functionality_c19231(http_server, wifi_sniffer, wifi_dut, htt
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
@@ -148,7 +148,7 @@ def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
                                            post_data="hellothisiaatestcaseforget")
-    assert exc_info.value.error_code == 0x0015, "observed wrong error code expected is 0x0015"
+    assert exc_info.value.error_code == 0x0015, "observed wrong error code; expected code is 0x0015"
 
     packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
                      f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
@@ -168,7 +168,7 @@ def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
@@ -182,7 +182,7 @@ def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut
 def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                              index_path):
     validation = True
-    file_name = 'test_https_put_func_with_get_cmd_c19233'
+    file_name = 'test_https_put_func_with_get_cmd_c19232'
 
     mac_address, bssid = join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                          index_path, file_name)
@@ -194,7 +194,7 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
     logger().info("Giving http get command")
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
-    assert exc_info.value.error_code == 0x0015, "observed wrong error code expected is 0x0015"
+    assert exc_info.value.error_code == 0x0015, "observed wrong error code; expected is 0x0015"
 
     packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
                      f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
@@ -214,7 +214,7 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
@@ -228,7 +228,7 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
 def test_https_put_functionality_c19234(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                         index_path):
     validation = True
-    file_name = 'test_https_put_functionality_c19231'
+    file_name = 'test_https_put_functionality_c19234'
     mac_address, bssid = join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                          index_path, file_name)
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi

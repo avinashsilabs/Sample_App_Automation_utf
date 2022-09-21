@@ -216,8 +216,9 @@ class WifiThread(ThreadBase):
                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_btps, f"unable to enable the btps"
         logger().info(f"Initiating ping to DUT ip {self.device_ip} after power save")
-        ping(self.device_ip, ping_count)
+        status = ping(self.device_ip, ping_count)
         time.sleep(5)
+        assert status == 1, "DUT not responding for ping request......"
 
     def sniffer_validation(self):
         validation = True
@@ -281,8 +282,9 @@ class DnsThread(ThreadBase):
             logger().info(f"ip :{result.decode()}")
             logger().info(f"Initiating ping to DUT ip {static_ip} after power save")
             logger().info(f"ping_count:{ping_count}")
-            ping(static_ip, ping_count)
-            time.sleep(15)
+            status = ping(static_ip, ping_count)
+            time.sleep(10)
+            assert status == 1, "DUT not responding for ping request......"
 
 
 class ConnectionStatus(ThreadBase):
@@ -380,6 +382,7 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature192kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "band": 0,
     }
@@ -440,6 +443,7 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature192kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "band": 0,
     }
@@ -474,8 +478,8 @@ def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_s
     check_connection_status(wifi_dut, ble=True)
     logger().info(f"Clean up activity")
     wifi_leave(wifi_dut)
-    logger().info("Initiating BLE disconnection on DUT")
-    ble_disconnect(wifi_dut, ble_client_address)
+    logger().info("Initiating BLE disconnection from ble_client")
+    ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     time.sleep(4)
     logger().info("Successfully disconnected from BLE SLAVE Device")
     logger().info("Stop Sniffer finally")
