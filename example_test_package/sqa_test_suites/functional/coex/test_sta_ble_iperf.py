@@ -1,6 +1,7 @@
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
 from utf.utils.iperf.iperf_utils import ping, get_host_ip
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
@@ -116,12 +117,12 @@ class Blethread(ThreadBase):
         ble_disconnect(self.wifi_dut, self.ble_address)
 
 class WifiThread(ThreadBase):
-    def __init__(self, wifi_dut, wifi_access_point, wifi_Sniffer, utf_constants, bssid=None, dut_mac_address=None, testcase=None, device_ip=None):
+    def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, bssid=None, dut_mac_address=None, testcase=None, device_ip=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.utf_constants = utf_constants
-        self.wifi_sniffer = wifi_Sniffer
+        self.wifi_sniffer = wifi_sniffer
         self.bssid = bssid
         self.device_ip = device_ip
         self.dut_mac_address = dut_mac_address
@@ -189,10 +190,12 @@ class WifiThread(ThreadBase):
                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_btps, f"unable to enable the btps"
         logger().info(f"Initiating ping to DUT ip {self.device_ip} after power save")
-        ping(self.device_ip, ping_count)
+        status = ping(self.device_ip, ping_count)
         time.sleep(5)
+        assert status == 1, "DUT not responding for ping request......"
 
-    def sniffer_validation(self):
+
+def sniffer_validation(self):
         validation = True
         packet_filter1 = f"wlan.addr=={self.dut_mac_address} && wlan.fc.type_subtype == 0 ||eapol"
         packet_filter2 = f"wlan.addr=={self.bssid} && wlan.fc.type_subtype == 1 ||eapol"
@@ -372,7 +375,7 @@ def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C20203_
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"**********joining*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
     iperf_obj = wifi_datatransfer(wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol)
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
@@ -423,7 +426,7 @@ def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C20203_
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"**********joining*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
     iperf_obj = wifi_datatransfer(wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol)
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
@@ -478,15 +481,22 @@ def test_TCP_Rx_packet_loss_with_LE_advertising_C20223(wifi_dut, wifi_access_poi
     wifi_dut.interfaces.wifi.ble_start_advertising()
     time.sleep(3)
     logger().info(f"**********joining*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
     iperf_obj = wifi_datatransfer(wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol)
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
     iperf_obj.fetch_ip()
     iperf_obj.run_rx()
-    logger().info(f"Begin Scanning for BLE devices")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-    assert bt_client_address is not None
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if ble_dut_address in found_devices and \
+                found_devices[ble_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
     logger().info(f"Clean up activity")
     wifi_leave(wifi_dut)
     ble_client.interfaces.bluetooth.stop_scanning()
@@ -531,7 +541,7 @@ def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C20229(wifi_dut, ble_client
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"**********joining*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
     iperf_obj = wifi_datatransfer(wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol)
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
@@ -552,7 +562,6 @@ def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C20229(wifi_dut, ble_client
     logger().info('Validating tcp port')
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Sniffer validation failed for tcp port'
-
     logger().info('Validating udp port')
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
         'packet_count'], 'Sniffer validation failed for udp port'
@@ -596,7 +605,7 @@ def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C20230(wifi_dut, wifi_acces
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
     logger().info(f"**********joining*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
     iperf_obj = wifi_datatransfer(wifi_dut, wifi_access_point, wifi_client, net_perf_client, protocol)
     wifi_obj.join_get_ip()
     wifi_obj.powersave_ping()
