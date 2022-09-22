@@ -281,6 +281,7 @@ devices:
     efr32_4180b:
         type: 'efx32'
         subtype: 'efr32'
+        commander_options: '--serialno 000440228768'
         interfaces:
             vcom:
                 type: 'serial'
