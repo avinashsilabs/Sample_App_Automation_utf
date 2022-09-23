@@ -1370,7 +1370,7 @@ def test_connect_disconnect_ap_after_ble_slave_connection_C20220(wifi_dut, wifi_
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "bt_powersave_disable", "disassociated"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_sta_ssl_ble_slave_C20232(
         wifi_dut, ble_client, wifi_sniffer, wifi_access_point, ssl_server):
@@ -1421,10 +1421,10 @@ def test_sta_ssl_ble_slave_C20232(
     wifi_dut.interfaces.wifi.close_socket(sock)
     ssl_server.interfaces.ssl.stop_server()
 
-    # QOS data Packets should be observed with More data Bit set to 1
+    # PS Polls with Power Management Bit set to 1 should be sent from the device
     packet_filter1 = f'wlan.ta == {bssid} && wlan.da == {dut_mac_address} && wlan.fc.moredata==1'
 
-    # PS Polls with Power Management Bit set to 1 should be sent from the device
+    # Data validating 
     packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
 
     validation = True
