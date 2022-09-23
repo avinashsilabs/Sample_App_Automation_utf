@@ -1535,7 +1535,7 @@ def test_dynamic_load_powersave_enabled_testcase14(
     wifi_dut.interfaces.wifi.leave()
 
 
-
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1755,7 +1755,7 @@ def test_dynamic_load_auto_join_TC19645(
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -1818,7 +1818,7 @@ def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC
         logger.info(f"Closing socket{socket}")
         wifi_dut.interfaces.wifi.close_socket(socket)
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -1883,7 +1883,7 @@ def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC
         logger.info(f"Closing socket{socket}")
         wifi_dut.interfaces.wifi.close_socket(socket)
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -2066,11 +2066,9 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     logger.info(f"Loading certificate{result_load_certificate}")
 
     wifi_dut.interfaces.wifi.close_socket(0)
-    wifi_dut.interfaces.wifi.reset()
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.init()
 
 
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -2143,11 +2141,9 @@ def test_BLE_connectivity_data_tx_after_loadcert0_C19653(wifi_sniffer, wifi_dut,
     logger.info(" Connected to the BLE device ")
 
     check_td1.wait_for_exit(True)
-    wifi_dut.interfaces.wifi.reset()
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.init()
 
 
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -2223,11 +2219,9 @@ def test_error_code_check_when_certificate_loaded_in_same_index_C19656(wifi_snif
     logger.info(" Connected to the BLE device ")
     #
     check_td1.wait_for_exit(True)
-    wifi_dut.interfaces.wifi.reset()
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.init()
 
 
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -2279,9 +2273,6 @@ def test_BLE_connectivity_data_tx_after_loadcert0_loadcert1_C19654(wifi_sniffer,
     logger.info(" Connected to the BLE device ")
 
     check_td1.wait_for_exit(True)
-    wifi_dut.interfaces.wifi.reset()
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.init()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2404,7 +2395,7 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
 
     wifi_dut.interfaces.wifi.close_socket(0)
 
-
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -2467,9 +2458,7 @@ def test_BLE_connectivity_data_tx_after_loadcert0_C19655(wifi_sniffer, wifi_dut,
 
     check_td1.wait_for_exit(True)
     check_td2.wait_for_exit(True)
-    wifi_dut.interfaces.wifi.reset()
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.init()
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -2536,6 +2525,7 @@ def test_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wi
         logger.info(f"Closing socket{socket}")
         wifi_dut.interfaces.wifi.close_socket(socket)
 
+@pytest.mark.skip()
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
