@@ -160,11 +160,10 @@ def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
     if ble_mode == "ble_master":
         logger().info(f"Start DUT")
         ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-        assert ble_dut_address is not None
-
+        assert ble_dut_address is not None, f"failed to initiate ble in dut"
         logger().info(f"Start ble client")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
-        assert ble_client_address is not None
+        assert ble_client_address is not None, f"unable to fetch ble address"
         time.sleep(1)
         logger().info(f"Start scanning and connect to ble client")
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=30)
