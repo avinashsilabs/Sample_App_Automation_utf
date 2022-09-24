@@ -1,28 +1,26 @@
+import time
+import re
+import uuid
+from datetime import datetime
 import pytest
-from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import ping
-from utf.interfaces.wifi import WlanError
-from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.bluetooth import BLEDeviceState
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
+from utf.utils.thread_base import ThreadBase
+from utf.utils.time_measurer import TimeMeasurer
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap,
-    RS9116CertificateType,
     RS9116FeatureBitMap,
     RS9116ConfigFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
     RS9116PowerSaveModes,
     SocketOptions,
-    SocketType,
-    Cipher,
-    DeviceConstants,
-    RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116RegionCode, RS9116AsyncEventType
+    RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116RegionCode,
+    RS9116AsyncEventType
 )
-from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utf.utils.thread_base import ThreadBase
-import time
 
 
 def logger():
@@ -1014,6 +1012,61 @@ class WifiDeeppowersave(ThreadBase):
                              'in sniffer'
 
 
+def packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_bssid, print_layers: list,
+                 capture_filename, mode=0) -> list:
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    result = []
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
+    for packet in wifi_sniffer.interfaces.capture.iter_packets(
+            decrypt_packets=True,
+            encryption_type="WPA-PWD",
+            decryption_key=decryption_key,
+            capture_file_filter=local_capture_file
+    ):
+
+        for layer in packet.layers:
+            layer_name = layer.layer_name.lower()
+            if layer_name == "tls":
+                filtered_packet = str(packet)
+                filtered_packet = filtered_packet.split("Layer ")
+                tls_layer_pkt = ""
+                ra_address = ""
+                ta_address = ""
+                logger().info(f"DUT_MAC_ADDRESS: {dut_mac_address},AP_BSSID: {ap_bssid}")
+                for layerp in filtered_packet:
+                    if ((re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:", layerp))
+                            or (re.search(".*TLS:", layerp))):
+                        if re.search(".*TLS:", layerp):
+                            tls_layer_pkt = layerp
+                        if re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:", layerp):
+                            Received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
+                            receiver_address = re.search(Received, layerp).group()
+                            ra_address = (re.search(Received, layerp).group(1)).lower()
+                            Transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
+                            Transmitter_address = re.search(Transmit, layerp).group()
+                            ta_address = (re.search(Transmit, layerp).group(1)).lower()
+                            dut_mac_address_mod = dut_mac_address.lower()
+                            ap_bssid_mod = ap_bssid.lower()
+
+                        if ((ra_address == dut_mac_address_mod or ra_address == ap_bssid_mod) and (
+                                ta_address == dut_mac_address_mod or ta_address == ap_bssid_mod)) and tls_layer_pkt:
+                            logger().info(f"{Transmitter_address}>>>>>>{receiver_address}")
+                            logger().info(f"TLS HANDSHAKE PACKET: {tls_layer_pkt}")
+                            result.append(str(tls_layer_pkt))
+    return result
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1053,6 +1106,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_C20207(wifi_dut, wifi_access_p
     ble_obj.wait_for_exit()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1297,11 +1351,116 @@ def test_connect_disconnect_ap_after_ble_slave_connection_C20220(wifi_dut, wifi_
     logger().info("Checking the connection status of wlan after issuing wlan_connect")
     check_connection_status(wifi_dut, ble=False, wlan=True)
 
-    logger().info("end")
-    wifi_dut.interfaces.wifi.leave()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default |
+                          RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
+                               | RS9116ExtCustomFeatureBitMap.FeatureLowPower
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        # "ca_cert": "ca-chain.cert.pem",
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "bt_powersave_disable", "disassociated"])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_sta_ssl_ble_slave_C20232(
+        wifi_dut, ble_client, wifi_sniffer, wifi_access_point, ssl_server):
+    ble_mode = "ble_slave"
+    testcase = "connect_disconnect_ap_ble_connection"
+    logger().info(f"ble mode: {ble_mode}")
+    ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
+    logger().info(f"ble_dut_address: {ble_dut_address}")
+    pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+    buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+    bytes_sent = (pkt_count * buffer_length)
+
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    wifi_join(wifi_dut, wifi_access_point)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP bssid {bssid}")
+
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server()
+
+    # Open ssl client socket in the DUT
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+    assert sock == 0, f"socket id received is wrong, expected is 0"
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    # ssl socket opened in DUT connects to the server
+    wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl)
+
+    socket = 1
+    ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
+
+    if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+        if ssl_server.interfaces.ssl.socket_connection_status(socket):
+            wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+            time.sleep(10)
+            bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+            assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote " \
+                                                 f"peer not matched on socket {socket} "
+    # Close socket 1
+    wifi_dut.interfaces.wifi.close_socket(sock)
+    ssl_server.interfaces.ssl.stop_server()
+
+    # PS Polls with Power Management Bit set to 1 should be sent from the device
+    packet_filter1 = f'wlan.ta == {bssid} && wlan.da == {dut_mac_address} && wlan.fc.moredata==1'
+
+    # Data validating 
+    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+    validation = True
+    # Validating dhcp packet
+    logger().info(f"Validating DHCP frames from AP & DUT")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"decryption_key : {decryption_key}")
+    dhcp_list = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
+    logger().info(f"dhcp_list : {dhcp_list}")
+    assert dhcp_list, "DHCP packets not found"
+
+    logger().info('QOS data Packets should be observed with More data Bit set to 1')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Sniffer validation failed for QOS data Packets'
+
+    logger().info('Validating PS Poll frames are sent from the device with power management bit')
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
+
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"DECRYPTION KEY-->{decryption_key}")
+    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, bssid, ["tls"], testcase)
+
+    assert (message for message in ssl_pkt if "Client Hello" in ssl_pkt), "Unable to find 'Client Hello' message"
+    assert (message for message in ssl_pkt if "Server Hello" in ssl_pkt), "Unable to find 'Server Hello' message"
+    assert (message for message in ssl_pkt if "Client Key Exchange" in ssl_pkt), \
+        "Unable to find 'Client Key Exchange' message"
+    assert (message for message in ssl_pkt if "Change Cipher Spec" in ssl_pkt), \
+        "Unable to find 'Change Cipher Spec' message"
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
 
 
-pytest.mark.config(
+@pytest.mark.skip()
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1317,8 +1476,6 @@ pytest.mark.config(
         "band": 0
     }
 )
-
-
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
@@ -1336,6 +1493,7 @@ def test_threading_httpgetfunctionality_ble_C20339(wifi_dut, wifi_access_point, 
     httpget_obj.wait_for_exit()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1610,6 +1768,7 @@ def test_wlan_disconnection_functionality_after_ble_connection_C20261(wifi_dut, 
         "Unable to find de-auth or disassoc packets in sniffer"
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
