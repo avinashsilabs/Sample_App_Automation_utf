@@ -28,15 +28,16 @@ def test_ble_start_stop_scan_1000_times_C19810(ble_dut,ble_client):
     logger().info("start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "ble initialization failed in dut"
-    for count in iter_count:
-        count = count+1
-        logger().info(f" ======= initialize ble adv in remote device {count}")
+    for i in range(0, iter_count):
+        ble_client.interfaces.bluetooth.close()
+        logger().info(f" ======= initialize ble adv in remote device for iteration {i}")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-        assert bt_client_address, f"ble initialization failed in remote device{count}"
-        logger().info(f"ble client address of remote device {count} is {bt_client_address}")
+        assert bt_client_address, f"ble initialization failed in remote device for iteration{i}"
+        logger().info(f"ble client address of remote device for iteration {i} is {bt_client_address}")
         time.sleep(5)
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
         time.sleep(2)
+        ble_client.interfaces.bluetooth.stop_advertising()
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
 @pytest.mark.config(
@@ -54,8 +55,8 @@ def test_ble_start_stop_scan_1000_times_C19810(ble_dut,ble_client):
 )
 def test_ble_continuous_scan_C19819(ble_dut,ble_client):
     with TimeMeasurer() as t:
-        ble_scan_window = 70
-        ble_scan_interval = 50
+        ble_scan_window = 32       # 0x20 in hexadecimal
+        ble_scan_interval = 32     # 0x20 in hexadecimal
         logger().info("start ble in dut")
         bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert bt_dut_address, "ble initialization failed in dut"
@@ -66,11 +67,13 @@ def test_ble_continuous_scan_C19819(ble_dut,ble_client):
 
             time.sleep(5)
             ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,
-                                                         ble_scan_interval=ble_scan_interval/0.625,
-                                                         ble_scan_window=ble_scan_window/0.625, timeout=120)
-        time.sleep(2)
+                                                        ble_scan_interval=int(ble_scan_interval/0.625),
+                                                        ble_scan_window=int(ble_scan_window/0.625), timeout=120)
+            time.sleep(2)
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            ble_client.interfaces.bluetooth.stop_advertising()
+            ble_client.interfaces.bluetooth.close()
     logger().info(f"time taken for test {t.duration}")
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -87,8 +90,8 @@ def test_ble_continuous_scan_C19819(ble_dut,ble_client):
 )
 def test_ble_continuous_scan_C19820(ble_dut,ble_client):
     with TimeMeasurer() as t:
-        ble_scan_window = 5
-        ble_scan_interval = 100
+        ble_scan_window = 32          # 0x0020 in hexadecimal
+        ble_scan_interval = 160       # 0x00A0 in hexadecimal
         logger().info("start ble in dut")
         bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert bt_dut_address, "ble initialization failed in dut"
@@ -99,7 +102,10 @@ def test_ble_continuous_scan_C19820(ble_dut,ble_client):
 
             time.sleep(5)
             ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,
-                                                         ble_scan_interval=ble_scan_interval/0.625,
-                                                         ble_scan_window=ble_scan_window/0.625, timeout=120)
-        time.sleep(2)
+                                                         ble_scan_interval=int(ble_scan_interval/0.625),
+                                                         ble_scan_window=int(ble_scan_window/0.625), timeout=120)
+            time.sleep(2)
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            ble_client.interfaces.bluetooth.stop_advertising()
+            ble_client.interfaces.bluetooth.close()
     logger().info(f"time taken for test {t.duration}")
