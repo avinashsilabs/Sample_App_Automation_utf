@@ -984,8 +984,8 @@ devices:
             bt_vul_sniffer:
                 type: 'bluetooth.sniffer.braktooth'
                 ip_address: '10.207.18.161'
-                container_name: "bt_braketooth"
-                image: 'jeevan7302/utf_braktooth'
+                container_name: "utf_braketooth"
+                image: 'utfsilabs/utf_braktooth'
                 is_prune: false
                 is_execute_raspi_manager_scripts: false
                 username: 'test'
@@ -1174,6 +1174,7 @@ defaults:
         log_file: "some_log_file.log"
         stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
         bt_exploit_type: "au_rand_flooding"
+        script: ""
     
 
     net_perf:
