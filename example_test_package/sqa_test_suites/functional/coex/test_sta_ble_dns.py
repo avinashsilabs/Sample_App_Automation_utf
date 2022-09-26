@@ -255,6 +255,7 @@ class WifiThread(ThreadBase):
         logger().info("DHCP decryption is in progress...this may take some time")
         dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(self.dut_mac_address, decryption_key, ["dhcp"])
         logger().info(f"dhcp_list : {dhcp_list}")
+        assert dhcp_list, "DHCP packets not found"
 
 class DnsThread(ThreadBase):
     def __init__(self, wifi_dut, utf_constants, dns_mode=None):
