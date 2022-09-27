@@ -2,7 +2,9 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict, logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116TCPIPFeatureBitMap, \
     RS9116PowerSaveModes, RS9116CustomFeatureBitMap, SocketOptions, RS9116PowerSaveProcedureTypes, \
+    RS9116ExtCustomFeatureBitMap, \
     RS9116ExtTCPIPFeatureBitMap
 import time
 import pytest
@@ -206,7 +208,7 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wi
     time.sleep(2)
 
     logger().info(f"********** Calling IPERF RX, UDP traffic DUT configured as Server **************")
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -236,7 +238,8 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wi
     packet_filter2 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.da == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.sa == {dut_mac_address})'
     packet_filter3 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x00) && (wlan.da == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.sa == {dut_mac_address})'
     packet_filter4 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.sa == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.da == {dut_mac_address})'
-    packet_filter5 = f'(wlan.addr =={dut_mac_address} && (wlan.fc.type_subtype == 0x0028 || wlan.fc.type_subtype == 0x0019))'
+    packet_filter5 = f'(wlan.addr =={dut_mac_address} && (wlan.fc.type_subtype == 0x0028 || wlan.fc.type_subtype == ' \
+                     f'0x0019)) '
 
     logger().info(f"***** Validating packets for Action frame to check Add-ba request from AP  ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
@@ -430,7 +433,7 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer, net_p
     time.sleep(2)
 
     logger().info(f"********** Calling IPERF RX, UDP traffic DUT configured as Server **************")
-    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
 
     logger().info(f"Host IP: {host_ip}")
     logger().info(f"Dut IP: {device_ip}")
@@ -460,7 +463,8 @@ def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer, net_p
     packet_filter2 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.da == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.sa == {dut_mac_address})'
     packet_filter3 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x00) && (wlan.da == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.sa == {dut_mac_address})'
     packet_filter4 = f'(wlan.fc.type_subtype ==0x000d) && (wlan.fixed.action_code == 0x01) && (wlan.sa == {wifi_access_point.interfaces.wifi.bssid}) && (wlan.da == {dut_mac_address})'
-    packet_filter5 = f'(wlan.addr =={dut_mac_address} && (wlan.fc.type_subtype == 0x0028 || wlan.fc.type_subtype == 0x0019))'
+    packet_filter5 = f'(wlan.addr =={dut_mac_address} && (wlan.fc.type_subtype == 0x0028 || wlan.fc.type_subtype == ' \
+                     f'0x0019)) '
 
     logger().info(f"***** Validating packets for Action frame to check Add-ba request from AP  ******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
