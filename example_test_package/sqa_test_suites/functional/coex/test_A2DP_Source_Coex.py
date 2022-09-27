@@ -96,9 +96,7 @@ class A2DP_DUT_stream(ThreadBase):
                     time.sleep(60)
                 elif self.codec == "PCM":
                     # A2DP PCM audio streaming to RASPI
-                    # for the time being using the SBC here also
-                    self.wifi_dut.interfaces.wifi.bt_a2dp_start_sbc_streaming()
-                    time.sleep(60)
+                    assert self.codec != "PCM", "PCM is not supported"
 
                 ping_response = self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
                 logger().info(f"l2ping response {ping_response}")
