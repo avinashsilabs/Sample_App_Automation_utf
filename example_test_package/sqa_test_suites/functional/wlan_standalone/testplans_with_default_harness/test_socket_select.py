@@ -1577,7 +1577,7 @@ def test_socket_select_udp_bidirectional_TC19338(
                 data_length)
             logger.info(f"DUT Received data ->  {data_receive} from address {address}")
             assert len(data_sent) == len(
-                data_receive.decode()), "data length sent by DUT and received on remote peer is " \
+                data_receive), "data length sent by DUT and received on remote peer is " \
                                         "not matching "
             logger.info("data length sent by DUT and received on remote peer is matching")
             wifi_dut.interfaces.wifi.set_fd(socket_count=4, start_sock_no=0)
