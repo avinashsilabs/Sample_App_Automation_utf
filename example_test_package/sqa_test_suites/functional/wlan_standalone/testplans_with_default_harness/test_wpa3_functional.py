@@ -1109,18 +1109,28 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
     status = ping(dut_ip, ping_count)
     assert status == 1
     time.sleep(5)
-    wifi_dut.interfaces.wifi.leave()
-
-    time.sleep(2)
-    logger().info('#### Turn off Access point ####')
-
-    if state == 'true':
-        switch.interfaces.pdu_switch.turn_off()
-    time.sleep(30)
 
     packet_filter4 = f'!(wlan.fc.type_subtype == 0x0008) && (wlan.tag.number == 45 ) || ' \
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {mac_address}'
+
+    logger().info("Checking for association packet before turning off the AP")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
+             'Unable to find Broadcast Probe request packet'
+    if result:
+        logger().info(f'Sniffer validation pass')
+    else:
+        assert result
+
+    logger().info('#### Turn off Access point and turn on the sniffer to capture the re association after rejoin####')
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_rejoin_with_wpa3_security_after_ap_turn_off_c34509')
+    if state == 'true':
+        switch.interfaces.pdu_switch.turn_off()
+    time.sleep(30)
 
     logger().info('##### Turn on Access point #####')
     state = switch.interfaces.pdu_switch.get_state()
@@ -1133,15 +1143,11 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
     try:
         wifi_sniffer.interfaces.capture.stop_capture()
         result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count'], \
-            'Unable to find Broadcast Probe request packet'
+                 'Unable to find Broadcast Probe request packet'
         if result:
             logger().info(f'Sniffer validation pass')
         else:
             assert result
-
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
-                                         join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                             | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
 
         result = wifi_dut.interfaces.wifi.start_ip()
         dut_ip = result.ip.decode()
@@ -1161,4 +1167,3 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
             switch.interfaces.pdu_switch.turn_on()
             logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
             time.sleep(30)
-
