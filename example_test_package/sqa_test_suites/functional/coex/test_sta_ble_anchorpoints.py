@@ -42,6 +42,13 @@ def logger():
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
+    Connection_Handle       = "0x61 0x00"
+    Connection_Interval_Min = "0x06 0x00"
+    Connection_Interval_Max = "0x06 0x00"
+    Max_Latency             = "0x05 0x00"
+    Supervision_Timeout     = "0x90 0x01"
+    Min_CE_Length           = "0x00 0x00"
+    Max_CE_Length           = "0x00 0x00"
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -97,10 +104,8 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
-
     logger().info(status)
     logger().info(content)
     assert content == content1, f"http send and receive content is not same"
@@ -127,13 +132,13 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
         ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
-                                                                         connection_handle="0x61 0x00",
-                                                                         connection_interval_min="0x06 0x00",
-                                                                         connection_interval_max="0x06 0x00",
-                                                                         max_latency="0x05 0x00",
-                                                                         supervision_timeout="0x90 0x01",
-                                                                         min_ce_length="0x00 0x00",
-                                                                         max_ce_length="0x00 0x00"
+                                                                         connection_handle=Connection_Handle,
+                                                                         connection_interval_min=Connection_Interval_Min,
+                                                                         connection_interval_max=Connection_Interval_Max,
+                                                                         max_latency=Max_Latency,
+                                                                         supervision_timeout=Supervision_Timeout,
+                                                                         min_ce_length=Min_CE_Length,
+                                                                         max_ce_length=Max_CE_Length
                                                                         )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -172,6 +177,13 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
+    Connection_Handle       = "0x61 0x00"
+    Connection_Interval_Min = "0x0C 0x00"
+    Connection_Interval_Max = "0x0C 0x00"
+    Max_Latency             = "0x05 0x00"
+    Supervision_Timeout     = "0x90 0x01"
+    Min_CE_Length           = "0x00 0x00"
+    Max_CE_Length           = "0x00 0x00"
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -227,10 +239,8 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
-
     logger().info(status)
     logger().info(content)
     assert content == content1, f"http send and receive content is not same"
@@ -257,13 +267,13 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
         ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
-                                                                         connection_handle="0x61 0x00",
-                                                                         connection_interval_min="0x0C 0x00",
-                                                                         connection_interval_max="0x0C 0x00",
-                                                                         max_latency="0x05 0x00",
-                                                                         supervision_timeout="0x90 0x01",
-                                                                         min_ce_length="0x00 0x00",
-                                                                         max_ce_length="0x00 0x00"
+                                                                         connection_handle=Connection_Handle,
+                                                                         connection_interval_min=Connection_Interval_Min,
+                                                                         connection_interval_max=Connection_Interval_Max,
+                                                                         max_latency=Max_Latency,
+                                                                         supervision_timeout=Supervision_Timeout,
+                                                                         min_ce_length=Min_CE_Length,
+                                                                         max_ce_length=Max_CE_Length
                                                                         )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -302,6 +312,13 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
+    Connection_Handle       = "0x61 0x00"
+    Connection_Interval_Min = "0x80 0x0C"
+    Connection_Interval_Max = "0x80 0x0C"
+    Max_Latency             = "0x02 0x00"
+    Supervision_Timeout     = "0x80 0x0C"
+    Min_CE_Length           = "0x00 0x00"
+    Max_CE_Length           = "0x00 0x00"
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -357,10 +374,8 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
-
     logger().info(status)
     logger().info(content)
     assert content == content1, f"http send and receive content is not same"
@@ -387,13 +402,13 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
         ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
-                                                                         connection_handle="0x61 0x00",
-                                                                         connection_interval_min="0x80 0x0C",
-                                                                         connection_interval_max="0x80 0x0C",
-                                                                         max_latency="0x02 0x00",
-                                                                         supervision_timeout="0x80 0x0C",
-                                                                         min_ce_length="0x00 0x00",
-                                                                         max_ce_length="0x00 0x00"
+                                                                         connection_handle=Connection_Handle,
+                                                                         connection_interval_min=Connection_Interval_Min,
+                                                                         connection_interval_max=Connection_Interval_Max,
+                                                                         max_latency=Max_Latency,
+                                                                         supervision_timeout=Supervision_Timeout,
+                                                                         min_ce_length=Min_CE_Length,
+                                                                         max_ce_length=Max_CE_Length
                                                                         )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -432,6 +447,13 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
+    Connection_Handle       = "0x61 0x00"
+    Connection_Interval_Min = "0x06 0x00"
+    Connection_Interval_Max = "0x06 0x00"
+    Max_Latency             = "0x00 0x00"
+    Supervision_Timeout     = "0x90 0x01"
+    Min_CE_Length           = "0x00 0x00"
+    Max_CE_Length           = "0x00 0x00"
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -487,10 +509,8 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
-
     logger().info(status)
     logger().info(content)
     assert content == content1, f"http send and receive content is not same"
@@ -517,13 +537,13 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
         ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
-                                                                         connection_handle="0x61 0x00",
-                                                                         connection_interval_min="0x06 0x00",
-                                                                         connection_interval_max="0x06 0x00",
-                                                                         max_latency="0x00 0x00",
-                                                                         supervision_timeout="0x90 0x01",
-                                                                         min_ce_length="0x00 0x00",
-                                                                         max_ce_length="0x00 0x00"
+                                                                         connection_handle=Connection_Handle,
+                                                                         connection_interval_min=Connection_Interval_Min,
+                                                                         connection_interval_max=Connection_Interval_Max,
+                                                                         max_latency=Max_Latency,
+                                                                         supervision_timeout=Supervision_Timeout,
+                                                                         min_ce_length=Min_CE_Length,
+                                                                         max_ce_length=Max_CE_Length
                                                                         )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
@@ -562,6 +582,13 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
+    Connection_Handle       = "0x61 0x00"
+    Connection_Interval_Min = "0x80 0x0C"
+    Connection_Interval_Max = "0x80 0x0C"
+    Max_Latency             = "0x00 0x00"
+    Supervision_Timeout     = "0x80 0x0C"
+    Min_CE_Length           = "0x00 0x00"
+    Max_CE_Length           = "0x00 0x00"
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -617,10 +644,8 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     logger().info("fetching the data from server bt get method")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,index_path)
     status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
-
     logger().info(status)
     logger().info(content)
     assert content == content1, f"http send and receive content is not same"
@@ -647,13 +672,13 @@ def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_
     with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
         logger().info("Updating ble connection with connection parameters")
         ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
-                                                                         connection_handle="0x61 0x00",
-                                                                         connection_interval_min="0x80 0x0C",
-                                                                         connection_interval_max="0x80 0x0C",
-                                                                         max_latency="0x00 0x00",
-                                                                         supervision_timeout="0x80 0x0C",
-                                                                         min_ce_length="0x00 0x00",
-                                                                         max_ce_length="0x00 0x00"
+                                                                         connection_handle=Connection_Handle,
+                                                                         connection_interval_min=Connection_Interval_Min,
+                                                                         connection_interval_max=Connection_Interval_Max,
+                                                                         max_latency=Max_Latency,
+                                                                         supervision_timeout=Supervision_Timeout,
+                                                                         min_ce_length=Min_CE_Length,
+                                                                         max_ce_length=Max_CE_Length
                                                                         )
     # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
     time.sleep(300)
