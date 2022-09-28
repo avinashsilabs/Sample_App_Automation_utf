@@ -1,6 +1,7 @@
 
 import time
 import pytest
+from paramiko.util import log_to_file
 
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
@@ -19,7 +20,6 @@ from utf.utils.logger import get_logger
 @pytest.mark.config(
     "bt_vulnerability_sniffer",
     bt_vulnerability_sniffer={
-        "log_file": "test_config_for_bt_vulnerability_sniffer.log",
         "bt_exploit_type": "au_rand_flooding"
     },
 )
@@ -33,7 +33,8 @@ def test_bt_vulnerability_sniffer(
     assert bt_dut_address is not None
 
     bt_vulnerability_sniffer.interfaces.bt_vul_sniffer.start_capture(
-        dut_address=bt_dut_address
+        dut_address=bt_dut_address,
+        log_file=f"reports/test_ble_vul_sniffer.log_{int(time.time())}"
     )
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address=bt_dut_address, pin_code=pin_code)
