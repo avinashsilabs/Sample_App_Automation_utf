@@ -12,7 +12,7 @@ from utf.utils.thread_base import ThreadBase
 
 def logger():
     return get_logger(__name__)
-
+time_lapse = 60 *48
 """
     setup requirement:
         1. DUT(RS9116)
