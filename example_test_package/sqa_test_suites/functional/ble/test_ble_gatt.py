@@ -65,13 +65,20 @@ def test_fetch_profiles_from_RD1_C19860(wifi_dut, ble_client):
     # Start scanning and connect to ble client
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
-    assert exc_info.value.error_code == 0x0003  # No AP Found
+    assert exc_info.value.error_code == 0x0003,"AP not Found"# No AP Found
     wifi_dut.interfaces.wifi.ble_stop_scanning()
+    # Enables the wifi power save in dut
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    # Enables the bt power save in dut
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
                                          expected="RSI_BLE_SECURITY_KEYS_EVENT")
-
+    time.sleep(60)
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
@@ -112,6 +119,13 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_client):
         wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
     assert exc_info.value.error_code == 0x0003  # No AP Found
     wifi_dut.interfaces.wifi.ble_stop_scanning()
+    # Enables the wifi power save in dut
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    # Enables the bt power save in dut
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
     wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
@@ -121,7 +135,7 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_client):
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected
-    assert state_int is not None, "BLEoOnnection failed"
+    assert state_int is not None, "BLE Connection failed"
     logger().info(" Connected to the BLE device ")
 
     # get all profiles
@@ -165,6 +179,13 @@ def test_fetch_characteristis_from_RD1_C19863(wifi_dut, ble_client):
     # Start scanning and connect to ble client
     wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
     wifi_dut.interfaces.wifi.ble_stop_scanning()
+    # Enables the wifi power save in dut
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    # Enables the bt power save in dut
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take upto {timeout} seconds....")
@@ -271,13 +292,14 @@ def test_validate_add_services_in_server_slave_C19878(wifi_dut, ble_client):
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address, "Failed to load bt address..."
     wifi_dut.interfaces.wifi.ble_add_service(uid=0x180D)
+    logger().info("enabled battery service")
 
     logger().info("start ble advertising....")
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     logger().info("scanning for ble client.. ")
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "failed to fetch scan list.. "
+    assert bt_client_address, "The client address is not found"
     time.sleep(5)
     ble_client.interfaces.bluetooth.stop_scanning()
 
@@ -292,7 +314,8 @@ def test_validate_add_services_in_server_slave_C19878(wifi_dut, ble_client):
 
     logger().info("connecting to dut....")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
-    time.sleep(2)
+    #stability for 60sec and then disconnection
+    time.sleep(60)
 
     logger().info("verifying dut state after the conn......")
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -340,7 +363,7 @@ def test_linkloss_profilesfrom_RD1_C19874(wifi_dut, ble_client):
     ble_client.interfaces.bluetooth.stop_scanning()
     assert device_found
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
-    time.sleep(20)
+    time.sleep(60)
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
@@ -378,8 +401,22 @@ def test_ble_multi_connect_disconnect_C19875(wifi_dut, ble_client):
     assert device_found
     for i in range(10):
         ble_client.interfaces.bluetooth.connect(bt_dut_address)
-        time.sleep(2)
-        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-        time.sleep(1)
+        # Get the state of the dut
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
+        assert state_int is not None, "BLE Connection failed"
+        logger().info(" Connected to the BLE device ")
+        time.sleep(10)
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
+        assert state_int is not None, "BLE Connection got disconnected"
+        logger().info(" Connected to the BLE device ")
+        if state_int is None:
+            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+            time.sleep(1)
+            logger().info(" Disconnected with the BLE device ")
+        #since at this point the disconnection is already completed
         wifi_dut.interfaces.wifi.ble_start_advertising()
         time.sleep(1)
