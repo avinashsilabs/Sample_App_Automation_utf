@@ -37,10 +37,6 @@ def logger():
     return get_logger(__name__)
 
 
-# Configure below time parameter to run the test case for specific time lapse # below is the 30 mins given as default
-# time_lapse = 30
-# ping_count = 10
-
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
@@ -55,13 +51,14 @@ static_gateway = '192.168.100.76'
 
 
 def run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol, iperf_time=60):
+    ping_count = 5
     for count in range(3):
         try:
             logger().info("***** preparing iperf dut as client *****")
             net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=dut_ip, protocol=protocol,
                                                             time_out=iperf_time)
             logger().info("Verifying host connection")
-            ping_from_client(dut_ip, 5)
+            ping_from_client(dut_ip, ping_count)
             net_perf_client.interfaces.net_perf.start()
             logger().info(f"***** open socket and send traffic *****")
             wifi_dut.interfaces.wifi.send_traffic_from_device(
@@ -86,6 +83,7 @@ def run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol
 
 
 def run_iperf_dut_as_server(wifi_dut, net_perf_client, host_ip, dut_ip, protocol, iperf_time=60):
+    ping_count = 5
     for count in range(3):
         try:
             logger().info(f"***** preparing iperf dut as server *****")
@@ -96,7 +94,7 @@ def run_iperf_dut_as_server(wifi_dut, net_perf_client, host_ip, dut_ip, protocol
             result = Result(net_perf_client.interfaces.net_perf.protocol)
             time.sleep(3)
             logger().info("Verifying host connection")
-            ping_from_client(dut_ip, 5)
+            ping_from_client(dut_ip, ping_count)
             logger().info("***** open socket and start listening *****")
             with wifi_dut.interfaces.wifi.start_socket_reader(
                     log_file=net_perf_client.interfaces.net_perf.device_log_file_handle,
@@ -729,4 +727,3 @@ def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, n
 
     logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
     wifi_client.interfaces.wifi.leave()
-    wifi_dut.interfaces.wifi.wireless_deinit()
