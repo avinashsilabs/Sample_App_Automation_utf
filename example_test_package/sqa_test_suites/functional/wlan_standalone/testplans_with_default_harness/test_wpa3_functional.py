@@ -1167,3 +1167,4 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
             switch.interfaces.pdu_switch.turn_on()
             logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
             time.sleep(30)
+
