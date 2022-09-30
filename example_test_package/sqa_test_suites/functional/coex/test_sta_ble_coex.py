@@ -2207,8 +2207,6 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
     verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
-########################### PR5 ##################################
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2645,7 +2643,6 @@ def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, b
     verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
-# =====================================================================================
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
