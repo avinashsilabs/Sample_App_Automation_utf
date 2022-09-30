@@ -71,11 +71,10 @@ def test_sniffer_icmp_inspection(
 def test_live_sniffer(
     wifi_sniffer, wifi_access_point, wifi_dut
 ):
-    with wifi_sniffer.interfaces.livecapture as live_capture:
+    with wifi_sniffer.interfaces.live_capture as live_capture:
         live_capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-
         timeout = 30
         start = time.time()
         live_capture.start_live_capture(timeout=timeout, capture_file=f"live_sniffing", filter_layer_name='wlan',
