@@ -72,10 +72,10 @@ def test_bt_spp_dut_as_master(wifi_dut, bt_client, power_meter):
     sniff_tout = 2
 
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
-    assert bt_dut_address ,"Dut address not found"
+    assert bt_dut_address is not None,"Dut address not found"
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-    assert bt_client_address , "bt client address not found"
+    assert bt_client_address is not None , "bt client address not found"
 
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
     if not found:
