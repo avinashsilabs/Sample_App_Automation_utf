@@ -213,8 +213,6 @@ def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wif
     # This API gets the host ip for the http server
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -312,8 +310,6 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -411,8 +407,6 @@ def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server,
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -589,8 +583,6 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -678,8 +670,6 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
     # This API gets the host ip for the http server
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -777,8 +767,6 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
     # This API gets the host ip for the http server
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -873,8 +861,6 @@ def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_d
     # This API gets the host ip for the http server
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     # logger().info("pinging to server ip....")
@@ -973,8 +959,6 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
     # This API gets the host ip for the http server
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     # logger().info("pinging to server ip....")
@@ -1251,10 +1235,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, wif
     # Enables and assign the dhcp in DUT
     logger().info("starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
-
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
-    time.sleep(5)
+    time.sleep(2)
 
     # performs the firmware upgrade on DUT over the http port
     logger().info("performing fw upgrade on dut with corrupted rps....")
