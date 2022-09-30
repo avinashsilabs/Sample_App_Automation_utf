@@ -76,14 +76,16 @@ def test_live_sniffer(
             channel=wifi_access_point.interfaces.wifi.channel
         )
 
-        live_capture.start_live_capture(timeout=30, capture_file=f"live_sniffing", filter_layer_name='wlan',
+        timeout = 30
+        start = time.time()
+        live_capture.start_live_capture(timeout=timeout, capture_file=f"live_sniffing", filter_layer_name='wlan',
                                         filter_field='fc.type.type_subtype', filter_val='12')
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         ip_config = wifi_dut.interfaces.wifi.start_ip()
         wifi_dut.interfaces.wifi.ping(ip_config.gateway)
         wifi_dut.interfaces.wifi.leave()
         is_packet_found = False
-        while live_capture.is_sniffing is not None:
+        while time.time() - start < timeout:
             packet = live_capture.get_packet()
             if packet is not None:
                 is_packet_found = True
