@@ -723,3 +723,137 @@ def test_ble_connect_with_1_28ms_4dBm_C20577(wifi_dut, ble_client, power_meter):
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
 
 
+##############BLE PER_0dBm##########
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
+
+
+       },
+)
+def test_ble_per_1mbps_tx_0dBm_C20578(bt_dut, bt_client, power_meter):
+    cmd_ix = 0x13
+    access_addr = 1903575337
+    pkt_len = 240
+    phy_rate = 1
+    rx_chnl_num = 10
+    tx_chnl_num = 10
+    scrambler_seed = 0
+    le_chnl_type = 1
+    payload_type = 0x06
+    tx_power = 31
+    transmit_mode = 1
+    freq_hop_en = 0
+    ant_sel = 2
+    rf_type = 1
+    pll_mode = 0
+    inter_pkt_gap = 0
+    num_pkts = 1000
+    rf_chain = 3
+    cmd_type = 8
+
+    logger().info("get dut bt address.....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    logger().info("configure bt local name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name='SILABS_BT')
+
+    logger().info("get bt local name....")
+    bt_dut.interfaces.bluetooth.bt_get_local_name()
+
+    bt_dut.interfaces.bluetooth.set_ble_per_tx_params(cmd_ix=cmd_ix, transmit_enable=1, access_addr=access_addr,
+                                                      phy_rate=phy_rate, rx_chnl_num =rx_chnl_num, tx_chnl_num=tx_chnl_num,
+                                                      scrambler_seed=scrambler_seed, le_chnl_type=le_chnl_type,
+                                                      freq_hop_en=freq_hop_en,ant_sel=ant_sel,pll_mode=pll_mode,
+                                                      rf_type=rf_type,rf_chain=rf_chain,pkt_len=pkt_len, payload_type=payload_type,tx_power=tx_power,
+                                                      transmit_mode=transmit_mode, inter_pkt_gap=inter_pkt_gap,
+                                                      num_pkts=num_pkts)
+    time.sleep(10)
+
+    logger().info("starting per stats")
+    bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
+    time.sleep(10)
+    logger().info("power number measurement initiated")
+    power_obj = power_number_output(power_meter=power_meter)
+    power_obj.get_power_value()
+
+
+##############BLE PER_10dBm##########
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
+        "enable_ble_power_index_params": 0,
+        "power_index": 63,
+
+    },
+)
+def test_ble_per_1mbps_tx_10dBm_C2057(bt_dut, bt_client, power_meter):
+    cmd_ix = 19
+    access_addr = 1903575337
+    pkt_len = 240
+    phy_rate = 1
+    rx_chnl_num = 10
+    tx_chnl_num = 10
+    scrambler_seed = 0
+    le_chnl_type = 1
+    payload_type = 0x06
+    tx_power = 63
+    transmit_mode = 1
+    freq_hop_en = 0
+    ant_sel = 2
+    rf_type = 1
+    pll_mode = 0
+    inter_pkt_gap = 0
+    num_pkts = 1000
+    rf_chain = 3
+    cmd_type = 8
+
+    logger().info("get dut bt address.....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    logger().info(f'bt dut address {bt_dut_address}')
+
+    logger().info("configure bt local name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name='SILABS_BT')
+
+    logger().info("get bt local name....")
+    bt_dut.interfaces.bluetooth.bt_get_local_name()
+
+    bt_dut.interfaces.bluetooth.set_ble_per_tx_params(cmd_ix=cmd_ix, transmit_enable=1, access_addr=access_addr,
+                                                      phy_rate=phy_rate, rx_chnl_num=rx_chnl_num,
+                                                      tx_chnl_num=tx_chnl_num,
+                                                      scrambler_seed=scrambler_seed, le_chnl_type=le_chnl_type,
+                                                      freq_hop_en=freq_hop_en, ant_sel=ant_sel, pll_mode=pll_mode,
+                                                      rf_type=rf_type, rf_chain=rf_chain, pkt_len=pkt_len,
+                                                      payload_type=payload_type, tx_power=tx_power,
+                                                      transmit_mode=transmit_mode, inter_pkt_gap=inter_pkt_gap,
+                                                      num_pkts=num_pkts)
+    time.sleep(10)
+
+    logger().info("starting per stats")
+    bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
+    time.sleep(10)
+    logger().info("power number measurement initiated")
+    power_obj = power_number_output(power_meter=power_meter)
+    power_obj.get_power_value()
+
+
+
