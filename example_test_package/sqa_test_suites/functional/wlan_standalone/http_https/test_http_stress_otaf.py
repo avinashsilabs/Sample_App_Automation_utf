@@ -61,8 +61,6 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
 
             logger().info("fetching server ip....")
             host_ip = get_host_ip()
-            start_time = time.perf_counter_ns()
-            async_timestamp = 0
             logger().info(f"server ip is {host_ip}")
 
             logger().info("pinging to server ip....")
@@ -83,6 +81,10 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
 
             logger().info("Starting dhcp....")
             wifi_dut.interfaces.wifi.start_ip()
+
+            start_time = time.perf_counter_ns()
+            async_timestamp = 0
+            time.sleep(2)
 
             logger().info("Performing fw upgrade on DUT....")
             wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
