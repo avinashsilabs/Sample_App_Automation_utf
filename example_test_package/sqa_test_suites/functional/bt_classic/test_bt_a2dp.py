@@ -216,7 +216,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
         retry_counts=3,
     )
     if not device_found:
-        logger().error(f"Dut unable to find the bt client device. The test case may fail.")
+        assert device_found, f"Dut unable to find the bt client device. The test case may fail."
     logger().info(f"BT found device is {device_found}, found bt client address {bt_client_address}")
 
     logger().info("=========Initiating BT Connection and followed by A2DP Connection=========")
