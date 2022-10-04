@@ -138,7 +138,7 @@ def test_store_config_by_turning_off_AP_C19082(wifi_sniffer, wifi_dut, wifi_acce
             time.sleep(2)
             with pytest.raises(WlanError) as exc_info:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0, timeout=120)
             assert exc_info.value.error_code == 0x3, "wrong error code found"
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -592,7 +592,7 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             time.sleep(2)
             with pytest.raises(WlanError) as exc_info:
                 logger().info("Initializing the DUT")
-                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(oper_mode=0, coex_mode=9, retries=0, timeout=120)
             assert (exc_info.value.error_code == 0x3 or exc_info.value.error_code == 0x19),\
                 "Wrong error code found"
             time.sleep(150)

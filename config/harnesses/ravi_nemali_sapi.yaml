@@ -25,7 +25,7 @@ devices:
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
             cli_transport: 'uart'
-            #gpio_transport: 'gpio_uart'
+#            gpio_transport: 'gpio_uart'
 
         # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
         interfaces:
@@ -36,6 +36,53 @@ devices:
                 # The type attribute is mandatory and specifies the module within the interfaces folder
                 # used to create the interface object
                 type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the 9116's 'UART' port
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+
+            # 'gpio_uart' is a special interface that indicates which UART is used
+            # for GPIO control with the AT command set.
+            # Typically this will be the UART for the EFx32 device.
+            gpio_uart:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+
+            wifi:
+                # the wifi interface type for the 9116 must be either
+                # 'cli.rs_at_commands' or 'cli.rs_sapi_commands'
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'cli.rs_at_commands'
+                src_dir: 'utf_wiseconnect'
+
+                # reset type
+                # this mechanism is applied when the wifi_dut fixture is created.
+                # null (or parameter not present) - do not reset device when creating interface
+                # hard - use physical reset line to reset device
+                #   - this requires the gpio_transport to be configured
+                # soft - use software initiated reset, if available
+                # reset: 'soft'
+
     rs9116_sapi:
 
         # The 'type' attribute is optional.  If it is present, the device will be created via a
@@ -57,6 +104,30 @@ devices:
 
             # Like the top level device names, the interface names are also arbitrary, but must be unique for a
             # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
 
             wifi:
                 # the wifi interface type for the 9116 must be either
@@ -65,6 +136,90 @@ devices:
                 # to be defined in the defaults section for specifying the
                 # communication interface to the device
                 type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
+
+    bt_wiseconnect:
+        type: 'efx32'
+        subtype: 'efx32'
+        commander_options: '--serialno 000440192804' #configure secondary EVK serial number
+        defaults:
+            rs_command_instance: 'rs_cmd_instance'
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440192804' # configure secondary evk serial number
+            bluetooth:
+                type: 'bluetooth'
+                src_dir: 'utf_wiseconnect'
+            rs_cmd_instance:
+                type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
+
+    rs9116_stm32_sapi:
+
+        # The 'type' attribute is optional.  If it is present, the device will be created via a
+        # create_device() function located in the corresponding python module under the 'devices'
+        # folder.
+        # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
+        # In the case of a 9116 device, the type 'rs911x' should be used
+        type: 'rs911x'
+        subtype: 'rs9116'
+        src_dir: 'utf_wiseconnect'
+
+        # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+
+            # Like the top level device names, the interface names are also arbitrary, but must be unique for a
+            # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x0483
+                pid: 0x374b
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+
+            wifi:
+                # the wifi interface type for the 9116 must be either
+                # 'cli.rs_at_commands' or 'cli.rs_sapi_commands'
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'cli.rs_sapi_stm32_commands'
                 src_dir: 'utf_wiseconnect'
 
     rs9117_sapi:
@@ -122,35 +277,6 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
-    bt_wiseconnect:
-        type: 'efx32'
-        subtype: 'efx32'
-        commander_options: '--serialno 000440192804'
-        defaults:
-            rs_command_instance: 'rs_cmd_instance'
-            cli_transport: 'serial'
-        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
-        interfaces:
-            serial:
-                # The type attribute is mandatory and specifies the module within the interfaces folder
-                # used to create the interface object
-                type: 'serial'
-
-                # Other attributes are specific to the interface type; some may be optional or mandatory
-                # For a serial uart device connected via USB, you can enable autodetection of the port
-                # by specifying the vid and pid of the device.
-                # In the below example, the vid and pid represent the USB connection to the WSTK
-                port: 'auto'
-                vid: 0x1366
-                pid: 0x0105
-                serial_number: '000440192804'
-            bluetooth:
-                type: 'bluetooth'
-                src_dir: 'utf_wiseconnect'
-            rs_cmd_instance:
-                type: 'cli.rs_sapi_commands'
-                src_dir: 'utf_wiseconnect'
-
     #EFR32 configuration
     efr32_4180b:
         type: 'efx32'
@@ -162,6 +288,17 @@ devices:
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+
+    stm32_nucleo_f411re:
+        type: 'stm32'
+        subtype: 'stm32'
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x0483
+                pid: 0x374b
+
 
     # This represents an access point configuration.
     static_ap:
@@ -188,11 +325,13 @@ devices:
                 ip_address: '192.168.0.1'
                 web_ui_port: 80
                 admin_password: '12345678'
+                skip_assertion_failure : True
                 security: WPA
                 ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                passphrase: 'thisisatestnetwork11'
                 supports: 'wifi_ap'
                 channel: 1
+
 
     # This represents another access point configuration.
     asus_rt_ax3000_ap:
@@ -204,7 +343,7 @@ devices:
                 ssh_port: 1022
                 ssid: "TESTTEST-ASUS"
                 protected_management_frame: 'Disable'
-                skip_assertion_failure : True
+                skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "192.168.50.176"
                 radius_port: "1812"
@@ -216,8 +355,80 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: 'F6E49FCE'
-                switch: 'pdu_switch'
+                switch_config: 'pdu_switch'
             pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '192.168.1.4'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 1
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
+    # This represents another access point configuration.
+    raspi_wifi:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.client.paho_client'
+                disable_certificate_verification: false
+            wifi:
+                # The 'wifi.access_points.linux' device type represents a linux-based access point
+                # running hostapd to create a soft AP
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '192.168.0.1'
+                region: 'Japan'
+
+    raspi_wifi_ssh:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.0.152
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '192.168.0.152'
+
+    raspi_ble_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            bluetooth:
+                type: 'bluetooth.bluez'
+                shell: 'linux_shell'
+
+
+    raspi_multicast:
+        interfaces:
+            multicast:
+                type: 'multicast.multicast_socket'
+                ip_version: 0
+                multicast_ip: '239.255.255.250'
+                multicast_ip2: '239.255.255.250'
+                dut_local_socket: 5001
+                destination_socket: 5002
+                ttl: 32
+                time: 30
                 buffer_length: 1470
                 no_of_pkts: 500
                 multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
@@ -258,7 +469,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.1.142'
+                ip_address: '10.207.18.146'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
@@ -329,6 +540,133 @@ devices:
                 forward_to: 'raspi_bt_client:linux_shell'
                 host: 'docker_host'
 
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
+    raspi_mosquitto:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                # (optional) listen address for broker (defaults to 0.0.0.0)
+                server_listen_address: '0.0.0.0'
+                # (optional) port on which the broker is listening (defaults to 1883)
+                port: 1883
+                # (required) network interface to which the broker is bound
+                interface: 'wlan0'
+                # (optional) controls whether tls is enabled. defaults to false
+                tls_enabled: false
+
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
+    raspi_mosquitto_auth:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                # (optional) listen address for broker (defaults to 0.0.0.0)
+                server_listen_address: '0.0.0.0'
+                # (optional) port on which the broker is listening (defaults to 1883)
+                port: 1883
+                # (required) network interface to which the broker is bound
+                interface: 'wlan0'
+                # (optional) username and password credentials for authentication to the broker
+                #            Defaults to authentication disabled
+                username: 'testuser'
+                password: 'testpassword'
+                # (optional) controls whether tls is enabled. defaults to false
+                tls_enabled: false
+
+    # this represents an MQTT broker running on the raspberry pi on port 8883 with TLS and authentication enabled
+    raspi_mosquitto_tls:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_mosquitto_tls_ecdsa:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'eth0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'server_ecdsa.key'
+                tls_certificate: 'server_ecdsa.crt'
+                tls_ca_chain: 'ca_ecdsa.crt'
+    # this represents a statically-configured MQTT broker
+    static_mqtt_broker:
+        interfaces:
+            mqtt:
+                type: 'mqtt.server.static'
+                # hostname and port are required parameters
+                hostname: 'mosquitto.dev.silabs.net'
+                port: 8883
+                # (optional) username and password credentials for authentication to the broker
+                #            Defaults to authentication disabled
+                username: 'testuser'
+                password: 'testpassword'
+                # (optional) controls whether tls is enabled. defaults to false
+                tls_enabled: true
+                # If TLS is enabled, tls_ca_chain must be specified and contain the name of
+                # a file within the utils/tls_certificates directory containing the CA certificate chain
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_lighttpd:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
+    raspi_lighttpd_tls:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
             http:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
@@ -394,13 +732,13 @@ devices:
                 username: 'test'
                 password: 'test123'
 
-    keysight_power_analyzer:
+    keysight_N6705_power_analyzer:
         interfaces:
             power_meter:
                 type: 'power_meter.keysight_N6705'
-                instrument_lan_ip_address: '10.207.19.83'
+                instrument_lan_ip_address: '10.207.21.140'
 
-    keysight_power_analyzer_benchvue_win_rm:
+    keysight_benchvue_power_analyzer_win_rm:
         interfaces:
             windows_shell:
                 type: 'rem_mgmt.win_rm'
@@ -414,7 +752,7 @@ devices:
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
 
-    keysight_power_analyzer_benchvue_win_wcf:
+    keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
             wcf_power_meter_keysight_benchvue_service:
                 type: 'rem_mgmt.win_wcf'
@@ -440,6 +778,84 @@ devices:
                 port: 8883
                 private_key: 'python-thing-private.pem.key'
                 root_ca: 'AWS-IoT-root-CA.crt'
+                client_cert: 'python-thing-certificate.pem.crt'
+
+
+    aws_s3_boto3:
+        interfaces:
+            s3:
+                type: 'aws_s3.boto3'
+                aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
+                aws_secret_access_key: "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"
+                region: "us-east-1"
+
+
+    50pa500_attenuator:
+        interfaces:
+            attenuator:
+                type: 'attenuator.50pa500'
+                shell: 'telnet_shell'
+            telnet_shell:
+                type: 'shell.telnet_shell'
+                remote: '192.168.10.185'
+                port: 3001
+                username: null
+                password: null
+
+
+    raspi_ssl_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            ssl:
+                type: 'ssl.server.ssl_linux'
+                shell: 'linux_shell'
+                port: 5001
+                interface: 'eth0'
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                client_limit: 1
+                ip_version: 0
+                buffer_length: 1300
+                no_of_pkts: 1000
+                time: 30
+                device_port1: 5001
+                device_port2: 5002
+                device_port3: 5003
+
+    raspi_ssl_server_static:
+        interfaces:
+            ssl:
+                type: 'ssl.server.static'
+                hostname: '192.168.1.6'
+                port: 5001
+                ip_version: 0
+                buffer_length: 1300
+                no_of_pkts: 500
+                time: 30
+
+    raspi_ssl_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            ssl:
+                type: 'ssl.client.ssl_client'
+                shell: 'linux_shell'
+                port: 5001
+                interface: 'eth0'
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                client_limit: 1
+                ip_version: 0
+                buffer_length: 1470
+                no_of_pkts: 500
+                time: 30
+                server_port: 5001
+                local_port: 5001
+
+    # This represents the wise connect web browser configuration
     wiseconnect_web:
         interfaces:
             wiseconnect_ui:
@@ -461,24 +877,145 @@ devices:
 
 
     secondary_raspi_iperf:
-            ftplib_ftp_client:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "192.168.0.152"
+                host_username: "pi"
+                host_password: "raspberry"
+
+    static_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "10.207.18.2"
+                host_username: "test"
+                host_password: "test123"
+
+    raspi_ftp_server:
+        interfaces:
+            ftp_server:
+                type: 'ftp.server.vsftpd_ftp_server'
+                tls_enabled: false
+
+    raspi_ftp_server_tls:
+        interfaces:
+            ftp_server:
+                type: 'ftp.server.vsftpd_ftp_server'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+
+    raspi_ftp_client:
+        interfaces:
+            ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
 
     raspi_ftp_client_tls:
         interfaces:
-            ftplib_ftp_client:
+            ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: true
+
+    raspi_radius_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+
+    static_radius_server:
+        interfaces:
+            ssh_shell:
+                type: 'shell.ssh_shell'
+                remote: '192.168.50.210'  # configure Free Radius Server NUC IP
+                username: test       # NUC username
+                password: test123    # NUC password
+                use_paramiko_expect: false
+            radius_server:
+                type: 'radius_server.freeradius.static'
+                shell: 'ssh_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
+
+    nrf_52840_sniffer:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sniffer:
+                type: 'bluetooth.sniffer.nrf.nrf_52840'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0x522A
+                follow_device: 'DMPFBD6'
+                max_tries: 10
+
+    ellisys_bt_tracker_win_wcf:
+        interfaces:
+            wcf_sniffer_ellysis_bluetooth_analyzer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.18.87:8735/Design_Time_Addresses/utf_wcf_service_library/SnifferEllisysBluetoothAnalyzerService/?wsdl'
+                timeout: 120000
+            wcf_file_transfer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.18.87:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.ellisys.ellisys_bluetooth_analyzer_win_wcf'
+                sniffer_ellysis_bluetooth_analyzer_service: 'wcf_sniffer_ellysis_bluetooth_analyzer_service'
+                file_transfer_service: 'wcf_file_transfer_service'
+
+    ble_sweyntooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                ip_address: '10.207.16.89'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            linux_shell:
+                type: 'shell.shell'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'rs9117_sapi'
+    dut: 'rs9116_sapi'
 
     efx32: 'efr32_4180b'
+
+    stm32: 'stm32_nucleo_f411re'
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
@@ -487,7 +1024,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_accesspoint fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'raspi_wifi'
+    wifi_access_point: 'dlink_ap'
 
     # To connect the multiple access points
     wifi_access_points:
@@ -498,12 +1035,23 @@ defaults:
     # (needed in order to test the host AP mode on the DUT)
     wifi_client: 'raspi_wifi'
 
+    aws_s3: 'aws_s3_boto3'
+
+    wifi_clients:
+        - 'raspi_wifi'
+        - 'raspi_wifi_ssh'
 
     wifi_sniffer: 'airpcap'
 
+    openssl: 'openssl_socket'
+
+    ble_sniffer: 'nrf_52840_sniffer'
+
+    bt_sniffer: 'ellisys_bt_tracker_win_wcf'
+
     logic_analyzer: 'saleae_logic_analyzer'
 
-    power_meter: 'keysight_power_analyzer'
+    power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
 
     ble_client: 'bt_wiseconnect'
 
@@ -535,13 +1083,19 @@ defaults:
     serial:
         baud: 115200
 
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
+
     wifi:
         ssid: 'TESTTESTTEST'
         security: WPA2
         channel: 1
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
+        static_ip: '192.168.50.199'
+        static_subnet: '255.255.255.0'
+        static_gateway: '192.168.50.1'
         sniffer_validation: True
+        disable_sniffer_validation: false
 
         # firmware path for http/https otaf
         http_url: '/RS9116.2.5.0.4.rps'
@@ -552,6 +1106,7 @@ defaults:
         enable_ppp: 0
         afe_type: 1
         features_enable: 0
+        enable_async_socket: 0
 
     wiseconnect_web: 'wiseconnect_web'
 
@@ -567,6 +1122,19 @@ defaults:
         channel: 1
         capture_screenshot: false
         screenshot_file_name: 'wiseconnect_screenshot'
+
+    s3:
+        aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
+        aws_secret_access_key: "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"
+        region: "us-east-1"
+
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
@@ -600,11 +1168,33 @@ defaults:
 
     ftp_client: 'raspi_ftp_client'
 
+    radius_server: 'raspi_radius_server'
+
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
+
     net_perf:
         server_options:
             # seconds between periodic bandwidth reports
             interval: 1
             # time in seconds to listen for new connections as well as to receive traffic (default not set)
+            time: 30
+        client_options:
+            # used only for UDP as there is no limit imposed while TCP
+            bandwidth: 0.1M
+            interval: 1
+            #time in seconds to transmit for (default 10 secs)
+            time: 30
+        host:
+            TCP:
+                port: 5201
+            UDP:
+                port: 5202
+        device:
+            # currently, solution is reading it as IP address of Device
             # ip_address: ""
             TCP:
                 port: 1234
@@ -638,6 +1228,17 @@ defaults:
         scope_trigger_source: 'ScopeRunButton'
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
 
+    sniffer_ellysis_bt_tracker:
+        remote_settings_folder_location: 'C:\\UTF\\Ellisys_Sniffer\\Settings\\'
+        remote_settings_file_name: 'dev_only_ble.bttse'
+        remote_capture_folder_location: 'C:\\UTF\\Ellisys_Sniffer\\Capture\\'
+        remote_capture_file_name: 'utf_ellisys_sniffer'
+        elapsed_time: 20000
+        device_filter_mode: 'KeepInvolving'
+        log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
+        device_filter_addresses : ''
+        stop_after_elapsed_time: false
+
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
@@ -653,3 +1254,13 @@ start_state:
 end_state:
     wifi_access_point:
         wifi: 'ap_disabled'
+
+constants:
+    time_duration:
+        value: 5
+    ping_count:
+        value: 10
+    iter_count:
+        value: 5
+
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']
