@@ -65,8 +65,6 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
 
         logger().info("fetching server ip....")
         host_ip = get_host_ip()
-        start_time = time.perf_counter_ns()
-        async_timestamp = 0
         logger().info(f"server ip is {host_ip}")
 
         logger().info("pinging to server ip....")
@@ -89,6 +87,10 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         logger().info("Starting dhcp....")
         wifi_dut.interfaces.wifi.start_ip()
 
+        start_time = time.perf_counter_ns()
+        async_timestamp = 0
+        time.sleep(2)
+
         logger().info("Performing firmware upgrade....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
         time.sleep(40)
@@ -109,6 +111,8 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         else:
             time_duration = (async_timestamp - start_time) / 1000000000
             logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+        assert time_duration < 40, "took too long time to download fw"
 
         # API does soft reset on DUT
         time.sleep(5)
