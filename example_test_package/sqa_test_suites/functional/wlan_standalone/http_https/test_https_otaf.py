@@ -119,8 +119,6 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -142,6 +140,10 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     logger().info("Performing firmware upgrade....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -162,6 +164,8 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -206,8 +210,6 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -229,6 +231,9 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+
     logger().info("Performing firmware upgrade on dut....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -249,6 +254,8 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -294,8 +301,6 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -317,6 +322,10 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     logger().info("Performing fw upgrade on DUT....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -337,6 +346,8 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -381,8 +392,6 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -404,6 +413,10 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
     logger().info("starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     logger().info("upgrading firmware......")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -423,6 +436,8 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -461,6 +476,12 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
     logger().info(" joinig ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -469,11 +490,13 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
 
     logger().info("Fetching the DUT fw version ...")
     wifi_dut.interfaces.wifi.version()
+
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
 
     logger().info("performing fw upgrade on dut....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
@@ -498,6 +521,8 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 
     logger().info("Fetching the DUT fw version after upgrade...")
     wifi_dut.interfaces.wifi.version()
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -532,6 +557,11 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -540,11 +570,13 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
 
     logger().info("fetching host ip for server....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
 
     logger().info("Fetching the DUT fw version ...")
     wifi_dut.interfaces.wifi.version()
+
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
 
     logger().info("performing fw upgrade on dut....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
@@ -569,6 +601,8 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
 
     logger().info("Fetching the DUT fw version after upgrade...")
     wifi_dut.interfaces.wifi.version()
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -609,8 +643,6 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -632,6 +664,10 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
     logger().info("starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     logger().info("performing fw upgrade on dut....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -652,6 +688,8 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -689,6 +727,12 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_dut, wifi_access_point):
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True
+    logger().info(f'http server state is {server_stat}')
+
     logger().info("joining ap....")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -703,11 +747,13 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
 
     logger().info("fetching host ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
 
     logger().info("Fetching the DUT fw version...")
     wifi_dut.interfaces.wifi.version()
+
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
 
     logger().info("performing fw upgrade on dut....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
@@ -732,6 +778,8 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
 
     logger().info("Fetching the DUT fw version after upgrade...")
     wifi_dut.interfaces.wifi.version()
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -771,8 +819,6 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -794,6 +840,10 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     logger().info("Performing firmware upgrade....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -814,6 +864,8 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -1043,8 +1095,6 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
@@ -1066,6 +1116,10 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
     logger().info("Starting dhcp....")
     wifi_dut.interfaces.wifi.start_ip()
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     logger().info("Performing firmware upgrade....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -1086,6 +1140,8 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     time.sleep(5)
     # API does soft reset on DUT
@@ -1157,8 +1213,6 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
 
     logger().info("fetching server ip....")
     host_ip = get_host_ip()
-    start_time = time.perf_counter_ns()
-    async_timestamp = 0
     logger().info(f"server ip is {host_ip}")
     #
     logger().info("pinging to server ip....")
@@ -1204,6 +1258,10 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
     logger().info("access point ip: " + str(acces_point_ip))
 
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
     # performs the firmware upgrade on DUT over the http port
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     time.sleep(40)
@@ -1224,6 +1282,8 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
     else:
         time_duration = (async_timestamp - start_time) / 1000000000
         logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    assert time_duration < 40, "took too long time to download fw"
 
     # API does soft reset on DUT
     logger().info("resetting DUT....")

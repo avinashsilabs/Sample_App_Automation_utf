@@ -84,6 +84,11 @@ def test_wifi_leave(wifi_networked_dut):
     logger().info(f"Leave completed in {t.duration} seconds")
 
 
+def test_wifi_join(utf_constants, wifi_dut, wifi_access_point, rs_helper):
+    device_ip, device_mac = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {device_ip}, {device_mac}")
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
