@@ -25,7 +25,7 @@ def logger():
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
 
-    Author: Aravind
+    Author: Aravind/Himaja
 """
 
 class FilterPacket:
