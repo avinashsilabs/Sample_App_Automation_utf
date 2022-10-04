@@ -968,7 +968,7 @@ def test_wlan_and_ble_radio_on_off_C20202(wifi_dut, ble_client, wifi_access_poin
     sw = Stopwatch()
     while sw.elapsed_sec < test_run_time:
         logger().info(f"Time left to complete this testcase is '{round((test_run_time / 60), 2)}' minutes")
-        logger().info("Disabling wlan radio of the DUT")skip
+        logger().info("Disabling wlan radio of the DUT")
         wifi_dut.interfaces.wifi.wlan_request_radio(0)
         logger().info("Disabled wlan radio of the DUT")
         time.sleep(2)
