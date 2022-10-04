@@ -72,8 +72,10 @@ class ble_adv(ThreadBase):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_io_cap_displayonly_C19851(ble_dut, ble_client):
@@ -138,7 +140,7 @@ def test_ble_io_cap_displayonly_C19851(ble_dut, ble_client):
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 
 @pytest.mark.config(
@@ -150,8 +152,10 @@ def test_ble_io_cap_displayonly_C19851(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -213,7 +217,7 @@ def test_ble_io_cap_display_yesno_C19852(ble_dut, ble_client):
         disconnect_time = datetime.datetime.now()
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)
 
@@ -227,8 +231,10 @@ def test_ble_io_cap_display_yesno_C19852(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -290,7 +296,7 @@ def test_ble_io_cap_keyboard_only_C19853(ble_dut, ble_client):
         disconnect_time = datetime.datetime.now()
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)
 
@@ -304,8 +310,10 @@ def test_ble_io_cap_keyboard_only_C19853(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -367,7 +375,7 @@ def test_ble_io_cap_No_input_output_C19854(ble_dut, ble_client):
         disconnect_time = datetime.datetime.now()
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
 
     ble_client.interfaces.bluetooth.close()
     time.sleep(10)
@@ -385,8 +393,10 @@ def test_ble_io_cap_No_input_output_C19854(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -451,7 +461,7 @@ def test_ble_io_cap_displayonly_C19855(ble_dut, ble_client):
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
+    if state_int > 0:
         logger().info("Disconnecting the bt host....")
         success = False
         for i in range(3):
@@ -470,7 +480,7 @@ def test_ble_io_cap_displayonly_C19855(ble_dut, ble_client):
         disconnect_time = datetime.datetime.now()
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
 
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)
@@ -546,7 +556,7 @@ def test_ble_io_cap_display_yesno_C19856(ble_dut, ble_client):
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
+    if state_int > 0:
         logger().info("Disconnecting the bt host....")
         success = False
         for i in range(3):
@@ -568,7 +578,7 @@ def test_ble_io_cap_display_yesno_C19856(ble_dut, ble_client):
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 
 @pytest.mark.config(
@@ -640,7 +650,7 @@ def test_ble_io_cap_keyboard_only_C19857(ble_dut, ble_client):
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
+    if state_int > 0:
         logger().info("Disconnecting the bt host....")
         success = False
         for i in range(3):
@@ -662,7 +672,7 @@ def test_ble_io_cap_keyboard_only_C19857(ble_dut, ble_client):
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 
 @pytest.mark.config(
@@ -734,7 +744,7 @@ def test_ble_io_cap_no_input_output_C19858(ble_dut, ble_client):
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
-    if (state_int > 0):
+    if state_int > 0:
         logger().info("Disconnecting the bt host....")
         success = False
         for i in range(3):
@@ -756,7 +766,7 @@ def test_ble_io_cap_no_input_output_C19858(ble_dut, ble_client):
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
 
 
 """============================ Ble-gap dut scan for adv types ============================================="""
@@ -771,8 +781,10 @@ def test_ble_io_cap_no_input_output_C19858(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -782,17 +794,16 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "failed to initiate ble in dut"
     logger().info("start ble client...")
+    adv_params = "0xA0 0x00 "  # Advertising_Interval_Min
+    "0xA0 0x00 "  # Advertising_Interval_Max
+    "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+    "0x00 "  # Own_Address_Type
+    "0x00 "  # Peer_Address_Type
+    "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+    "0x07 "  # Advertising_Channel_Map
+    "0x00"  # Advertising_Filter_Policy
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0xA0 0x00 "  # Advertising_Interval_Min
-                       "0xA0 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client addr..{bt_client_address}")
     time.sleep(5)
@@ -843,8 +854,10 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -917,8 +930,10 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -928,17 +943,16 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "failed to start ble in dut"
     logger().info("start ble client...")
+    adv_params = "0xA0 0x00 "
+    "0xA0 0x00 "
+    "0x03 "
+    "0x00 "
+    "0x00 "
+    "0x00 0x00 0x00 0x00 0x00 0x00 "
+    "0x07 "
+    "0x00"
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0xA0 0x00 "
-                       "0xA0 0x00 "
-                       "0x03 "
-                       "0x00 "
-                       "0x00 "
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "
-                       "0x07 "
-                       "0x00"
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(5)
@@ -987,8 +1001,10 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -998,17 +1014,16 @@ def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "failed to start ble in dut"
     logger().info("start ble client...")
+    adv_params = "0xA0 0x00 "
+    "0xA0 0x00 "
+    "0x02 "
+    "0x00 "
+    "0x00 "
+    "0x00 0x00 0x00 0x00 0x00 0x00 "
+    "0x07 "
+    "0x00"
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0xA0 0x00 "
-                       "0xA0 0x00 "
-                       "0x02 "
-                       "0x00 "
-                       "0x00 "
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "
-                       "0x07 "
-                       "0x00"
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(5)
@@ -1057,8 +1072,10 @@ def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1068,17 +1085,16 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "failed to initiate ble in dut"
     logger().info("start ble client...")
+    adv_params = "0x40 0x00 "  # Advertising_Interval_Min
+    "0x40 0x00 "  # Advertising_Interval_Max
+    "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+    "0x00 "  # Own_Address_Type
+    "0x00 "  # Peer_Address_Type
+    "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+    "0x07 "  # Advertising_Channel_Map
+    "0x00"  # Advertising_Filter_Policy
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
     time.sleep(1)
@@ -1132,8 +1148,10 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1181,7 +1199,7 @@ def test_ble_dut_slave_connect_C19832(ble_dut, ble_client):
         disconnect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.disconnect(bt_dut_address))
         logger().info(f"disconnect_time  {disconnect_time}")
         assert "unable to disconnect since the connection never existed"
-    logger().info(f"connection existed for {disconnect_time - connect_time}")
+        logger().info(f"connection existed for {disconnect_time - connect_time}")
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)
 
@@ -1254,8 +1272,10 @@ def test_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1267,21 +1287,19 @@ def test_ble_scan_resp_8_bytes_C19821(ble_dut, ble_client):
 
     # pdu name -- No PDU name as address itself satisfies the 8 bytes
     logger().info("start ble client with pdu length 8 bytes....")
+    adv_params = "0x40 0x00 "  # Advertising_Interval_Min
+    "0x40 0x00 "  # Advertising_Interval_Max
+    "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+    "0x00 "  # Own_Address_Type
+    "0x00 "  # Peer_Address_Type
+    "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+    "0x07 "  # Advertising_Channel_Map
+    "0x00"  # Advertising_Filter_Policy
+    scan_resp_name_params = "0x00 0x09 0x09 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+    "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+    "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-        , scan_resp_name_params="0x00 0x09 0x09 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params, scan_resp_name_params=scan_resp_name_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(1)
     logger().info("Start ble scanning...")
@@ -1320,8 +1338,10 @@ def test_ble_scan_resp_8_bytes_C19821(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1333,20 +1353,19 @@ def test_ble_scan_resp_20_bytes_C19822(ble_dut, ble_client):
 
     # pdu name -- automateaa
     logger().info("start ble client with pdu length 8 bytes....")
+    adv_params = "0x40 0x00 "  # Advertising_Interval_Min
+    "0x40 0x00 "  # Advertising_Interval_Max
+    "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+    "0x00 "  # Own_Address_Type
+    "0x00 "  # Peer_Address_Type
+    "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+    "0x07 "  # Advertising_Channel_Map
+    "0x00"  # Advertising_Filter_Policy
+    scan_resp_name_params = "0x0c 0x0b 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
+    "0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+    "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-        , scan_resp_name_params="0x0c 0x0b 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
-                                "0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-                                "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params, scan_resp_name_params=scan_resp_name_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(1)
     logger().info("Start ble scanning...")
@@ -1386,8 +1405,10 @@ def test_ble_scan_resp_20_bytes_C19822(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1399,21 +1420,19 @@ def test_ble_scan_resp_30_bytes_C19823(ble_dut, ble_client):
 
     # pdu name -- automateaaaaaaaaaaaa
     logger().info("start ble client with pdu length 30 bytes....")
+    adv_params = "0x40 0x00 "  # Advertising_Interval_Min
+    "0x40 0x00 "  # Advertising_Interval_Max
+    "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+    "0x00 "  # Own_Address_Type
+    "0x00 "  # Peer_Address_Type
+    "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+    "0x07 "  # Advertising_Channel_Map
+    "0x00"  # Advertising_Filter_Policy
+    scan_resp_name_params = "0x16 0x15 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 "
+    "0x65 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
+    "0x61 0x61 0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-        , scan_resp_name_params="0x16 0x15 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 "
-                                "0x65 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
-                                "0x61 0x61 0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params, scan_resp_name_params=scan_resp_name_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(1)
     logger().info("Start ble scanning...")
@@ -1453,8 +1472,10 @@ def test_ble_scan_resp_30_bytes_C19823(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1466,21 +1487,19 @@ def test_ble_scan_resp_39_bytes_C19824(ble_dut, ble_client):
 
     # pdu name -- automateaaaaaaaaaaaaaaaaaaaaa
     logger().info("start ble client with pdu length 30 bytes....")
+    adv_params = "0x40 0x00 "  # Advertising_Interval_Min
+    "0x40 0x00 "  # Advertising_Interval_Max
+    "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+    "0x00 "  # Own_Address_Type
+    "0x00 "  # Peer_Address_Type
+    "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+    "0x07 "  # Advertising_Channel_Map
+    "0x00"  # Advertising_Filter_Policy
+    scan_resp_name_params = "0x1F 0x1E 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
+    "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
+    "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x00 0x00 "
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-        bt_dut_address=bt_dut_address,
-        hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                       "0x40 0x00 "  # Advertising_Interval_Max
-                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                       "0x00 "  # Own_Address_Type
-                       "0x00 "  # Peer_Address_Type
-                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                       "0x07 "  # Advertising_Channel_Map
-                       "0x00"  # Advertising_Filter_Policy
-        , scan_resp_name_params="0x1F 0x1E 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
-                                "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
-                                "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x00 0x00 "
-
-    )
+        bt_dut_address=bt_dut_address, hci_adv_params=adv_params, scan_resp_name_params=scan_resp_name_params)
     assert bt_client_address, "failed to initiate ble in remote device"
     time.sleep(1)
     logger().info("Start ble scanning...")
@@ -1520,8 +1539,10 @@ def test_ble_scan_resp_39_bytes_C19824(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1573,8 +1594,10 @@ def test_ble_adv_report_C19848(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_continuous_scan_C19819(ble_dut, ble_client):
@@ -1621,8 +1644,10 @@ def test_ble_continuous_scan_C19819(ble_dut, ble_client):
         "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_continuous_scan_C19820(ble_dut, ble_client):
@@ -1737,7 +1762,7 @@ def test_BLE_continuousscanning_for_48_hours_C19829(wifi_dut, ble_client):
                                                                    ble_scan_window=int(400 / 0.625),
                                                                    timeout=120)
     time.sleep(10)
-    # Enables the wifi power save in dut
+    # Enables the Wi-Fi power save in dut
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # Enables the bt power save in dut
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
@@ -1777,7 +1802,7 @@ def test_thePowersavemode2_functionality_of_DUT_C19859(wifi_dut, ble_client):
                                                                ble_scan_window=int(400 / 0.625),
                                                                timeout=120)
     time.sleep(10)
-    # Enables the wifi power save in dut
+    # Enables the Wi-Fi power save in dut
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
     # Enables the bt power save in dut
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
