@@ -45,6 +45,7 @@ def logger():
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.config("wifi_access_point", wifi={"channel": 3, "security": 'OPEN'})
 def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info(f"********Query DNS server IP address when DNS IP address is obtained through dhcp hs********")
     validation = True
@@ -58,7 +59,7 @@ def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_p
             scan_fail = 1
             # DUT connects to AP after join_ap API is executed
             logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
+            wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
             scan_fail = 0
             break
         except:
@@ -107,10 +108,12 @@ def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_p
     time.sleep(1)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"DHCP decryption is in progress {decryption_key}")
+    wifi_sniffer.interfaces.capture.get_dhcp_list(mac_address, decryption_key, ["dhcp"])
     logger().info(f"*****##### Sniffer validation for DHCP packets #####******")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-    result =  wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count']
+    result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)['packet_count']
     if result is False:
         logger().info('Unable to find DNS packet')
         assert True

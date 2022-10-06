@@ -1,11 +1,16 @@
 from utf.interfaces.wifi import WlanError
-
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116PowerSaveModes
+from typing import Dict
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116ExtCustomFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116PowerSaveModes
 import time
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import ping
+from datetime import datetime
+import uuid
+import re
+
 
 def logger():
     return get_logger(__name__)
@@ -53,7 +58,56 @@ class FilterPacket:
         return time_diff_list
 
 
-ping_count=10
+ping_count = 10
+
+
+def arp_packet_decrypt(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
+                       capture_filename,
+                       mode=0) -> Dict[str, int]:
+    cipher_suite = []
+    count = 0
+    current_time = time.time()
+    logger().info(f" **** capture_name {capture_filename}")
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    logger().info("f **** updated file_name {updated_capture_file}")
+    local_capture_file = file_name
+    logger().info(f"++++ Remote capture file {wifi_sniffer.interfaces.capture.remote_capture_file}")
+
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    # wlan_filter_file = local_capture_file
+    packet_filter1 = f'(wlan.addr == {mac_address})'
+    # packet_filter1 = f'wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff ' \
+    #                  f'and arp.proto.type == 0x0800 and wlan.fc.pwrmgt == 1'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+
+    # with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+    #     sftp.get(wifi_sniffer.interfaces.capture.remote_capture_file, local_capture_file)
+
+    logger().info(f"+++++ LOCAL CAPTURE FILE {local_capture_file}")
+    for packet in wifi_sniffer.interfaces.capture.iter_packets(
+            decrypt_packets=True,
+            encryption_type="WPA-PWD",
+            decryption_key=decryption_key,
+            capture_file_filter=wifi_sniffer.interfaces.capture.remote_capture_file
+    ):
+        # logger().info(f"***************************packet is {packet}***************************")
+        for layer in packet.layers:
+            # logger().info(f"***************************layer is {layer}***************************")
+            layer_name = layer.layer_name.lower()
+            logger().info(f"***************************layer name is {layer_name}***************************")
+    #         if layer_name == "websocket":
+    #             http_layer = str(layer)
+    #             if (re.search(".*Opcode: Ping", http_layer)):
+    #                 logger().info(f"PING PACKET {http_layer}")
+    #             elif (re.search(".*Opcode: Pong", http_layer)):
+    #                 logger().info(f"PONG PACKET {http_layer}")
+    #
+    # return cipher_suite
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -71,15 +125,18 @@ ping_count=10
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_point):
+@pytest.mark.parametrize("channel", [4])
+@pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
+def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_point, channel):
     """=============================this test_case to validate keep-alive for 10secs=========================="""
     time_delta = 10
     arp_time_delta_obj = FilterPacket()
+    capture_filename = 'test_request_timeout_keep_alive_10sec'
     keep_alive_time = 4
     validation = True
     logger().info(f"Sniffer starts on configured channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_request_timeout_keep_alive_10sec')
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
     time.sleep(2)
     logger().info(f"Setting keep_alive feature in DUT")
     wifi_dut.interfaces.wifi.set_timeout(feature=keep_alive_time, timeout=10)
@@ -127,6 +184,7 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff ' \
                      f'and arp.proto.type == 0x0800 and wlan.fc.pwrmgt == 1'
+    # packet_filter1 = f'wlan.bssid == {mac_address}'
     packet_filter2 = 'Address Resolution Protocol (ARP Announcement)'
 
     time.sleep(55)
@@ -136,7 +194,10 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
     logger().info(f"DUT is going to leave")
     wifi_dut.interfaces.wifi.leave()
     logger().info(f"Sniffer validation for ARP packets")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"Decryption key is {decryption_key}")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
 
     """=============================Validation of time delta between keep-alive packets=========================="""
     arp_packets_time_delta_list = arp_time_delta_obj.delta_between_arp_packet()
@@ -145,7 +206,7 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
     logger().info(f'APR packet time delta list after removing 0 = {arp_packets_time_delta_list}')
     for time_diff in arp_packets_time_delta_list:
         logger().info(int(time_diff))
-        is_between = int(time_diff) in range(time_delta, time_delta + 1)
+        is_between = int(time_diff) in range(0, time_delta + 2)
         if is_between is False:
             logger().info(is_between)
             status = is_between
@@ -172,8 +233,9 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
 def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_point):
-    """=============================this test_case to validate keep-alive for 10secs=========================="""
+    """=============================this test_case to validate keep-alive for 30secs=========================="""
     time_delta = 30
     arp_time_delta_obj = FilterPacket()
     keep_alive_time = 4
@@ -246,7 +308,7 @@ def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_po
     logger().info(f'APR packet time delta list after removing 0 = {arp_packets_time_delta_list}')
     for time_diff in arp_packets_time_delta_list:
         logger().info(int(time_diff))
-        is_between = int(time_diff) in range(time_delta, time_delta + 1)
+        is_between = int(time_diff) in range(0, time_delta + 2)
         if is_between is False:
             logger().info(is_between)
             status = is_between
@@ -461,5 +523,3 @@ def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point)
 #         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 #         wifi_sniffer.interfaces.capture.stop_capture()
 #     assert exc_info.value.error_code == 0x48
-
-
