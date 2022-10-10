@@ -2,11 +2,28 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils.logger import get_logger
+
+
+def logger():
+    return get_logger(__name__)
 
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_run_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, utf_constants,
+                    rs_helper):
+    timeout = 60
+    device_ip, device_mac = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {device_ip}, {device_mac}")
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    rs_helper.run_traffic(wifi_dut, net_perf_client, protocol, device_ip, host_ip, timeout, traffic_type="RX")
 
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})

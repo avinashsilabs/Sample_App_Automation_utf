@@ -537,10 +537,9 @@ class connect_disconnect_ble_master_thread(ThreadBase):
 
     def run(self):
         connect_disconnect_ble(self.wifi_dut, self.ble_client, self.ble_client_address, self.ble_dut_address,
-                                      self.mode, self.iter_count,
-                                      expected=self.expected,
-                                      skip_scan=self.skip_scan)
-
+                               self.mode, self.iter_count,
+                               expected=self.expected,
+                               skip_scan=self.skip_scan)
 
         logger().info("BLE master connect_disconnect_thread completed")
 
@@ -617,7 +616,9 @@ class stop_ap_thread(ThreadBase):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(wifi_dut, bt_dut, wifi_access_point,net_perf_client, wifi_client,ble_client, protocol, ssid, wifi_sniffer):
+def test_get_local_bd_address_of_ble_while_sta_data_transfer_inprogress_C20324(wifi_dut, bt_dut, wifi_access_point,
+                                                                               net_perf_client, wifi_client, ble_client,
+                                                                               protocol, ssid, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     bt_local_name = "rs911x_bt_spp"
@@ -726,7 +727,8 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C20310(wifi_dut, bt_
 
     logger().info(f"ble_client_address:{ble_client_address2}")
     t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
-    t2 = connect_disconnect_ble_master_thread(wifi_dut, ble_client2, ble_client_address2, ble_dut_address2, "ble_master", iter_count=5, skip_scan=True)
+    t2 = connect_disconnect_ble_master_thread(wifi_dut, ble_client2, ble_client_address2, ble_dut_address2,
+                                              "ble_master", iter_count=5, skip_scan=True)
 
     t1.start()
     logger().info("BLE master connect_disconnect_thread execution starts...")
@@ -807,7 +809,8 @@ def test_adv_functionality_of_ble_when_sta_scan_C20311(wifi_dut, wifi_sniffer, w
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer):
+def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_client, wifi_access_point,
+                                                                  net_perf_client, wifi_client, protocol, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -854,8 +857,8 @@ def test_adv_func_of_ble_while_sta_data_transfer_inprogressC20312(wifi_dut, ble_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol, ssid):
-
+def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_client, wifi_access_point, net_perf_client,
+                                                             wifi_sniffer, wifi_client, protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -956,7 +959,7 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
 
     t1 = wifi_join_thread(wifi_dut, wifi_access_point)
     t2 = ble_continuous_scan_thread(wifi_dut, ble_client, ble_mode, ble_scan_interval=100, ble_scan_window=5,
-                         ble_client_address=ble_client_address)
+                                    ble_client_address=ble_client_address)
 
     t1.start()
     time.sleep(20)
@@ -991,7 +994,8 @@ def test_functionality_of_sta_when_ble_scan_C20315(wifi_dut, ble_client, wifi_ac
     },
 )
 @pytest.mark.config("net_perf_client")
-def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, ble_client, wifi_access_point, ssid, wifi_sniffer):
+def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, ble_client, wifi_access_point, ssid,
+                                                                     wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1084,8 +1088,9 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C20314(wifi_dut, b
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol, ssid):
-
+def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C20319(wifi_dut, ble_client, wifi_access_point,
+                                                                               net_perf_client, wifi_sniffer,
+                                                                               wifi_client, protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1225,10 +1230,10 @@ def test_Active_scan_func_of_ble_when_sta_connect_C20320(wifi_dut, ble_client, w
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-@pytest.mark.config( "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, ssid, wifi_sniffer):
-
-
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, ble_client, wifi_access_point,
+                                                                     net_perf_client, wifi_client, protocol, ssid,
+                                                                     wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1299,9 +1304,9 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C20328(wifi_dut, b
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, ssid ,wifi_sniffer):
-
-
+def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut, ble_client, wifi_access_point,
+                                                                        net_perf_client, wifi_client, protocol, ssid,
+                                                                        wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1357,6 +1362,7 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut
     wifi_sniffer.interfaces.capture.stop_capture()
     verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
+
 ################## PR3 ###################################
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1375,8 +1381,8 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_inprogress_C20329(wifi_dut
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_access_point, net_perf_client, wifi_client, wifi_sniffer, protocol):
-
+def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
+                                                   wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1442,8 +1448,8 @@ def test_dual_role_ble_msg_based_power_save_C20277(wifi_dut, ble_clients, wifi_a
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_access_point, net_perf_client, wifi_client, wifi_sniffer, protocol):
-
+def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
+                                                    wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1507,8 +1513,10 @@ def test_dual_role_ble_gpio_based_power_save_C20279(wifi_dut, ble_clients, wifi_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316(wifi_dut, ble_clients, wifi_access_point, wifi_sniffer, net_perf_client,wifi_client, protocol, ssid):
-
+def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316(wifi_dut, ble_clients,
+                                                                                 wifi_access_point, wifi_sniffer,
+                                                                                 net_perf_client, wifi_client, protocol,
+                                                                                 ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1591,8 +1599,9 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C20316
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_dut, ble_client,wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol, ssid):
-
+def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_dut, ble_client, wifi_access_point,
+                                                                           wifi_sniffer, net_perf_client, wifi_client,
+                                                                           protocol, ssid):
     iter_count = 5
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -1733,8 +1742,8 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_inprogress_C20330(wifi_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, wifi_access_point,net_perf_client, wifi_client, wifi_sniffer, protocol):
-
+def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
+                                                        wifi_client, wifi_sniffer, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1799,8 +1808,9 @@ def test_throughput_func_of_sta_when_ble_connect_C20336(wifi_dut, ble_clients, w
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_dut, ble_clients, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer, ssid):
-
+def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_dut, ble_clients, wifi_access_point,
+                                                                         net_perf_client, wifi_client, protocol,
+                                                                         wifi_sniffer, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1868,8 +1878,10 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_C20333(wifi_du
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C20334(wifi_dut, ble_clients, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol, ssid):
-
+def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C20334(wifi_dut, ble_clients,
+                                                                                     wifi_access_point, wifi_sniffer,
+                                                                                     net_perf_client, wifi_client,
+                                                                                     protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1974,8 +1986,9 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_inprogress_with_CI20ms_C2
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_scan_func_of_ble_while_sta_data_transfer_inprogress_C20335(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol):
-
+def test_scan_func_of_ble_while_sta_data_transfer_inprogress_C20335(wifi_dut, ble_client, wifi_access_point,
+                                                                    wifi_sniffer, net_perf_client, wifi_client,
+                                                                    protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -2123,8 +2136,9 @@ def test_sta_connection_with_ble_connect_disconnect_C20280(wifi_dut, ble_client,
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
-
+def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble_client, wifi_access_point,
+                                                                   net_perf_client, wifi_sniffer, wifi_client,
+                                                                   protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -2192,7 +2206,6 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
     wifi_sniffer.interfaces.capture.stop_capture()
     verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
-########################### PR5 ##################################
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2214,8 +2227,8 @@ def test_smp_func_of_ble_while_sta_data_transfer_inprogress_C20325(wifi_dut, ble
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer):
-
+def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, wifi_access_point, net_perf_client,
+                                                          wifi_client, protocol, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -2303,8 +2316,8 @@ def test_get_all_profiles_functionality_of_dut_ble_C20317(wifi_dut, ble_client, 
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_client, protocol, wifi_sniffer):
-
+def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_client, wifi_access_point,
+                                                                 net_perf_client, wifi_client, protocol, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -2390,156 +2403,171 @@ def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_c
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client, protocol):
-
+def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,
+                                                    net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
+    iteration_count = 11
 
-    for iteration in range(1, 11):
-        logger().info(f"Initiating test.....iteration:{iteration}")
+    # logger().info(f"Initiating test.....iteration:{iteration}")
+    logger().info("Initializing the DUT")
+    wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9)
+    logger().info("Initializing wlan_radio_init on the DUT")
+    wifi_dut.interfaces.wifi.wlan_radio_init()
 
-        validation = True
-        ssid = wifi_access_point.interfaces.wifi.ssid
-        channel = wifi_access_point.interfaces.wifi.channel
-        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_case_C20309')
+    validation = True
+    ssid = wifi_access_point.interfaces.wifi.ssid
+    channel = wifi_access_point.interfaces.wifi.channel
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_case_C20309')
 
-        with TimeMeasurer() as t:
-            scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
-        logger().info(scan_results)
-        assert len(scan_results) > 0, f"scan_list not found"
-        logger().info(f"Scan in {t.duration} seconds")
+    with TimeMeasurer() as t:
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
+    logger().info(scan_results)
+    assert len(scan_results) > 0, f"scan_list not found"
+    logger().info(f"Scan in {t.duration} seconds")
 
-        logger().info("Joining into Wi-Fi")
-        device_ip = wifi_join(wifi_dut, wifi_access_point)
-        assert device_ip, "Device ip fetch failed"
+    logger().info("Joining into Wi-Fi")
+    device_ip = wifi_join(wifi_dut, wifi_access_point)
+    assert device_ip, "Device ip fetch failed"
 
-        data = []
-        for i in range(5):
-            data.append(text_generator(size=4))
-        ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-        bt_local_name = "rs9116_test_C20309"
-        logger().info("configuring bd local name....")
-        wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name)
+    data = []
+    for i in range(5):
+        data.append(text_generator(size=4))
+    ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
+    bt_local_name = "rs9116_test_C20309"
+    logger().info("configuring bd local name....")
+    wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name)
 
-        logger().info("fetching bd local name....")
-        bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
-        logger().info(f"bd local name is : {bd_local_name}")
+    logger().info("fetching bd local name....")
+    bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
+    logger().info(f"bd local name is : {bd_local_name}")
 
-        logger().info("start ble on DUT")
-        ble_dut_addr = wifi_dut.interfaces.wifi.ble_start()
-        assert ble_dut_addr, "Unable to get ble_dut_address"
+    logger().info("start ble on DUT")
+    ble_dut_addr = wifi_dut.interfaces.wifi.ble_start()
+    assert ble_dut_addr, "Unable to get ble_dut_address"
 
-        logger().info("Creating new custom gatt service in DUT")
-        wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-        logger().info("Adding custom characteristic declaration to the custom service")
-        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-        logger().info("Adding characteristic value attribute to the service")
-        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[0])
+    logger().info("Creating new custom gatt service in DUT")
+    wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
+    logger().info("Adding custom characteristic declaration to the custom service")
+    wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
+    logger().info("Adding characteristic value attribute to the service")
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[0])
 
-        logger().info("Start ble advertising on DUT")
-        # 256(0x100), 512(0x200), 7(0x07)
-        wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=256, ble_adv_int_max=512, ble_adv_channel_map=7)
+    logger().info("Start ble advertising on DUT")
+    # 256(0x100), 512(0x200), 7(0x07)
+    wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=256, ble_adv_int_max=512, ble_adv_channel_map=7)
 
-        logger().info(f"Begin Scanning for BLE devices")
-        ble_client.interfaces.bluetooth.close()
+    logger().info(f"Begin Scanning for BLE devices")
+    ble_client.interfaces.bluetooth.close()
+    time.sleep(2)
+
+    ble_client_addr = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
+    assert ble_client_addr, "ble client address not found"
+    time.sleep(5)
+    ble_client.interfaces.bluetooth.stop_scanning()
+    logger().info(f"See that we found our device")
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+    assert wifi_dut.interfaces.wifi.ble_address in found_devices
+    assert (found_devices[wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data)
+
+    connect_time = datetime.datetime.now()
+    connect_state = ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_addr, timeout=500)
+    logger().info(f"connect_time  {connect_time}")
+    assert connect_state, "unable to connect to the given address"
+
+    logger().info("BLE Connection success")
+    time.sleep(2)
+
+    logger().info("Configuring remote device to receive notifications from DUT")
+    service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+    char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    bus = ble_client.interfaces.bluetooth.bus
+    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+    assert len(services) > 0, "Unable to fetch services"
+    assert len(chars) > 0, "Unable to get characteristics list from ble_client"
+
+    char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus, services=services,
+                                                                                           service_uid=service_uid,
+                                                                                           char_uid=char_uid)
+    assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+    assert len(char_props) > 0, "Unable to get char_props"
+
+    logger().info("Subscribing to notifications on ble_client")
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+
+    logger().info("Sending notifications from DUT")
+    for i in range(5):
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[i])
+        wifi_dut.interfaces.wifi.ble_notify_value()
+
+    logger().info("Validating received notifications on ble_client")
+    notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+    logger().info(f"Notifications: {notifications}")
+    notification_len = len(notifications)
+    for i in range(0, notification_len):
+        assert notifications[i] == data[i], "Received wrong data in ble_client"
+
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
+    logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
+    t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=30)
+    t1.start()
+
+    logger().info("Checking connection status of BLE")
+    check_connection_status(wifi_dut, ble=True)
+
+    with pytest.raises(Exception) as exc_info:
+        logger().info("Initiating Wi-Fi disconnection on DUT")
+        wifi_leave(wifi_dut)
+        raise exc_info
+    error_code = '0xffffffd5'
+    if error_code in str(exc_info.value).lower():
+        wifi_dut.interfaces.wifi.reset()
         time.sleep(2)
+        wifi_dut.interfaces.wifi.init()
 
-        ble_client_addr = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
-        assert ble_client_addr, "ble client address not found"
-        time.sleep(5)
-        ble_client.interfaces.bluetooth.stop_scanning()
-        logger().info(f"See that we found our device")
-        found_devices = ble_client.interfaces.bluetooth.get_devices()
-        assert wifi_dut.interfaces.wifi.ble_address in found_devices
-        assert (found_devices[wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data)
+    # QOS data Packets should be observed with More data Bit set to 1
+    packet_filter1 = f'wlan.ta == {bssid} && wlan.ra == {dut_mac_address} && wlan.fc.moredata==1'
 
-        connect_time = datetime.datetime.now()
-        connect_state = ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_addr, timeout=500)
-        logger().info(f"connect_time  {connect_time}")
-        assert connect_state, "unable to connect to the given address"
+    # PS Polls with Power Management Bit set to 1 should be sent from the device
+    packet_filter2 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) and (wlan.ra == {bssid}))'
 
-        logger().info("BLE Connection success")
-        time.sleep(2)
+    time.sleep(2)
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("Configuring remote device to receive notifications from DUT")
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-        bus = ble_client.interfaces.bluetooth.bus
-        services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
-        assert len(services) > 0, "Unable to fetch services"
-        assert len(chars) > 0, "Unable to get characteristics list from ble_client"
+    logger().info("Validating QOS data Packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find QOS data Packets'
 
-        char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus, services=services,
-                                                                                               service_uid=service_uid,
-                                                                                               char_uid=char_uid)
-        assert char is not None, "Unable to resolve custom service characteristic from ble_client"
-        assert len(char_props) > 0, "Unable to get char_props"
+    logger().info("Validating PS Polls with Power Management Bit")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
 
-        logger().info("Subscribing to notifications on ble_client")
-        ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-        ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    logger().info("Initiating BLE connection and disconnection from raspi")
 
-        logger().info("Sending notifications from DUT")
-        for i in range(5):
-            wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[i])
-            wifi_dut.interfaces.wifi.ble_notify_value()
-
-        logger().info("Validating received notifications on ble_client")
-        notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-        logger().info(f"Notifications: {notifications}")
-        notification_len = len(notifications)
-        for i in range(0, notification_len):
-            assert notifications[i] == data[i], "Received wrong data in ble_client"
-
-        bssid = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f'AP BSSID = {bssid}')
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"Device mac address: {dut_mac_address}")
-
-        logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
-        t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=30)
-        t1.start()
-
-        t1.wait_for_exit(True)
-        logger().info("Checking connection status of BLE")
-        check_connection_status(wifi_dut, ble=True)
-
-        with pytest.raises(Exception) as exc_info:
-            logger().info("Initiating Wi-Fi disconnection on DUT")
-            wifi_leave(wifi_dut)
-            raise exc_info
-        error_code = '0xffffffd5'
-        if error_code in str(exc_info.value).lower() or iteration == 5:
-            wifi_dut.interfaces.wifi.reset()
-            time.sleep(2)
-            wifi_dut.interfaces.wifi.init()
-
-        # QOS data Packets should be observed with More data Bit set to 1
-        packet_filter1 = f'wlan.ta == {bssid} && wlan.ra == {dut_mac_address} && wlan.fc.moredata==1'
-
-        # PS Polls with Power Management Bit set to 1 should be sent from the device
-        packet_filter2 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) and (wlan.ra == {bssid}))'
-
-        time.sleep(2)
-        logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        logger().info("Validating QOS data Packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'], 'Unable to find QOS data Packets'
-
-        logger().info("Validating PS Polls with Power Management Bit")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-        logger().info("Initiating BLE disconnection from raspi")
+    for i in range(1, iteration_count):
+        logger().info(f"Initiating BLE disconnection...iteration: '{i}'")
         ble_client.interfaces.bluetooth.disconnect(ble_dut_addr)
-
-        data.clear()
-        ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
+        logger().info(f"Disconnect completed...iteration: '{i}'")
         time.sleep(3)
-        logger().info(f"Iteration '{iteration}' completed")
+        logger().info(f"Re-Initiating BLE connection...iteration: '{i}'")
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert ble_dut_address, f"Unable to get ble_dut_address"
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+        ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        logger().info(f"DUT successfully connected to {ble_client} Device...iteration: '{i}'")
+        time.sleep(3)
+
+    t1.wait_for_exit(True)
+    data.clear()
+    ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
+    time.sleep(3)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2561,8 +2589,9 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, ble_client, wifi_access_point, net_perf_client, wifi_sniffer, wifi_client, protocol):
-
+def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, ble_client, wifi_access_point,
+                                                                     net_perf_client, wifi_sniffer, wifi_client,
+                                                                     protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     # global ble_dut_address
@@ -2614,7 +2643,6 @@ def test_query_rssi_of_ble_while_sta_data_transfer_inprogress_C20323(wifi_dut, b
     verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
 
 
-# =====================================================================================
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")

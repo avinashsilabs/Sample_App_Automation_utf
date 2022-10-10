@@ -18,7 +18,6 @@ from utf.utils.logger import get_logger
 @pytest.mark.config(
     "ble_vulnerability_sniffer",
     ble_vul_sniffer={
-        "log_file": "test_config_for_ble_vul_sniffer.log",
         "script": "Telink_key_size_overflow.py"
     },
 )
@@ -28,12 +27,11 @@ def test_ble_vulnerability_sniffer(
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None
-    started = ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
-        dut_address=bt_dut_address
+    ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
+        dut_address=bt_dut_address,
+        log_file=f"reports/test_bt_vul_sniffer.log_{int(time.time())}"
     )
-    assert started
     wifi_dut.interfaces.wifi.ble_start_advertising()
-
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address is not None
 
@@ -53,3 +51,4 @@ def test_ble_vulnerability_sniffer(
     time.sleep(2)
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
+    ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.stop_capture()

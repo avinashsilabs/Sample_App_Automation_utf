@@ -513,7 +513,7 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
     # assert bytes_received == bytes_sent, "Packet loss observed while receive test"
     assert bytes_received >= assert_packet_check, "Packet loss observed while receive test"
     logger.info(f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
-    wifi_dut.interfaces.wifi.close_socket(sock1)
+    result = wifi_dut.interfaces.wifi.close_socket(sock1)
     assert b"success" in result, "unable to close opened ssl socket in the dut"
     logger.info(f"Successfully closed opened socket {sock1} in the DUT")
     wifi_dut.interfaces.wifi.leave()
