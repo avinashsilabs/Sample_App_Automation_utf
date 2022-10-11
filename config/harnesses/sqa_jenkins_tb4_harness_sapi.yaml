@@ -1088,7 +1088,7 @@ defaults:
         sniffer_validation: True
         disable_sniffer_validation: false
         # firmware path for http/https otaf
-        http_url: '/RS9116W.2.7.0.13.rps'
+        http_url: '/RS9116.2.5.0.4.rps'
 
         pll_mode: 0
         rf_type: 1
