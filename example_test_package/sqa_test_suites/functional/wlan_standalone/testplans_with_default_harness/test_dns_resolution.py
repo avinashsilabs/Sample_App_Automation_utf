@@ -43,6 +43,7 @@ def logger():
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.config("wifi_access_point", wifi={"channel": 3, "security": 'OPEN'})
 @pytest.mark.config(
     "wifi_dut",
     wifi={
