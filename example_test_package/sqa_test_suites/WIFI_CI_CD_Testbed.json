@@ -9,7 +9,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.108",
     "HARNESS_NAME": "sqa_jenkins_tb2_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/ble --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/ble::test_ble_advertise_wifi_sqa.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
   },
   {
     "SQA_TEST_AGENT": "",
@@ -21,25 +21,25 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.133",
     "HARNESS_NAME": "sqa_jenkins_tb4_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness/test_join_2_4.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
   },
   {
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.126",
     "HARNESS_NAME": "sqa_jenkins_tb5_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex::test_sta_ble_diff_ble_intervals.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
   },
   {
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.166",
     "HARNESS_NAME": "sqa_jenkins_tb6_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness  --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/ssl --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
   },
   {
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.170",
     "HARNESS_NAME": "sqa_jenkins_tb7_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex  --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/http_https/test_http_https_get_post.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
   },
   {
     "SQA_TEST_AGENT": "",
