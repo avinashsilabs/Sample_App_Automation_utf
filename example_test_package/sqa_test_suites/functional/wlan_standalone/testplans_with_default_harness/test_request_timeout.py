@@ -71,7 +71,7 @@ ping_count=10
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_request_timeout_keep_alive_10sec_c19746(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate keep-alive for 10secs=========================="""
     time_delta = 10
     arp_time_delta_obj = FilterPacket()
@@ -172,7 +172,7 @@ def test_request_timeout_keep_alive_10sec(wifi_sniffer, wifi_dut, wifi_access_po
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_request_timeout_keep_alive_30sec_c19750(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate keep-alive for 10secs=========================="""
     time_delta = 30
     arp_time_delta_obj = FilterPacket()
@@ -273,7 +273,7 @@ def test_request_timeout_keep_alive_30sec(wifi_sniffer, wifi_dut, wifi_access_po
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_request_timeout_scan_100misc(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_request_timeout_scan_100misc_c19748(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate scan for 100 Milli seconds=========================="""
     scan_timeout = 2
     validation = True
@@ -342,7 +342,7 @@ def test_request_timeout_scan_100misc(wifi_sniffer, wifi_dut, wifi_access_point)
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_request_timeout_scan_500misc_c19751(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate scan for 500 Milliseconds=========================="""
     scan_timeout = 2
     validation = True
