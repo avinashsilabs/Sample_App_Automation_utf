@@ -55,7 +55,8 @@ def logger():
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Sniffer(NUC device)
-    Reworked by : CG team    
+        
+      Modified by CG team : Considered PDU fix [UTF-1660 and updated the code]
 """
 
 
