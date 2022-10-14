@@ -371,7 +371,6 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         logger().info("Found DNS packet")
         assert True
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
