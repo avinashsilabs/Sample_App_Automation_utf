@@ -172,7 +172,7 @@ def test_bt_per_tx(bt_dut, bt_client, power_meter):
 
     logger().info("starting per stats")
     bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
-    logger.info("BT per stats successfull")
+    logger().info("BT per stats successfull")
 
     time.sleep(10)
     logger().info("power number measurement initiated")
@@ -243,6 +243,8 @@ def test_bt_per_tx_GFSCK_C20583(bt_dut, bt_client, power_meter):
     logger().info("power number measurement initiated")
     power_obj = power_number_output(power_meter=power_meter)
     power_obj.get_power_value()
+
+
 
 
 
