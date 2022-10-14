@@ -180,6 +180,7 @@ def wifi_join(wifi_dut, wifi_access_point, ping_count=5):
 
 
 def delta_btwn_last_beacon_and_first_probe_req(wifi_sniffer, dut_mac_address, ap_bssid, test_case):
+    ''' Method to calculate time stamp for the last beacon and consecutive broadcast and unicast probe request'''
     remote_capture_file = wifi_sniffer.interfaces.capture.remote_capture_file
     logger().info(f"capture file is:{remote_capture_file}")
 
