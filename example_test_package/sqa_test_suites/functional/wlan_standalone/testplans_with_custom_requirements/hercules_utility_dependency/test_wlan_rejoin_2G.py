@@ -124,7 +124,7 @@ def wifi_join(wifi_dut, wifi_access_point, ping_count=5):
     for i in range(3):
         try:
             wifi_dut.interfaces.wifi.associated = False
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
             time.sleep(3)
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
             time.sleep(5)
