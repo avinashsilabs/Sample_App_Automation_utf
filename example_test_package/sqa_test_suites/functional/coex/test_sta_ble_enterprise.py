@@ -600,7 +600,6 @@ def test_sta_ble_PEAP_BLE_adv_C20217(radius_server, wifi_sniffer, wifi_access_po
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
 def test_sta_ble_TCP_UDP_TLS_C20205(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client):
@@ -659,7 +658,6 @@ def test_sta_ble_TCP_UDP_TLS_C20205(radius_server, wifi_sniffer, wifi_access_poi
  #EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
 def test_sta_ble_TCP_UDP_TTLS_C20206(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
