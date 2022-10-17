@@ -1727,10 +1727,10 @@ def test_powersave_functionality_after_rejoin_C19508(wifi_sniffer, wifi_dut, wif
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
-def test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19507(multicast_client, net_perf_client, protocol,
+def test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19510(multicast_client, net_perf_client, protocol,
                                                       wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,
                                                       utf_constants, rs_helper):
-    testcase = "test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19507"
+    testcase = "test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19510"
     logger().info("configuring the Sniffer with the channel")
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     assoc_obj = FilterPacket()
@@ -1751,8 +1751,9 @@ def test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19507(multicast_client, net_perf
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
 
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=0,
-                                         listen_interval=0)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
+                                         join_feature_bitmap=RS9116JoinFeatureBitMap.ListenIntervalFromJoin,
+                                         listen_interval=800)
         logger().info("enabling dhcp in DUT.......")
         ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=60)
         device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)

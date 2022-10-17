@@ -3,7 +3,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.106",
     "HARNESS_NAME": "sqa_jenkins_tb1_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/hercules_utility_dependency  --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/hercules_utility_dependency --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_1_device_group",
     "device_group_label": ""
   },
@@ -27,7 +27,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.133",
     "HARNESS_NAME": "sqa_jenkins_tb4_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness/test_join_2_4.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_4_device_group",
     "device_group_label": ""
   },
@@ -35,7 +35,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.126",
     "HARNESS_NAME": "sqa_jenkins_tb5_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex/test_sta_ble_diff_ble_intervals.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_5_device_group",
     "device_group_label": ""
   },
@@ -43,7 +43,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.166",
     "HARNESS_NAME": "sqa_jenkins_tb6_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/testplans_with_default_harness  --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/ssl --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_6_device_group",
     "device_group_label": ""
   },
@@ -51,7 +51,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.170",
     "HARNESS_NAME": "sqa_jenkins_tb7_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/coex  --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/wlan_standalone/http_https/test_http_https_get_post.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_7_device_group",
     "device_group_label": ""
   },
