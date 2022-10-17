@@ -57,6 +57,7 @@ pipeline {
                         sed_param=s,BRANCH_NAME=.*,BRANCH_NAME=${UTF_WIFI_BRANCH},
                         sed -i "$sed_param" settings_defaults.env
 
+                        build=$( echo "$RS9116_FIRMWARE" |cut -d '.' -f5)
                         sed_param=s,SDK_BUILD_NUM=.*,SDK_BUILD_NUM=${build},
                         sed -i "$sed_param" settings_defaults.env
 
@@ -82,11 +83,15 @@ pipeline {
                         sed_param=s,TESTBED_NAME=.*,TESTBED_NAME=${SSH_TARGET},
                         sed -i "$sed_param" settings_defaults.env
 
-                        sed_param=s,JOB_TYPE=.*,JOB_TYPE='smoke',
-                        sed -i "$sed_param" settings_defaults.env
-
+                        if[ $device_group_name = 'utf_sqa_smoke_test_device_group' ]; then
+                            sed_param=s,JOB_TYPE=.*,JOB_TYPE='smoke',
+                            sed -i "$sed_param" settings_defaults.env
+                        else
+                            sed_param=s,JOB_TYPE=.*,JOB_TYPE='regression',
+                            sed -i "$sed_param" settings_defaults.env
+                        fi
+                        echo "updated settings_defaults.env file data"
                         cat settings_defaults.env
-
                         '''
 
                     } catch(err) {

@@ -85,9 +85,8 @@ pipeline {
 
                         sed_param=s,JOB_TYPE=.*,JOB_TYPE='regression',
                         sed -i "$sed_param" settings_defaults.env
-
+                        echo "updated settings_defaults.env file data"
                         cat settings_defaults.env
-
                         '''
 
                     } catch(err) {
