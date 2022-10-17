@@ -11,7 +11,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.108",
     "HARNESS_NAME": "sqa_jenkins_tb2_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/ble/test_ble_advertise_wifi_sqa.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/functional/ble --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_2_device_group",
     "device_group_label": ""
   },
