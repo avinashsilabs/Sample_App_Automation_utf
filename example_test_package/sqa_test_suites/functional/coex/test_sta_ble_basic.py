@@ -659,6 +659,7 @@ def test_http_post_functionality_when_ble_connection_C20340(wifi_dut, wifi_acces
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.sniffer_validation()
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -827,6 +828,7 @@ def test_sta_deinit_init_functionality_of_ble_C20236(wifi_dut, ble_client, wifi_
     wifi_obj.sniffer_validation()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
       wifi={
