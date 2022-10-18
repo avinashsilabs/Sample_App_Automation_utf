@@ -31,7 +31,7 @@ def logger():
     Author: Vishakha
 """
 
-def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut,capture_filename):
+def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename):
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger().info(f"DUT firmware version: {result}")
@@ -148,11 +148,13 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         ble_client.interfaces.bluetooth.stop_scanning()
         logger().info(f"See that we found our device")
         found_devices = ble_client.interfaces.bluetooth.get_devices()
+        logger().info(f"ble_scan_list:\n{found_devices}")
         assert wifi_dut.interfaces.wifi.ble_address in found_devices
         assert (
                 found_devices[wifi_dut.interfaces.wifi.ble_address]
                 == wifi_dut.interfaces.wifi.ble_advertising_data
-        )
+        ),"Could not able to find our DUT"
+        logger().info(f"See that we found our device:'{ble_dut_address}'")
         ble_client.interfaces.bluetooth.connect(ble_dut_address)
         logger().info("BLE Connection success")
         time.sleep(2)
@@ -216,7 +218,7 @@ class tx_rx:
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_TCP_packet_loss_C20222(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,remote_socket, remote_socket_factory):
+def test_TCP_packet_loss_C20222(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,remote_socket, remote_socket_factory):
     remote_socket.interfaces.socket.time_limit = 1800
     capture_filename = "test_TCP_packet_loss_C20222"
     logger().info(f"Set up DUT for BLE advertising")
@@ -256,6 +258,7 @@ def test_TCP_packet_loss_C20222(wifi_sniffer,wifi_dut,wifi_access_point,ble_clie
                                               f"opened in the DUT is not matched "
     packet_loss = (((buffer_length - buffer_length_rx) / buffer_length) * 100)
     logger().info(f"packet loss tx {packet_loss}")
+    logger().info(f"Start scanning to ble client")
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
     assert ble_client_address, f"Unable to start smp scanning "
     time.sleep(5)
@@ -263,18 +266,13 @@ def test_TCP_packet_loss_C20222(wifi_sniffer,wifi_dut,wifi_access_point,ble_clie
     logger().info(f"See that we found our device")
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert wifi_dut.interfaces.wifi.ble_address in found_devices
-    assert (
-            found_devices[wifi_dut.interfaces.wifi.ble_address]
-            == wifi_dut.interfaces.wifi.ble_advertising_data
-    )
-    logger().info(f"Start scanning to ble client")
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "unable to close opened tcp socket"
+    assert (found_devices[wifi_dut.interfaces.wifi.ble_address]== wifi_dut.interfaces.wifi.ble_advertising_data)
     remote_socket.interfaces.socket.socket_close_indication(1)
     logger().info("Successfully closed opened socket in the DUT")
-    wifi_dut.interfaces.wifi.leave()
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 #Wlan Multicast data UDP_TX and UDP_RX when DUT connected as slave
@@ -297,6 +295,8 @@ def test_TCP_packet_loss_C20222(wifi_sniffer,wifi_dut,wifi_access_point,ble_clie
 def test_Multicast_C20227(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,multicast_client,remote_socket):
     capture_filename = "test_Multicast_C20227"
     ble_mode = "ble_slave"
+    wifi_dut.interfaces.wifi.reset_soft()
+    wifi_dut.interfaces.wifi.init()
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, _ = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
@@ -320,9 +320,6 @@ def test_Multicast_C20227(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,mul
     logger().info(f"Successfully sent multicast_ip : {multicast_ip} and device_port : {device_port}")
     multicast_client.interfaces.multicast.socket_close()
     time.sleep(30)
-    result = wifi_dut.interfaces.wifi.close_socket(socket_id)
-    assert b"success" in result, "unable to close opened socket in the dut"
-    logger().info("Successfully closed opened socket in the DUT")
     result = wifi_dut.interfaces.wifi.get_socket_rx_stats(socket_id)
     bytes_received = int(result.split(b":")[1])
     bytes_sent = (no_of_pkts * buffer_length)
@@ -330,9 +327,10 @@ def test_Multicast_C20227(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,mul
     logger().info(f"Packet loss {packet_loss}")
     assert packet_loss < 20, "Packet loss is not in tolerance level"
     wifi_dut.interfaces.wifi.leave_multicast_group(multicast_ip=multicast_ip)
-    wifi_dut.interfaces.wifi.leave()
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 #WLAN Broadcast TX when DUT connected as slave
@@ -351,12 +349,14 @@ def test_Multicast_C20227(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,mul
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
     },
 )
-@pytest.mark.parametrize("number_of_pkts", [500])
+@pytest.mark.parametrize("number_of_pkts", [200])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Broadcast_C20228(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,remote_socket, number_of_pkts):
+def test_Broadcast_C20228(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,remote_socket,number_of_pkts):
     data_size = 1460
     capture_filename = "test_Broadcast_C20228"
     ble_mode = "ble_slave"
+    wifi_dut.interfaces.wifi.reset_soft()
+    wifi_dut.interfaces.wifi.init()
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, _ = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
@@ -386,13 +386,10 @@ def test_Broadcast_C20228(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,rem
                                                          server_ip=ap_broadcast_ip, server_port=server_port)
     logger().info(f"Number of bytes sent by dut {bytes_sent}")
     th_start.join(5)
-    # DUT closes the socket.socket id is mentioned in sock variable
-    logger().info("contents of data sent and receive are matched")
-    result = wifi_dut.interfaces.wifi.close_socket(sock)
-    assert b"success" in result, "Unable to close the udp socket opened in the dut"
-    wifi_dut.interfaces.wifi.leave()
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.leave()
+
 
 
 #WiFi SSL Tx functionality and stability after BLE connection
@@ -421,7 +418,7 @@ def test_Broadcast_C20228(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,rem
                          )
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_ssl_tx_and_stability_C20231(wifi_sniffer,wifi_dut,wifi_access_point,ble_client,ssl_server, cert1, protocol):
-    capture_filename = "test_TCP_packet_loss_C20222"
+    capture_filename = "test_wifi_ssl_tx_and_stability_C20231"
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address, _ = ble_master_slave(wifi_dut, ble_client, ble_mode)
@@ -461,9 +458,8 @@ def test_wifi_ssl_tx_and_stability_C20231(wifi_sniffer,wifi_dut,wifi_access_poin
     assert data_sent == data_receive.decode(), "Data sent by DUT and received on server is matching"
     logger().info("Data sent by DUT and received on server is matching")
 
-    # Close socket
-    wifi_dut.interfaces.wifi.close_socket(sock)
+    # stop server
     ssl_server.interfaces.ssl.stop_server()
-    wifi_dut.interfaces.wifi.leave()
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.leave()
