@@ -60,7 +60,6 @@ class ble_adv(ThreadBase):
         logger().info(f"ble client add..{bt_client_address}")
         time.sleep(5)
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -594,7 +593,6 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
 
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)
-
 
 @pytest.mark.config(
     "wifi_dut",
