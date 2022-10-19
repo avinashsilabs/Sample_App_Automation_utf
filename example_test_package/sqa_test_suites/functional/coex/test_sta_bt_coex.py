@@ -382,7 +382,6 @@ class BtSppMasterThread_diff_data(ThreadBase):
                     logger().info(f"**** pinging to DUT ****")
                     assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
                         f"Failed to ping BT client to DUT"
-
                     logger().info(f">>>>>>>>>>> iteration {j} completed for Data length {i}<<<<<<<<<<<<<<")
 
             # Ping dut
@@ -1212,7 +1211,7 @@ def test_bt_spp_data_transfer_RX_master_C20095(wifi_dut, wifi_access_point, bt_c
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, rf_attenuator):
-    send_text = text_generator(size=50)
+    send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
     with TimeMeasurer() as t:
@@ -1249,16 +1248,18 @@ def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
         if not found:
             assert found, "Dut unable to find the bt client device. The test case may fail"
 
+        logger().info(f"Starting Raspberry PI as BT Server")
         bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
         for i in range(1, iter_cnt):
             # SPP Connection
             with wifi_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
-                result = ThreadBase.call_functions_simultaneously(
-                    [(wifi_dut.interfaces.wifi.bt_connect, bt_client_address),
-                    (bt_client_socket.accept, 20)])
-                assert result[1] == bt_dut_address, "Unable to find BT client socket connection"
-                logger().info(f"Result from Callable Function {result}")
+                logger().info(f"Connecting Raspberry PI to DUT-BT")
+                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
+                addr = bt_client_socket.accept(timeout=40)
+                assert addr == bt_dut_address, "Unable to find BT client socket connection"
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
+                f"Failed to ping BT client to DUT"
 
             # Send data from bt_client to dut
             with wifi_dut.interfaces.wifi.run_bt_task():
@@ -1279,20 +1280,20 @@ def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
             assert data.decode() == send_text
             logger().info(f'Data received from dut')
 
-            bt_client.interfaces.bluetooth.bt_adapter.set_noscan()
+            # bt_client.interfaces.bluetooth.bt_adapter.set_noscan()
 
-            # Ping dut
-            logger().info(f"  Ping to DUT ")
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
-                f"Failed to ping BT client to DUT"
-            logger().info(f" Pinging ")
+        # Ping dut
+        logger().info(f"  Ping to DUT ")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
+            f"Failed to ping BT client to DUT"
+        logger().info(f" Pinging ")
 
-            # Close connection
-            logger().info(f"disconnecting bt host....")
-            wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
-            logger().info(f"Close Socket connection")
-            bt_client_socket.close()
-            time.sleep(5)
+        # # Close connection
+        # logger().info(f"disconnecting bt host....")
+        # wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+        # logger().info(f"Close Socket connection")
+        # bt_client_socket.close()
+        # time.sleep(5)
 
         received_authentication_failure = False
         time.sleep(1)
@@ -1821,59 +1822,58 @@ def test_bt_coex_inquiry_C20101(wifi_dut, bt_client, wifi_access_point, wifi_sni
 def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_client):
     event_found = 0
     validation = True
-    with TimeMeasurer() as t:
-        logger().info(" ====== configuring the sniffer with access point channel ====== ")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bt_coex_noremote_C20102')
-        ap_bssid = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f'AP BSSID = {ap_bssid}')
+    logger().info(f" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info(f" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bt_coex_noremote_C20102')
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
 
-        # Join Wi-Fi Access Point
-        logger().info("Joining into Wi-Fi")
-        device_ip = wifiJoin(wifi_dut, wifi_access_point)
-        assert device_ip, "Device IP fetching failed"
-        time.sleep(3)
+    # Join Wi-Fi Access Point
+    logger().info("Joining into Wi-Fi")
+    device_ip = wifiJoin(wifi_dut, wifi_access_point)
+    assert device_ip, "Device IP fetching failed"
+    time.sleep(3)
 
-        logger().info("fetching dut mac address....")
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info("fetching dut mac address....")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
-        logger().info(f"Configuring DUT as SPP MASTER")
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
-        assert bt_dut_address, "Unable to get BT DUT address"
-        logger().info(f"DUT is BT-MASTER with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
-        assert bt_client_address, "Unable to get BT client address"
-        logger().info(f"Raspberry PI is BT-SLAVE with MAC address {bt_client_address} ")
-        time.sleep(1)
-        logger().info(f" bt inquiry started ")
-        found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                              inquiry_type=2,
-                                                              inquiry_duration_ms=10000,
-                                                              timeout=40,
-                                                              retry_counts=3)
-        if not found:
-            assert found, "Dut unable to find the bt client device. The test case may fail"
+    logger().info(f"Configuring DUT as SPP MASTER")
+    bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
+    assert bt_dut_address is not None, "Unable to get BT DUT address"
+    logger().info(f"DUT is BT-MASTER with MAC address {bt_dut_address} ")
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
+    assert bt_client_address is not None, "Unable to get BT client address"
+    logger().info(f"Raspberry PI is BT-SLAVE with MAC address {bt_client_address} ")
 
-        #Get Asynchronous messages
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        assert len(events) > 0, "Events not found"
-        # Search for Inquiry Complete Event
-        event_data = ''
-        for event in events:
-            event_data = event_data + str(event.event_data.decode())
-            logger().info(f" ###### EVENT DATA ARE '{event_data}' ######")
-            if 'RSI_APP_EVENT_INQ_COMPLT' in event_data:
-                logger().info(f"inquiry complete event found")
-                break
-        if bt_client_address not in event_data:
-            logger().info(f" ** BT CLIENT ADDRESS NOT IN EVENT DATA *** ")
-            event_found = 1
-            logger().info(f" ** EVENT FOUND VALUE IS '{event_found}' *** ")
-            assert True
-        if event_found == 0:
-            assert False, logger().info(f"inquiry complete event not found")
-    logger().info(f"Test case executed in {t.duration} seconds")
+    found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                           inquiry_type=1,
+                                                           inquiry_duration_ms=10000,
+                                                           max_device_cnt=1,
+                                                           timeout=60,
+                                                           retry_counts=1)
+    if not found:
+        assert found is not None, "Dut unable to find the bt client device. The test case may fail"
+
+    # Get Asynchronous messages
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    assert len(events) > 0, "Events not found"
+    # Search for Inquiry Complete Event
+    event_data = ''
+    for event in events:
+        event_data = event_data + str(event.event_data.decode())
+        logger().info(f" ###### EVENT DATA ARE '{event_data}' ######")
+        if 'nRSI_APP_EVENT_INQ_COMPLT' in event_data:
+            logger().info(f"inquiry complete event found: {event_data}")
+            break
+    if bt_client_address not in event_data:
+        logger().info(f" ** BT CLIENT ADDRESS NOT IN EVENT DATA *** ")
+        event_found = 1
+        logger().info(f" ** EVENT FOUND VALUE IS '{event_found}' *** ")
+        assert True
+    if event_found == 0:
+        assert False, logger().info(f"inquiry complete event not found")
 
     # Sniffer stop
     logger().info(f"Stop Sniffer finally")
@@ -1888,9 +1888,7 @@ def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_c
     wifi_leave(wifi_dut)
 
 
-
 #BT Inquiry command cancel
-# @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=[ 'init'])
 @pytest.mark.config(
@@ -1926,9 +1924,10 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, bt_client, wifi_a
     logger().info("fetching dut mac address....")
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f' initialize bt inquiry ')
-    result = wifi_dut.interfaces.wifi.bt_inquiry()
-    logger().info(f'bt inquiry successful: , {result}')
-    time.sleep(10)
+    wifi_dut.interfaces.wifi.bt_start()
+    found = wifi_dut.interfaces.wifi.bt_inquiry(timeout=20)
+    logger().info(f'bt inquiry successful: {found}')
+    # time.sleep(10)
     # Cancel BT inquiry
     wifi_dut.interfaces.wifi.bt_cancel_inquiry()
     logger().info("Inquiry cancelled")
@@ -2252,7 +2251,6 @@ def test_bt_coex_without_pin_C20106(wifi_dut, wifi_access_point, bt_client, wifi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_bt_spp_remote_unpair_C20107(wifi_dut, wifi_access_point, bt_client, wifi_sniffer):
     send_text = text_generator(size=20)
-    recv_text = send_text
     with TimeMeasurer() as t:
         validation = True
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -2271,41 +2269,15 @@ def test_bt_spp_remote_unpair_C20107(wifi_dut, wifi_access_point, bt_client, wif
         logger().info("fetching dut mac address....")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
-        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
-        assert bt_dut_address, "Unable to get BT DUT device"
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+        logger().info(f"Configuring DUT as SPP Master")
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave_without_agent(bt_dut_address)
         assert bt_client_address, "Unable to get BT client address"
-        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
-        if not found:
-            assert found, "Dut unable to find the bt client device. The test case may fail"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
+        time.sleep(10)
 
-        logger().info(f"Starting Raspberry PI as BT Server")
-        bt_server_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server)
-        # SPP Connection
-        with wifi_dut.interfaces.wifi.run_bt_task():
-            bt_server_socket.create_server()
-            logger().info(f"Connecting Raspberry PI to DUT-BT")
-            connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-            assert connected, "Unable to find BT server socket connection"
-            logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
-
-        # Send data from bt_client to dut
-        with wifi_dut.interfaces.wifi.run_bt_task():
-            sent = bt_server_socket.send(recv_text)  # SQA Agent is programmed to send back data
-            assert sent, "Unable to send the data"
-            time.sleep(10)
-            data = bt_server_socket.recv()
-            assert data, "Unable to find BT server socket connection"
-            assert data.decode() == recv_text
-
-        # Send data from dut to bt_client
-        wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-        data = bt_server_socket.recv()
-        assert data, "Unable to find BT server socket connection"
-        assert data.decode() == send_text
-        # Ping dut
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
         # Capture the time to identify events
         start_capture_time = time.perf_counter_ns()
         # Remote device un-pairing
@@ -2398,7 +2370,7 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
 
         for i in range(1, iter_cnt):
             found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                                   inquiry_type=2,
+                                                                   inquiry_type=1,
                                                                    inquiry_duration_ms=20000,
                                                                    timeout=22,
                                                                    retry_counts=3)
@@ -2411,7 +2383,8 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
 
             # Close connection
             logger().info(f"disconnecting bt host....")
-            wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+            result = bt_client.interfaces.bluetooth.bt_device.remove_device(bt_dut_address)
+            logger().info(f"successfully disconnected device, {result}")
             time.sleep(2)
             logger().info(f"iteration completed: {i}")
 
@@ -2419,7 +2392,7 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
                                                                inquiry_type=1,
                                                                inquiry_duration_ms=20000,
-                                                               timeout=40,
+                                                               timeout=22,
                                                                retry_counts=3)
         if not found:
             assert found is not None, "Dut unable to find the bt client device. The test case may fail"
@@ -3062,6 +3035,7 @@ def test_sta_bt_C20117(wifi_sniffer, wifi_dut, bt_client, wifi_access_point):
 
 
 #Data transfer on by enabling Max slots
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("num_sockets", [10])
@@ -3462,7 +3436,6 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_poin
     logger().info(f"Test case executed in {t.duration} seconds")
     logger().info(f"Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
-
 
 
 
