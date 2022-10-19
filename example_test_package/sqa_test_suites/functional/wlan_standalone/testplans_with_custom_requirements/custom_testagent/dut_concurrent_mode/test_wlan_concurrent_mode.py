@@ -318,7 +318,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     time.sleep(5)
 
-    logger().info("fetching ip address through DHCP")
+    logger().info("Fetch the device ip")
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
@@ -357,15 +357,17 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     logger().info("connect and disconnect for multiple times")
     for count in range(1, 3):
         wifi_dut.interfaces.wifi.leave()
-
-        logger().info("reconnecting DUT station from 3rd party AP")
+        logger().info(f"reconnecting DUT station from 3rd party AP {count}")
         time.sleep(10)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         time.sleep(5)
         for i in range(3):
             try:
-                logger().info("fetching ip address through DHCP")
-                wifi_dut.interfaces.wifi.start_ip()
+                logger().info(f"fetching ip address through DHCP in '{i}' iteration")
+                ip_config = wifi_dut.interfaces.wifi.start_ip()
+                device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                if device_ip:
+                    break
             except:
                 logger().info(f"Get IP address through dhcp process is failed. retry count -> {i + 1}")
                 time.sleep(5)
