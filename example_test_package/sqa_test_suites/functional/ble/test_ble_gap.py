@@ -9,10 +9,10 @@ from threading import Thread
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 
-
 def logger():
     return get_logger(__name__)
 time_lapse = 60 *48
+
 """
     setup requirement:
         1. DUT(RS9116)
@@ -59,7 +59,6 @@ class ble_adv(ThreadBase):
 
         logger().info(f"ble client add..{bt_client_address}")
         time.sleep(5)
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -594,7 +593,6 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
 
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)
-
 
 @pytest.mark.config(
     "wifi_dut",
