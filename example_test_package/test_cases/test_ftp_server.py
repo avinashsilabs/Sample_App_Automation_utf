@@ -13,6 +13,8 @@ def test_ftp_server(ftp_server, ftp_client):
     ftp_client.interfaces.ftp_client.write_to_file('readMe1.txt', "This is read me file1")
     # read file to ftp server
     logger().info(ftp_client.interfaces.ftp_client.read_from_file('readMe1.txt'))
+    # list files and directories present in current working directory
+    logger().info(ftp_client.interfaces.ftp_client.list_files_and_dirs())
     # delete file from ftp server
     assert ftp_client.interfaces.ftp_client.delete_file('readMe1.txt') == "250 Delete operation successful."
     # create dir in ftp server
@@ -36,6 +38,8 @@ def test_ftp_server_tls(ftp_server, ftp_client):
     ftp_client.interfaces.ftp_client.write_to_file('readMe1.txt',"This is read me file1")
     # read file to ftp server
     logger().info(ftp_client.interfaces.ftp_client.read_from_file('readMe1.txt'))
+    # list files and directories present in current working directory
+    logger().info(ftp_client.interfaces.ftp_client.list_files_and_dirs())
     # delete file from ftp server
     assert ftp_client.interfaces.ftp_client.delete_file('readMe1.txt') == "250 Delete operation successful."
     # create dir in ftp server
