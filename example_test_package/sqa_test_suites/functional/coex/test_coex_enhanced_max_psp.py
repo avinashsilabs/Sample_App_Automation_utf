@@ -293,48 +293,45 @@ class BleThreadConnectionDataTransfer(ThreadBase):
         time.sleep(2)
 
         # resolving charecteristic
-        bus = self.ble_client.interfaces.bluetooth.bus
-        servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(
-            bus)
+        servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
         assert len(servs) > 0
         assert len(chars) > 0
 
-        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                    services=servs,
+        char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
                                                                                                     service_uid=service_uid,
                                                                                                     char_uid=char_uid)
-        assert char is not None
+        assert char_path is not None
         assert len(char_props) > 0
 
         # read value - Notifications not enabled
-        result = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+        result = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
         assert result == data1
 
         # subscribe to notifications
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                      char_uid=char_uid)
 
         # notify only
         self.wifi_dut.interfaces.wifi.ble_notify_value()
 
         # write/read new value - Notifications enabled
-        self.ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data2)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data2)
         time.sleep(0.1)
-        result = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+        result = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
         assert result == data2
 
         # write value - Notifications enabled
-        self.ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(characteristic=char, data=data3)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data3)
 
         # auto notify
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                      char_uid=char_uid)
         self.wifi_dut.interfaces.wifi.ble_start_notify_value(interval_ms=500, count=2)
         time.sleep(1)
 
         # subscribe to notifications
-        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(characteristic=char)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         time.sleep(1)
         # notify only - disabled notifications - should raise exception
