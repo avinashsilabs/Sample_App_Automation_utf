@@ -689,6 +689,11 @@ devices:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
                 interface: 'wlp0s20f3'
+            live_capture:
+                host_address: 192.168.50.210
+                type: 'wifi.sniffer.pyshark_live_sniffer'
+                shell: 'local_shell'
+                interface: 'wlp0s20f3'
 
     saleae_logic_analyzer:
         interfaces:
