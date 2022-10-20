@@ -1,6 +1,15 @@
-import pytest
 import time
+from random import randint
+from threading import Thread
+
+import pytest
 from retry import retry
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.interfaces.iperf.iperf_device_output_parser import Result
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import (
     RS9116OperatingMode,
     RS9116Band,
@@ -8,13 +17,9 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtTCPIPFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
     RS9116CustomFeatureBitMap,
-    RS9116TCPIPFeatureBitMap, RS9116CoexMode)
-from utf.interfaces.iperf.iperf_constants import IperfConstants
-from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict
-from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import ping
-from utf.utils.stopwatch import Stopwatch
+    RS9116TCPIPFeatureBitMap, RS9116CoexMode,
+    SocketType,
+)
 
 """Test Author = Rakesh Nayini
     Reworked by CG, Rashmi & Team.
@@ -35,7 +40,6 @@ setup requirement:
 
 def logger():
     return get_logger(__name__)
-
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -120,6 +124,102 @@ def run_iperf_dut_as_server(wifi_dut, net_perf_client, host_ip, dut_ip, protocol
         except:
             net_perf_client.interfaces.net_perf.close_files()
             net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+
+
+def run_tcp_traffic(wifi_dut, remote_socket, dut_ip):
+    logger().info("Starting TCP server socket remotely")
+    proto_type = "TCP"
+    no_of_packets = 10000
+    packet_length = 4
+    local_port = randint(6000, 6100)
+
+    remote_socket.interfaces.socket.interface = "wlan0"
+    logger().info("Starting TCP Server socket at remote device")
+    remote_socket.interfaces.socket.start_server(port=local_port)
+    server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+    server_port = remote_socket.interfaces.socket.server_port
+
+    logger().info("Opening TCP client socket in DUT")
+    tcp_socket_id = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+    logger().info(f"Socket open successfully : {tcp_socket_id}")
+    time.sleep(5)
+
+    logger().info("Binding TCP socket in DUT")
+    bind_response = wifi_dut.interfaces.wifi.bind(tcp_socket_id, dut_ip, local_port)
+    logger().info(f"Bind socket successfully: {bind_response}")
+
+    logger().info("DUT is connecting to server socket")
+    connect_status = False
+    for count in range(3):
+        try:
+            wifi_dut.interfaces.wifi.connect_to_server(tcp_socket_id, remote_socket.interfaces.socket, server_port)
+            connect_status = True
+            break
+        except:
+            logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+            time.sleep(10)
+    assert connect_status, "Socket connection failed in DUT"
+    logger().info("Socket connection is successful")
+    time.sleep(3)
+
+    # Send and receive data.
+    t1 = Thread(target=receive_data_socket, args=(remote_socket, no_of_packets, packet_length, proto_type), )
+    for count in range(3):
+        try:
+            logger().info("Receiving TCP data from DUT")
+            t1.start()
+            time.sleep(2)
+            logger().info("DUT Sending Data packets")
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(tcp_socket_id, pkt_length=packet_length,
+                                                                 no_of_pkts=no_of_packets,
+                                                                 server_ip=server_ip, server_port=server_port)
+            logger().info(f"Number of bytes sent by dut {bytes_sent}")
+            break
+        except:
+            logger().info(f"Unable to send data packets from DUT...retry:{count + 1}")
+            t1.join()
+            time.sleep(30)
+
+    time.sleep(5)
+    logger().info("Closing opened socket in DUT")
+    try:
+        result = wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+        assert b"success" in result, "Unable to close the udp socket"
+        logger().info("Socket closed successfully")
+    except:
+        logger().info("Unable to close the socket")
+    t1.join()
+
+
+def receive_data_socket(remote_socket, no_of_packets, packet_length, proto_type="TCP"):
+    try:
+        fail_count = 0
+        rcv_data = 0
+        if proto_type == "TCP":
+            logger().info("Setting TCP socket receive timeout in remote server")
+            remote_socket.interfaces.socket.set_recv_timeout(socket_type=0)
+        else:
+            logger().info("Setting UDP socket receive timeout in remote server")
+            remote_socket.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
+        logger().info("Receiving data at remote server")
+        for count in range(0, no_of_packets):
+            if proto_type == "TCP":
+                data = remote_socket.interfaces.socket.recv_data_tcp(packet_length)
+            else:
+                data, address = remote_socket.interfaces.socket.recv_data_udp(packet_length)
+            if not isinstance(data, str):
+                fail_count = fail_count + 1
+                if fail_count == 5:
+                    break
+                else:
+                    continue
+            rcv_data = rcv_data + len(data)
+        time.sleep(3)
+        logger().info(f"Total bytes received on socket opened remotely -> {rcv_data}")
+        time.sleep(10)
+        remote_socket.interfaces.socket.stop()
+    except Exception as err:
+        logger().warning(f"Error is:{err}")
 
 
 @retry(Exception, delay=10, tries=3)
@@ -547,6 +647,7 @@ def test_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_d
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "band": RS9116Band.TwoPointFourGHz,
         "client_socket_limit": 10,
+        "server_socket_limit": 0,
         "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"
     }
 )
@@ -555,12 +656,10 @@ def test_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_d
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
           "channel": 11, }
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_DUTAP_TCPSocket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
-                                                                protocol, channel, utf_constants, teardown):
+def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, remote_socket, wifi_dut, wifi_client,
+                                                                 channel, utf_constants, teardown):
     validation = True
     test_run_time = utf_constants.get('time_duration')
     ping_count = utf_constants.get('ping_count')
@@ -605,9 +704,10 @@ def test_DUTAP_TCPSocket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, ne
     while sw.elapsed_sec <= test_run_time:
         time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
         logger().info(f"Remaining time to complete test is '{time_left}' minutes")
-        logger().info("***** Initiating TCP TX traffic from DUT *****")
-        run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol, iperf_time=200)
+        logger().info("***** Initiating UDP TX traffic from DUT *****")
+        run_tcp_traffic(wifi_dut, remote_socket, dut_ip)
         time.sleep(30)
+        logger().info("\n\n")
 
     logger().info("Stop sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -628,7 +728,6 @@ def test_DUTAP_TCPSocket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, ne
 
     logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
     wifi_client.interfaces.wifi.leave()
-    wifi_dut.interfaces.wifi.wireless_deinit()
 
 
 # @pytest.mark.skip()
@@ -654,12 +753,10 @@ def test_DUTAP_TCPSocket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, ne
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
           "channel": 11, }
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
-                                                                 protocol, channel, utf_constants, teardown):
+def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, remote_socket, wifi_dut, wifi_client,
+                                                                 channel, utf_constants, teardown):
     validation = True
     test_run_time = utf_constants.get('time_duration')
     ping_count = utf_constants.get('ping_count')
@@ -704,9 +801,59 @@ def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, n
     while sw.elapsed_sec <= test_run_time:
         time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
         logger().info(f"Remaining time to complete test is '{time_left}' minutes")
-        logger().info("***** Initiating UDP TX traffic from DUT *****")
-        run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol, iperf_time=200)
+        proto_type = "UDP"
+        no_of_packets = 10000
+        packet_length = 4
+        local_port = randint(5001, 6000)
+
+        logger().info("Starting UDP server socket at remote device")
+        remote_socket.interfaces.socket.interface = "wlan0"
+        remote_socket.interfaces.socket.start_server(socket_type=1)  # 0-TCP, 1-UDP
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+        server_port = remote_socket.interfaces.socket.server_port
+
+        logger().info("Opening UDP client socket in DUT")
+        udp_socket_id = wifi_dut.interfaces.wifi.open_udp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+        logger().info(f"Successfully opened UDP client socket on DUT with socket id:'{udp_socket_id}'")
+
+        logger().info("Initiating socket bind from DUT")
+        wifi_dut.interfaces.wifi.bind(udp_socket_id, dut_ip, local_port)
+        logger().info("Socket binding is success")
+
+        logger().info("DUT is connecting to server socket")
+        connect_status = False
+        for count in range(3):
+            try:
+                wifi_dut.interfaces.wifi.connect_to_server(udp_socket_id, remote_socket.interfaces.socket, server_port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                time.sleep(10)
+        assert connect_status, "Socket connection failed in DUT"
+        logger().info("Socket connection is successful")
+        time.sleep(3)
+
+        logger().info("Receiving UDP data from DUT")
+        t1 = Thread(target=receive_data_socket, args=(remote_socket, no_of_packets, packet_length, proto_type), )
+        t1.start()
+        time.sleep(2)
+        logger().info("DUT is sending UDP data packets")
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(udp_socket_id, pkt_length=packet_length,
+                                                             no_of_pkts=no_of_packets,
+                                                             server_ip=server_ip, server_port=server_port)
+        logger().info(f"Number of bytes sent by dut {bytes_sent}")
+        time.sleep(5)
+        try:
+            logger().info("Closing opened socket in DUT")
+            result = wifi_dut.interfaces.wifi.close_socket(udp_socket_id)
+            assert b"success" in result, "Unable to close the udp socket"
+            logger().info("Successfully closed opened socket in DUT")
+        except:
+            logger().info("Unable to close the socket")
+        t1.join()
         time.sleep(30)
+        logger().info("\n\n")
 
     logger().info("Stop sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
