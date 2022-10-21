@@ -99,7 +99,6 @@ def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
         assert (found_devices[
                     wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
         logger().info(f"See that we found our device:'{ble_dut_address}'")
-        # ble_client.interfaces.bluetooth.connect(ble_dut_address)
         ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address,
                                                  min_conn_interval=conn_params["min_conn_interval"],
                                                  max_conn_interval=conn_params["max_conn_interval"],
@@ -214,8 +213,6 @@ class WifiThread(ThreadBase):
 
     def powersave_ping(self):
         ping_count = self.utf_constants.get("ping_count")
-        # self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        # logger().info(f"device ip:{self.device_ip}")
         logger().info(
             f"The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put")
         logger().info(f"DUT to power save in Wifi+bluetooth mode")
@@ -414,7 +411,7 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
     logger().info(f"wrong_dnsserver :  '{dns_mode}'")
     dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
     bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
-    time.sleep(10)
+    time.sleep(5)
     wifi_obj.powersave_ping()
     ble_mode = "ble_slave"
     logger().info(f"ble mode : {ble_mode}")
