@@ -2085,6 +2085,11 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     # read value - Notifications not enabled
     result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
     assert result == data1
+    device_ip = join_ap(wifi_dut, wifi_access_point)
+
+    load_cert1 = ["open", 0, port1, cert1]
+    result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
+    logger.info(f"Loading certificate{result_load_certificate}")
 
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -2092,13 +2097,8 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     assert state_int == BLEDeviceState.Connected
     logger.info(" Connected to the BLE device ")
 
-    device_ip = join_ap(wifi_dut, wifi_access_point)
-
-    load_cert1 = ["open", 0, port1, cert1]
-    result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
-    logger.info(f"Loading certificate{result_load_certificate}")
-
     wifi_dut.interfaces.wifi.close_socket(0)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.skip()
@@ -2414,11 +2414,7 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
     assert result == data1
 
-    # Get the state of the dut
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
-    logger.info(" Connected to the BLE device ")
+
 
     device_ip = join_ap(wifi_dut, wifi_access_point)
 
@@ -2426,7 +2422,14 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
     logger.info(f"Loading certificate{result_load_certificate}")
 
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+    logger.info(" Connected to the BLE device ")
+
     wifi_dut.interfaces.wifi.close_socket(0)
+    wifi_dut.interfaces.wifi.leave()
 
 @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
