@@ -360,7 +360,6 @@ class BleThread_Connection(ThreadBase):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'Asia'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -396,7 +395,6 @@ def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client,  wi
 @pytest.mark.config('wifi_access_point', wifi={"channel": 12, "region": 'Europe'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_EU_2_4_C34786"
@@ -428,7 +426,6 @@ def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_s
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'US'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_US_2_4_C34785"
@@ -461,7 +458,6 @@ def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client,  wifi_
 @pytest.mark.config('wifi_access_point', wifi={"channel": 36, "region": 'US'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_US_5Ghz_C34789(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_US_5Ghz_C34789"
@@ -493,7 +489,6 @@ def test_join_US_5Ghz_C34789(wifi_access_point, wifi_dut, net_perf_client,  wifi
 @pytest.mark.config('wifi_access_point', wifi={"channel": 48, "region": 'Europe'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_EU_5Ghz_C34790(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_EU_5Ghz_C34790"
@@ -526,7 +521,6 @@ def test_join_EU_5Ghz_C34790(wifi_access_point, wifi_dut, net_perf_client,  wifi
 @pytest.mark.config('wifi_access_point', wifi={"channel": 44, "region": 'Asia'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_WORLD_5Ghz_C34792(wifi_access_point, wifi_dut, net_perf_client,  wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_WORLD_5Ghz_C34792"
@@ -558,7 +552,6 @@ def test_join_WORLD_5Ghz_C34792(wifi_access_point, wifi_dut, net_perf_client,  w
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("wifi_access_point", wifi={"region": "US","channel": 6})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_US_dual_band_C34793(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_US_dual_band_C34793"
@@ -601,7 +594,6 @@ def test_join_US_dual_band_C34793(wifi_access_point, wifi_dut, net_perf_client, 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("wifi_access_point", wifi={"region": "Europe","channel": 12})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_EU_dual_band_C34794(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_EU_dual_band_C34794"
@@ -644,7 +636,6 @@ def test_join_EU_dual_band_C34794(wifi_access_point, wifi_dut, net_perf_client, 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("wifi_access_point", wifi={"region": "Asia","channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_join_WORLD_dual_band_C34796(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_WORLD_dual_band_C34796"
