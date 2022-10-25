@@ -1925,9 +1925,9 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, bt_client, wifi_a
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f' initialize bt inquiry ')
     wifi_dut.interfaces.wifi.bt_start()
-    found = wifi_dut.interfaces.wifi.bt_inquiry(timeout=20)
-    logger().info(f'bt inquiry successful: {found}')
-    # time.sleep(10)
+    wifi_dut.interfaces.wifi.bt_inquiry()
+    time.sleep(2)
+    logger().info(f'bt inquiry successful')
     # Cancel BT inquiry
     wifi_dut.interfaces.wifi.bt_cancel_inquiry()
     logger().info("Inquiry cancelled")
@@ -2228,6 +2228,7 @@ def test_bt_coex_without_pin_C20106(wifi_dut, wifi_access_point, bt_client, wifi
         'packet_count'], 'Unable to find power management bit 1 in sniffer '
     logger().info(f"Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
+
 
 
 #Validate BT bond reject
@@ -2597,7 +2598,6 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point,bt_client):
         'packet_count'], 'Unable to find power management bit 1 in sniffer '
     logger().info(f"Initiating Wi-Fi disconnection on DUT")
     wifi_leave(wifi_dut)
-
 
 
 #Verify the SPP data transfer with minimum data value of 1 Byte
