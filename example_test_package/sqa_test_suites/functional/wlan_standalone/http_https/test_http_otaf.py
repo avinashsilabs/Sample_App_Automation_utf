@@ -799,7 +799,7 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
 def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -889,7 +889,7 @@ def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_d
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -979,7 +979,7 @@ def test_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_dut, wi
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1037,7 +1037,7 @@ def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1090,7 +1090,7 @@ def test_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_
 def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut):
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1126,7 +1126,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, wif
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1192,7 +1192,7 @@ def test_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1228,7 +1228,7 @@ def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, wifi
     """ ******* SERVER CHECKS ***** """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1298,7 +1298,7 @@ def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, w
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1361,7 +1361,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(firmware_loader, h
 
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -1480,7 +1480,7 @@ def test_http_fw_upgrade_in_rejoin_and_measure_time_C19783(http_server, wifi_dut
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
