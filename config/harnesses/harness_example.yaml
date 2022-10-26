@@ -1101,6 +1101,7 @@ defaults:
         features_enable: 0
         enable_async_socket: 0
         enable_socket_config: 0
+        board_type: "rs9117"
 
     wiseconnect_web: 'wiseconnect_web'
 
