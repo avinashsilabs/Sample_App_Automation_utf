@@ -1066,7 +1066,6 @@ def test_connectivity_in_WPA2_EAP_TLS_PMF_C19026(wifi_sniffer, wifi_access_point
                     wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
 def test_GTK_Renewal_WPA_EAP_Multicast_C19029(radius_server, multicast_client, net_perf_client, protocol,
                                                   wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
@@ -1135,7 +1134,6 @@ def test_GTK_Renewal_WPA_EAP_Multicast_C19029(radius_server, multicast_client, n
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(radius_server, multicast_client, net_perf_client, protocol,
                                                   wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,utf_constants):
@@ -1205,7 +1203,6 @@ def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(radius_server, multicast_client, net_p
                     wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_GTK_Renewal_WPA_EAP_unicast_C70607(radius_server, net_perf_client, protocol,
                                              wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
@@ -1272,7 +1269,6 @@ def test_GTK_Renewal_WPA_EAP_unicast_C70607(radius_server, net_perf_client, prot
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_GTK_Renewal_WPA2_EAP_unicast_C70609(radius_server, net_perf_client, protocol,
                                              wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
@@ -1340,7 +1336,6 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(radius_server, net_perf_client, pro
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
 def test_GTK_Renewal_WPA2_EAP_Multicast_C70608(radius_server, multicast_client, net_perf_client, protocol,
                                                wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):

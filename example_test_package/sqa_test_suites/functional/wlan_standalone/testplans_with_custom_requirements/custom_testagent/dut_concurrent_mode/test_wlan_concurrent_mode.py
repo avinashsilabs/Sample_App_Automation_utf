@@ -318,7 +318,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     time.sleep(5)
 
-    logger().info("Fetch the device ip")
+    logger().info("fetching ip address through DHCP")
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
@@ -357,14 +357,15 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     logger().info("connect and disconnect for multiple times")
     for count in range(1, 3):
         wifi_dut.interfaces.wifi.leave()
-        logger().info(f"reconnecting DUT station from 3rd party AP {count}")
+
+        logger().info("reconnecting DUT station from 3rd party AP")
         time.sleep(10)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         time.sleep(5)
         for i in range(3):
             try:
-                logger().info(f"fetching ip address through DHCP in '{i}' iteration")
-                ip_config = wifi_dut.interfaces.wifi.start_ip()
+                logger().info("fetching ip address through DHCP")
+                wifi_dut.interfaces.wifi.start_ip()
                 device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
                 if device_ip:
                     break
@@ -378,7 +379,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.reset_soft()
 
 
-##########19313###########
+# #########19313###########
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
@@ -413,7 +414,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, execute_number):
     ping_iterations = 10
     validation = True
@@ -424,6 +425,21 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19313')
     time.sleep(3)
+
+    # preparing wifi_dut as access point - AP Mode
+    logger().info("Bringing up DUT in AP mode")
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19313", security="WPA2", passphrase="12345678", channel=8)
+    logger().info("joining 3rd party client to DUT ap")
+    time.sleep(5)
+    wifi_client.interfaces.wifi.join()
+    logger().info("fetching gateway ip of ap")
+    device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
+    logger().info("fetching p address of 3rd party sta")
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
+    logger().info("wifi_client ip: " + host_ip)
+    status = ping(host_ip, ping_iterations)
+    assert status, "failed to ping to client"
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
@@ -437,7 +453,10 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC: {dut_mac_address}")
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'ap mac is {ap_mac}')
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
     packet_filter5 = f'((wlan.addr == {dut_mac_address}) and' \
                      f' (!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                      f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
@@ -448,23 +467,6 @@ def test_device_as_sta_and_ap_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
     logger().info("access point ip: " + str(access_point_ip))
 
-    # preparing wifi_dut as access point - AP Mode
-    ap_mac = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f'ap mac is {ap_mac}')
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-    logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19313", security="WPA2", passphrase="12345678", channel=8)
-    logger().info("joining 3rd party client to DUT ap")
-    time.sleep(5)
-    wifi_client.interfaces.wifi.join()
-    logger().info("fetching gateway ip of ap")
-    device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
-    logger().info("fetching p address of 3rd party sta")
-    host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
-    logger().info("wifi_client ip: " + host_ip)
-    status = ping(host_ip, ping_iterations)
-    assert status == 1, "failed to ping to client"
     logger().info("setting eth0 interface on raspi ")
     wifi_client.interfaces.wifi.interface = "eth0"
     logger().info("fetching eth0 interface ip of raspi wifi connected to 3rd party ap over ethernet")
@@ -858,7 +860,6 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 
 
 # ##############19318###############
-
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
@@ -871,7 +872,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "band": RS9116Band.TwoPointFourGHz,
-        "security": 'WPA2', "ssid": "RS9116_AP_C19318", "channel": 8, "passphrase": "12345678"
+        "security": 'Open', "ssid": "RS9116_AP_C19318", "channel": 8,
     }
 )
 @pytest.mark.config(
@@ -879,13 +880,13 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
     wifi={
         'ssid': 'Concurent_ap',
         'security': 'WPA2',
-        'passphrase': 'test1234',
+        'passphrase': '12345678',
         'channel': 8,
     }
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19318", "channel": 8, "passphrase": "12345678", "interface": "wlan0"}
+    wifi={"security": "Open", "ssid": "RS9116_AP_C19318", "channel": 8, "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -907,7 +908,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 
     # preparing wifi_dut as access point - AP Mode
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19318", security="WPA2", passphrase="12345678", channel=8)
+    wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19318", security="Open", channel=8)
     logger().info("joining 3rd party client to DUT ap")
     time.sleep(5)
     wifi_client.interfaces.wifi.join()
@@ -919,7 +920,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
     logger().info("wifi_client ip: " + host_ip)
     status = ping(host_ip, ping_iterations)
-    assert status == 1, "failed to ping to client"
+    assert status, "failed to ping to client"
 
     # preparing wifi_dut as STA - STA Mode
     logger().info("joining to 3rd party AP")
@@ -944,7 +945,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
     logger().info("access point ip: " + str(access_point_ip))
 
-    # starting iperf server at raspi client with  DUT as AP
+    # starting iperf server at raspi client with DUT as AP
     logger().info("configured iperf server")
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip_dut_as_ap,
                                                     protocol=protocol)
