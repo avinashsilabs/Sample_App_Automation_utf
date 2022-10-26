@@ -195,21 +195,20 @@ class ble_data_transfer_thread(ThreadBase):
         logger().info("Configuring remote device to receive notifications from DUT")
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-        bus = self.ble_client.interfaces.bluetooth.bus
-        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+
+        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
         assert len(services) > 0, "Unable to fetch services"
         assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                    services=services,
+        char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
                                                                                                     service_uid=service_uid,
                                                                                                     char_uid=char_uid)
-        assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+        assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
         assert len(char_props) > 0, "Unable to get char_props"
 
         logger().info("Subscribing to notifications on ble_client")
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                      char_uid=char_uid)
 
         logger().info("Sending notifications from DUT")
@@ -2062,20 +2061,20 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     logger.info("Configuring remote device to receive notifications from DUT")
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-    bus = ble_client.interfaces.bluetooth.bus
-    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+
+    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(services) > 0, "Unable to fetch services"
     assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-    char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus, services=services,
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
                                                                                            service_uid=service_uid,
                                                                                            char_uid=char_uid)
-    assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+    assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
     assert len(char_props) > 0, "Unable to get char_props"
 
     logger.info("Subscribing to notifications on ble_client")
-    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
 
     logger.info("Sending notifications from DUT")
 
@@ -2083,7 +2082,7 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     wifi_dut.interfaces.wifi.ble_notify_value()
 
     # read value - Notifications not enabled
-    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     assert result == data1
 
     # Get the state of the dut
@@ -2390,20 +2389,20 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     logger.info("Configuring remote device to receive notifications from DUT")
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-    bus = ble_client.interfaces.bluetooth.bus
-    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+
+    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(services) > 0, "Unable to fetch services"
     assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-    char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus, services=services,
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
                                                                                            service_uid=service_uid,
                                                                                            char_uid=char_uid)
-    assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+    assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
     assert len(char_props) > 0, "Unable to get char_props"
 
     logger.info("Subscribing to notifications on ble_client")
-    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
 
     logger.info("Sending notifications from DUT")
 
@@ -2411,7 +2410,7 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     wifi_dut.interfaces.wifi.ble_notify_value()
 
     # read value - Notifications not enabled
-    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     assert result == data1
 
     # Get the state of the dut
