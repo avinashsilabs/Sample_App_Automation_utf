@@ -65,12 +65,14 @@ class WifiThread(ThreadBase):
 
     def join_get_ip(self):
         count_i = 4
+        self.bssid = self.wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {self.bssid}")
         for count in range(1, count_i):
             try:
                 scan_fail = 1
                 logger().info("Scanning to the Wifi Access Point")
                 self.wifi_dut.interfaces.wifi.scan(channel=self.wifi_access_point.interfaces.wifi.channel,
-                                                       ssid=None)
+                                                   ssid=None)
                 scan_fail = 0
                 break
             except:
@@ -81,8 +83,6 @@ class WifiThread(ThreadBase):
             assert scan_fail == 0, "Scanning to the AP is failed"
         self.bssid = self.wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {self.bssid}")
-        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
         for count in range(1, count_i):
             try:
                 join_fail = 1
@@ -96,18 +96,18 @@ class WifiThread(ThreadBase):
         if join_fail:
             logger().info(f"Joining to the AP has failed")
             assert join_fail == 0, "Joining to the AP is failed"
-
-        ip_fail = 1
         for count in range(1, count_i):
             try:
-                result = self.wifi_dut.interfaces.wifi.start_ip()
-                assert isinstance(result, self.wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {result}"
-                ip_fail = 0
+                ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
+                self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                logger().info(f"Found device ip: {self.device_ip}")
                 break
             except:
-                logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+                logger().info(f"Get IP address through dhcp process is failed...retry count -> {count}")
                 time.sleep(1)
-        assert ip_fail == 0, "ip setting in DUT has failed"
+        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
+        return self.bssid, self.dut_mac_address, self.device_ip
 
     def ps_ping(self):
         ping_count = self.utf_constants.get("ping_count")
@@ -198,6 +198,11 @@ def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None, expec
         logger().info("BLE Connection success")
 
     if ble_mode == "ble_slave":
+        conn_params = {
+            "min_conn_interval": 36,
+            "max_conn_interval": 36,
+            "conn_latency": 0,
+            "supervision_timeout": 400}
         logger().info(f"Set up DUT for BLE advertising")
         ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert ble_dut_address, f"Unable to find ble dut address"
@@ -215,7 +220,11 @@ def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None, expec
         assert (found_devices[
                     wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
         logger().info(f"See that we found our device:'{ble_dut_address}'")
-        ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address,
+                                                min_conn_interval=conn_params["min_conn_interval"],
+                                                max_conn_interval=conn_params["max_conn_interval"],
+                                                conn_latency=conn_params["conn_latency"],
+                                                supervision_timeout=conn_params["supervision_timeout"])
         logger().info("BLE Connection success")
         time.sleep(2)
     return ble_client_address, ble_dut_address
@@ -353,26 +362,6 @@ class wifi_datatransfer(ThreadBase):
         self.__print_throughput(tp)
 
 
-class httppostThread(ThreadBase):
-    def __init__(self, wifi_dut, wifi_access_point, http_server, index_path, wifi_sniffer):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-        self.wifi_access_point = wifi_access_point
-        self.http_server = http_server
-        self.index_path = index_path
-        self.wifi_sniffer = wifi_sniffer
-
-    def run(self):
-        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-        logger().info("API used to post the http data")
-        logger().info("API used to post the http data")
-        status, content = self.wifi_dut.interfaces.http.http_post(self.http_server.interfaces.http, "cgi-bin/cgi_example.py",
-                                                             post_data="hellothisiaatestcaseforget")
-        assert status, "failed to get http data"
-        assert content, "failed to get http data"
-        logger().info(status)
-        logger().info(content)
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -399,6 +388,11 @@ class httppostThread(ThreadBase):
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_connect_and_disconnect_functionality_of_dut_ble_in_slave_mode_while_sta_is_in_connection_C20263(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client):
     testcase = "sta+ble_C20263"
+    conn_params = {
+        "min_conn_interval": 36,
+        "max_conn_interval": 36,
+        "conn_latency": 0,
+        "supervision_timeout": 400}
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
@@ -421,7 +415,11 @@ def test_connect_and_disconnect_functionality_of_dut_ble_in_slave_mode_while_sta
             break
     ble_client.interfaces.bluetooth.stop_scanning()
     assert device_found
-    ble_client.interfaces.bluetooth.connect(ble_dut_address)
+    ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address,
+                                            min_conn_interval=conn_params["min_conn_interval"],
+                                            max_conn_interval=conn_params["max_conn_interval"],
+                                            conn_latency=conn_params["conn_latency"],
+                                            supervision_timeout=conn_params["supervision_timeout"])
     time.sleep(2)
     logger().info(f"**********joining*******************")
     wifi_obj = WifiThread(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer)
@@ -474,17 +472,17 @@ def test_BG_SCAN_functionality_of_dut_when_dut_ble_in_scan_state_C20362(wifi_sni
     logger().info(f"************************C20362*********************")
     validation = True
     testcase = "bgscan+ble"
+    ping_count = utf_constants.get("ping_count")
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_mode = "ble_slave"
     logger().info(f"ble mode : {ble_mode}")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 63, 4, 2, 50, 50, 0)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    ping_count = utf_constants.get("ping_count")
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
     result = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = result.ip.decode()
@@ -595,7 +593,6 @@ def test_functionality_of_BLE_for_disconnect_and_connect_multiple_times_When_STA
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_with_nonexisting_ip_after_ble_connection_C20237(wifi_dut, ble_client, wifi_access_point, utf_constants, wifi_sniffer, http_server, index_path):
     logger().info(f"************************C20237*********************")
@@ -635,23 +632,22 @@ def test_http_post_functionality_with_nonexisting_ip_after_ble_connection_C20237
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features":  RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "features":  RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+                          | RS9116TCPIPFeatureBitMap.SSL
                           | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "custom_features": RS9116CustomFeatureBitMap.Default,
-        "ext_tcpip_features": 0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_http_post_functionality_when_ble_connection_C20340(wifi_dut, wifi_access_point, wifi_sniffer, http_server, index_path, ble_client, utf_constants):
+def test_http_post_functionality_with_ble_connection_C20340(wifi_dut, wifi_access_point, wifi_sniffer, http_server, ble_client, utf_constants):
     logger().info(f"************************C20340*********************")
     testcase = "http_post + ble_C20340"
     channel = wifi_access_point.interfaces.wifi.channel
@@ -659,21 +655,25 @@ def test_http_post_functionality_when_ble_connection_C20340(wifi_dut, wifi_acces
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     logger().info(f"**********joining*******************")
     wifi_obj = WifiThread(wifi_dut, wifi_access_point,  utf_constants,  wifi_sniffer)
-    post_obj = httppostThread(wifi_dut, wifi_access_point, http_server, index_path, wifi_sniffer)
     wifi_obj.join_get_ip()
     wifi_obj.ps_ping()
-    post_obj.start()
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+    logger().info("API used to post the http data")
+    status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                                         post_data="hellothisiaatestcaseforget")
+    assert status, "failed to get http data"
+    assert content, "failed to get http data"
+    logger().info(status)
+    logger().info(content)
     ble_mode = "ble_slave"
     logger().info(f"ble mode : {ble_mode}")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
     check_connection_status(wifi_dut, wlan=True)
     check_connection_status(wifi_dut, ble=True)
     logger().info(f"Clean up activity")
-    ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
     wifi_leave(wifi_dut)
     logger().info(f"Initiating BLE disconnection")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
-    post_obj.stop()
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.sniffer_validation()
@@ -709,12 +709,11 @@ def test_coex_functionality_ble_connection_as_a_master_C20183(wifi_dut, ble_clie
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     ble_mode = "ble_master"
     logger().info(f"ble mode : {ble_mode}")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
     wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants)
-    wifi_obj.join_get_ip()
+    bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
     wifi_obj.ps_ping()
     packet_filter1 = f'((wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype == 10 || wlan.fc.type_subtype == 12))'
     check_connection_status(wifi_dut, wlan=True)
