@@ -967,6 +967,13 @@ devices:
             # the docker image to run
             ble_vul_sniffer:
                 type: 'bluetooth.sniffer.sweyntooth'
+                docker_host: 'sweyntooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            sweyntooth_docker:
+                type: 'docker'
                 ip_address: '10.207.16.89'
                 container_name: "utf_sweyntooth"
                 image: 'utfsilabs/utf_sweyntooth'
@@ -974,10 +981,6 @@ devices:
                 is_execute_raspi_manager_scripts: false
                 username: pi
                 password: 'raspberry'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x239a
-                pid: 0x8029
             linux_shell:
                 type: 'shell.shell'
 
@@ -988,6 +991,13 @@ devices:
             # the docker image to run
             bt_vul_sniffer:
                 type: 'bluetooth.sniffer.braktooth'
+                docker_host: 'braktooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            braktooth_docker:
+                type: 'docker'
                 ip_address: '10.207.18.161'
                 container_name: "utf_braketooth"
                 image: 'utfsilabs/utf_braktooth'
@@ -995,10 +1005,6 @@ devices:
                 is_execute_raspi_manager_scripts: false
                 username: 'test'
                 password: 'test123'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x0403
-                pid: 0x6010
             linux_shell:
                 type: 'shell.shell'
 
