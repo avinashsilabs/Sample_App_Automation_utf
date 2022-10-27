@@ -4519,10 +4519,6 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(
     status = ping(device_ip, 10)
     assert status == 1, "DUT not responding for ping request......"
 
-    wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
-                                                        RS9116PowerSaveProcedureTypes.FastPowerSave,
-                                                        listen_interval=listen_interval)
-
     get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
     get_time_sec = ((get_minutes * 60) + get_seconds)
     assert (set_hour == get_hours) and (set_month_day == get_day_month) and (set_month == get_month) and (
