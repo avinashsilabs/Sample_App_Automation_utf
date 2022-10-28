@@ -1080,7 +1080,7 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find the probe request broadcast packets from DUT side'
 
-
+@pytest.mark.skip(reason="skipping this for CI/CD execution")
 @pytest.mark.dut("rs9116")
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1114,7 +1114,7 @@ def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
             logger().info(f"observed error code 0x0021 which is expected")
     logger().info(f"test executed in {t.duration} seconds")
 
-
+@pytest.mark.skip(reason="skipping this for CI/CD execution")
 @pytest.mark.dut("rs9116")
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

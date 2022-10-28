@@ -931,9 +931,11 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155"
-
+    listen_interval = 700
     rejoin_params = [40, 6, 40, 0]
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  listen_interval_feature=True,
+                                  listen_interval=listen_interval,
                                   rejoin_params=rejoin_params)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -1069,9 +1071,11 @@ def test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156"
-
+    listen_interval = 700
     rejoin_params = [20, 6, 40, 0]
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  listen_interval_feature=True,
+                                  listen_interval=listen_interval,
                                   rejoin_params=rejoin_params)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -3130,7 +3134,7 @@ def test_2SSL_1TCP_RX_testcaseTC19187(
         list_sock.append(sock)
 
     socket_no = [1,2,3]
-    for i in range(10):
+    for i in range(50):
         for socket in socket_no:
             buffer_length = 100
             pkt_count = 10
