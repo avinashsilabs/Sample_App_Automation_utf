@@ -81,8 +81,6 @@ class WifiThread(ThreadBase):
         if scan_fail:
             logger().info(f"Scanning to the AP has failed")
             assert scan_fail == 0, "Scanning to the AP is failed"
-        self.bssid = self.wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP bssid {self.bssid}")
         for count in range(1, count_i):
             try:
                 join_fail = 1
