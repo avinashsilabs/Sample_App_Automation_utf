@@ -2091,10 +2091,10 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
     logger.info(f"Loading certificate{result_load_certificate}")
 
-    # Get the state of the dut
+    logger.info("Get ble device state")
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
+    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
     logger.info(" Connected to the BLE device ")
 
     wifi_dut.interfaces.wifi.close_socket(0)
@@ -2422,10 +2422,10 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
     logger.info(f"Loading certificate{result_load_certificate}")
 
-    # Get the state of the dut
+    logger.info("Get ble device state")
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
+    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
     logger.info(" Connected to the BLE device ")
 
     wifi_dut.interfaces.wifi.close_socket(0)
