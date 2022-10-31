@@ -874,6 +874,9 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
         switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
+        logger().info(f"Configuring Rejoin parameters")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max_value, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+        time.sleep(3)
 
         logger().info("Joining into wifi_access_point")
         dut_ip = wifi_join(wifi_dut, wifi_access_point)
