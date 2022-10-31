@@ -11,8 +11,12 @@ from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
+import utf.utils.commander as commander
+from utf_wiseconnect.devices.rs911x import RS9116
 
 last_loaded_custom_app_name = None
+last_test_mode = None
+default_test_mode = None
 
 
 @pytest.fixture()
@@ -28,6 +32,8 @@ def wiseconnect_duts(request: pytest.FixtureRequest, harness) -> Generator[List[
         None
     """
     wiseconnect_duts = harness.create_devices_for_role(request.fixturename, request)
+    dut = wiseconnect_duts[0] if isinstance(wiseconnect_duts[0], RS9116) else wiseconnect_duts[1]
+    wifi_interface = dut.create_interface("wifi")
     yield wiseconnect_duts
 
     # Clean up WiseConnect Devices
@@ -82,14 +88,45 @@ def store_environment_info(request, harness: Harness):
     access_point_type = UtfConfig.instance().data.get("devices", {}).get(access_point, {}).get("interfaces", {}).get("wifi", {}).get("type", "")
     access_point_type = access_point_type.split(".")[-1]
     request.config._metadata['Access point Type'] = access_point_type
+    global default_test_mode
+    default_test_mode = UtfConfig.instance().defaults.get("dut")
+    global last_test_mode
+    last_test_mode = default_test_mode
 
 
 def pytest_collection_modifyitems(config, items):
     if config.option.collectonly:
         generate_base_test_definitions_yaml(os.getcwd(), items)
 
+
 @pytest.fixture()
 def rs_helper(request):
     yield RSHelperCommands.create_instance()
 
 
+@pytest.fixture(autouse=True, scope='function')
+def reset_on_test_mode_change(request, wiseconnect_duts):
+    """
+    This fixture checks for change in test mode between last executed test case and current test case
+    and does commander, soft reset on device if there is change
+
+    Args:
+        request: ``FixtureRequest`` This object provides context of requesting test case
+        wiseconnect_duts: ``List[Device]`` list of devices on which reset happens
+
+    Returns:
+        None
+
+    """
+    markers_list = list(request.node.iter_markers(name="dut"))
+    if markers_list:
+        marker = markers_list[0]
+        current_test_mode = marker.args[0]
+    else:
+        current_test_mode = default_test_mode
+    global last_test_mode
+    if current_test_mode != last_test_mode:
+        commander.reset_device()
+        for device in wiseconnect_duts:
+            device.reset()
+        last_test_mode = current_test_mode
