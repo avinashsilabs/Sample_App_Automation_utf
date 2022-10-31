@@ -319,10 +319,6 @@ def load_certificates(wifi_dut, ssl_server, *lst: list):
                                                          str(get_tls_certificate_dir().joinpath(i[3][0])),
                                                          cert_index=index,
                                                          )
-            # wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-            #                                     RS9116PowerSaveProcedureTypes.FastPowerSave)
-            # wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-            #                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
             ssl_server.interfaces.ssl.start_server(port=port, server_cert=i[3][1], server_key=i[3][2])
