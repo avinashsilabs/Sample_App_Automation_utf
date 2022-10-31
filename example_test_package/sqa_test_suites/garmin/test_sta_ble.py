@@ -18,6 +18,29 @@ from utf.utils.iperf.iperf_utils import ping
 def logger():
     return get_logger(__name__)
 
+"""Author : Vivek"""
+
+"""This function runs below test steps for DUT-RS9116 for WLAN+BLE(Coex) Garmin test cases verification
+        1. Configuration of DUT in 2G : BGN
+        2. Association of Third party AP's
+        3. Get the valid IP address
+        4. Verification of WiFi Sync Co-ex Static/Transient sync
+        5. Multi connection(2/3/5) test required execution of WLAN and BLE operation simultaneously 
+        6. WLAN thread execution scan/associate with third part AP, start the HTTP server and download files(with different sizes(1/10MB)
+        7. BLE thread operates on single/multi-connection basis with different Master/Slave variations.
+        8. BLE thread connection with DUT with or without SMP security.
+        9. BLE connection verified with different parameter values like(connection interval, scan interval, advertisement interval)
+        10. BLE connection verified with connection/disconnection multiple times.
+
+
+    setup requirement:
+        1. DUT(RS9116)
+        2. EFR32
+        3. Raspberry PI4(6 raspberry device required to run the complete test cases)
+        4. Access Point(Third Party AP's)
+        5. Sniffer(NUC device)
+"""
+
 
 class Wlan:
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, http_server=None, index_path=None,
@@ -326,23 +349,21 @@ class BleThread(ThreadBase):
             self.supervision_timeout = 800
 
     def transmit_notification(self, device_interface, service_uid, char_uid, data1):
-        bus = device_interface.interfaces.bluetooth.bus
-        logger().info(f'\n\n BUS = {bus} \n')
-        services, chars = device_interface.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
-        logger().info(f'\n\n Services ={services} \n chars = {chars}')
+        services, chars = device_interface.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+
         assert len(services) > 0, "Unable to fetch services"
         assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-        char, char_props = device_interface.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                     services=services,
-                                                                                                     service_uid=service_uid,
-                                                                                                     char_uid=char_uid)
+        char_path, char_props = device_interface.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+            services=services,
+            service_uid=service_uid,
+            char_uid=char_uid)
 
         assert char is not None, "Unable to resolve custom service characteristic from ble_client"
         assert len(char_props) > 0, "Unable to get char_props"
 
         # read value - Notifications not enabled
-        result = device_interface.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+        result = device_interface.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path)
         assert result == data1
 
         # subscribe to notifications
@@ -626,7 +647,7 @@ class BleThread(ThreadBase):
         logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
         self.transmit_notification(self.ble_client2, service_uid, char_uid, data1)
 
-    def multi_client_connection_5_with_services_notify(self, reconnection=False, two_remote_connection_master_without_smp=False):
+    def multi_client_connection_5_with_services_notify(self, reconnection=False, two_remote_connection_master_without_smp=False, no_of_notify_connection=3):
         """Note need to change service id as per test case requirement """
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
@@ -745,11 +766,31 @@ class BleThread(ThreadBase):
             logger().infor('\n\n ***** Make 2 RESPI connection without SMP *****\n\n')
             ''' Will add the logic after Ravi provide the fix '''
 
-        logger().info(f'\n\n Remote device 1 will discover services and characteristic of DUT \n\n')
-        self.transmit_notification(self.ble_client1, service_uid, char_uid, data1)
+        if no_of_notify_connection==3:
+            logger().info(f'\n\n Remote device 1 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client1, service_uid, char_uid, data1)
 
-        logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
-        self.transmit_notification(self.ble_client2, service_uid, char_uid, data1)
+            logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client2, service_uid, char_uid, data1)
+
+            logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client3, service_uid, char_uid, data1)
+
+        if no_of_notify_connection == 5:
+            logger().info(f'\n\n Remote device 1 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client1, service_uid, char_uid, data1)
+
+            logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client2, service_uid, char_uid, data1)
+
+            logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client3, service_uid, char_uid, data1)
+
+            logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client4, service_uid, char_uid, data1)
+
+            logger().info(f'\n\n Remote device 2 will discover services and characteristic of DUT \n\n')
+            self.transmit_notification(self.ble_client5, service_uid, char_uid, data1)
 
         if reconnection:
             count = 3
@@ -1570,6 +1611,7 @@ class BleThread(ThreadBase):
             BleThread.counter_flag = True
 
             self.dut_ble.scan_stop()
+            self.dut_ble.advertise_stop()
             self.ble_client1.interfaces.bluetooth.stop_advertising()
             self.ble_client2.interfaces.bluetooth.stop_advertising()
             self.ble_client3.interfaces.bluetooth.stop_advertising()
@@ -1579,6 +1621,7 @@ class BleThread(ThreadBase):
             BleThread.counter_flag = True
 
             self.dut_ble.scan_stop()
+            self.dut_ble.advertise_stop()
             self.ble_client1.interfaces.bluetooth.stop_advertising()
             self.ble_client2.interfaces.bluetooth.stop_advertising()
             self.ble_client3.interfaces.bluetooth.stop_advertising()
@@ -1588,6 +1631,7 @@ class BleThread(ThreadBase):
             BleThread.counter_flag = True
 
             self.dut_ble.scan_stop()
+            self.dut_ble.advertise_stop()
             self.ble_client1.interfaces.bluetooth.stop_advertising()
             self.ble_client2.interfaces.bluetooth.stop_advertising()
             self.ble_client3.interfaces.bluetooth.stop_advertising()
@@ -1597,6 +1641,7 @@ class BleThread(ThreadBase):
             BleThread.counter_flag = True
 
             self.dut_ble.scan_stop()
+            self.dut_ble.advertise_stop()
             self.ble_client1.interfaces.bluetooth.stop_advertising()
             self.ble_client2.interfaces.bluetooth.stop_advertising()
             self.ble_client3.interfaces.bluetooth.stop_advertising()
@@ -1640,6 +1685,18 @@ class BleThread(ThreadBase):
             BleThread.counter_flag = True
 
             self.dut_ble.scan_stop()
+            self.dut_ble.advertise_stop()
+            self.ble_client1.interfaces.bluetooth.stop_advertising()
+            self.ble_client2.interfaces.bluetooth.stop_advertising()
+            self.ble_client3.interfaces.bluetooth.stop_advertising()
+
+        if self.test_case_no == 18956:
+            ''' Repeat the same test case by changing advertise intervals '''
+            self.multi_client_connection_5_with_services_notify(reconnection=True, no_of_notify_connection=5)
+            BleThread.counter_flag = True
+
+            self.dut_ble.scan_stop()
+            self.dut_ble.advertise_stop()
             self.ble_client1.interfaces.bluetooth.stop_advertising()
             self.ble_client2.interfaces.bluetooth.stop_advertising()
             self.ble_client3.interfaces.bluetooth.stop_advertising()
@@ -2956,12 +3013,12 @@ def test_wlan_connect_disconnect_ble_5_connection_c18954(wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wlan_advertisement_intervals_ble_5_connection_c18954(wifi_dut, wifi_access_point, ble_dut, ble_client,
+def test_wlan_advertisement_intervals_ble_5_connection_c18956(wifi_dut, wifi_access_point, ble_dut, ble_client,
                                                      ble_clients, index_path, http_server, utf_constants):
     remote_devices_count = 5
-    test_case_no = 18954
+    test_case_no = 18956
 
-    '''Test connect & disconnect of third party BLE devices with DUT and Wifi HTTP data transfer should happen'''
+    '''Enable notifications for all the 5 BLE connections and verify wi-fi connection along with HTTP download'''
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
     assert server_stat is True
