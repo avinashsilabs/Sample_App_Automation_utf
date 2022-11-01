@@ -34,7 +34,7 @@ def logger():
         4. Initiate http firmware upgrade
         5. Verify the otaf status
 
-    Author: RaviNemali
+    Author: RaviNemali && Benazeer K
 """
 
 # Otaf timeout for deinit
@@ -1465,7 +1465,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(firmware_loader, h
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_http_fw_upgrade_in_rejoin_and_measure_time_C19783(http_server, wifi_dut, wifi_access_point,
+def test_http_fw_upgrade_in_rejoin_and_measure_time_C19788(http_server, wifi_dut, wifi_access_point,
                                                            wifi_sniffer, switch):
     ''' Verify Rejoin Functionality in otaf functionality'''
     ping_count = 10
