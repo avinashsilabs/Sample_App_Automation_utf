@@ -34,7 +34,7 @@ def logger():
         4. Initiate http firmware upgrade
         5. Verify the otaf status
 
-    Author: RaviNemali
+    Author: RaviNemali && Benazeer K
 """
 
 # Otaf timeout for deinit
