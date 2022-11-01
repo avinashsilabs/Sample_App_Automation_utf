@@ -405,7 +405,7 @@ def test_ble_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_C19915(ble_dut, 
     time.sleep(5)
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
-    ble_client.interfaces.bluetooth()
+    ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.config(
