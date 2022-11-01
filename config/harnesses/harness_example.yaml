@@ -1008,6 +1008,15 @@ devices:
             linux_shell:
                 type: 'shell.shell'
 
+    nrf_ppk2_device:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            power_meter:
+                type: 'power_meter.nrf_power_profiler'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0xC00A
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1055,6 +1064,9 @@ defaults:
     logic_analyzer: 'saleae_logic_analyzer'
 
     power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
+
+    power_meters:
+        - 'nrf_ppk2_device'
 
     ble_client: 'raspi_ble_client'
 
