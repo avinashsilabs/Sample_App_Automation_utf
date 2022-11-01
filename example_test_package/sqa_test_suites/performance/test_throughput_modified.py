@@ -658,15 +658,15 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
-    for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
-                                                  suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1, enable_socket_config=0)
-    logger().info(f"verifying BT connection after IPERF completion")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-        dest_addr=bt_dut_address
-    )
+        ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+        iter_count = 3
+        for i in range(0, iter_count):
+            filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                      suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1, enable_socket_config=0)
+        logger().info(f"verifying BT connection after IPERF completion")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
     bt_server_socket.close()
     wifi_dut.interfaces.wifi.leave()
     time.sleep(2)
@@ -719,15 +719,15 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-    iter_count = 3
-    for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
-                                                  suspend_bt_task=1, suspend_ble_task=1)
-    logger().info(f"verifying BT connection after IPERF completion")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-        dest_addr=bt_dut_address
-    )
+        ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
+        iter_count = 3
+        for i in range(0, iter_count):
+            filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                      suspend_bt_task=1, suspend_ble_task=1)
+        logger().info(f"verifying BT connection after IPERF completion")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
     bt_server_socket.close()
     wifi_dut.interfaces.wifi.leave()
     time.sleep(2)
@@ -780,17 +780,17 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
-    for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
-                                                  suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1,
-                                                  enable_socket_config=1
-                                                  )
-    logger().info(f"verifying BT connection after IPERF completion")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-        dest_addr=bt_dut_address
-    )
+        ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+        iter_count = 3
+        for i in range(0, iter_count):
+            filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                      suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1,
+                                                      enable_socket_config=1
+                                                      )
+        logger().info(f"verifying BT connection after IPERF completion")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
     bt_server_socket.close()
     wifi_dut.interfaces.wifi.leave()
     time.sleep(2)
@@ -843,15 +843,15 @@ def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected
 
-    ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-    iter_count = 3
-    for i in range(0, iter_count):
-        filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
-                                                  suspend_bt_task=1, suspend_ble_task=1)
-    logger().info(f"verifying BT connection after IPERF completion")
-    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-        dest_addr=bt_dut_address
-    )
+        ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
+        iter_count = 3
+        for i in range(0, iter_count):
+            filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                      suspend_bt_task=1, suspend_ble_task=1)
+        logger().info(f"verifying BT connection after IPERF completion")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
     bt_server_socket.close()
     wifi_dut.interfaces.wifi.leave()
     time.sleep(2)
