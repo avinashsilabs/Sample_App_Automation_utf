@@ -318,10 +318,6 @@ def load_certificates(wifi_dut, ssl_server, *lst: list):
                                                          str(get_tls_certificate_dir().joinpath(i[3][0])),
                                                          cert_index=index,
                                                          )
-            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-            wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
             ssl_server.interfaces.ssl.start_server(port=port, server_cert=i[3][1], server_key=i[3][2])
@@ -2319,7 +2315,7 @@ def test_BLE_connectivity_data_tx_after_loadcert0_loadcert1_C19654(wifi_sniffer,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
 @pytest.mark.parametrize("cert1",
@@ -2504,7 +2500,7 @@ def test_BLE_connectivity_data_tx_after_loadcert0_C19655(wifi_sniffer, wifi_dut,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
     }
 )
