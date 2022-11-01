@@ -76,7 +76,7 @@ def store_environment_info(request, harness: Harness):
     if manifest_file is not None:
         request.config._metadata['DUT Firmware Version'] = parse_version(manifest_file)
     else:
-        request.config._metadata['DUT Firmware Version'] = parse_version()
+        request.config._metadata['DUT Firmware Version'] = "Firmware not loaded"
     dut = UtfConfig.instance().defaults.get("dut", {})
     dut_type = UtfConfig.instance().data.get("devices", {}).get(dut, {}).get("type", "")
     request.config._metadata['DUT Type'] = dut_type
