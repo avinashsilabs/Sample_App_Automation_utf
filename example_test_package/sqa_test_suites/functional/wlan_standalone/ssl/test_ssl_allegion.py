@@ -3134,7 +3134,7 @@ def test_2SSL_1TCP_RX_testcaseTC19187(
         list_sock.append(sock)
 
     socket_no = [1,2,3]
-    for i in range(10):
+    for i in range(50):
         for socket in socket_no:
             buffer_length = 100
             pkt_count = 10

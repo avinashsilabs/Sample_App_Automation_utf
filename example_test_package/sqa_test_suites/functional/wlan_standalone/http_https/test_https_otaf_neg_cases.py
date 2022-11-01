@@ -50,9 +50,9 @@ timeout = 60
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_dut, wifi_access_point):
-    logger().info("checking weather server is running....")
+    logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -86,11 +86,11 @@ def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi_dut):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -124,11 +124,11 @@ def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, wifi_dut, wifi_access_point):
+def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, wifi_dut):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -166,7 +166,7 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     """ ******* SERVER CHECKS ***** """
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True
+    assert server_stat == True,"server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -203,15 +203,13 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
         time.sleep(10)
-    assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
+    assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
 
-    # API does soft reset on DUT
     time.sleep(5)
     logger().info("resetting DUT....")
     wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
-    # performs the wifi initialization
     logger().info("Initialising DUT after the reset....")
     wifi_dut.interfaces.wifi.dut_init()
 

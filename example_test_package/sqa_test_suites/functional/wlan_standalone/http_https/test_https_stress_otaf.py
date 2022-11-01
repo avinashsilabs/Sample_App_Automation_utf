@@ -60,7 +60,7 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         """ ******* SERVER CHECKS ******* """
         logger().info("Verifying server stats....")
         server_stat = http_server.interfaces.http.started
-        assert server_stat == True
+        assert server_stat == True,"server is inactive"
         logger().info(f'http server state is {server_stat}')
 
         logger().info("fetching server ip....")
@@ -93,7 +93,7 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
 
         logger().info("Performing firmware upgrade....")
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
-        time.sleep(40)
+        time.sleep(120)
 
         logger().info("Fetching the otaf status....")
         wifi_dut.interfaces.wifi.get_http_otaf_status()
@@ -114,13 +114,11 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
 
         assert time_duration < 40, "took too long time to download fw"
 
-        # API does soft reset on DUT
         time.sleep(5)
         logger().info("resetting DUT....")
         wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
         time.sleep(10)
 
-        # performs the wifi initialization
         logger().info("Initialising DUT after the reset....")
         wifi_dut.interfaces.wifi.dut_init()
 
@@ -154,7 +152,7 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         """ ******* SERVER CHECKS ******* """
         logger().info("checking weather server is running....")
         server_stat = http_server.interfaces.http.started
-        assert server_stat == True
+        assert server_stat == True,"server is inactive"
         logger().info(f'http server state is {server_stat}')
 
         logger().info("fetching server ip....")
@@ -185,22 +183,20 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         time.sleep(40)
         with pytest.raises(WlanError) as exc_info:
             wifi_dut.interfaces.wifi.get_http_otaf_status()
-        assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
+        assert exc_info.value.error_code == 0xBB41 | 0xFFFD, "observed wrong error code expected is 0xBB41"
 
-        # API does soft reset on DUT
         time.sleep(5)
         logger().info("resetting DUT....")
         wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
         time.sleep(10)
 
-        # performs the wifi initialization
         logger().info("Initialising DUT after the reset....")
         wifi_dut.interfaces.wifi.dut_init()
 
         logger().info("fetching the fw version after init....")
         wifi_dut.interfaces.wifi.version()
 
-        logger().info("Stop Sniffer capture...")
+        logger().info("stop Sniffer capture...")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
 
@@ -227,7 +223,7 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         """ ******* SERVER CHECKS ***** """
         logger().info("checking server stats....")
         server_stat = http_server.interfaces.http.started
-        assert server_stat == True
+        assert server_stat == True,"server is inactive"
         logger().info(f'http server state is {server_stat}')
 
         logger().info("fetching server ip....")
@@ -264,15 +260,13 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         with pytest.raises(WlanError) as exc_info:
             wifi_dut.interfaces.wifi.get_http_otaf_status()
             time.sleep(10)
-        assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
+        assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
 
-        # API does soft reset on DUT
         time.sleep(5)
         logger().info("resetting DUT....")
         wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
         time.sleep(10)
 
-        # performs the wifi initialization
         logger().info("Initialising DUT after the reset....")
         wifi_dut.interfaces.wifi.dut_init()
 
