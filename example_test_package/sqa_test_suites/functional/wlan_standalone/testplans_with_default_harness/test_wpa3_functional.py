@@ -144,7 +144,7 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
                      f'(wlan.fc.type_subtype == 0x0000) || eapol || (wlan.fixed.sae_message_type == 1) || ' \
                      f'(wlan.fixed.sae_message_type == 2) && wlan.addr == {dut_mac_address}'
 
-    logger().info(f"*****Enable Max PSP in DUT******")
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -204,6 +204,7 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -293,6 +294,7 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -382,6 +384,7 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -476,6 +479,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -570,6 +574,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -658,6 +663,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -746,6 +752,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -842,6 +849,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -932,7 +940,7 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
         mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {mac_address}")
 
-        logger().info(f"*****Enable Max PSP in DUT******")
+        logger().info(f"*****Enabling Enhanced MAX PSP******")
         wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                             power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
         wifi_dut.interfaces.wifi.bt_power_save(
@@ -1011,7 +1019,7 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_specific_chal_wpa3_C34508')
     time.sleep(2)
 
-    logger().info(f"*****Enable Max PSP in DUT******")
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -1082,7 +1090,7 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_in_all_channel_wpa3_C34510')
     time.sleep(2)
 
-    logger().info(f"*****Enable Max PSP in DUT******")
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
@@ -1153,7 +1161,7 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     time.sleep(2)
-    logger().info(f"*****Enable Fast PSP power save in DUT******")
+    logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
