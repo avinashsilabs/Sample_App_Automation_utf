@@ -2537,7 +2537,10 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
         wifi_dut.interfaces.wifi.ble_start_advertising()
         ble_client.interfaces.bluetooth.connect(ble_dut_address)
         logger().info(f"DUT successfully connected to {ble_client} Device...iteration: '{i}'")
-        time.sleep(3)
+        logger().info("Wait for 10 sec and check ble connection status")
+        time.sleep(10)
+        logger().info("Checking ble connection still persists")
+        check_connection_status(wifi_dut, ble=True)
 
     with pytest.raises(Exception) as exc_info:
         logger().info("Initiating Wi-Fi disconnection on DUT")
