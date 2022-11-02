@@ -50,13 +50,12 @@ timeout = 60
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-
         t_end = time.time() + 60 * time_lapse
         while time.time() < t_end:
             """ ******* SERVER CHECKS ******* """
             logger().info("checking weather server is running....")
             server_stat = http_server.interfaces.http.started
-            assert server_stat == True
+            assert server_stat == True,"server is inactive"
             logger().info(f'http server state is {server_stat}')
 
             logger().info("fetching server ip....")
@@ -73,13 +72,13 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
             wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_over_night_C19793')
 
-            logger().info("Fetching the DUT version...")
+            logger().info("fetching the DUT version...")
             wifi_dut.interfaces.wifi.version()
 
-            logger().info("Joining ap....")
+            logger().info("joining ap....")
             wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-            logger().info("Starting dhcp....")
+            logger().info("starting dhcp....")
             wifi_dut.interfaces.wifi.start_ip()
 
             start_time = time.perf_counter_ns()
@@ -88,7 +87,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
 
             logger().info("Performing fw upgrade on DUT....")
             wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
-            time.sleep(40)
+            time.sleep(120)
 
             logger().info("fetching otaf upgrade status....")
             wifi_dut.interfaces.wifi.get_http_otaf_status()
@@ -107,13 +106,16 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
                 time_duration = (async_timestamp - start_time) / 1000000000
                 logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-            time.sleep(5)
-            # API does soft reset on DUT
+            if time_duration > 40:
+                logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
+            else:
+                logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+            time.sleep(2)
             logger().info("resetting DUT....")
             wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
-            time.sleep(10)
+            time.sleep(5)
 
-            # performs the wifi initialization
             logger().info("Initialising DUT after the reset....")
             wifi_dut.interfaces.wifi.dut_init()
             time.sleep(10)
@@ -142,13 +144,12 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-
         t_end = time.time() + 60 * time_lapse
         while time.time() < t_end:
             """ ******* SERVER CHECKS ******* """
-            logger().info("checking weather server is running....")
+            logger().info("checking server stats....")
             server_stat = http_server.interfaces.http.started
-            assert server_stat == True
+            assert server_stat == True,"server is inactive"
             logger().info(f'http server state is {server_stat}')
 
             logger().info("fetching server ip....")
@@ -182,12 +183,10 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
             assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
 
             time.sleep(5)
-            # API does soft reset on DUT
             logger().info("resetting DUT....")
             wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
             time.sleep(10)
 
-            # performs the wifi initialization
             logger().info("Initialising DUT after the reset....")
             wifi_dut.interfaces.wifi.dut_init()
             time.sleep(10)
@@ -216,13 +215,12 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-
         t_end = time.time() + 60 * time_lapse
         while time.time() < t_end:
             """ ******* SERVER CHECKS ***** """
             logger().info("checking weather server is running....")
             server_stat = http_server.interfaces.http.started
-            assert server_stat == True
+            assert server_stat == True,"server is inactive"
             logger().info(f'http server state is {server_stat}')
 
             logger().info("fetching server ip....")
@@ -260,12 +258,10 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
             assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
 
             time.sleep(5)
-            # API does soft reset on DUT
             logger().info("resetting DUT....")
             wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
             time.sleep(10)
 
-            # performs the wifi initialization
             logger().info("Initialising DUT after the reset....")
             wifi_dut.interfaces.wifi.dut_init()
             time.sleep(10)

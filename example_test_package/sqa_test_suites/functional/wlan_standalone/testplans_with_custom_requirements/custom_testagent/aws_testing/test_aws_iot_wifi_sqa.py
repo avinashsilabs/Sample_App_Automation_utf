@@ -4,6 +4,7 @@ import random
 import string
 import time
 from datetime import datetime
+from retry import retry
 from threading import Thread
 import pytest
 from utf.utils.iperf.iperf_utils import ping
@@ -73,10 +74,7 @@ def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, log
         capture_file=f"{capture_filename}.pcap"
     )
 
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=20,
-                                    scan_interval=6,
-                                    beacon_missedcount=40,
-                                    first_time_retry=0)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     join_fail = 1
     for count in range(1, 3):
         try:
@@ -117,6 +115,7 @@ def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, log
 
     logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
     assert ping(device_ip, ping_count), "Unable to ping to DUT"
+    return device_ip, mac_address
 
 
 def ApWirelessOff(wifi_access_point, wait_time, logger):
@@ -129,8 +128,119 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
     wifi_access_point.interfaces.wifi.start_ap()
 
 
+def connect_disconnect_aws(wifi_dut, messages, topic):
+    try:
+        aws_fail = 1
+        for count in range(10):
+            try:
+                logger().info("Initiating aws connect from DUT")
+                wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                aws_fail = 0
+                break
+            except Exception as err:
+                logger().info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                if count == 8:
+                    raise err
+                time.sleep(5)
+        assert aws_fail == 0, "Connecting to AWS server is failed"
+        logger().info("Connecting to AWS server is successful")
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(1, 11):
+            try:
+                logger().info(f"DUT is Subscribing on topic '{topic}' and QOS:'{RS9116AwsQos.QOS1}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic, qos=RS9116AwsQos.QOS1, timeout=10)
+                subscribe_fail = 0
+                break
+            except Exception as err:
+                logger().info(f"Subscribing on topic '{topic}' failed. retry count->{count}")
+                if count == 10:
+                    raise err
+                time.sleep(10)
+        assert subscribe_fail == 0, "Subscribing to topic is failed, test_run_time 30 minutes completed"
+
+        count = 0
+        for msg in messages:
+            count += 1
+            logger().info(f"\nDUT message{count} on topic:'{topic}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                          f"\nMessage{count} with length:'{len(msg)} bytes'\nMessage{count} is:'{msg}'")
+            publish_from_dut(wifi_dut, topic, msg, qos=RS9116AwsQos.QOS1)
+            time.sleep(5)
+
+        logger().info("\nValidating received aws message")
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        count = 0
+        iot_event = 0
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                iot_event = 1
+                aws_event_qos = event.event_data.qos
+                aws_event_topic = event.event_data.topic
+                aws_event_payload = event.event_data.payload
+                logger().info(
+                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                assert topic == aws_event_topic, f"received wrong topic, expected is {topic}"
+                assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                count += 1
+        assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+        logger().info("Received aws message validated successfully")
+
+        logger().info("DUT Unsubscribing from aws topic")
+        wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic, timeout=30)
+    finally:
+        logger().info("Initiating aws_iot_disconnect from DUT")
+        wifi_dut.interfaces.wifi.aws_iot_disconnect()
+        time.sleep(20)
+        logger().info("\n")
+
+
 def logger():
     return get_logger(__name__)
+
+
+def dut_recovery(wifi_dut, error):
+    recovery_error_codes = ['0xffffffe2', '0xffffffd5']
+    for error_code in recovery_error_codes:
+        if error_code in str(error):
+            logger().info('******* Initiating DUT Recovery using Reset **********')
+            wifi_dut.interfaces.wifi.reset()
+
+
+def dut_clean_up(wifi_dut, topic=None):
+    logger().info("\n\n ---------------------------- Cleaning UP the DUT ----------------------------")
+    try:
+        if topic:
+            logger().info("DUT Unsubscribing from aws topic")
+            wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic, timeout=30)
+            time.sleep(3)
+        logger().info("Initiating aws_iot disconnect from DUT")
+        wifi_dut.interfaces.wifi.aws_iot_disconnect()
+        time.sleep(3)
+        logger().info("Closing all opened sockets")
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger().info("Disconnect from AP")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
+        wifi_dut.interfaces.wifi.inited = False
+    except:
+        logger().info("******* Recovering the DUT using EFR reset instead of device reset  **********")
+        wifi_dut.interfaces.wifi.reset_soft()
+    logger().info("\n ---------------------------- Cleaning UP of DUT is Completed ----------------------------")
+
+
+@retry(Exception, delay=30, tries=5)
+def ping_to_dut(dut_ip, ping_count=10):
+    logger().info("Pinging to DUT")
+    status = ping(dut_ip, ping_count)
+    return status
+
+
+@retry(Exception, delay=15, tries=10)
+def publish_from_dut(wifi_dut, topic, message, qos, timeout=20):
+    wifi_dut.interfaces.wifi.aws_iot_publish(topic, message, qos=qos, timeout=timeout)
 
 
 class aws_publish_message_Thread(ThreadBase):
@@ -147,8 +257,9 @@ class aws_publish_message_Thread(ThreadBase):
         send_count = 0
         while 1:
             msg = self.message[send_count]
-            logger().info(f"DUT is publishing message{send_count + 1}:'{msg}' on topic:{self.topic}")
-            self.wifi_dut.interfaces.wifi.aws_iot_publish(self.topic, msg, qos=RS9116AwsQos.QOS1, timeout=5)
+            logger().info(f"\nDUT publishing message{send_count + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
+                          f"\nMessage{send_count + 1} with length:'{len(msg)} bytes'\nMessage{send_count + 1} is:'{msg}'")
+            publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos, timeout=10)
             send_count += 1
             time.sleep(2)
             if send_count == msg_count:
@@ -169,7 +280,7 @@ class aws_receive_message_Thread(ThreadBase):
         recv_count = 0
         while 1:
             logger().info("Receiving published aws message on aws_iot_client")
-            time.sleep(3)
+            time.sleep(10)
             recv_messages = self.aws_iot_client.interfaces.aws_iot.get_received_messages()
             logger().info(f"Received message{recv_count + 1} is: '{recv_messages[recv_count].payload.decode()}'")
             logger().info(f"Received message{recv_count + 1} topic is: '{recv_messages[recv_count].topic}'")
@@ -193,15 +304,16 @@ class aws_publish_from_raspi_receive_from_wifidut_thread(ThreadBase):
         self.topic = topic
         self.message = message
         self.qos = qos
-        logger().info(f"Topic '{self.topic}'")
-        logger().info(f"Message '{self.message}'")
-        logger().info(f"QOS '{self.qos}'")
+        # logger().info(f"Topic '{self.topic}'")
+        # logger().info(f"Message '{self.message}'")
+        # logger().info(f"QOS '{self.qos}'")
 
     def run(self):
         i = 0
         for msg in self.message:
             i += 1
-            logger().info(f"aws_iot_client is publishing message{i}:'{msg}' on topic:{self.topic}")
+            logger().info(f"\naws_iot_client publishing message{i} on topic:'{self.topic}' \nQOS:'{self.qos}'"
+                          f"\nMessage{i} with length:'{len(msg)} bytes'\nMessage{i} is:'{msg}'")
             self.aws_iot_client.interfaces.aws_iot.aws_iot_publish(self.topic, msg, qos=self.qos)
             time.sleep(5)
 
@@ -224,35 +336,149 @@ pytestmark = [
             "client_cert": ["client-certificate.crt"],
             "client_key": ["private-key.key"],
         }
-    )
+    ),
+    pytest.mark.firmware_app("test_aws")
 ]
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_connect_sub_publish_C19548(wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
-    for iter_count in range(iterations):
-        logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_connect_sub_publish_c19548(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
+    topic_1 = "sdk/test/Python"
+    try:
+        for iter_count in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+            messages = []
+            for i in range(10):
+                messages.append(text_generator(size=10))
+            logger.info(f"Messages are:{messages}")
 
-        topic_1 = "sdk/test/Python"
-        message = []
+            capture_filename = "test_C19548"
+            dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+            ap_bssid = wifi_access_point.interfaces.wifi.bssid
+            logger.info(f'AP BSSID = {ap_bssid}')
+            logger.info(f"Device mac address: {dut_mac_address}")
+
+            aws_fail = 1
+            for count in range(10):
+                try:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail = 0
+                    break
+                except:
+                    logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                    time.sleep(5)
+            assert aws_fail == 0, "Connecting to AWS server is failed"
+            logger.info("Connecting to AWS server is successful")
+            time.sleep(2)
+
+            subscribe_fail = 1
+            for count in range(5):
+                try:
+                    logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                    wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                    subscribe_fail = 0
+                    break
+                except:
+                    logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                    time.sleep(5)
+
+            assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+            count = 0
+            for msg in messages:
+                count += 1
+                logger.info(f"\nDUT publishing message{count} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                            f"\nMessage{count} with length:'{len(msg)} bytes'\nMessage{count} is:'{msg}'")
+                publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS0)
+                time.sleep(2)
+
+            logger.info("\nValidating received aws message")
+            time.sleep(10)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            count = 0
+            iot_event = 0
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                    iot_event = 1
+                    aws_event_qos = event.event_data.qos
+                    aws_event_topic = event.event_data.topic
+                    aws_event_payload = event.event_data.payload
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
+                    assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                    assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                    count += 1
+            assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+            logger.info("aws messages validated successfully")
+
+            try:
+                logger.info("DUT Unsubscribing from aws topic")
+                wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=30)
+                logger.info("Initiating aws_iot disconnect")
+                wifi_dut.interfaces.wifi.aws_iot_disconnect()
+                logger.info("Initiating Wi-Fi disconnection on DUT")
+                wifi_dut.interfaces.wifi.leave()
+            except Exception as err:
+                logger.info(str(err))
+
+            logger.info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            validation = True
+            channel = wifi_access_point.interfaces.wifi.channel
+            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+            packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                             f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+            packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+            logger.info("Validating assoc/eapol Packets")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find association/eapol Packets'
+
+            logger.info("Validating PS Polls with Power Management Bit")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+                'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+            logger.info(f"Iteration '{iter_count + 1}' completed")
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_connect_after_wifi_reconnection_c4053(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
         for i in range(10):
-            message.append(text_generator(size=10))
-        logger.info(f"Messages are:{message}")
+            messages.append(text_generator(size=10))
+        logger.info(f"Messages are:{messages}")
 
-        capture_filename = "test_C19548"
-        join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        capture_filename = "test_C4053"
+        logger.info("Joining to AP for first time")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        time.sleep(10)
+        logger.info("Initiating wifi leave for first time")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger.info("Joining to AP for second time")
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger.info(f"Device mac address: {dut_mac_address}")
 
-        logger.info("Initiating aws connect from DUT")
         aws_fail = 1
-        for count in range(0, 3):
+        for count in range(10):
             try:
+                logger.info("Initiating aws connect from DUT")
                 wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
                 aws_fail = 0
                 break
@@ -264,10 +490,10 @@ def test_aws_connect_sub_publish_C19548(wifi_sniffer, wifi_access_point, wifi_du
         time.sleep(2)
 
         subscribe_fail = 1
-        for count in range(0, 3):
+        for count in range(5):
             try:
-                logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=10)
                 subscribe_fail = 0
                 break
             except:
@@ -276,13 +502,116 @@ def test_aws_connect_sub_publish_C19548(wifi_sniffer, wifi_access_point, wifi_du
         assert subscribe_fail == 0, "Subscribing to topic is failed"
 
         count = 0
-        for msg in message:
+        for msg in messages:
             count += 1
-            logger.info(f"Sending message{count} {msg} on topic {topic_1}")
-            wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0)
+            logger.info(f"\nDUT message{count} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                        f"\nMessage{count} with length:'{len(msg)} bytes'\nMessage{count} is:'{msg}'")
+            publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS1)
             time.sleep(2)
 
-        logger.info("Validating received aws message")
+        logger.info("\nValidating received aws message")
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        count = 0
+        iot_event = 0
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                iot_event = 1
+                aws_event_qos = event.event_data.qos
+                aws_event_topic = event.event_data.topic
+                aws_event_payload = event.event_data.payload
+                logger.info(
+                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
+                assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                count += 1
+        assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+        logger.info("aws messages validated successfully")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=10))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C4062"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.aws_iot_connect(hostname="www.google.com", load_cert=False)
+        assert exc_info.value.error_code == 0x0021, "DUT sent wrong error code, expected is 0x0021"
+        logger.info(
+            f"DUT sent error code '{exc_info.value.error_code}' when server is not responding which is expected")
+
+        aws_fail = 1
+        for count in range(10):
+            try:
+                logger.info("Initiating aws connect from DUT")
+                wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                aws_fail = 0
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                time.sleep(1)
+        assert aws_fail == 0, "Connecting to AWS server is failed"
+        logger.info("Connecting to AWS server is successful")
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+        count = 0
+        for msg in messages:
+            count += 1
+            logger.info(f"\nDUT message{count} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                        f"\nMessage{count} with length:'{len(msg)} bytes'\nMessage{count} is:'{msg}'")
+            publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS0)
+            time.sleep(2)
+
+        logger.info("\nValidating received aws message")
         time.sleep(10)
         events = wifi_dut.interfaces.wifi.get_async_events()
         count = 0
@@ -297,19 +626,66 @@ def test_aws_connect_sub_publish_C19548(wifi_sniffer, wifi_access_point, wifi_du
                     f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
                 assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
                 assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message[count] == aws_event_payload, "sent and received messages are not matching"
+                assert messages[count] == aws_event_payload, "sent and received messages are not matching"
                 count += 1
-        assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
+        assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
         logger.info("aws messages validated successfully")
 
-        logger.info("Unsubscribing from aws topic")
-        wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
 
-        logger.info("Initiating aws_iot disconnect")
-        wifi_dut.interfaces.wifi.aws_iot_disconnect()
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
 
-        logger.info("Initiating Wi-Fi disconnection on DUT")
-        wifi_dut.interfaces.wifi.leave()
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("test_run_time", [1800])
+def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger,
+                                                test_run_time):
+    exception_count = 5
+    try:
+        topic_1 = "sdk/test/Python"
+        messages = []
+        for i in range(5):
+            messages.append(text_generator(size=20))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19552"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        sw = Stopwatch()
+        error_count = 0
+        logger.info(f"Running the aws connect and disconnect test for '{test_run_time}' seconds")
+        while sw.elapsed_sec <= test_run_time:
+            time_left = int((test_run_time - sw.elapsed_sec) / 60)
+            logger.info(f"Remaining time to complete test is '{time_left}' minutes")
+            try:
+                connect_disconnect_aws(wifi_dut, messages, topic_1)
+            except Exception as err:
+                error_count += 1
+                logger.error(str(err))
 
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -329,319 +705,13 @@ def test_aws_connect_sub_publish_C19548(wifi_sniffer, wifi_access_point, wifi_du
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
 
-        logger.info(f"Iteration '{iter_count + 1}' completed")
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_connect_after_wifi_reconnection_C4053(wifi_sniffer, wifi_access_point, wifi_dut, logger):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(10):
-        message.append(text_generator(size=10))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C4053"
-    logger.info("Joining to AP for first time")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    time.sleep(10)
-    logger.info("Initiating wifi leave for first time")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Joining to AP for second time")
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    logger.info("Initiating aws connect from DUT")
-    aws_fail = 1
-    for count in range(0, 3):
-        try:
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail = 0
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
-            time.sleep(1)
-    assert aws_fail == 0, "Connecting to AWS server is failed"
-    logger.info("Connecting to AWS server is successful")
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    count = 0
-    for msg in message:
-        count += 1
-        logger.info(f"Sending message{count} {msg} on topic {topic_1}")
-        wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0)
-        time.sleep(2)
-
-    logger.info("Validating received aws message")
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    count = 0
-    iot_event = 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-            iot_event = 1
-            aws_event_qos = event.event_data.qos
-            aws_event_topic = event.event_data.topic
-            aws_event_payload = event.event_data.payload
-            logger.info(
-                f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-            assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
-            assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-            assert message[count] == aws_event_payload, "sent and received messages are not matching"
-            count += 1
-    assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-    logger.info("aws messages validated successfully")
-
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_server_not_respond_C4062(wifi_sniffer, wifi_access_point, wifi_dut, logger):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(10):
-        message.append(text_generator(size=10))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C4062"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.aws_iot_connect(hostname="www.google.com", load_cert=False)
-    assert exc_info.value.error_code == 0x0021, "DUT sent wrong error code, expected is 0x0021"
-    logger.info(f"DUT sent error code '{exc_info.value.error_code}' when server is not responding which is expected")
-
-    logger.info("Initiating aws connect from DUT")
-    aws_fail = 1
-    for count in range(0, 3):
-        try:
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail = 0
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
-            time.sleep(1)
-    assert aws_fail == 0, "Connecting to AWS server is failed"
-    logger.info("Connecting to AWS server is successful")
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    count = 0
-    for msg in message:
-        count += 1
-        logger.info(f"Sending message{count} {msg} on topic {topic_1}")
-        wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0)
-        time.sleep(2)
-
-    logger.info("Validating received aws message")
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    count = 0
-    iot_event = 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-            iot_event = 1
-            aws_event_qos = event.event_data.qos
-            aws_event_topic = event.event_data.topic
-            aws_event_payload = event.event_data.payload
-            logger.info(
-                f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-            assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
-            assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-            assert message[count] == aws_event_payload, "sent and received messages are not matching"
-            count += 1
-    assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-    logger.info("aws messages validated successfully")
-
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-@pytest.mark.parametrize("test_run_time", [1800])
-def test_aws_connect_disconnect_sequence_C19552(wifi_sniffer, wifi_access_point, wifi_dut, logger, test_run_time):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(5):
-        message.append(text_generator(size=20))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19552"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    sw = Stopwatch()
-    logger.info(f"Running the aws connect and disconnect test for '{test_run_time}' seconds")
-    while sw.elapsed_sec <= test_run_time:
-        time_left = int((test_run_time - sw.elapsed_sec) / 60)
-        logger.info(f"Remaining time to complete test is '{time_left}' minutes")
-        logger.info("Initiating aws connect from DUT")
-        aws_fail = 1
-        for count in range(0, 3):
-            try:
-                wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-                aws_fail = 0
-                break
-            except:
-                logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
-                time.sleep(1)
-        assert aws_fail == 0, "Connecting to AWS server is failed"
-        logger.info("Connecting to AWS server is successful")
-        time.sleep(2)
-
-        subscribe_fail = 1
-        for count in range(0, 3):
-            try:
-                logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-                subscribe_fail = 0
-                break
-            except:
-                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-                time.sleep(2)
-        assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-        count = 0
-        for msg in message:
-            count += 1
-            logger.info(f"Sending message{count} {msg} on topic {topic_1}")
-            wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0)
-            time.sleep(5)
-
-        logger.info("Validating received aws message")
-        time.sleep(10)
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        count = 0
-        iot_event = 0
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                iot_event = 1
-                aws_event_qos = event.event_data.qos
-                aws_event_topic = event.event_data.topic
-                aws_event_payload = event.event_data.payload
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message[count] == aws_event_payload, "sent and received messages are not matching"
-                count += 1
-        assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-        logger.info("Received aws message validated successfully")
-
-        logger.info("Unsubscribing from aws topic")
-        wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
-
-        logger.info("Initiating aws_iot disconnect")
-        wifi_dut.interfaces.wifi.aws_iot_disconnect()
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+        logger.info(f"Number of times : aws_connect failure in span of 30 minutes:'{error_count}'")
+        assert error_count <= exception_count, f"aws connect_publish_disconnect_sequence failed more than '{exception_count}' times in 30 minutes of test run"
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
 
 
 # ########### PR_NEW AWS_TEST CASES CG TEAM #################################
@@ -649,1222 +719,366 @@ def test_aws_connect_disconnect_sequence_C19552(wifi_sniffer, wifi_access_point,
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-773 [clean_session: bool - support is needed in aws_iot_connect method/TestAgent]
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-786 [Aws_iot: Unable to publish message with size 512 bytes]
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-857 [ Test agent support required for keep alive periods for aws-mqtt]
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_publish_data_with_different_length_C19553(wifi_sniffer, wifi_access_point, wifi_dut, logger):
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                       logger):
     topic_1 = "sdk/test/Python"
-    message1 = text_generator(size=1)
-    message2 = text_generator(size=10)
-    message3 = text_generator(size=100)
-    # message4 = text_generator(size=512)
-    # message5 = text_generator(size=1000)
-    # message6 = text_generator(size=1390)
+    try:
+        message1 = text_generator(size=1)
+        message2 = text_generator(size=10)
+        message3 = text_generator(size=100)
+        # message4 = text_generator(size=512)
+        # message5 = text_generator(size=1000)
+        # message6 = text_generator(size=1390)
 
-    message = {"message1": message1, "message2": message2, "message3": message3}
-    # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5, "message6": message6}
-    logger.info(f"Messages are:{message}")
+        message = {"message1": message1, "message2": message2, "message3": message3}
+        # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5, "message6": message6}
+        logger.info(f"Messages are:{message}")
 
-    capture_filename = "test_aws_publish_data_with_different_length_TC19553"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
+        capture_filename = "test_aws_publish_data_with_different_length_TC19553"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
 
-    logger.info("Initiating aws connect from DUT")
-    aws_fail = 1
-    for count_aws in range(0, 3):
-        try:
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail = 0
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
+        aws_fail = 1
+        for count_aws in range(10):
+            try:
+                logger.info("Initiating aws connect from DUT")
+                wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                aws_fail = 0
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
 
-    assert aws_fail == 0, "Connecting to AWS server is failed"
-    logger.info("Connecting to AWS server is successful")
-    time.sleep(2)
+        assert aws_fail == 0, "Connecting to AWS server is failed"
+        logger.info("Connecting to AWS server is successful")
+        time.sleep(2)
 
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
 
-    for message_key, message_value in message.items():
-        logger.info(f"message_key:{message_key}, message_value:{message_value}")
-        wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, message_value, qos=RS9116AwsQos.QOS0, timeout=5)
+        for message_key, message_value in message.items():
+            logger.info(f"\nDUT publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                        f"\nMessage with length:'{len(message_value)} bytes'\nMessage is:'{message_value}'")
+            publish_from_dut(wifi_dut, topic_1, message_value, qos=RS9116AwsQos.QOS0, timeout=10)
 
-        time.sleep(5)
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        logger.info("Validating received aws message")
-        iot_event = 0
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                iot_event = 1
-                aws_event_data = event.event_data
-                aws_event_qos = event.event_data.qos
-                aws_event_topic = event.event_data.topic
-                aws_event_payload = event.event_data.payload
-                logger.info(f"Event data: {aws_event_data}")
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message_value == aws_event_payload, "sent and received messages are not matching"
-        assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
-        logger.info("aws messages validated successfully")
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            logger.info("\nValidating received aws message")
+            iot_event = 0
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                    iot_event = 1
+                    aws_event_data = event.event_data
+                    aws_event_qos = event.event_data.qos
+                    aws_event_topic = event.event_data.topic
+                    aws_event_payload = event.event_data.payload
+                    # logger.info(f"Event data: {aws_event_data}")
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                    assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                    assert message_value == aws_event_payload, "sent and received messages are not matching"
+            assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
+            logger.info("aws messages validated successfully")
 
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=5)
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
 
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
 
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_receive_data_over_subscribed_topic_with_different_lengths_C19554(wifi_sniffer, wifi_access_point, wifi_dut,
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(firmware_loader, wifi_sniffer,
+                                                                              wifi_access_point, wifi_dut,
                                                                               aws_iot_client, logger):
     topic_1 = "sdk/test/Python"
-
-    message1 = text_generator(size=10)
-    message2 = text_generator(size=100)
-    # message3 = text_generator(size=500)
-    # message4 = text_generator(size=1000)
-    # message5 = text_generator(size=1390)
-
-    message = {"message1": message1, "message2": message2}
-    # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5}
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_aws_receive_data_over_subscribed_topic_with_different_lengths_C19554"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    for message_key, message_value in message.items():
-        logger.info(f"message_key:{message_key}, message_value:{message_value}")
-        logger.info(f"aws_iot_client is publishing message '{message_value}' on topic:{topic_1}")
-        aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, message_value, qos=0)
-
-        time.sleep(5)
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        logger.info("Validating received aws messages")
-        iot_event = 0
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                iot_event = 1
-                aws_event_data = event.event_data
-                aws_event_qos = event.event_data.qos
-                aws_event_topic = event.event_data.topic
-                aws_event_payload = event.event_data.payload
-                logger.info(f"Event data: {aws_event_data}")
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message_value == aws_event_payload, "sent and received messages are not matching"
-        assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
-        logger.info("aws messages validated successfully")
-
-    logger.info("Unsubscribing from aws topic from DUT")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=5)
-    logger.info("Initiating aws_iot disconnect from DUT")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(1)
-    logger.info("Initiating aws_iot disconnect from aws_iot_client")
-    aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_tx_after_rejoin_qos0_C19555(wifi_sniffer, wifi_access_point, wifi_dut, switch, logger):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(10):
-        message.append(text_generator(size=10))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_aws_tx_after_rejoin_qos0_C19555"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    logger.info("Initiating aws connect")
-    aws_fail = 1
-    for count in range(0, 3):
-        try:
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail = 0
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
-            time.sleep(1)
-    assert aws_fail == 0, "Connecting to AWS server is failed"
-    logger.info("Connecting to AWS server is successful")
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    send_count = 0
-    ap_power_off = 0
-    while 1:
-        if ap_power_off:
-            logger.info("Turning off the AP")
-            switch.interfaces.pdu_switch.turn_off()
-            logger.info("Successfully powered off AP")
-            time.sleep(10)
-            logger.info("Again turning on the AP")
-            switch.interfaces.pdu_switch.turn_on()
-            ap_power_off = 0
-            logger.info("Waiting for rejoin from DUT")
-            time.sleep(100)
-            logger.info("Successfully powered on AP")
-
-        # if ap_power_off:
-        #     ap_power_off = 0
-        #     thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger))
-        #     thread.start()
-        #     thread.join()
-        #     time.sleep(10)
-
-        msg = message[send_count]
-        logger.info(f"Sending message '{msg}' on topic '{topic_1}'")
-        wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0, timeout=5)
-        time.sleep(5)
-        send_count = send_count + 1
-        if send_count == int(len(message) / 4):
-            ap_power_off = 1
-        if send_count == int(len(message)):
-            break
-
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    count = 0
-    logger.info("Validating received aws messages")
-    iot_event = 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-            iot_event = 1
-            aws_event_data = event.event_data
-            aws_event_qos = event.event_data.qos
-            aws_event_topic = event.event_data.topic
-            aws_event_payload = event.event_data.payload
-            logger.info(f"Event data: {aws_event_data}")
-            logger.info(
-                f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-            assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-            assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-            assert message[count] == aws_event_payload, "sent and received messages are not matching"
-            count += 1
-    assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-    logger.info("aws messages validated successfully")
-    time.sleep(5)
-
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_tx_after_rejoin_qos1_C19556(wifi_sniffer, wifi_access_point, wifi_dut, logger, switch):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(10):
-        message.append(text_generator(size=100))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_aws_tx_after_rejoin_qos1_C19556"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    logger.info("Initiating aws connect")
-    aws_fail = 1
-    for count in range(0, 3):
-        try:
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail = 0
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
-            time.sleep(1)
-    assert aws_fail == 0, "Connecting to AWS server is failed"
-    logger.info("Connecting to AWS server is successful")
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    send_count = 0
-    ap_power_off = 0
-    while 1:
-        if ap_power_off:
-            logger.info("Turning off the AP")
-            switch.interfaces.pdu_switch.turn_off()
-            logger.info("Successfully powered off AP")
-            time.sleep(10)
-            logger.info("Again turning on the AP")
-            switch.interfaces.pdu_switch.turn_on()
-            ap_power_off = 0
-            time.sleep(100)
-            logger.info("Successfully powered on AP")
-
-        # if ap_power_off:
-        #     ap_power_off = 0
-        #     thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger))
-        #     thread.start()
-        #     thread.join()
-        #     time.sleep(10)
-
-        msg = message[send_count]
-        logger.info(f"Sending message '{msg}' on topic '{topic_1}'")
-        wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS1, timeout=5)
-        time.sleep(5)
-        send_count = send_count + 1
-        if send_count == int(len(message) / 4):
-            ap_power_off = 1
-        if send_count == int(len(message)):
-            break
-
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    count = 0
-    logger.info("Validating received aws messages")
-    iot_event = 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-            iot_event = 1
-            aws_event_data = event.event_data
-            aws_event_qos = event.event_data.qos
-            aws_event_topic = event.event_data.topic
-            aws_event_payload = event.event_data.payload
-            logger.info(f"Event data: {aws_event_data}")
-            logger.info(
-                f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-            assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-            assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS1"
-            assert message[count] == aws_event_payload, "sent and received messages are not matching"
-            count += 1
-    assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-    logger.info("aws messages validated successfully")
-
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-# https://jira.silabs.com/browse/WIFI_BT_UTFHELP-773
-# Need test agent change after adding cleanSession flag
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_connection_when_client_id_is_null_C19558(wifi_sniffer, wifi_access_point, wifi_dut, logger):
-    capture_filename = "test_aws_connection_when_client_id_is_null_C19558"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    time.sleep(5)
-
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-    logger.info("Initiating aws connect")
-    with pytest.raises(Exception) as exc_info:
-        wifi_dut.interfaces.wifi.aws_iot_connect(client_id='', clean_session=1, load_cert=False)
-    err = 'Incorrect number of arguments'
-    assert err in str(exc_info.value), "Expected error not received"
-    logger.info(f"aws_iot_connect failed with error: '{err}',which is expected")
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-
-# ########### PR2 ###########################
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_tcp_shutdown_C19546(wifi_sniffer, wifi_access_point, wifi_dut,
-                                 aws_iot_client, logger):
-    topic_1 = "sdk/test/Python"
-    message1 = text_generator(size=100)
-    message = {"message1": message1}
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_aws_tcp_shutdown_C19546"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-    for message_key, message_value in message.items():
-        logger.info(f"message_key:{message_key}, message_value:{message_value}")
-        logger.info(f"aws_iot_client is publishing message '{message_value}' on topic:{topic_1}")
-        aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, message_value, qos=0)
-
-        time.sleep(5)
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        logger.info("Validating received aws messages")
-        iot_event = 0
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                iot_event = 1
-                aws_event_data = event.event_data
-                aws_event_qos = event.event_data.qos
-                aws_event_topic = event.event_data.topic
-                aws_event_payload = event.event_data.payload
-                logger.info(f"Event data: {aws_event_data}")
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message_value == aws_event_payload, "sent and received messages are not matching"
-        assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
-        logger.info("aws messages validated successfully")
-
-    logger.info("Initiating AWS shutdown")
-    wifi_dut.interfaces.wifi.close_sockets()
-    logger.info("AWS shutdown success")
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_C19559(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                               aws_iot_client, switch, logger):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(10):
-        message.append(text_generator(size=100))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19559"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    send_count = 0
-    ap_power_off = 0
-    while 1:
-
-        if ap_power_off:
-            logger.info("Turning off the AP")
-            switch.interfaces.pdu_switch.turn_off()
-            logger.info("Successfully powered off AP")
-            time.sleep(10)
-            logger.info("Again turning on the AP")
-            switch.interfaces.pdu_switch.turn_on()
-            ap_power_off = 0
-            time.sleep(100)
-            logger.info("Successfully powered on AP")
-
-        # if ap_power_off:
-        #     ap_power_off = 0
-        #     thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger))
-        #     thread.start()
-        #     thread.join()
-        #     time.sleep(10)
-
-        msg = message[send_count]
-        logger.info(f"aws_iot_client is publishing message '{msg}' on topic:{topic_1}")
-        aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, msg, qos=1)
-        time.sleep(5)
-        send_count = send_count + 1
-        if send_count == int(len(message) / 4):
-            ap_power_off = 1
-        if send_count == int(len(message)):
-            break
-
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    count = 0
-    logger.info("Validating received aws messages")
-    iot_event = 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-            iot_event = 1
-            aws_event_data = event.event_data
-            aws_event_qos = event.event_data.qos
-            aws_event_topic = event.event_data.topic
-            aws_event_payload = event.event_data.payload
-            logger.info(f"Event data: {aws_event_data}")
-            logger.info(
-                f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-            assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-            assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS1"
-            assert message[count] == aws_event_payload, "sent and received messages are not matching"
-            count += 1
-    assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-    logger.info("aws messages validated successfully")
-
-    logger.info("Unsubscribing from aws topic from DUT")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
-
-    logger.info("Initiating aws_iot disconnect from DUT")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(1)
-    logger.info("Initiating aws_iot disconnect from aws_iot_client")
-    aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_publish_message_in_thread1_and_receive_message_in_thread2_C19566(wifi_sniffer, wifi_access_point,
-                                                                              wifi_dut, aws_iot_client, logger):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(10):
-        message.append(text_generator(size=10))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19566"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"aws_iot_client is subscribing on topic '{topic_1}'")
-            aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1)
-            time.sleep(4)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-    logger.info("Subscribing to topic is successful")
-
-    t1 = aws_publish_message_Thread(wifi_dut, topic_1, message, qos=RS9116AwsQos.QOS1)
-    t2 = aws_receive_message_Thread(aws_iot_client, topic_1, message, qos=RS9116AwsQos.QOS1)
-
-    logger.info("aws_publish_message_thread + aws_receive_message_thread execution starts....")
-    t1.start()
-    t2.start()
-
-    t1.wait_for_exit(True)
-    t2.wait_for_exit(True)
-
-    logger.info("Unsubscribing from aws topic from aws_iot_client")
-    aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
-    time.sleep(2)
-
-    logger.info("Initiating aws_iot disconnect from DUT")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(1)
-    logger.info("Initiating aws_iot disconnect from aws_iot_client")
-    aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.parametrize("test_run_time", [1800])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_publish_a_message_on_the_topic_for_every_10_minutes_C19567(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                                        logger, test_run_time):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(5):
-        message.append(text_generator(size=20))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19567"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    logger.info("Initiating aws connect from DUT")
-    aws_fail = 1
-    for count_aws in range(0, 3):
-        try:
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail = 0
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-
-    assert aws_fail == 0, "Connecting to AWS server is failed"
-    logger.info("Connecting to AWS server is successful")
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    sw = Stopwatch()
-    while sw.elapsed_sec < test_run_time:
-        for msg in message:
-            logger.info(f"Sending message '{msg}' on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0, timeout=5)
-            time.sleep(2)
-
-        logger.info("Validating received aws messages")
-        time.sleep(10)
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        count = 0
-        iot_event = 0
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                iot_event = 1
-                aws_event_data = event.event_data
-                aws_event_qos = event.event_data.qos
-                aws_event_topic = event.event_data.topic
-                aws_event_payload = event.event_data.payload
-                logger.info(f"Event data: {aws_event_data}")
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message[count] == aws_event_payload, "sent and received messages are not matching"
-                count += 1
-        assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
-        logger.info("aws messages validated successfully")
-
-        logger.info("DUT is going to sleep for 10 minutes")
-        time.sleep(600)
-        logger.info("Again publishing aws message from DUT after 10 minutes of sleep")
-
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=5)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-# ################################# PR3 #####################################
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.parametrize("iterations", [1])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuously_C19561(wifi_sniffer,
-                                                                                         wifi_access_point, wifi_dut,
-                                                                                         aws_iot_client, logger,
-                                                                                         iterations):
-    topic_1 = "mytesttopic/1"
-    # 100 messages of 300 bytes of random data
-    message = []
-    for i in range(100):
-        message.append(text_generator(size=300))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19561"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    for iter_count in range(iterations):
-        logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
-        i = 0
-        for msg in message:
-            i += 1
-            logger.info(f"aws_iot_client is publishing message{i}:'{msg}' on topic:{topic_1}")
-            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, msg, qos=0)
-            time.sleep(3)
-
-        time.sleep(10)
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        logger.info("Validating received aws messages")
-        count = 0
-        iot_event = 0
-        for event in events:
-            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                iot_event += 1
-                aws_event_data = event.event_data
-                aws_event_qos = event.event_data.qos
-                aws_event_topic = event.event_data.topic
-                aws_event_payload = event.event_data.payload
-                logger.info(f"Event data: {aws_event_data}")
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message[count] == aws_event_payload, "sent and received messages are not matching"
-                count += 1
-        assert iot_event == 100, f"published message '{message[count]}' not received on DUT"
-        logger.info("aws messages validated successfully")
-        logger.info(f"Iteration '{iter_count + 1}' completed")
-
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=5)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.parametrize("total_bytes", [20])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_C19563(wifi_sniffer, wifi_access_point,
-                                                                       wifi_dut, aws_iot_client, logger,
-                                                                       total_bytes):
-    topic_1 = "mytesttopic/1"
-    topic_2 = "mytesttopic/2"
-    message = []
-    for i in range(100):
-        message.append(text_generator(size=total_bytes))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19563"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
-
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_2}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_2, qos=RS9116AwsQos.QOS1, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_2}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-    qos0_thread = aws_publish_from_raspi_receive_from_wifidut_thread(wifi_dut, aws_iot_client, topic_1, message, 0)
-    qos1_thread = aws_publish_from_raspi_receive_from_wifidut_thread(wifi_dut, aws_iot_client, topic_2, message, 1)
-
-    qos0_thread.start()
-    time.sleep(5)
-    qos1_thread.start()
-
-    qos0_thread.wait_for_exit(True)
-    qos1_thread.wait_for_exit(True)
-
-    time.sleep(10)
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    logger.info("Validating received aws messages")
-    iot_event = 0
-    qos0_count = 0
-    qos1_count = 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-            aws_event_qos = event.event_data.qos
-            aws_event_topic = event.event_data.topic
-            aws_event_payload = event.event_data.payload
-            if aws_event_qos == RS9116AwsQos.QOS0:
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_1 == aws_event_topic, f"Received wrong topic. expected is topic1:{topic_1}"
-                assert aws_event_qos == RS9116AwsQos.QOS0, "Received wrong QOS. expected is QOS0"
-                assert message[qos0_count] == aws_event_payload, "sent and received messages are not matching"
-                qos0_count += 1
-            else:
-                logger.info(
-                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                assert topic_2 == aws_event_topic, f"Received wrong topic. expected is topic2:{topic_2}"
-                assert aws_event_qos == RS9116AwsQos.QOS1, "Received wrong QOS. expected is QOS0"
-                assert message[qos1_count] == aws_event_payload, "sent and received messages are not matching"
-                qos1_count += 1
-            iot_event += 1
-    assert iot_event == 200, f"some of published message not received on DUT"
-    logger.info("aws messages validated successfully")
-
-    logger.info("Unsubscribing from aws topic1")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=5)
-
-    logger.info("Unsubscribing from aws topic2")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_2, timeout=5)
-
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
-
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.parametrize("iterations", [2])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_check_rejoin_failure_functionality_of_dut_C19549(wifi_sniffer, wifi_access_point, wifi_dut, switch,
-                                                              logger, iterations):
-    topic_1 = "sdk/test/Python"
-    message = []
-    for i in range(5):
-        message.append(text_generator(size=10))
-    logger.info(f"Messages are:{message}")
-
-    capture_filename = "test_C19549"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-
-    for i in range(iterations):
-        logger.info(f"Initiating aws connect for iteration:{i + 1}")
-        aws_fail = 1
-        for count in range(0, 3):
+    try:
+        message1 = text_generator(size=10)
+        message2 = text_generator(size=100)
+        # message3 = text_generator(size=500)
+        # message4 = text_generator(size=1000)
+        # message5 = text_generator(size=1390)
+
+        message = {"message1": message1, "message2": message2}
+        # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5}
+        logger.info(f"Messages are:{message}")
+
+        capture_filename = "test_aws_receive_data_over_subscribed_topic_with_different_lengths_C19554"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
             try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+        for message_key, message_value in message.items():
+            logger.info(f"\naws_iot_client publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                        f"\nMessage with length:'{len(message_value)} bytes'\nMessage is:'{message_value}'")
+            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, message_value, qos=RS9116AwsQos.QOS1)
+
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            logger.info("\n\nValidating received aws messages")
+            iot_event = 0
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                    iot_event = 1
+                    aws_event_data = event.event_data
+                    aws_event_qos = event.event_data.qos
+                    aws_event_topic = event.event_data.topic
+                    aws_event_payload = event.event_data.payload
+                    # logger.info(f"Event data: {aws_event_data}")
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                    assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                    assert message_value == aws_event_payload, "sent and received messages are not matching"
+            assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
+            logger.info("aws messages validated successfully")
+
+        logger.info("Initiating aws_iot disconnect from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_tx_after_rejoin_qos0_C19555(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, switch, logger):
+#def test_aws_tx_after_rejoin_qos0_c19555(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=10))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_aws_tx_after_rejoin_qos0_C19555"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+
+        aws_fail = 1
+        for count in range(10):
+            try:
+                logger.info("Initiating aws connect from DUT")
+                wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                aws_fail = 0
+                break
+            except Exception as err:
+                logger.error(str(err))
+                logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                time.sleep(15)
+        assert aws_fail == 0, "Connecting to AWS server is failed"
+        logger.info("Connecting to AWS server is successful")
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(10)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+        send_count = 0
+        ap_power_off = 0
+        while 1:
+            if ap_power_off:
+                logger.info("Turning off the AP")
+                switch.interfaces.pdu_switch.turn_off(delay=20)
+                logger.info("Successfully powered off AP")
+                logger.info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
+                ap_power_off = 0
+                logger.info("Successfully powered on AP")
+
+            # if ap_power_off:
+            #     ap_power_off = 0
+            #     thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger))
+            #     thread.start()
+            #     thread.join()
+            #     time.sleep(60)
+            #     logger.info("Pinging to DUT to check rejoin process is completed or not")
+            #     status = ping_to_dut(dut_ip, ping_count=30)
+            #     assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+
+            msg = messages[send_count]
+            logger.info(f"\nDUT publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                        f"\nMessage with length:'{len(msg)} bytes'\nMessage is:'{msg}'")
+            publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS0, timeout=10)
+            time.sleep(5)
+            send_count = send_count + 1
+            if send_count == int(len(messages) / 4):
+                ap_power_off = 1
+            if send_count == int(len(messages)):
+                break
+
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        count = 0
+        logger.info("\nValidating received aws messages")
+        iot_event = 0
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                iot_event = 1
+                aws_event_data = event.event_data
+                aws_event_qos = event.event_data.qos
+                aws_event_topic = event.event_data.topic
+                aws_event_payload = event.event_data.payload
+                # logger.info(f"Event data: {aws_event_data}")
+                logger.info(
+                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                count += 1
+        assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+        logger.info("aws messages validated successfully")
+        time.sleep(5)
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, switch):
+#def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=100))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_aws_tx_after_rejoin_qos1_C19556"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        aws_fail = 1
+        for count in range(10):
+            try:
+                logger.info("Initiating aws connect from DUT")
                 wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
                 aws_fail = 0
                 break
@@ -1876,10 +1090,10 @@ def test_aws_check_rejoin_failure_functionality_of_dut_C19549(wifi_sniffer, wifi
         time.sleep(2)
 
         subscribe_fail = 1
-        for count in range(0, 3):
+        for count in range(5):
             try:
-                logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' with QOS:{RS9116AwsQos.QOS1}")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=10)
                 subscribe_fail = 0
                 break
             except:
@@ -1888,19 +1102,42 @@ def test_aws_check_rejoin_failure_functionality_of_dut_C19549(wifi_sniffer, wifi
         assert subscribe_fail == 0, "Subscribing to topic is failed"
 
         send_count = 0
+        ap_power_off = 0
         while 1:
-            msg = message[send_count]
-            logger.info(f"Sending message '{msg}' on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS0, timeout=5)
-            send_count += 1
-            time.sleep(3)
-            if send_count == int(len(message)):
+            if ap_power_off:
+                logger.info("Turning off the AP")
+                switch.interfaces.pdu_switch.turn_off(delay=20)
+                logger.info("Successfully powered off AP")
+                logger.info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
+                ap_power_off = 0
+                logger.info("Successfully powered on AP")
+
+            # if ap_power_off:
+            #     ap_power_off = 0
+            #     thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger))
+            #     thread.start()
+            #     thread.join()
+            #     time.sleep(60)
+            #     logger.info("Pinging to DUT to check rejoin process is completed or not")
+            #     status = ping_to_dut(dut_ip, ping_count=30)
+            #     assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+
+            msg = messages[send_count]
+            logger.info(f"\nDUT publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                        f"\nMessage with length:'{len(msg)} bytes'\nMessage is:'{msg}'")
+            publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS1, timeout=10)
+            time.sleep(5)
+            send_count = send_count + 1
+            if send_count == int(len(messages) / 4):
+                ap_power_off = 1
+            if send_count == int(len(messages)):
                 break
 
         time.sleep(10)
         events = wifi_dut.interfaces.wifi.get_async_events()
         count = 0
-        logger.info("Validating received aws messages")
+        logger.info("\nValidating received aws messages")
         iot_event = 0
         for event in events:
             if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
@@ -1909,89 +1146,992 @@ def test_aws_check_rejoin_failure_functionality_of_dut_C19549(wifi_sniffer, wifi
                 aws_event_qos = event.event_data.qos
                 aws_event_topic = event.event_data.topic
                 aws_event_payload = event.event_data.payload
-                logger.info(f"Event data: {aws_event_data}")
+                # logger.info(f"Event data: {aws_event_data}")
                 logger.info(
                     f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
                 assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                assert message[count] == aws_event_payload, "sent and received messages are not matching"
+                assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS1"
+                assert messages[count] == aws_event_payload, "sent and received messages are not matching"
                 count += 1
-        assert iot_event == 1, f"published message '{message[count]}' not received on DUT"
+        assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
         logger.info("aws messages validated successfully")
 
-        logger.info("Turning off the AP")
-        switch.interfaces.pdu_switch.turn_off()
-        logger.info("Successfully powered off AP")
-        time.sleep(10)
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
 
-        # logger.info("Disabling Wireless in AP")
-        # wifi_access_point.interfaces.wifi.stop_ap()
-        # time.sleep(5)
-        # logger.info("Disabled Wireless in AP")
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
 
-        logger.info("Checking for rejoin fail event from dut, this may take some time....")
-        sw = Stopwatch()
-        rejoin_msg = 0
-        while sw.elapsed_sec <= 200:
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            if len(events):
-                for event in events:
-                    if event.event_type == RS9116AsyncEventType.RejoinError:
-                        rejoin_msg = 1
-            if rejoin_msg:
-                break
-        logger.info(f"Elapsed time to get rejoin_error is: '{int(sw.elapsed_sec)}' sec")
-        assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off"
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
 
-        wifi_dut.interfaces.wifi.reset_soft()
-        wifi_dut.interfaces.wifi.init()
 
-        logger.info("Again turning on the AP")
-        switch.interfaces.pdu_switch.turn_on()
-        time.sleep(60)
-        logger.info("Successfully powered on AP")
+# https://jira.silabs.com/browse/WIFI_BT_UTFHELP-773
+# Need test agent change after adding cleanSession flag
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                      logger):
+    try:
+        capture_filename = "test_aws_connection_when_client_id_is_null_C19558"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
 
-        # logger.info("Enabling Wireless in AP")
-        # wifi_access_point.interfaces.wifi.start_ap()
-        # time.sleep(10)
+        logger.info("Initiating aws connect with client_id 'null' and clean_session flag '1'")
+        with pytest.raises(Exception) as exc_info:
+            wifi_dut.interfaces.wifi.aws_iot_connect(client_id='', clean_session=1, load_cert=False)
+        err = 'Incorrect number of arguments'
+        assert err in str(exc_info.value), "Expected error_code '-2' not received"
+        logger.error("Received error_code '-2'")
+        logger.info(f"aws_iot_connect failed with error_code '-2', which is expected as per the test step")
 
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=10, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-        logger.info("Joining to the Wifi Access Point")
-        for count in range(1, 3):
-            join_fail = 1
-            ip_fail = 1
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+        time.sleep(5)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
+
+# ########### PR2 ###########################
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        message1 = text_generator(size=100)
+        message = {"message1": message1}
+        logger.info(f"Messages are:{message}")
+
+        capture_filename = "test_aws_tcp_shutdown_C19546"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
             try:
-                wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-                join_fail = 0
-                logger.info("DUT gets ipaddress through DHCP ")
-                wifi_dut.interfaces.wifi.start_ip(timeout=60)
-                ip_fail = 0
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
                 break
             except:
-                logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
-            assert join_fail == 0, "Joining to the AP is failed"
-            assert ip_fail == 0, "ip setting in DUT has failed"
-        logger.info(f"Iteration '{i + 1}' completed")
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
 
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+        for message_key, message_value in message.items():
+            logger.info(f"\naws_iot_client publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                        f"\nMessage with length:'{len(message_value)} bytes'\nMessage is:'{message_value}'")
+            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, message_value, qos=RS9116AwsQos.QOS0)
 
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            logger.info("\nValidating received aws messages")
+            iot_event = 0
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                    iot_event = 1
+                    aws_event_data = event.event_data
+                    aws_event_qos = event.event_data.qos
+                    aws_event_topic = event.event_data.topic
+                    aws_event_payload = event.event_data.payload
+                    # logger.info(f"Event data: {aws_event_data}")
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                    assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                    assert message_value == aws_event_payload, "sent and received messages are not matching"
+            assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
+            logger.info("aws messages validated successfully")
 
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+        logger.info("Initiating AWS shutdown")
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger.info("AWS shutdown success")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, switch, logger):
+# def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=100))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19559"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
+            try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+        send_count = 0
+        ap_power_off = 0
+        while 1:
+            if ap_power_off:
+                logger.info("Turning off the AP")
+                switch.interfaces.pdu_switch.turn_off(delay=20)
+                logger.info("Successfully powered off AP")
+                logger.info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
+                ap_power_off = 0
+                logger.info("Successfully powered on AP")
+
+            # if ap_power_off:
+            #     ap_power_off = 0
+            #     thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger))
+            #     thread.start()
+            #     thread.join()
+            #     time.sleep(60)
+            #     logger.info("Pinging to DUT to check rejoin process is completed or not")
+            #     status = ping_to_dut(dut_ip, ping_count=30)
+            #     assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+
+            msg = messages[send_count]
+            logger.info(f"\naws_iot_client publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                        f"\nMessage with length:'{len(msg)} bytes'\nMessage is:'{msg}'")
+            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS1)
+            time.sleep(5)
+            send_count = send_count + 1
+            if send_count == int(len(messages) / 4):
+                ap_power_off = 1
+            if send_count == int(len(messages)):
+                break
+
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        count = 0
+        logger.info("\nValidating received aws messages")
+        iot_event = 0
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                iot_event = 1
+                aws_event_data = event.event_data
+                aws_event_qos = event.event_data.qos
+                aws_event_topic = event.event_data.topic
+                aws_event_payload = event.event_data.payload
+                # logger.info(f"Event data: {aws_event_data}")
+                logger.info(
+                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS1"
+                assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                count += 1
+        assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+        logger.info("aws messages validated successfully")
+
+        logger.info("Initiating aws_iot disconnect from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(firmware_loader, wifi_sniffer,
+                                                                              wifi_access_point,
+                                                                              wifi_dut, aws_iot_client, logger):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=10))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19566"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
+            try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"aws_iot_client is subscribing to topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1)
+                time.sleep(4)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+        logger.info("Subscribing to topic is successful")
+
+        t1 = aws_publish_message_Thread(wifi_dut, topic_1, messages, qos=RS9116AwsQos.QOS1)
+        t2 = aws_receive_message_Thread(aws_iot_client, topic_1, messages, qos=RS9116AwsQos.QOS1)
+
+        logger.info("aws_publish_message_thread + aws_receive_message_thread execution starts....")
+        t1.start()
+        t2.start()
+
+        t1.wait_for_exit(True)
+        t2.wait_for_exit(True)
+
+        logger.info("Unsubscribing from aws topic from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
+        time.sleep(2)
+
+        logger.info("Initiating aws_iot_disconnect from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+        time.sleep(2)
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.parametrize("test_run_time", [1800])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(firmware_loader, wifi_dut, wifi_access_point,
+                                                                        wifi_sniffer, logger, test_run_time):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(5):
+            messages.append(text_generator(size=20))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19567"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+
+        aws_fail = 1
+        for count_aws in range(10):
+            try:
+                logger.info("Initiating aws connect from DUT")
+                wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                aws_fail = 0
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+
+        assert aws_fail == 0, "Connecting to AWS server is failed"
+        logger.info("Connecting to AWS server is successful")
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(10)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+        sw = Stopwatch()
+        count = 0
+        while sw.elapsed_sec < test_run_time:
+            try:
+                for msg in messages:
+                    count += 1
+                    logger.info(f"\nDUT message{count} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                                f"\nMessage{count} with length:'{len(msg)} bytes'\nMessage{count} is:'{msg}'")
+                    publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS0, timeout=10)
+                    time.sleep(2)
+
+                logger.info("\nValidating received aws messages")
+                time.sleep(10)
+                events = wifi_dut.interfaces.wifi.get_async_events()
+                count = 0
+                iot_event = 0
+                for event in events:
+                    if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                        iot_event = 1
+                        aws_event_qos = event.event_data.qos
+                        aws_event_topic = event.event_data.topic
+                        aws_event_payload = event.event_data.payload
+                        logger.info(
+                            f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                        assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                        assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                        assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                        count += 1
+                assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+                logger.info("aws messages validated successfully")
+            except Exception as err:
+                logger.info(str(err))
+
+            logger.info("DUT is going to sleep for 10 minutes")
+            time.sleep(600)
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+# ################################# PR3 #####################################
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.parametrize("iterations", [1])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuously_c19561(firmware_loader, wifi_sniffer,
+                                                                                         wifi_dut, aws_iot_client,
+                                                                                         wifi_access_point, logger,
+                                                                                         iterations):
+    topic_1 = "mytesttopic/1"
+    try:
+        # 100 messages of 300 bytes of random data
+        messages = []
+        for i in range(100):
+            messages.append(text_generator(size=300))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19561"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
+            try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+        for iter_count in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+            i = 0
+            iot_event = 0
+            count = 0
+            for msg in messages:
+                for retry_count in range(20):
+                    event_received = False
+                    try:
+                        i += 1
+                        logger.info(
+                            f"\naws_iot_client publishing message{i} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                            f"\nMessage{i} with length:'{len(msg)} bytes'\nMessage{i} is:'{msg}'")
+                        aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS1)
+                        time.sleep(10)
+                        events = wifi_dut.interfaces.wifi.get_async_events()
+                        logger.info("\nValidating received aws message")
+                        for event in events:
+                            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                                iot_event += 1
+                                aws_event_qos = event.event_data.qos
+                                aws_event_topic = event.event_data.topic
+                                aws_event_payload = event.event_data.payload
+                                logger.info(
+                                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                                assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                                assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                                assert messages[
+                                           count] == aws_event_payload, "sent and received messages are not matching"
+                                count += 1
+                                event_received = True
+                            if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+                                logger.info("tcp socket is closed...waiting for rejoin from DUT")
+                                time.sleep(200)
+                                ping_to_dut(dut_ip)
+                    except:
+                        logger.info(f"Published message not received in DUT--->retry_count:{retry_count}")
+                    if event_received:
+                        break
+            assert iot_event == 100, f"published message '{messages[count]}' not received on DUT"
+            logger.info("aws messages validated successfully")
+            logger.info(f"Iteration '{iter_count + 1}' completed")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.parametrize("total_bytes", [20])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(firmware_loader, wifi_sniffer, wifi_access_point,
+                                                                       wifi_dut,
+                                                                       aws_iot_client, logger, total_bytes):
+    try:
+        topic_1 = "mytesttopic/1"
+        topic_2 = "mytesttopic/2"
+        messages = []
+        for i in range(100):
+            messages.append(text_generator(size=total_bytes))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19563"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
+            try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
+
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, f"Subscribing to topic1 '{topic_1}' failed"
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_2}' and QOS:'{RS9116AwsQos.QOS1}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_2, qos=RS9116AwsQos.QOS1, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_2}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, f"Subscribing to topic2 '{topic_2}' is failed"
+
+        qos0_thread = aws_publish_from_raspi_receive_from_wifidut_thread(wifi_dut, aws_iot_client, topic_1, messages,
+                                                                         RS9116AwsQos.QOS0)
+        qos1_thread = aws_publish_from_raspi_receive_from_wifidut_thread(wifi_dut, aws_iot_client, topic_2, messages,
+                                                                         RS9116AwsQos.QOS1)
+
+        qos0_thread.start()
+        time.sleep(10)
+        qos1_thread.start()
+
+        qos0_thread.wait_for_exit(True)
+        qos1_thread.wait_for_exit(True)
+
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        logger.info("\nValidating received aws messages")
+        iot_event = 0
+        qos0_count = 0
+        qos1_count = 0
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                aws_event_qos = event.event_data.qos
+                aws_event_topic = event.event_data.topic
+                aws_event_payload = event.event_data.payload
+                if aws_event_qos == RS9116AwsQos.QOS0:
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, f"Received wrong topic. expected is topic1:{topic_1}"
+                    assert aws_event_qos == RS9116AwsQos.QOS0, "Received wrong QOS. expected is QOS0"
+                    assert messages[qos0_count] == aws_event_payload, "sent and received messages are not matching"
+                    qos0_count += 1
+                else:
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_2 == aws_event_topic, f"Received wrong topic. expected is topic2:{topic_2}"
+                    assert aws_event_qos == RS9116AwsQos.QOS1, "Received wrong QOS. expected is QOS0"
+                    assert messages[qos1_count] == aws_event_payload, "sent and received messages are not matching"
+                    qos1_count += 1
+                iot_event += 1
+        assert iot_event == 200, f"Some of the published message not received on DUT"
+        logger.info("aws messages validated successfully")
+
+        try:
+            logger.info("Unsubscribing from aws topic1")
+            wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=30)
+
+            logger.info("Unsubscribing from aws topic2")
+            wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_2, timeout=30)
+        except Exception as err:
+            logger.info(str(err))
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.parametrize("iterations", [2])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, switch, logger, iterations):
+#def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
+    topic_1 = "sdk/test/Python"
+    try:
+        messages = []
+        for i in range(5):
+            messages.append(text_generator(size=10))
+        logger.info(f"Messages are:{messages}")
+
+        capture_filename = "test_C19549"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        time.sleep(5)
+
+        for iteration in range(iterations):
+            logger.info(f"Initiating test for iteration:'{iteration + 1}'")
+            wifi_dut.interfaces.wifi.rejoin(rejoin_max=10, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+            logger.info(f"Initiating wlan join from DUT")
+            for join_count in range(3):
+                try:
+                    wifi_dut.interfaces.wifi.associated = False
+                    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+                    time.sleep(3)
+                    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+                    time.sleep(5)
+                    break
+                except Exception as e:
+                    logger.info(f"Error found:{str(e)} ----> Count{join_count} ")
+                    if "0x2" in str(e):
+                        logger.info(
+                            f"Error found:{str(e)} ----> Device already in connected step need to disconnect before connect")
+                        logger.info("Initiating disconnect for cleanup")
+                        wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+                        wifi_dut.interfaces.wifi.associated = False
+                    if join_count == 2:
+                        raise e
+                    time.sleep(5)
+
+            dut_ip = None
+            for ip_count in range(4):
+                try:
+                    ip_config = wifi_dut.interfaces.wifi.start_ip()
+                    assert isinstance(ip_config,
+                                      wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
+                    dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                    break
+                except:
+                    logger.info(f"Get IP address through dhcp process is failed. retry count -> {ip_count + 1}")
+                    time.sleep(10)
+            assert dut_ip, "ip setting in DUT has failed"
+            logger.info(f'DUT ip {dut_ip}')
+
+            logger.info("Initiating wlan power save on DUT")
+            enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_wifi_ps, "Failed to enable wifi power save"
+            logger.info("Initiating bt power save on DUT")
+            enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
+            assert enable_bt_ps, "Failed to enable bt power save"
+            logger.info("*****Enabled ENH Max PSP in DUT******")
+
+            logger.info(f"Initiating aws connect from DUT")
+            aws_fail = 1
+            for aws_count in range(10):
+                try:
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail = 0
+                    break
+                except:
+                    logger.info(f"Connecting to AWS server is failed. retry count->{aws_count + 1}")
+                    time.sleep(1)
+            assert aws_fail == 0, "Connecting to AWS server is failed"
+            logger.info("Connecting to AWS server is successful")
+            time.sleep(2)
+
+            subscribe_fail = 1
+            for sub_count in range(5):
+                try:
+                    logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                    wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1, timeout=10)
+                    subscribe_fail = 0
+                    break
+                except:
+                    logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{sub_count + 1}")
+                    time.sleep(2)
+            assert subscribe_fail == 0, "Subscribing to topic is failed"
+
+            send_count = 0
+            while 1:
+                msg = messages[send_count]
+                logger.info(f"\nDUT message{send_count + 1} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                            f"\nMessage{send_count + 1} with length:'{len(msg)} bytes'\nMessage{send_count + 1} is:'{msg}'")
+                publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS1, timeout=10)
+                send_count += 1
+                time.sleep(3)
+                if send_count == int(len(messages)):
+                    break
+
+            time.sleep(10)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            count = 0
+            logger.info("\nValidating received aws messages")
+            iot_event = 0
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                    iot_event = 1
+                    aws_event_qos = event.event_data.qos
+                    aws_event_topic = event.event_data.topic
+                    aws_event_payload = event.event_data.payload
+                    logger.info(
+                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
+                    assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS1"
+                    assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                    count += 1
+            assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+            logger.info("aws messages validated successfully")
+
+            logger.info("\n\nTurning off the AP")
+            switch.interfaces.pdu_switch.turn_off(delay=20)
+            logger.info("Successfully powered off AP")
+            time.sleep(10)
+
+            # logger.info("\n\nDisabling Wireless in AP")
+            # wifi_access_point.interfaces.wifi.stop_ap()
+            # time.sleep(5)
+            # logger.info("Disabled Wireless in AP")
+
+            logger.info("Checking for rejoin fail event from dut, this may take some time....")
+            sw = Stopwatch()
+            rejoin_msg = 0
+            while sw.elapsed_sec <= 300:
+                events = wifi_dut.interfaces.wifi.get_async_events()
+                if len(events):
+                    for event in events:
+                        if event.event_type == RS9116AsyncEventType.RejoinError:
+                            rejoin_msg = 1
+                if rejoin_msg:
+                    break
+            assert rejoin_msg == 1, f"Rejoin Error not found from DUT even after AP is switched off for 300 seconds for iteration:'{iteration + 1}'"
+            logger.info("Rejoin Error Received from DUT")
+
+            wifi_dut.interfaces.wifi.reset_soft()
+            wifi_dut.interfaces.wifi.init()
+
+            logger.info("\n\nAgain turning on the AP")
+            switch.interfaces.pdu_switch.turn_on(delay=60)
+            logger.info("Successfully powered on AP")
+
+            # logger.info("\n\nEnabling Wireless in AP")
+            # wifi_access_point.interfaces.wifi.start_ap()
+            # time.sleep(30)
+
+            try:
+                logger.info("Initiating Wi-Fi disconnection on DUT")
+                wifi_dut.interfaces.wifi.leave()
+            except:
+                logger.info("Unable to disconnect DUT from AP")
+                time.sleep(5)
+            logger.info(f"Iteration '{iteration + 1}' completed")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
 
 
 # @pytest.mark.skip()
@@ -1999,146 +2139,145 @@ def test_aws_check_rejoin_failure_functionality_of_dut_C19549(wifi_sniffer, wifi
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.parametrize("publish_len, total_bytes", [(490, 1024000)])  # 493 is max limit
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_C19562(wifi_sniffer, wifi_access_point,
-                                                                               wifi_dut,
-                                                                               aws_iot_client, logger, publish_len,
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_c19562(firmware_loader, wifi_dut, wifi_sniffer,
+                                                                               aws_iot_client,
+                                                                               wifi_access_point, logger, publish_len,
                                                                                total_bytes, iterations):
-    current_time = time.time()
     topic_1 = "mytesttopic/1"
+    try:
+        current_time = time.time()
+        capture_filename = "test_C19562"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
 
-    capture_filename = "test_C19562"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
+            try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
 
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"DUT is Subscribing on topic '{topic_1}'")
-            wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=5)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
 
-    data = text_generator(size=total_bytes)
-    file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-    tx_file = "./reports/" + capture_filename + "_tx_file_" + file_time_stamp + ".txt"
-    with open(tx_file, "w") as temp:
-        temp.write(data)
-
-    since_time = 0
-    msgs = []
-    recv_count = 0
-    for iter_count in range(iterations):
-        logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
-        with open(tx_file, "r") as temp:
-            while 1:
-                recv_fail = 0
-                data = temp.read(publish_len)
-                if data == '':
-                    break
-                else:
-                    for retry_count in range(10):
-                        try:
-                            logger.info(f"aws_iot_client is publishing message:'{data}' on topic:{topic_1}")
-                            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, data, qos=0)
-                            time.sleep(3)
-                            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-                            logger.info("Fetching received aws messages")
-                            recv_count = 0
-                            for event in events:
-                                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                                    aws_event_qos = event.event_data.qos
-                                    aws_event_topic = event.event_data.topic
-                                    aws_event_payload = event.event_data.payload
-                                    since_time = event.timestamp + 1
-                                    assert topic_1 == aws_event_topic, "received topic is not matching with subscribed topic"
-                                    assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                                    assert data == aws_event_payload, "sent and received messages are not matching"
-                                    recv_fail = 0
-                                    recv_count = 1
-                                if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
-                                    logger.info("tcp socket is closed...waiting for rejoin from DUT")
-                                    since_time = event.timestamp + 1
-                                    time.sleep(200)
-                            assert recv_count == 1, "Published message not received on DUT"
-                            msgs.append(aws_event_payload)
-                        except:
-                            recv_fail = 1
-                            time.sleep(10)
-                            logger.info(f"Published message not received on DUT-->retry_count:{retry_count + 1}")
-                        if recv_count:
-                            break
-                    if recv_fail:
-                        break
-
-        logger.info("Validating 1mb of data by comparing tx_file an rx_file")
+        data = text_generator(size=total_bytes)
         file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        rx_file = "./reports/" + capture_filename + f"_rx_file_{iter_count}" + file_time_stamp + ".txt"
-        if len(msgs):
-            with open(rx_file, "w") as recv:
-                for data in msgs:
-                    recv.write(data)
-        if not os.path.exists(rx_file):
-            logger.info("No aws data received at receiver")
-        result = filecmp.cmp(tx_file, rx_file, shallow=False)
-        assert result, "Data loss observed, Contents of tx file and rx file not matched"
-        logger.info("Contents of tx_file and rx_file are same")
-        logger.info(f"Iteration '{iter_count + 1}' completed")
+        tx_file = "./reports/" + capture_filename + "_tx_file_" + file_time_stamp + ".txt"
+        with open(tx_file, "w") as temp:
+            temp.write(data)
 
-    logger.info("Unsubscribing from aws topic")
-    wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=10)
+        msgs = []
+        recv_count = 0
+        for iter_count in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+            with open(tx_file, "r") as temp:
+                while 1:
+                    recv_fail = 0
+                    data = temp.read(publish_len)
+                    if data == '':
+                        break
+                    else:
+                        for retry_count in range(30):
+                            try:
+                                logger.info(
+                                    f"\naws_iot_client publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                                    f"\nData with length:'{len(data)} bytes'\nData is:'{data}'")
+                                aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, data, qos=RS9116AwsQos.QOS0)
+                                time.sleep(3)
+                                events = wifi_dut.interfaces.wifi.get_async_events()
+                                logger.info("Fetching received aws messages")
+                                recv_count = 0
+                                for event in events:
+                                    if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                                        aws_event_qos = event.event_data.qos
+                                        aws_event_topic = event.event_data.topic
+                                        aws_event_payload = event.event_data.payload
+                                        assert topic_1 == aws_event_topic, "received topic is not matching with subscribed topic"
+                                        assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                                        assert data == aws_event_payload, "sent and received messages are not matching"
+                                        recv_fail = 0
+                                        recv_count = 1
+                                    if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+                                        logger.info("Waiting for reconnection from DUT")
+                                        time.sleep(200)
+                                assert recv_count == 1, "Published message not received on DUT"
+                                msgs.append(aws_event_payload)
+                            except:
+                                recv_fail = 1
+                                time.sleep(20)
+                                logger.info(f"Published message not received on DUT-->retry_count:{retry_count + 1}")
+                                if retry_count >= 15:
+                                    time.sleep(200)
+                            if recv_count:
+                                break
+                        if recv_fail:
+                            logger.info("Published message not received on DUT and test case will fail")
+                            break
 
-    logger.info("Initiating aws_iot disconnect")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(5)
+            logger.info("Validating 1mb of data by comparing tx_file and rx_file")
+            file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+            rx_file = "./reports/" + capture_filename + f"_rx_file_{iter_count}" + file_time_stamp + ".txt"
+            if len(msgs):
+                with open(rx_file, "w") as recv:
+                    for data in msgs:
+                        recv.write(data)
+            if not os.path.exists(rx_file):
+                logger.info("No aws data received at receiver")
+            result = filecmp.cmp(tx_file, rx_file, shallow=False)
+            assert result, "Data loss observed, Contents of tx file and rx file not matched"
+            logger.info("Contents of tx_file and rx_file are same")
+            logger.info(f"Iteration '{iter_count + 1}' completed")
 
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
 
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
 
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
-
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)
 
 
 # @pytest.mark.skip()
@@ -2146,128 +2285,137 @@ def test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_C19562(w
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.parametrize("publish_len, total_bytes", [(90, 102400)])  # 100 is max limit 1024000-filesize
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
-def test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_C19564(wifi_sniffer, wifi_access_point, wifi_dut,
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_c19564(firmware_loader, wifi_sniffer,
+                                                                             wifi_access_point, wifi_dut,
                                                                              aws_iot_client, logger, publish_len,
                                                                              total_bytes, iterations):
-    current_time = time.time()
     topic_1 = "mytesttopic/1"
+    try:
+        current_time = time.time()
+        capture_filename = "test_C19564"
+        dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
 
-    capture_filename = "test_C19564"
-    join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger.info(f'AP BSSID = {ap_bssid}')
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"Device mac address: {dut_mac_address}")
+        aws_fail_dut = 1
+        aws_fail_raspi = 1
+        for count_aws in range(10):
+            try:
+                if aws_fail_dut:
+                    logger.info("Initiating aws connect from DUT")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    aws_fail_dut = 0
+                    logger.info("Connecting to AWS server from DUT is successful")
+                    time.sleep(2)
+                if aws_fail_raspi:
+                    logger.info("Initiating aws connect from aws_iot_client")
+                    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+                    aws_fail_raspi = 0
+                    logger.info("Connecting to AWS server from aws_iot_client is successful")
+                break
+            except:
+                logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
+                time.sleep(1)
+        assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
+        assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
+        time.sleep(2)
 
-    aws_fail_dut = 0
-    aws_fail_raspi = 0
-    for count_aws in range(0, 3):
-        try:
-            logger.info("Initiating aws connect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
-            aws_fail_dut = 0
-            logger.info("Connecting to AWS server from DUT is successful")
-            time.sleep(2)
-            logger.info("Initiating aws connect from aws_iot_client")
-            aws_iot_client.interfaces.aws_iot.aws_iot_connect()
-            aws_fail_raspi = 0
-            logger.info("Connecting to AWS server from aws_iot_client is successful")
-            break
-        except:
-            logger.info(f"Connecting to AWS server is failed. retry count->{count_aws + 1}")
-            time.sleep(1)
-    assert aws_fail_dut == 0, "Connecting to AWS server from DUT is failed"
-    assert aws_fail_raspi == 0, "Connecting to AWS server from aws_iot_client is failed"
-    time.sleep(2)
+        subscribe_fail = 1
+        for count in range(5):
+            try:
+                logger.info(f"aws_iot_client is subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS1}'")
+                aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS1)
+                time.sleep(4)
+                subscribe_fail = 0
+                break
+            except:
+                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                time.sleep(2)
+        assert subscribe_fail == 0, "Subscribing to topic is failed"
+        logger.info("Subscribing to topic is successful")
 
-    subscribe_fail = 1
-    for count in range(0, 3):
-        try:
-            logger.info(f"aws_iot_client is subscribing on topic '{topic_1}'")
-            aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0)
-            time.sleep(4)
-            subscribe_fail = 0
-            break
-        except:
-            logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-            time.sleep(2)
-    assert subscribe_fail == 0, "Subscribing to topic is failed"
-    logger.info("Subscribing to topic is successful")
-
-    data = text_generator(size=total_bytes)
-    file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-    tx_file = "./reports/" + capture_filename + "_tx_file_" + file_time_stamp + ".txt"
-    with open(tx_file, "w") as temp:
-        temp.write(data)
-
-    for iter_count in range(iterations):
-        logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
-        with open(tx_file, "r") as temp:
-            while 1:
-                data = temp.read(publish_len)
-                if data == '':
-                    break
-                else:
-                    for count in range(3):
-                        try:
-                            logger.info(f"DUT is publishing message:'{data}' on topic:{topic_1}")
-                            wifi_dut.interfaces.wifi.aws_iot_publish(topic_1, data, qos=RS9116AwsQos.QOS0, timeout=5)
-                            time.sleep(5)
-                            break
-                        except:
-                            logger.info(f"Publishing message is failed. retry count->{count + 1}")
-
-        time.sleep(10)
-        recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
-        logger.info("Fetching received aws messages")
-        msgs = []
-        for msg in recv_messages:
-            msgs.append(msg.payload.decode())
-            assert msg.topic == topic_1, "Received wrong topic in aws_iot_client"
-            assert msg.qos == RS9116AwsQos.QOS0, "Received wrong qos in aws_iot_client"
-
-        logger.info("Validating 1mb of data by comparing tx_file an rx_file")
+        data = text_generator(size=total_bytes)
         file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        rx_file = "./reports/" + capture_filename + f"_rx_file_{iter_count}" + file_time_stamp + ".txt"
-        if len(msgs):
-            with open(rx_file, "w") as recv:
-                for data in msgs:
-                    recv.write(data)
-        if not os.path.exists(rx_file):
-            logger.info("No aws data received at receiver")
-        result = filecmp.cmp(tx_file, rx_file, shallow=False)
-        assert result, "Data loss observed, Contents of tx file and rx file not matched"
-        logger.info("Contents of tx_file and rx_file are same")
-        logger.info(f"Iteration '{iter_count + 1}' completed")
+        tx_file = "./reports/" + capture_filename + "_tx_file_" + file_time_stamp + ".txt"
+        with open(tx_file, "w") as temp:
+            temp.write(data)
 
-    logger.info("Unsubscribing from aws topic from aws_iot_client")
-    aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
-    time.sleep(2)
+        for iter_count in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+            with open(tx_file, "r") as temp:
+                while 1:
+                    data = temp.read(publish_len)
+                    if data == '':
+                        break
+                    else:
+                        for count in range(30):
+                            try:
+                                logger.info(
+                                    f"\nDUT publishing data on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
+                                    f"\nData with length:'{len(data)} bytes'\nData is:'{data}'")
+                                publish_from_dut(wifi_dut, topic_1, data, qos=RS9116AwsQos.QOS1, timeout=10)
+                                time.sleep(5)
+                                break
+                            except:
+                                logger.info(f"Publishing message is failed. retry count->{count + 1}")
+                                time.sleep(20)
+                                events = wifi_dut.interfaces.wifi.get_async_events()
+                                for event in events:
+                                    if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+                                        logger.info("Waiting for reconnection from DUT")
+                                        time.sleep(200)
 
-    logger.info("Initiating aws_iot disconnect from DUT")
-    wifi_dut.interfaces.wifi.aws_iot_disconnect()
-    time.sleep(1)
-    logger.info("Initiating aws_iot disconnect from aws_iot_client")
-    aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+            time.sleep(15)
+            recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
+            logger.info("Fetching received aws messages")
+            msgs = []
+            for msg in recv_messages:
+                msgs.append(msg.payload.decode())
+                assert msg.topic == topic_1, "Received wrong topic in aws_iot_client"
+                assert msg.qos == RS9116AwsQos.QOS1, "Received wrong qos in aws_iot_client"
 
-    logger.info("Initiating Wi-Fi disconnection on DUT")
-    wifi_dut.interfaces.wifi.leave()
-    logger.info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    validation = True
-    channel = wifi_access_point.interfaces.wifi.channel
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
-                     f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-    packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+            logger.info("Validating 1mb of data by comparing tx_file an rx_file")
+            file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+            rx_file = "./reports/" + capture_filename + f"_rx_file_{iter_count}" + file_time_stamp + ".txt"
+            if len(msgs):
+                with open(rx_file, "w") as recv:
+                    for data in msgs:
+                        recv.write(data)
+            if not os.path.exists(rx_file):
+                logger.info("No aws data received at receiver")
+            result = filecmp.cmp(tx_file, rx_file, shallow=False)
+            assert result, "Data loss observed, Contents of tx file and rx file not matched"
+            logger.info("Contents of tx_file and rx_file are same")
+            logger.info(f"Iteration '{iter_count + 1}' completed")
 
-    logger.info("Validating assoc/eapol Packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find association/eapol Packets'
+        logger.info("Unsubscribing from aws topic from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
+        time.sleep(2)
 
-    logger.info("Validating PS Polls with Power Management Bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+        logger.info("Initiating aws_iot disconnect from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
 
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        channel = wifi_access_point.interfaces.wifi.channel
+        # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+        packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
+                         f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
+                         f'and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
+        packet_filter2 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+
+        logger.info("Validating assoc/eapol Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find association/eapol Packets'
+
+        logger.info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, topic_1)

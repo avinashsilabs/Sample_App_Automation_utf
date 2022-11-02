@@ -195,21 +195,20 @@ class ble_data_transfer_thread(ThreadBase):
         logger().info("Configuring remote device to receive notifications from DUT")
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-        bus = self.ble_client.interfaces.bluetooth.bus
-        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+
+        services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
         assert len(services) > 0, "Unable to fetch services"
         assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-        char, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus,
-                                                                                                    services=services,
+        char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
                                                                                                     service_uid=service_uid,
                                                                                                     char_uid=char_uid)
-        assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+        assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
         assert len(char_props) > 0, "Unable to get char_props"
 
         logger().info("Subscribing to notifications on ble_client")
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char,
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                      char_uid=char_uid)
 
         logger().info("Sending notifications from DUT")
@@ -319,10 +318,6 @@ def load_certificates(wifi_dut, ssl_server, *lst: list):
                                                          str(get_tls_certificate_dir().joinpath(i[3][0])),
                                                          cert_index=index,
                                                          )
-            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-            wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
             ssl_server.interfaces.ssl.start_server(port=port, server_cert=i[3][1], server_key=i[3][2])
@@ -2062,20 +2057,20 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     logger.info("Configuring remote device to receive notifications from DUT")
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-    bus = ble_client.interfaces.bluetooth.bus
-    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+
+    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(services) > 0, "Unable to fetch services"
     assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-    char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus, services=services,
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
                                                                                            service_uid=service_uid,
                                                                                            char_uid=char_uid)
-    assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+    assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
     assert len(char_props) > 0, "Unable to get char_props"
 
     logger.info("Subscribing to notifications on ble_client")
-    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
 
     logger.info("Sending notifications from DUT")
 
@@ -2083,22 +2078,22 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     wifi_dut.interfaces.wifi.ble_notify_value()
 
     # read value - Notifications not enabled
-    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     assert result == data1
-
-    # Get the state of the dut
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
-    logger.info(" Connected to the BLE device ")
-
     device_ip = join_ap(wifi_dut, wifi_access_point)
 
     load_cert1 = ["open", 0, port1, cert1]
     result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
     logger.info(f"Loading certificate{result_load_certificate}")
 
+    logger.info("Get ble device state")
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
+    logger.info(" Connected to the BLE device ")
+
     wifi_dut.interfaces.wifi.close_socket(0)
+    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.skip()
@@ -2320,7 +2315,7 @@ def test_BLE_connectivity_data_tx_after_loadcert0_loadcert1_C19654(wifi_sniffer,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
 @pytest.mark.parametrize("cert1",
@@ -2390,20 +2385,20 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     logger.info("Configuring remote device to receive notifications from DUT")
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-    bus = ble_client.interfaces.bluetooth.bus
-    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics(bus)
+
+    services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(services) > 0, "Unable to fetch services"
     assert len(chars) > 0, "Unable to get characteristics list from ble_client"
 
-    char, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(bus, services=services,
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
                                                                                            service_uid=service_uid,
                                                                                            char_uid=char_uid)
-    assert char is not None, "Unable to resolve custom service characteristic from ble_client"
+    assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
     assert len(char_props) > 0, "Unable to get char_props"
 
     logger.info("Subscribing to notifications on ble_client")
-    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(characteristic=char)
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(characteristic=char, char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
 
     logger.info("Sending notifications from DUT")
 
@@ -2411,14 +2406,10 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     wifi_dut.interfaces.wifi.ble_notify_value()
 
     # read value - Notifications not enabled
-    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(characteristic=char)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     assert result == data1
 
-    # Get the state of the dut
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected
-    logger.info(" Connected to the BLE device ")
+
 
     device_ip = join_ap(wifi_dut, wifi_access_point)
 
@@ -2426,7 +2417,14 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
     result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
     logger.info(f"Loading certificate{result_load_certificate}")
 
+    logger.info("Get ble device state")
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
+    logger.info(" Connected to the BLE device ")
+
     wifi_dut.interfaces.wifi.close_socket(0)
+    wifi_dut.interfaces.wifi.leave()
 
 @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2505,7 +2503,7 @@ def test_BLE_connectivity_data_tx_after_loadcert0_C19655(wifi_sniffer, wifi_dut,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
     }
 )

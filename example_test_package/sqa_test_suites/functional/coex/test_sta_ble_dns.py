@@ -1,5 +1,6 @@
 import pytest
 import datetime
+import re
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, get_host_ip
@@ -76,6 +77,11 @@ def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
         logger().info("BLE Connection success")
 
     if ble_mode == "ble_slave":
+        conn_params = {
+                       "min_conn_interval": 36,
+                       "max_conn_interval": 36,
+                       "conn_latency": 0,
+                       "supervision_timeout": 400}
         logger().info(f"Set up DUT for BLE advertising")
         ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert ble_dut_address, f"Unable to find ble dut address"
@@ -93,7 +99,11 @@ def ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None):
         assert (found_devices[
                     wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
         logger().info(f"See that we found our device:'{ble_dut_address}'")
-        ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address,
+                                                 min_conn_interval=conn_params["min_conn_interval"],
+                                                 max_conn_interval=conn_params["max_conn_interval"],
+                                                 conn_latency=conn_params["conn_latency"],
+                                                 supervision_timeout=conn_params["supervision_timeout"])
         logger().info("BLE Connection success")
         time.sleep(2)
     return ble_client_address, ble_dut_address
@@ -156,6 +166,8 @@ class WifiThread(ThreadBase):
 
     def join_get_ip(self):
         count_i = 4
+        self.bssid = self.wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {self.bssid}")
         for count in range(1, count_i):
             try:
                 scan_fail = 1
@@ -172,8 +184,6 @@ class WifiThread(ThreadBase):
             assert scan_fail == 0, "Scanning to the AP is failed"
         self.bssid = self.wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {self.bssid}")
-        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
         for count in range(1, count_i):
             try:
                 join_fail = 1
@@ -188,24 +198,21 @@ class WifiThread(ThreadBase):
             logger().info(f"Joining to the AP has failed")
             assert join_fail == 0, "Joining to the AP is failed"
 
-        ip_fail = 1
         for count in range(1, count_i):
             try:
-                result = self.wifi_dut.interfaces.wifi.start_ip()
-                assert isinstance(result,
-                                  self.wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {result}"
-
-                ip_fail = 0
+                ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
+                self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                logger().info(f"Found device ip: {self.device_ip}")
                 break
             except:
-                logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+                logger().info(f"Get IP address through dhcp process is failed...retry count -> {count}")
                 time.sleep(1)
-        assert ip_fail == 0, "ip setting in DUT has failed"
+        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {self.dut_mac_address}")
+        return self.bssid, self.dut_mac_address, self.device_ip
 
     def powersave_ping(self):
         ping_count = self.utf_constants.get("ping_count")
-        self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip:{self.device_ip}")
         logger().info(
             f"The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put")
         logger().info(f"DUT to power save in Wifi+bluetooth mode")
@@ -280,10 +287,13 @@ class DnsThread(ThreadBase):
             logger().info("=======DNS SERVER WITH DHCP========")
             static_ip = "10.207.110.11"
             result = self.wifi_dut.interfaces.wifi.dns_get(4, "www.google.com", static_ip, "NULL")
-            logger().info(f"ip :{result.decode()}")
-            logger().info(f"Initiating ping to DUT ip {static_ip} after power save")
+            dns_response = result.decode()
+            ip_sen = dns_response.split("\n")
+            ip_str = ip_sen[1]
+            dns_ip = ip_str.split(":")
+            logger().info(f"dns_response_ip : {dns_ip[1]}")
             logger().info(f"ping_count:{ping_count}")
-            status = ping(static_ip, ping_count)
+            status = ping(dns_ip[1], ping_count)
             time.sleep(10)
             assert status == 1, "DUT not responding for ping request......"
 
@@ -312,14 +322,15 @@ class ConnectionStatus(ThreadBase):
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "bt_features": RS9116BTFeatureBitMap.Default
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after_BLE_connection_as_slave_C20233(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, ble_client):
     logger().info("*******************C20233************************")
     validation = True
@@ -327,10 +338,6 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-    bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP bssid {bssid}")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     ble_mode = "ble_slave"
     logger().info(f"ble mode : {ble_mode}")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
@@ -339,9 +346,8 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
     dns_mode = "dnsstatic"
     logger().info(f"dns_mode : '{dns_mode}'")
     dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
-    wifi_obj.join_get_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    logger().info(f"device ip:{device_ip}")
+    bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
+    time.sleep(10)
     logger().info(
         f"The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put")
     logger().info(f"DUT to power save in Wifi+bluetooth mode")
@@ -371,7 +377,6 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         logger().info("Found DNS packet")
         assert True
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -388,10 +393,11 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
         "band": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_connection_C20234(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, ble_client):
     logger().info("*******************C20234************************")
     validation = True
@@ -399,14 +405,13 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info(f"**********wifi*******************")
     wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
     dns_mode = "wrong_dnsserver"
     logger().info(f"wrong_dnsserver :  '{dns_mode}'")
     dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
-    wifi_obj.join_get_ip()
+    bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
+    time.sleep(5)
     wifi_obj.powersave_ping()
     ble_mode = "ble_slave"
     logger().info(f"ble mode : {ble_mode}")
@@ -449,10 +454,11 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
         "band": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_state_C20360(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client):
     logger().info("*******************C20360************************")
     validation = True
@@ -468,11 +474,10 @@ def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_s
     dns_mode = "dnsquery"
     logger().info(f"dns_mode : {dns_mode}")
     dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-    packet_filter1 = f'wlan.addr == {dut_mac_address} && dns'
-    wifi_obj.join_get_ip()
+    bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
+    time.sleep(5)
     wifi_obj.powersave_ping()
+    packet_filter1 = f'wlan.addr == {dut_mac_address} && dns'
     dns_obj.dns_request_with_server()
     time.sleep(5)
     check_connection_status(wifi_dut, wlan=True)

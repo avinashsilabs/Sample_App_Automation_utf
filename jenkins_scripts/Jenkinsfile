@@ -1,151 +1,236 @@
+@Library('pipeline-shared-library@main') _
+import groovy.json.JsonSlurper
+import main.groovy.HWMuxUtils
+import groovy.json.JsonSlurperClassic
+import groovy.json.JsonOutput
+
 pipeline {
-    agent none
-    stages {
-        stage('Start') {
-            agent {
-                label 'swarm && linux64'
-            }
-            environment {
-                JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
-                JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
-                JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
-            }
-            stages{
-                stage('Toolchain Setup'){
-                    steps {
-                        script {
-                            if (env.SQA_TEST_AGENT == "") {
-                                env.SQA_TEST_AGENT = env.RS9116_FIRMWARE
-                            }
-                        }
-                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                           keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                           passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                           usernameVariable: 'SSH_KEY_USERNAME')]) {
-                            sh '''
-                                export GIT_SSH=ssh
-                                export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-
-                                git config --file=.gitmodules submodule.utf_core.url ssh://git@stash.silabs.com/utf/utf_core
-                                git submodule update --init --recursive utf_core
-
-                                git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect
-                                git submodule update --init --recursive utf_wiseconnect
-                            '''
-                        }
-                        script {
-                            if(isUnix()) {
-                                sh '''
-                                    ./workspace_setup.sh
-                                '''
-                            } else {
-                                bat '''
-                                   call workspace_setup.bat
-                                '''
-                            }
-                        }
+    agent {
+        label 'swarm && linux64'
+    }
+    environment {
+        UTF_HWMUX_TOKEN = credentials('utf-sqa-hwmux-token')
+        JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
+        JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
+        JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
+    }
+    options {
+        globalLock(credentialsId: 'utf-sqa-hwmux-token', deviceGroup: env.device_group_name, label: env.device_group_label, variable: 'data')
+    }
+    stages{
+        stage('Toolchain Setup'){
+            steps {
+                script {
+                    if (env.SQA_TEST_AGENT == "") {
+                        env.SQA_TEST_AGENT = env.RS9116_FIRMWARE
                     }
-                }
-                stage('Get rs9116 binary') {
-                    steps{
-                        script{
-                            if(FLASH_RS9116.toBoolean()){
-                                if(BUILD_LOCATION != "source_code"){
-                                    if(RS9116_FIRMWARE != "Internal"){
-                                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                                keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                                passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                                usernameVariable: 'SSH_KEY_USERNAME')]) {
+                    echo env.SSH_TARGET
+                    echo env.HARNESS_NAME
+                    echo "${env.data}"
+                    configString = env.data.trim()
+                    def configJSON = readJSON text: configString
+                    print  configJSON["a_device_groups"][0]
+                    id_num=configJSON["a_device_groups"][0]
+                    def hwmuxUtils = new HWMuxUtils()
+                    url= "https://hwmux.silabs.net/api/groups/${id_num}/"
+                    def responseJson = hwmuxUtils.httpCallToJson(url, 'GET', '200', null, UTF_HWMUX_TOKEN)
+                    echo JsonOutput.toJson(responseJson)
+                    env.SSH_TARGET= hwmuxUtils.getGroupMetadataProperty(id_num,UTF_HWMUX_TOKEN,"host_ip")
+                    env.HARNESS_NAME=hwmuxUtils.getGroupMetadataProperty(id_num,UTF_HWMUX_TOKEN,"HARNESS_NAME")
+                    echo env.SSH_TARGET
+                    echo env.HARNESS_NAME
+                    env.SSH_TARGET=env.SSH_TARGET.replace("\"","")
+                    env.HARNESS_NAME=env.HARNESS_NAME.replace("\"","")
+                    echo env.SSH_TARGET
+                    echo env.HARNESS_NAME
+                    env.tests_url= env.JENKINS_URL + 'view/UTF/job/'+env.JOB_NAME+ '/'+env.BUILD_NUMBER + '/testReport/'
 
-                                            if(BUILD_LOCATION == "build_artifacts"){
-                                                sh '''
-                                                    rm -rf rs9116_binary
-                                                    export GIT_SSH=ssh
-                                                    export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                                    git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
-                                                '''
-                                            } else {
-                                                sh '''
-                                                    rm -rf rs9116_binary
-                                                    export GIT_SSH=ssh
-                                                    export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                                    git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
-                                                '''
-                                            }
-                                        }
-                                        dir('rs9116_binary'){
-                                            sh '''
-                                            if [ -d venv/bin ]; then
-                                            . venv/bin/activate
-                                            elif [ -d venv/Scripts ]; then
-                                            . venv/Scripts/activate
-                                            fi
-                                            python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                            '''
-                                        }
-                                    }
-                                }
-                            } else {
-                                echo "Skipping release package checkout for RS9116 firmware."
-                            }
-                        }
-                    }
-                }
-                stage('Build sqa test agent binary') {
-                    steps{
-                        script{
-                            if(FLASH_EFR32.toBoolean()){
-                                if(SQA_TEST_AGENT != "Internal"){
-                                    withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                               keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                               passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                               usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                        sh '''
-                                            ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
-                                        '''
-                                    }
-                                }
-                            } else {
-                                echo "Skipping release package checkout for SQA test agent."
-                            }
-                        }
-                    }
-                }
-                stage('Update manifest yaml'){
-                    steps {
+                    try {
                         sh '''
-                            if [ -d venv/bin ]; then
-                               . venv/bin/activate
-                            else
-                               . venv/Scripts/activate
-                            fi
-                            python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV} ${BUILD_LOCATION}
+                        pwd && ls -alh
+                        cd config
+                        cat settings_defaults.env
+
+                        sed_param=s,RELEASE_NAME=.*,RELEASE_NAME=${Release_Name},
+                        sed -i "$sed_param" settings_defaults.env
+
+                        sed_param=s,BRANCH_NAME=.*,BRANCH_NAME=${UTF_WIFI_BRANCH},
+                        sed -i "$sed_param" settings_defaults.env
+
+                        build=$( echo "$RS9116_FIRMWARE" |cut -d '.' -f5)
+                        sed_param=s,SDK_BUILD_NUM=.*,SDK_BUILD_NUM=${build},
+                        sed -i "$sed_param" settings_defaults.env
+
+                        url_link='https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'$RS9116_FIRMWARE
+                        sed_param=s,SDK_URL=.*,SDK_URL=${url_link},
+                        sed -i "$sed_param" settings_defaults.env
+
+
+                        sed_param=s,JENKINS_SERVER_NAME=.*,JENKINS_SERVER_NAME=${JENKINS_URL},
+                        sed -i "$sed_param" settings_defaults.env
+
+
+                        sed_param=s,JENKIN_RUN_NUM=.*,JENKIN_RUN_NUM=${BUILD_NUMBER},
+                        sed -i "$sed_param" settings_defaults.env
+
+                        sed_param=s,JENKINS_JOB_NAME=.*,JENKINS_JOB_NAME=${JOB_NAME},
+                        sed -i "$sed_param" settings_defaults.env
+
+
+                        sed_param=s,JENKINS_TEST_RESULTS_URL=.*,JENKINS_TEST_RESULTS_URL=${tests_url},
+                        sed -i "$sed_param" settings_defaults.env
+
+                        sed_param=s,TESTBED_NAME=.*,TESTBED_NAME=${SSH_TARGET},
+                        sed -i "$sed_param" settings_defaults.env
+
+                        if [ ${device_group_name} = "utf_sqa_smoke_test_device_group" ]; then
+                            sed_param=s,JOB_TYPE=.*,JOB_TYPE='smoke',
+                            sed -i "$sed_param" settings_defaults.env
+                        else
+                            sed_param=s,JOB_TYPE=.*,JOB_TYPE='regression',
+                            sed -i "$sed_param" settings_defaults.env
+                        fi
+
+                        echo "updated settings_defaults.env file data"
+                        cat settings_defaults.env
+                        '''
+
+                    } catch(err) {
+                        echo err.toString()
+                        // Below stages in pipeline won't execute
+                        sh ''' exit 1'''
+                    }
+                }
+                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                    keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                    passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                    usernameVariable: 'SSH_KEY_USERNAME')]) {
+                    sh '''
+                        export GIT_SSH=ssh
+                        export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+
+                        git config --file=.gitmodules submodule.utf_core.url ssh://git@stash.silabs.com/utf/utf_core
+                        git submodule update --init --recursive utf_core
+
+                        git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect
+                        git submodule update --init --recursive utf_wiseconnect
+                    '''
+                }
+                script {
+                    if(isUnix()) {
+                        sh '''
+                            ./workspace_setup.sh
+                        '''
+                    } else {
+                        bat '''
+                            call workspace_setup.bat
                         '''
                     }
                 }
-                stage('Run Tests') {
-                    steps {
-                        echo BUILD_URL
-                        echo BUILD_NUMBER
-                        echo GIT_BRANCH
-                        echo RUN_TESTS_DISPLAY_URL
-                        echo RS9116_FIRMWARE
-                        echo PUBLISH_TEST_RESULTS
-                        withEnv(['JENKINS_SERVER_NAME='+BUILD_URL, 'JENKIN_RUN_NUM='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'JENKINS_TEST_RESULTS_URL='+RUN_TESTS_DISPLAY_URL, 'SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
-                              sh "echo \$BUILD_URL"
-                              sh "echo \$BUILD_NUMBER"
-                              sh "echo \$GIT_BRANCH"
-                              sh "echo \$RUN_TESTS_DISPLAY_URL"
-                              sh "echo \$INSTALLER_URL_SDK"
+            }
+        }
+        stage('Get rs9116 binary') {
+            steps{
+                script{
+                    if(FLASH_RS9116.toBoolean()){
+                        if(BUILD_LOCATION != "source_code"){
+                            if(RS9116_FIRMWARE != "Internal"){
+                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                        keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                        passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                        usernameVariable: 'SSH_KEY_USERNAME')]) {
+
+                                    if(BUILD_LOCATION == "build_artifacts"){
+                                        sh '''
+                                            rm -rf rs9116_binary
+                                            export GIT_SSH=ssh
+                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                            git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
+                                        '''
+                                    } else {
+                                        sh '''
+                                            rm -rf rs9116_binary
+                                            export GIT_SSH=ssh
+                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                        '''
+                                    }
+                                }
+                                dir('rs9116_binary'){
+                                    sh '''
+                                    if [ -d venv/bin ]; then
+                                    . venv/bin/activate
+                                    elif [ -d venv/Scripts ]; then
+                                    . venv/Scripts/activate
+                                    fi
+                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                    '''
+                                }
+                            }
                         }
+                    } else {
+                        echo "Skipping release package checkout for RS9116 firmware."
+                    }
+                }
+            }
+        }
+        stage('Build sqa test agent binary') {
+            steps{
+                script{
+                    if(FLASH_EFR32.toBoolean()){
+                        if(SQA_TEST_AGENT != "Internal"){
+                            withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                        keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                        passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                        usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                sh '''
+                                    ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
+                                '''
+                            }
+                        }
+                    } else {
+                        echo "Skipping release package checkout for SQA test agent."
+                    }
+                }
+            }
+        }
+        stage('Update manifest yaml'){
+            steps {
+                sh '''
+                    if [ -d venv/bin ]; then
+                        . venv/bin/activate
+                    else
+                        . venv/Scripts/activate
+                    fi
+                    python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV} ${BUILD_LOCATION}
+                '''
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                echo BUILD_URL
+                echo BUILD_NUMBER
+                echo GIT_BRANCH
+                echo RUN_TESTS_DISPLAY_URL
+                echo RS9116_FIRMWARE
+                echo PUBLISH_TEST_RESULTS
+                withEnv(['JENKINS_SERVER_NAME='+BUILD_URL, 'JENKIN_RUN_NUM='+BUILD_NUMBER, 'GIT_BRANCH='+GIT_BRANCH, 'JENKINS_TEST_RESULTS_URL='+RUN_TESTS_DISPLAY_URL, 'SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
+                        sh "echo \$BUILD_URL"
+                        sh "echo \$BUILD_NUMBER"
+                        sh "echo \$GIT_BRANCH"
+                        sh "echo \$RUN_TESTS_DISPLAY_URL"
+                        sh "echo \$INSTALLER_URL_SDK"
+                }
+                script{
+                    try{
                         sh '''
                             rm -rf reports
                             export SKIP_PROCESSING_ARTIFACTS=1
 
                             if [ -d venv/bin ]; then
-                               . venv/bin/activate
+                            . venv/bin/activate
                             else
-                               . venv/Scripts/activate
+                            . venv/Scripts/activate
                             fi
 
                             export PYTHONPATH=./utf_core/src
@@ -166,6 +251,16 @@ pipeline {
                                     -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
                         '''
+                    } catch(err) {
+                        echo err.toString()
+                        // Below stages in pipeline won't execute
+                        sh ''' exit 1'''
+                    }
+                }
+            }
+            post {
+                always {
+                    script {
                         archiveArtifacts 'example_test_package/**'
                         archiveArtifacts 'manifest/**'
                         archiveArtifacts 'reports/**'

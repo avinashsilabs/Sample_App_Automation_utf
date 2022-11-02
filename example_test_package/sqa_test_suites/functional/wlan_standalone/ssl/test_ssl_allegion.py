@@ -931,9 +931,11 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155"
-
+    listen_interval = 700
     rejoin_params = [40, 6, 40, 0]
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  listen_interval_feature=True,
+                                  listen_interval=listen_interval,
                                   rejoin_params=rejoin_params)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -1069,9 +1071,11 @@ def test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
         ):
     capture_filename = "test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156"
-
+    listen_interval = 700
     rejoin_params = [20, 6, 40, 0]
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  listen_interval_feature=True,
+                                  listen_interval=listen_interval,
                                   rejoin_params=rejoin_params)
 
     port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -3130,7 +3134,7 @@ def test_2SSL_1TCP_RX_testcaseTC19187(
         list_sock.append(sock)
 
     socket_no = [1,2,3]
-    for i in range(10):
+    for i in range(50):
         for socket in socket_no:
             buffer_length = 100
             pkt_count = 10
@@ -4514,10 +4518,6 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(
     logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
     status = ping(device_ip, 10)
     assert status == 1, "DUT not responding for ping request......"
-
-    wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
-                                                        RS9116PowerSaveProcedureTypes.FastPowerSave,
-                                                        listen_interval=listen_interval)
 
     get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
     get_time_sec = ((get_minutes * 60) + get_seconds)

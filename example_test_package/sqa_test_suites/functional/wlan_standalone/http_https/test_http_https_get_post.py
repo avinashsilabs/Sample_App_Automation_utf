@@ -466,7 +466,7 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_c
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_http_get_func_host_name_with_tcp_C19216(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
+def test_http_get_func_host_name_with_tcp_C19218(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
                                                  wifi_client, protocol, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19216')
@@ -640,7 +640,7 @@ def test_https_post_functionality_for_5_iterations_C19225(http_server, wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_http_get_func_host_name_with_udp_C19216(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
+def test_http_get_func_host_name_with_udp_C19218(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
                                                  wifi_client, protocol, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19216')
@@ -1157,6 +1157,58 @@ def test_http_server_closes_conn_before_C19230(http_server, wifi_dut, wifi_sniff
     time.sleep(3)
 
     logger().info("Sniffer going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    logger().info("Sniffer validation for power save packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1), ['packet_count']
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+                          | RS9116TCPIPFeatureBitMap.SSL
+                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ca_cert": "ca-chain.cert.pem"
+    }
+)
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_https_post_functionality_different_urls_C19226(http_server, wifi_dut, http_client, wifi_access_point,
+                                                        index_path, utf_constants, wifi_sniffer):
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_https_post_functionality_different_urls_C19226')
+    time.sleep(3)
+    ping_count = 120
+    join_get_ip(wifi_dut, wifi_access_point, ping_count)
+    bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC: {bssid}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {mac_address}")
+
+    packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
+                     f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+    logger().info("http functionality using post method")
+    status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
+                                                         post_data="hellothisisfordifferenturlsusedtopostthed"
+                                                                   "atoverthehttppostprotocol")
+    assert status, "failed to post data to http server"
+    logger().info(status)
+    logger().info(content)
+
+    logger().info("Stopping sniffer capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info("Sniffer validation for power save packets")

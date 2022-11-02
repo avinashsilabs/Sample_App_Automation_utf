@@ -446,7 +446,6 @@ def test_Wireless_fw_upgradein_AP_mode_C19378(wifi_sniffer, wifi_dut, wifi_clien
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
