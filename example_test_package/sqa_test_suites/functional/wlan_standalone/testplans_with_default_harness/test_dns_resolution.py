@@ -359,7 +359,7 @@ def test_when_only_primary_ip_statically_c19303(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_when_only_secondary_ip_statically_c19303(
+def test_when_only_secondary_ip_statically_c19304(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
     validation = True
