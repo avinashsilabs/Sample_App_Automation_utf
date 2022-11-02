@@ -689,6 +689,11 @@ devices:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
                 interface: 'wlp0s20f3'
+            live_capture:
+                host_address: 192.168.50.210
+                type: 'wifi.sniffer.pyshark_live_sniffer'
+                shell: 'local_shell'
+                interface: 'wlp0s20f3'
 
     saleae_logic_analyzer:
         interfaces:
@@ -962,6 +967,13 @@ devices:
             # the docker image to run
             ble_vul_sniffer:
                 type: 'bluetooth.sniffer.sweyntooth'
+                docker_host: 'sweyntooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            sweyntooth_docker:
+                type: 'docker'
                 ip_address: '10.207.16.89'
                 container_name: "utf_sweyntooth"
                 image: 'utfsilabs/utf_sweyntooth'
@@ -969,10 +981,6 @@ devices:
                 is_execute_raspi_manager_scripts: false
                 username: pi
                 password: 'raspberry'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x239a
-                pid: 0x8029
             linux_shell:
                 type: 'shell.shell'
 
@@ -983,6 +991,13 @@ devices:
             # the docker image to run
             bt_vul_sniffer:
                 type: 'bluetooth.sniffer.braktooth'
+                docker_host: 'braktooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            braktooth_docker:
+                type: 'docker'
                 ip_address: '10.207.18.161'
                 container_name: "utf_braketooth"
                 image: 'utfsilabs/utf_braktooth'
@@ -990,13 +1005,18 @@ devices:
                 is_execute_raspi_manager_scripts: false
                 username: 'test'
                 password: 'test123'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x0403
-                pid: 0x6010
             linux_shell:
                 type: 'shell.shell'
 
+    nrf_ppk2_device:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            power_meter:
+                type: 'power_meter.nrf_power_profiler'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0xC00A
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1044,6 +1064,9 @@ defaults:
     logic_analyzer: 'saleae_logic_analyzer'
 
     power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
+
+    power_meters:
+        - 'nrf_ppk2_device'
 
     ble_client: 'raspi_ble_client'
 
