@@ -120,7 +120,8 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         logger().info(f"ble_scan_list:\n{found_devices}")
         assert wifi_dut.interfaces.wifi.ble_address in found_devices
         assert (found_devices[
-                    wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
+                    wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), \
+            "Could not able to find our DUT"
         logger().info(f"See that we found our device:'{ble_dut_address}'")
         ble_client.interfaces.bluetooth.connect(ble_dut_address)
         logger().info("BLE Connection success")
@@ -131,12 +132,12 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
 def verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid):
     validation = True
     # validate PS-POLL frame with PM bit set to '1'
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
-                     f'and (wlan.ra == {bssid}))'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta ==' \
+                     f' {dut_mac_address}) and (wlan.ra == {bssid}))'
 
     # validate QOS data frame with more data bit set to '1'
-    packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
-                     f'and (wlan.ta == {bssid}))'
+    packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and ' \
+                     f'(wlan.ra == {dut_mac_address}) and (wlan.ta == {bssid}))'
 
     logger().info('Validating PS Poll frames are sent from the device with power management bit')
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
@@ -611,7 +612,8 @@ class stop_ap_thread(ThreadBase):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -903,8 +905,8 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C20313(wifi_dut, ble_clien
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     # validate PS-POLL frame with pwrmgt bit set to '1'
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
-                     f'and (wlan.ra == {bssid}))'
+    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and ' \
+                     f'(wlan.ta == {dut_mac_address}) and (wlan.ra == {bssid}))'
 
     # validate QOS data frame with more data bit set to '1'
     packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
@@ -2130,7 +2132,8 @@ def test_sta_connection_with_ble_connect_disconnect_C20280(wifi_dut, ble_client,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -2397,7 +2400,8 @@ def test_get_particular_profiles_functionality_of_dut_ble_C20318(wifi_dut, ble_c
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -2513,11 +2517,28 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
     logger().info(f"Device mac address: {dut_mac_address}")
 
     logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
-    t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=30)
+    t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=600)
     t1.start()
 
     logger().info("Checking connection status of BLE")
     check_connection_status(wifi_dut, ble=True)
+    logger().info("Initiating BLE connection and disconnection from raspi")
+
+    for i in range(1, iteration_count):
+        logger().info(f"Initiating BLE disconnection...iteration: '{i}'")
+        ble_client.interfaces.bluetooth.disconnect(ble_dut_addr)
+        logger().info(f"Disconnect completed...iteration: '{i}'")
+        time.sleep(3)
+        logger().info(f"Re-Initiating BLE connection...iteration: '{i}'")
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert ble_dut_address, f"Unable to get ble_dut_address"
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+        ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        logger().info(f"DUT successfully connected to {ble_client} Device...iteration: '{i}'")
+        logger().info("Wait for 10 sec and check ble connection status")
+        time.sleep(10)
+        logger().info("Checking ble connection still persists")
+        check_connection_status(wifi_dut, ble=True)
 
     with pytest.raises(Exception) as exc_info:
         logger().info("Initiating Wi-Fi disconnection on DUT")
@@ -2546,21 +2567,6 @@ def test_ble_and_Wlan_data_transfer_for_5min_C20309(wifi_dut, ble_client, wifi_a
     logger().info("Validating PS Polls with Power Management Bit")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
         'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-
-    logger().info("Initiating BLE connection and disconnection from raspi")
-
-    for i in range(1, iteration_count):
-        logger().info(f"Initiating BLE disconnection...iteration: '{i}'")
-        ble_client.interfaces.bluetooth.disconnect(ble_dut_addr)
-        logger().info(f"Disconnect completed...iteration: '{i}'")
-        time.sleep(3)
-        logger().info(f"Re-Initiating BLE connection...iteration: '{i}'")
-        ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
-        assert ble_dut_address, f"Unable to get ble_dut_address"
-        wifi_dut.interfaces.wifi.ble_start_advertising()
-        ble_client.interfaces.bluetooth.connect(ble_dut_address)
-        logger().info(f"DUT successfully connected to {ble_client} Device...iteration: '{i}'")
-        time.sleep(3)
 
     t1.wait_for_exit(True)
     data.clear()
