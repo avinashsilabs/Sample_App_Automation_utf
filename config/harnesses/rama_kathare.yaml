@@ -167,13 +167,23 @@ devices:
                 channel: 1
                 cipher: 'AES'
 
-    binatone_static_ap:
+    tp_link_e12ad0_static:
         interfaces:
             wifi:
                 type: 'wifi.access_points.static'
                 security: WPA2
-                ssid: 'binatone_dt910w'
+                ssid: 'TP-LINK_E12AD0'
                 passphrase: 'thisisatestnetwork'
+                channel: 1
+                cipher: 'AES'
+
+    tp_link_a6_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'ramakathare2g'
+                passphrase: '89219898'
                 channel: 1
                 cipher: 'AES'
 
@@ -194,20 +204,6 @@ devices:
                 security: 'WPA2'
                 channel: 11
                 passphrase: 'F6E49FCE'
-                switch_config: 'pdu_switch'
-            pdu_switch:
-                # switch type is Digital Logging v222
-                type: 'switch.dli_v222_pdu'
-                hostname: '192.168.2.4'
-                user: 'admin'
-                password: '1234'
-                # valid outlet numbers are 1-8
-                outlet: 1
-                # use_persistent_state: true will set a persistent state, that the outlet will revert
-                # to after reboot or power cycle
-                # use_persistent_state: false will set a transient state only, and the outlet will revert
-                # back to the persistent state after reboot or power cycle
-                use_persistent_state: false
 
     # This represents another access point configuration.
     raspi_wifi:
@@ -244,18 +240,318 @@ devices:
                 type: 'bluetooth.bluez'
                 shell: 'linux_shell'
 
+    raspi_bt_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            bluetooth:
+                type: 'bluetooth.pybluez'
+                shell: 'linux_shell'
 
-    raspi_multicast:
+    # this configuration entry represents a secondary raspberry pi device that we will connect
+    # to through via RPC
+    secondary_raspi_bt_client:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.14.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
+                container_name: 'secondary_raspi_bt_client'
+                username: pi
+                password: 'raspberry'
+
+            # these are the RPC-enabled interfaces that will forward all method and property access
+            # calls over to the respective instance on the server
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_bt_client:bluetooth'
+                host: 'docker_host'
+
+            mqtt:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_bt_client:mqtt'
+                host: 'docker_host'
+
+            wifi:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_bt_client:wifi'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_bt_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.pybluez'
+                            shell: 'linux_shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            server_listen_address: '0.0.0.0'
+                            port: 1883
+                            interface: 'wlan0'
+                            tls_enabled: false
+                        wifi:
+                            # The 'wifi.access_points.linux' device type represents a linux-based access point
+                            # running hostapd to create a soft AP
+                            type: 'wifi.access_points.linux'
+                            shell: 'linux_shell'
+                            interface: 'wlan0'
+            defaults: { }
+
+    secondary_raspi_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.14.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
+    raspi_mosquitto:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+
+    raspi_mosquitto_auth:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+
+    raspi_mosquitto_tls:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    static_mqtt_broker:
+        interfaces:
+            mqtt:
+                type: 'mqtt.server.static'
+                # hostname and port are required parameters
+                hostname: 'mosquitto.dev.silabs.net'
+                port: 8883
+                # (optional) username and password credentials for authentication to the broker
+                #            Defaults to authentication disabled
+                username: 'testuser'
+                password: 'testpassword'
+                # (optional) controls whether tls is enabled. defaults to false
+                tls_enabled: true
+                # If TLS is enabled, tls_ca_chain must be specified and contain the name of
+                # a file within the utils/tls_certificates directory containing the CA certificate chain
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_lighttpd:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
+    raspi_lighttpd_tls:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 443
+                interface: 'wlan0'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_http_client:
+        interfaces:
+            http:
+                type: 'http.client.requests_client'
+                disable_certificate_verification: false
+
+    static_http:
+        interfaces:
+            http:
+                type: 'http.server.static'
+                hostname: 'letsencrypt.org'
+                port: 443
+                tls_enabled: true
+                tls_ca_chain: 'isrg-root.pem'
+
+    airpcap:
+        interfaces:
+            ssh_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.14.3
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            capture:
+                default:
+                type: 'wifi.sniffer.tshark'
+                shell: 'ssh_shell'
+                interface: 'wlan1'
+
+    python_aws_iot_thing:
+        interfaces:
+            aws_iot:
+                type: 'aws_iot.python_thing'
+                client_id: 'Python-Thing'
+                hostname: 'a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com'
+                port: 8883
+                private_key: 'python-thing-private.pem.key'
+                root_ca: 'AWS-IoT-root-CA.crt'
+                client_cert: 'python-thing-certificate.pem.crt'
+
+    raspi_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+
+    static_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                # host machine details where iperf is configuered
+                host_ip: "10.207.18.2"
+                host_username: "test"
+                host_password: "test123"
+
+    raspi_ip_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_socket'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
-                interface: 'eth0'
+                interface: 'wlan0'
 
     ip_socket_factory:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
 
+    ble_sweyntooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                ip_address: '10.207.16.89'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            linux_shell:
+                type: 'shell.shell'
+
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
+
+    # this represents an brakttoth docker running on the NUC machine using sniffer
+    bt_braktooth:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            bt_vul_sniffer:
+                type: 'bluetooth.sniffer.braktooth'
+                ip_address: '10.207.18.161'
+                container_name: "utf_braktooth"
+                image: 'utfsilabs/utf_braktooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: 'test'
+                password: 'test123'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            linux_shell:
+                type: 'shell.shell'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -273,12 +569,8 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'binatone_static_ap'
+    wifi_access_point: 'tp_link_a6_static'
 
-    # To connect the multiple access points
-    wifi_access_points:
-        - 'raspi_wifi'
-        - 'static_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -288,47 +580,33 @@ defaults:
         - 'raspi_wifi'
         - 'secondary_raspi_client'
 
-    wifi_sniffer: 'airpcap'
-
-    logic_analyzer: 'saleae_logic_analyzer'
-
-    power_meter: 'keysight_power_analyzer'
-
-    bt_client: 'raspi_bt_client'
     ble_client: 'raspi_ble_client'
 
-    ble_clients:
-        - 'secondary_raspi_ble_client'
-        - 'raspi_ble_client'
+    bt_client: 'raspi_bt_client'
 
     mqtt_server: 'raspi_mosquitto'
 
     mqtt_client: 'raspi_wifi'
 
+    wifi_sniffer: 'airpcap'
+
     http_server: 'raspi_lighttpd'
 
     http_client: 'raspi_http_client'
 
-    rf_attenuator: '50pa500_attenuator'
-
-    ssl_server: 'raspi_ssl_server'
+    net_perf_client: 'raspi_iperf'
 
     remote_socket: 'raspi_ip_socket'
-    #ssl_server: 'raspi_ssl_server_static'
-    #ssl_client: 'raspi_ssl_client'
+
+    remote_socket_factory: "ip_socket_factory"
 
     aws_iot_client: 'python_aws_iot_thing'
 
-    wiseconnect_web: 'wiseconnect_web'
+    bt_vulnerability_sniffer: 'bt_braktooth'
 
-    net_perf_client: 'raspi_iperf'
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
 
-    wiseconnect_ui:
-        mode: 'Client'
-        band: '2.4'
-        ssid: 'TESTTESTTEST'
-        passphrase: 'thisisatestnetwork'
-        channel: 1
+    openssl: 'openssl_socket'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -343,22 +621,11 @@ defaults:
         num_ping_attempts: 10
         ping_timeout: 4
 
-        static_ip: '192.168.14.200'
-        static_subnet: '255.255.255.0'
-        static_gateway: '192.168.14.1'
-
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
         ble_advertising_data: 'HELLO'
         bt_local_name: "rs911x_bt_spp"
         bt_pin_code: "4321"
-
-    iop_sockets:
-        server_ip: '192.168.10.212'
-        server_port: '6001'
-        att_channel: 1
-        db_value: 2
-        att_enable: true
 
     aws_iot:
         hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
@@ -368,6 +635,27 @@ defaults:
         certfile: "python-thing-certificate.pem.crt"
         keyfile: "python-thing-private.pem.key"
         cafile: "AWS-IoT-root-CA.crt"
+
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
+
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
+
+    bt_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
+        bt_exploit_type: "au_rand_flooding"
+        script: ""
 
     net_perf:
         server_options:
