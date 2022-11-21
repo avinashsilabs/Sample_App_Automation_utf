@@ -1,5 +1,6 @@
 from utf import TestResultsModelAttrs, TestUserPropertiesSource
 from utf.apis import extract_test_case_id
+from utf.env_settings import EnvironSettings
 from utf.utils import is_publish_test_results_enabled, is_test_results_source_api_enabled
 from utf.utils.test_management.test_definition_utils import generate_base_test_definitions_yaml
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
@@ -143,10 +144,11 @@ def reset_on_test_mode_change(request, wiseconnect_duts):
 def pytest_runtest_protocol(item, nextitem):
     if is_publish_test_results_enabled() and is_test_results_source_api_enabled():
         module_name = UtfConfig.instance().defaults.get("dut")
+        settings = EnvironSettings()
         case_id = extract_test_case_id(item.name)
         tool_chain = "GCC 10.3.1"
-        if os.environ.get("TOOL_CHAIN"):
-            tool_chain = os.environ["TOOL_CHAIN"]
+        if settings.TOOL_CHAIN:
+            tool_chain = settings.TOOL_CHAIN
 
         custom_values = {TestResultsModelAttrs.module_name: module_name,
                          TestResultsModelAttrs.tool_chain: tool_chain}
