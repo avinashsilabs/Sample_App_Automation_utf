@@ -418,6 +418,23 @@ devices:
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
                 interface: 'eth0'
+
+    raspi_ip_remote_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_remote_socket'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
+                buffer_length: 1470
+                no_of_pkts: 500
+                socket_type: 0   #0- TCP, 1 - UDP
+                interface: 'eth0'
+                primary_interface: 'eth0'
+                primary_port: 5001
+
     raspi_bt_client:
         interfaces:
             linux_shell:
@@ -1089,6 +1106,7 @@ defaults:
     #ssl_server: 'raspi_ssl_server_static'
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
+    # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
 

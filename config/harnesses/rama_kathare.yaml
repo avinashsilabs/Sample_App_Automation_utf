@@ -219,6 +219,22 @@ devices:
                 shell: 'linux_shell'
                 interface: 'wlan0'
 
+    raspi_wifi_ssh:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+
+    raspi_wifi_ssh_1:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+
     secondary_raspi_client:
         interfaces:
             linux_shell:
@@ -498,7 +514,23 @@ devices:
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
-                interface: 'wlan0'
+                interface: 'eth0'
+
+    raspi_ip_remote_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_remote_socket'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
+                buffer_length: 1470
+                no_of_pkts: 500
+                socket_type: 0   #0- TCP, 1 - UDP
+                interface: 'eth0'
+                primary_interface: 'eth0'
+                primary_port: 5001
 
     ip_socket_factory:
         interfaces:

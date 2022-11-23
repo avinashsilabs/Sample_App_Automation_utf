@@ -208,6 +208,42 @@ devices:
                 shell: 'linux_shell'
                 interface: 'wlan0'
 
+    raspi_wifi_ssh:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.16.93
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.16.93'
+
+    raspi_wifi_ssh_1:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.16.88
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.16.88'
+
     secondary_raspi_client:
         interfaces:
             linux_shell:
@@ -482,12 +518,12 @@ devices:
                 ip_version: 0
                 dut_local_socket: 5001
                 destination_socket: 5001
-                server_ip: '192.168.14.2'
+                server_ip: '10.207.16.89'
                 time: 30
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
-                interface: 'eth1'
+                interface: 'wlan0'
 
     remote_raspi_ip_socket:
         interfaces:
@@ -496,18 +532,20 @@ devices:
                 ip_version: 0
                 dut_local_socket: 5001
                 destination_socket: 5001
-                server_ip: '192.168.14.3'
+                server_ip: '10.207.16.93'
                 time: 30
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
-                interface: 'eth0'
-                primary_interface: 'eth1'
+                interface: 'wlan0'
+                primary_interface: 'wlan0'
+                primary_port: 8090
 
     ip_socket_factory:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
+                remote_ip_list: ['10.207.16.93', '10.207.16.88']
 
 
     ble_sweyntooth:
@@ -574,7 +612,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap_static'
+    wifi_access_point: 'tp_link_e12ad0_static'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
@@ -583,7 +621,8 @@ defaults:
 
     wifi_clients:
         - 'raspi_wifi'
-        - 'secondary_raspi_client'
+        - 'raspi_wifi_ssh'
+        - 'raspi_wifi_ssh_1'
 
     ble_client: 'raspi_ble_client'
 
@@ -601,8 +640,8 @@ defaults:
 
     net_perf_client: 'raspi_iperf'
 
-    remote_socket: 'raspi_ip_socket'
-    # remote_socket: 'remote_raspi_ip_socket'
+#    remote_socket: 'raspi_ip_socket'
+    remote_socket: 'remote_raspi_ip_socket'
 
     remote_socket_factory: "ip_socket_factory"
 
