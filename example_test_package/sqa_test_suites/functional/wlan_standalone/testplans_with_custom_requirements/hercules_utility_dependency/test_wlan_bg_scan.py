@@ -2,12 +2,13 @@ import re
 import time
 from utf.utils.time_measurer import TimeMeasurer
 import pytest as pytest
-
+from utf import UtfDatabaseProperties
 from utf_wiseconnect.interfaces.cli.rs_at_commands import RSATCommands
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
@@ -37,7 +38,7 @@ def logger():
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Sniffer(NUC device)
-        
+
     Author: Vivek Verma
 """
 
@@ -79,6 +80,31 @@ class IopTcpIpSockets:
         return connect_status
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_C19035',
+                                                       test_case_id='C19035',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -90,10 +116,11 @@ class IopTcpIpSockets:
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -103,19 +130,11 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_2g')
 
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -146,8 +165,8 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
         'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -169,6 +188,31 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_dual_mode_C19036',
+                                                       test_case_id='C19036',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -182,10 +226,11 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 2,
     },
 )
-def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -195,19 +240,11 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_dual_mode')
 
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -239,8 +276,11 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
         'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
+
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -262,6 +302,31 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_instant_bgscan_C19037',
+                                                       test_case_id='C19037',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -274,10 +339,11 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut):
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -287,19 +353,11 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.set_bgscan(1, 1, 10, 4, 10, 15, 20, 0)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_instant_bgscan')
 
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -330,8 +388,11 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
         'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
+
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -353,6 +414,30 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_rejoin_infinite_retry_C19038',
+                                                       test_case_id='C19038',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -366,9 +451,10 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -380,20 +466,11 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
-
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.fc.type_subtype == ' \
@@ -445,6 +522,30 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
         'Unable to find probe request broadcast packet'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_primary_channel_2G_C19039',
+                                                       test_case_id='C19039',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -457,10 +558,11 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -486,19 +588,12 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
                                                         scan_bitmap_2_4=channel_bitmap_2_4,
                                                         scan_bitmap_5=channel_bitmap_5,
                                                         scan_feature=scan_feature_extend)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
-        result = wifi_dut.interfaces.wifi.start_ip()
-        dut_ip = result.ip.decode()
-        logger().info(f"DUT ip address : {dut_ip}")
 
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+        logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-        logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        ap_mac = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC : {ap_mac}")
 
         # Validating probe request broadcast packet
         packet_filter1 = f'wlan_radio.channel == {channel} and wlan.sa == {dut_mac_address} ' \
@@ -527,12 +622,13 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-        'Unable to find probe request broadcast packet'
+            'Unable to find probe request broadcast packet'
+
 
 # @pytest.mark.start_state("wifi_dut", wifi="init")
 # @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 # @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-#@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # @pytest.mark.config(
 #     "wifi_dut",
 #
@@ -600,6 +696,30 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
 #     assert True if res is False else False
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_5G_C19383',
+                                                       test_case_id='C19383',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -613,10 +733,11 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
-def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -630,19 +751,12 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g')
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -672,12 +786,16 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)['packet_count'], \
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+        'packet_count'], \
         'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
+
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -699,6 +817,30 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_5G_dual_band_C19384',
+                                                       test_case_id='C19384',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -712,10 +854,11 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 2,
     },
 )
-def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -728,20 +871,12 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_dual_band')
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -774,8 +909,12 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
         'Unable to find the broadcast probe request packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
+
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
     connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
@@ -797,6 +936,30 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_5G_rejoin_infinite_C19386',
+                                                       test_case_id='C19386',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -810,10 +973,11 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
-def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -829,19 +993,11 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_5g_rejoin')
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -869,7 +1025,7 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find any broadcast probe request packets'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
@@ -895,6 +1051,31 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_5G_DFS_ch_C19385',
+                                                       test_case_id='C19385',
+                                                       notes='test notes'))
 @pytest.mark.parametrize(
     "channel_list",
     [52, 56, 60, 64],
@@ -912,10 +1093,11 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1
     },
 )
-def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
+def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
@@ -931,19 +1113,11 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
 
     time.sleep(2)
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-    ip_config = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    ap_mac = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC : {ap_mac}")
 
     # Validating probe request broadcast packet
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -971,7 +1145,7 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
         'Unable to find probe request broadcast packet'
 
     '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
@@ -998,6 +1172,31 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_primary_channel_5G_C19387',
+                                                       test_case_id='C19387',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1011,17 +1210,18 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 2,
     },
 )
-def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
     channel_bitmap_2_4 = 0
     channel_bitmap_5g = 0
     scan_feature_extend = 0
-    channel_list = {36:0, 149:20, 165:24}
+    channel_list = {36: 0, 149: 19, 165: 23}
 
     '''configure the channels 36,149,165 in channel_bitmap field and verify whether the BG scan is happening in 
     those particular channels only or not'''
@@ -1038,19 +1238,12 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
                                                         scan_bitmap_5=channel_bitmap_5g,
                                                         scan_feature=scan_feature_extend)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_primary_channel_5G')
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
-        result = wifi_dut.interfaces.wifi.start_ip()
-        dut_ip = result.ip.decode()
-        logger().info(f"DUT ip address : {dut_ip}")
 
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+        logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-        logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        ap_mac = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC : {ap_mac}")
 
         # Validating probe request broadcast packet
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
@@ -1080,6 +1273,32 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find the probe request broadcast packets from DUT side'
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_response_before_connection_c19040',
+                                                       test_case_id='c19040',
+                                                       notes='test notes'))
 @pytest.mark.skip(reason="skipping this for CI/CD execution")
 @pytest.mark.dut("rs9116")
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
@@ -1092,10 +1311,10 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
+def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut, rs_helper, utf_constants):
     # Verify BG Scan response before Connection ,it should return 0x0021 error(This we can test in
     # AT mode only
     wifi_dut.interfaces.wifi.reset_mode = "hard"
@@ -1114,6 +1333,32 @@ def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
             logger().info(f"observed error code 0x0021 which is expected")
     logger().info(f"test executed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+
+
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_rejoin_failure_c19041',
+                                                       test_case_id='c19041',
+                                                       notes='test notes'))
 @pytest.mark.skip(reason="skipping this for CI/CD execution")
 @pytest.mark.dut("rs9116")
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
@@ -1126,11 +1371,11 @@ def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut):
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_bgscan_rejoin_failure_c19041(wifi_access_point, wifi_dut):
-    #Verify BG Scan response During the rejoin process, it should return 0x0025 error.(This we can test only in AT
+def test_bgscan_rejoin_failure_c19041(wifi_access_point, wifi_dut, rs_helper, utf_constants):
+    # Verify BG Scan response During the rejoin process, it should return 0x0025 error.(This we can test only in AT
     # mode'''
     wifi_dut.interfaces.wifi.reset_mode = "hard"
     wifi_dut.interfaces.wifi.reset()
@@ -1140,7 +1385,8 @@ def test_bgscan_rejoin_failure_c19041(wifi_access_point, wifi_dut):
             "This test case is only currently implemented for AT"
         )
 
-    wifi_dut.interfaces.wifi.rejoin(rsi_max_try=0, rsi_scan_interval=4, rsi_beacon_missed_count=40, rsi_first_time_retry_enabled=0)
+    wifi_dut.interfaces.wifi.rejoin(rsi_max_try=0, rsi_scan_interval=4, rsi_beacon_missed_count=40,
+                                    rsi_first_time_retry_enabled=0)
     wifi_dut.interfaces.wifi.scan(ssid=None, channel_list=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, bgscan_flag=True)
 

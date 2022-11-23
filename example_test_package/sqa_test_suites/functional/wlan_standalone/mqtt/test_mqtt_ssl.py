@@ -22,6 +22,7 @@ import string
 import filecmp
 import os
 import random
+from utf import UtfDatabaseProperties
 from threading import Thread
 from utf.utils import mac_address_to_string
 from utf.utils.iperf.iperf_utils import ping
@@ -116,6 +117,29 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
     wifi_access_point.interfaces.wifi.start_ap()
 
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_authentication_ssl_TC19258',
+                                                       test_case_id='TC19258',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -217,6 +241,28 @@ def test_mqtt_authentication_ssl_TC19258(
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_rx_after_rejoin_ssl_TC19271',
+                                                       test_case_id='TC19271',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -331,6 +377,28 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_publish_while_rejoin_ssl_TC19274',
+                                                       test_case_id='TC19274',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -446,6 +514,28 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_rx_ssl_TC19285',
+                                                       test_case_id='TC19285',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -548,6 +638,28 @@ def test_mqtt_rx_ssl_TC19285(
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_publish_1mb_file_ssl_TC19286',
+                                                       test_case_id='TC19286',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -653,6 +765,28 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_publish_max_len_ssl_TC19287',
+                                                       test_case_id='TC19287',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -757,6 +891,28 @@ def test_mqtt_publish_max_len_ssl_TC19287(
     wifi_dut.interfaces.wifi.leave()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_publish_max_len_ssl_ecdsa_TC19290',
+                                                       test_case_id='TC19290',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -958,7 +1114,28 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
 #     events = wifi_dut.interfaces.wifi.get_async_events()
 #     assert len(events) == 0
 
-
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mqtt_rx_ssl_ecdsa_TC19291',
+                                                       test_case_id='TC19291',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=

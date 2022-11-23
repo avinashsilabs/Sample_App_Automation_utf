@@ -36,7 +36,7 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
-def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client):
+def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
     inq_type = 1
     duration = 10000
     max_no_dev = 10
@@ -56,7 +56,8 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client):
         logger().info(f'******BT initialization******')
         wifi_dut.interfaces.wifi.bt_start()
 
-        for i in range(0, 3):
+        iter_count = utf_constants.get("iter_count")
+        for i in range(iter_count):
             # start BT inquiry with RSSI from DUT
             logger().info(f'******Start BT inquiry with RSSI from DUT******')
             wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
@@ -92,7 +93,7 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client):
             assert True
     logger().info(f"Test case executed in {t.duration} seconds")
 
-def test_bt_extended_inquiry_C19982(wifi_dut, bt_client):  # T3561 in testrail
+def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T3561 in testrail
     inq_type = 2
     duration = 10000
     max_no_dev = 10
@@ -112,7 +113,8 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client):  # T3561 in testrail
         logger().info(f'******BT initialization******')
         wifi_dut.interfaces.wifi.bt_start()
 
-        for i in range(0,3):
+        iter_count = utf_constants.get("iter_count")
+        for i in range(iter_count):
             # start BT inquiry with RSSI from DUT
             logger().info(f'******Start BT inquiry with RSSI from DUT******')
             wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
@@ -153,7 +155,7 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client):  # T3561 in testrail
             assert True
     logger().info(f"Test case executed in {t.duration} seconds")
 
-def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):
+def test_bt_standard_inquiry_C19983(wifi_dut, bt_client, utf_constants):
     inq_type = 0
     duration = 10000
     max_no_dev = 10
@@ -168,7 +170,7 @@ def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):
         # BT initialization
         logger().info(f'******BT initialization******')
         wifi_dut.interfaces.wifi.bt_start()
-
+        time.sleep(3)
         # start BT standard inquiry from DUT
         logger().info(f'******Start BT standard inquiry from DUT******')
         wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
@@ -178,7 +180,8 @@ def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):
         events = wifi_dut.interfaces.wifi.get_async_events()
         assert len(events) > 0
         # Search for Inquiry type and Remote BT device address
-        for i in range(0,3):
+        iter_count = utf_constants.get("iter_count")
+        for i in range(iter_count):
             for event in events:
                 event_data = str(event.event_data.decode())
                 if bt_client_address in event_data and 'Inquiry_type = 0' in event_data:

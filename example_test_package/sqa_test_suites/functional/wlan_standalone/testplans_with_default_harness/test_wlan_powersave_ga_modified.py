@@ -1,5 +1,4 @@
 import pytest
-from test_wlan_sta_enterprise import WifiEapThread, RunMulticastTraffic, RunUnicastTraffic
 from test_wlan_max_psp_functionality import FilterPacket
 from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap,
                                             RS9116CustomFeatureBitMap,
@@ -1458,7 +1457,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(firmware_loader, w
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_powersave_mode_2_Enterprise_C19509(radius_server, net_perf_client, protocol,
-                                            wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, utf_constants):
+                                            wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, utf_constants,
+                                            rs_helper):
     testcase = "test_powersave_mode_2_Enterprise_C19509"
 
     iter_count = utf_constants.get("iter_count")
@@ -1472,26 +1472,21 @@ def test_powersave_mode_2_Enterprise_C19509(radius_server, net_perf_client, prot
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
-        logger().info("enable eap method")
-        eap_obj = WifiEapThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
-                                wifi_access_point=wifi_access_point, eap_type="TLS", testcase=testcase,
-                                wifi_client=wifi_client, net_perf_client=net_perf_client, protocol=protocol, timeout=100)
-        eap_obj.join_eap()
-
-        logger().info("Getting the DUT mac")
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {ap_bssid}")
 
-        eap_obj.check_connectivity(ping_count=ping_count)
+        device_ip, dut_mac_address = rs_helper.check_eap_connectivity(utf_constants, wifi_dut, wifi_access_point, eap_type="TLS")
+        logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
 
-        eap_obj.run_unicast_traffic(traffic_type="RX")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        timeout = 60
 
-        eap_obj.protocol = IperfConstants.UDP
+        rs_helper.run_traffic(wifi_dut, net_perf_client, protocol, device_ip, host_ip, timeout, traffic_type="RX")
 
-        eap_obj.run_unicast_traffic(traffic_type="RX")
+        protocol = IperfConstants.UDP
+
+        rs_helper.run_traffic(wifi_dut, net_perf_client, protocol, device_ip, host_ip, timeout, traffic_type="RX")
 
         logger().info("Initiating disconnect from DUT")
         # Wlan Disconnect

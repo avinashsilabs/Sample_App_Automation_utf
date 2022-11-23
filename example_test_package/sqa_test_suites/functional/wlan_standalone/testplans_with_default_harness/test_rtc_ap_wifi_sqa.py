@@ -3,11 +3,33 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116OperatingMode, RS9116ExtCustomFeatureBitMap, \
     RS9116ExtTCPIPFeatureBitMap
-
+from utf import UtfDatabaseProperties
 import time
 from utf.utils.time_measurer import TimeMeasurer
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_wifi_set_get_rtc_TC19051',
+                                                       test_case_id='TC19051',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=

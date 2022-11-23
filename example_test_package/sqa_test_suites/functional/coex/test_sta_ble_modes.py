@@ -174,10 +174,11 @@ class WifiThread_PSKMODE(ThreadBase):
             self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
             time.sleep(15)
-            logger().info(f"Initiate ping from third party wifi-client to DUT")
-            status = ping(device_ip, 10)
-            assert status == 1, "DUT not responding for ping request......"
-            logger().info("ping to DUT is successful....")
+            if not self.tcp_bypass:
+                logger().info(f"Initiate ping from third party wifi-client to DUT")
+                status = ping(device_ip, 10)
+                assert status == 1, "DUT not responding for ping request......"
+                logger().info("ping to DUT is successful....")
 
             #Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
             packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \

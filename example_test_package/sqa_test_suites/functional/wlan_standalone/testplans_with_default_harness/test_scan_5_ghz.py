@@ -7,7 +7,7 @@ from utf.interfaces.wifi import WlanError
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, \
     RS9116CustomFeatureBitMap
-
+from utf import UtfDatabaseProperties
 
 def logger():
     return get_logger(__name__)
@@ -45,6 +45,29 @@ def logger():
 # configure the ping count for dut
 ping_count = 10
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5Ghz_US_NonDFS_C19400',
+                                                       test_case_id='C19400',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -116,6 +139,29 @@ def test_scan_5Ghz_US_NonDFS_C19400(wifi_dut, wifi_access_point,wifi_sniffer):
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5Ghz_EU_NonDFS_C19401',
+                                                       test_case_id='C19401',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -190,7 +236,28 @@ def test_scan_5Ghz_EU_NonDFS_C19401(wifi_dut, wifi_access_point,wifi_sniffer):
     logger().info(f"test completed in {t.duration} seconds")
 
 
-
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5Ghz_JP_NonDFS_C19402',
+                                                       test_case_id='C19402',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -269,6 +336,29 @@ def test_scan_5Ghz_JP_NonDFS_C19402(wifi_dut, wifi_access_point,wifi_sniffer):
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_bgscan_5G_dual_band_C19406',
+                                                       test_case_id='C19406',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -324,6 +414,29 @@ def test_scan_response_in_5Ghz_C19406(wifi_dut, wifi_access_point,wifi_sniffer):
 
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_all_chan_scan_in_5Ghz_by_chan_0_C19407',
+                                                       test_case_id='C19407',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -393,6 +506,29 @@ def test_all_chan_scan_in_5Ghz_by_chan_0_C19407(wifi_dut, wifi_access_point,wifi
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_all_chan_by_chan_in_bitmap_C19409',
+                                                       test_case_id='C19409',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -480,6 +616,29 @@ def test_scan_all_chan_by_chan_in_bitmap_C19409(wifi_dut, wifi_access_point,wifi
                         'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_all_channels_in_dual_band_C19408',
+                                                       test_case_id='C19408',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -553,6 +712,29 @@ def test_scan_all_channels_in_dual_band_C19408(wifi_dut, wifi_access_point,wifi_
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_all_chan_scan_by_all_chan_in_bitmap_dual_band_C19410',
+                                                       test_case_id='C19410',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -637,6 +819,29 @@ def test_all_chan_scan_by_all_chan_in_bitmap_dual_band_C19410(wifi_dut, wifi_acc
 
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_for_channels_36_40_48_149_157_161_165_C19411',
+                                                       test_case_id='C19411',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -725,6 +930,29 @@ def test_scan_for_channels_36_40_48_149_157_161_165_C19411(wifi_dut, wifi_access
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_in_dual_band_for_channels_6_and_36_C19412',
+                                                       test_case_id='C19412',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -804,6 +1032,28 @@ def test_scan_in_dual_band_for_channels_6_and_36_C19412(wifi_dut, wifi_access_po
                 'packet_count'], 'Unable to find probe request packet in sniffer'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5ghz_band_for_channels_36_40_149_161_165_C19413',
+                                                       test_case_id='C19413',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -890,6 +1140,29 @@ def test_scan_5ghz_band_for_channels_36_40_149_161_165_C19413(wifi_dut, wifi_acc
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_selective_channels_in_dual_bands_C19414',
+                                                       test_case_id='C19414',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -984,6 +1257,28 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
 
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_in_DFS_from_52_to_68_AND_100_to_140_C19415',
+                                                       test_case_id='C19415',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1091,6 +1386,28 @@ def test_scan_in_DFS_from_52_to_68_AND_100_to_140_C19415(wifi_dut, wifi_access_p
     logger().info(f"test completed in {t.duration} seconds")
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_for_selective_channels_in_5GHZ_C19416',
+                                                       test_case_id='C19416',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1176,7 +1493,28 @@ def test_scan_for_selective_channels_in_5GHZ_C19416(wifi_dut, wifi_access_point,
     logger().info(f"testcase completed in {t.duration} seconds")
 
 
-
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5Ghz_US_DFS_C61170',
+                                                       test_case_id='C61170',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1271,7 +1609,28 @@ def test_scan_5Ghz_US_DFS_C61170(wifi_dut, wifi_access_point,wifi_sniffer):
     logger().info(f"test completed in {t.duration} seconds")
 
 
-
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5Ghz_EU_DFS_C61171',
+                                                       test_case_id='C61171',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1364,6 +1723,29 @@ def test_scan_5Ghz_EU_DFS_C61171(wifi_dut, wifi_access_point,wifi_sniffer):
                 'packet_count'], 'Unable to find probe request packet in sniffer '
     logger().info(f"test completed in {t.duration} seconds")
 
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_scan_5Ghz_JP_DFS_C61172',
+                                                       test_case_id='C61172',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1460,6 +1842,28 @@ def test_scan_5Ghz_JP_DFS_C61172(wifi_dut, wifi_access_point,wifi_sniffer):
     logger().info(f"test completed in {t.duration} seconds")
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_regional_scan_dfs_world_mode_in_5GHZ_C61173',
+                                                       test_case_id='C61173',
+                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=

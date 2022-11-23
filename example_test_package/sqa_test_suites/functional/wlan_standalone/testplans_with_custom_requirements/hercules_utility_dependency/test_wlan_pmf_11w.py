@@ -592,6 +592,7 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
             assert send_response
     time.sleep(60)
     wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count']
@@ -686,6 +687,7 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
             assert send_response
     time.sleep(10)
     wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
 
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count']
@@ -775,9 +777,13 @@ def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut
         else:
             logger().info(f"Data transfer failed")
             assert send_response
+
+    wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
     wifi_dut.interfaces.wifi.leave()
+
     time.sleep(30)
     wifi_sniffer.interfaces.capture.stop_capture()
+
     result1 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count']
     result2 = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[

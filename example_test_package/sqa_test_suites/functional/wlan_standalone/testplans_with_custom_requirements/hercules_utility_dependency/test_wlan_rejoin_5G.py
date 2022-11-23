@@ -14,7 +14,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, 
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
-    RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
+    RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116CustomFeatureBitMap,
 )
 
 
@@ -111,6 +111,7 @@ class WifiPingThread(ThreadBase):
 
     def run(self):
         # Initiate ping from third party wifi-client to DUT
+        logger().info(f'\n\n Ping traffic is going on for 300 sec ........Please wait\n')
         ping(self.device_ip, 300)
 
 
@@ -120,12 +121,11 @@ class AccessPointApOnOff(ThreadBase):
         self.switch = switch
 
     def run(self):
-        logger().info('******* Turn on the AP radio **********')
-        self.switch.interfaces.pdu_switch.turn_on()
-        logger().info('******* Wait for 30 second after disable the AP radio **********')
-        time.sleep(150)
-        logger().info('******* Turn off the AP radio **********')
-        self.switch.interfaces.pdu_switch.turn_off()
+        logger().info('\n\n******* Turn on Access point **********\n')
+        self.switch.interfaces.pdu_switch.turn_on(delay=90)
+        logger().info('\n\n******* Wait for 90 second after turn on the AP radio **********\n')
+        logger().info('\n\n ******* Turn off the AP radio **********\n')
+        self.switch.interfaces.pdu_switch.turn_off(10)
 
 
 pytestmark = [
@@ -134,9 +134,6 @@ pytestmark = [
     pytest.mark.start_state("wifi_access_point", wifi="ap_enabled"),
     pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 ]
-
-pdu_state = False
-
 
 @pytest.mark.parametrize("channel_list",
                          [
@@ -150,6 +147,7 @@ pdu_state = False
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
@@ -157,14 +155,11 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
 
     '''Check rejoin is happening in all 5G channels or not'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
     for channel in channel_list:
@@ -183,10 +178,15 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
         logger().info(f"DUT MAC_Address: {mac_address}")
 
         logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
+
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
 
         packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -210,10 +210,8 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
         file_name = f'5g_uni_broad_prob_req_for_ch_{channel}'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-        logger().info('***** Turn off the AP radio *****')
-        if pdu_state is True:
-            switch.interfaces.pdu_switch.turn_off()
-            pdu_state = False
+        logger().info('******* Turn off Access point **********')
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         logger().info('***** Wait... Enable the time sleep for 150 second for rejoin process *****')
         time.sleep(150)
@@ -222,12 +220,9 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
                 'Unable to find Broadcast Probe request packet'
 
-            logger().info('***** Turn on the AP radio *****')
-            if pdu_state is False:
-                switch.interfaces.pdu_switch.turn_on()
-                pdu_state = True
+            logger().info('******* Turn on Access point **********')
+            switch.interfaces.pdu_switch.turn_on(delay=60)
 
-            time.sleep(60)
             file_name_rejoin = f'Rejoin_for_ch_{channel}'
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
             time.sleep(10)
@@ -251,11 +246,8 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
         except (AssertionError, IndexError, CLITransportException):
             assert False, 'Find exception'
         finally:
-            if pdu_state is False:
-                logger().info('\n\n Finally Turn on the AP ')
-                switch.interfaces.pdu_switch.turn_on()
-                pdu_state = True
-                time.sleep(60)
+            logger().info('******* Turn on Access point **********')
+            switch.interfaces.pdu_switch.turn_on(delay=60)
             wifi_dut.interfaces.wifi.leave()
 
 
@@ -276,6 +268,7 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.
             FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 |
                                RS9116ExtCustomFeatureBitMap.IEEE802_11W,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
@@ -286,14 +279,11 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
     send_bytes = 1000
     validation = True
     rejoin_value = 4
-    global pdu_state
 
     '''Verify rejoin functionality by changing connected AP security settings in 5Ghz'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     security_mode_startup = f'SecurityMode.{change_security_mode_startup_time}'
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     logger().info(f'\n\n ***** Security mode configured in {change_security_mode_startup_time} *****\n\n')
@@ -307,7 +297,8 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
         # time.sleep(10)
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
                                          join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                             | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired, timeout=25)
+                                                             | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired,
+                                         timeout=25)
     else:
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -319,10 +310,16 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+
 
     packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -375,12 +372,6 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    # logger().info('***** Turn on AP radio *****')
-    # if pdu_state is False:
-    #     switch.interfaces.pdu_switch.turn_on()
-    #     pdu_state = True
-    # time.sleep(60)
-
     try:
         packet_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['find_packet_num']
 
@@ -399,11 +390,8 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_dut.interfaces.wifi.leave()
 
 
@@ -417,6 +405,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 2,
     },
 )
@@ -424,13 +413,10 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
 
     '''Rejoin functionality when dual band selected'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=30)
 
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_access_point.interfaces.wifi.config['channel'] = channel_list
@@ -448,10 +434,16 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+
 
     packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -478,10 +470,8 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
     file_name = f'5g_broad_prob_req_for_ch_{channel_list}'
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
-    logger().info('\n\n***** Disable the AP radio *****')
-    if pdu_state is True:
-        switch.interfaces.pdu_switch.turn_off()
-        pdu_state = False
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_off(delay=10)
 
     logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n\n')
     time.sleep(150)
@@ -491,11 +481,9 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
-        logger().info('***** Turn on the AP radio *****')
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
         file_name_rejoin = f'Rejoin_for_ch_{channel_list}'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
 
@@ -521,11 +509,10 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config(
@@ -535,6 +522,7 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
         "band": 1,
     },
@@ -543,17 +531,14 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
 
     '''Verify rejoin functionality in DFS channels '''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(20)
+    time.sleep(90)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
@@ -564,11 +549,11 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
     wifi_sniffer.interfaces.capture.start_capture(capture_file='verify_beacon')
     time.sleep(5)
     wifi_sniffer.interfaces.capture.stop_capture()
-    packet_filter2 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
+    packet_filter1 = f'(radiotap.channel.freq == 5260) and (wlan.ta == {ap_bssid}) ' \
                      f'and wlan.fc.type_subtype == 0x0008'
 
     try:
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find Beacon packets'
 
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -581,13 +566,21 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
         logger().info(f"DUT MAC_Address: {mac_address}")
 
         logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
 
-        packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
+
+        # Broadcasr Probe request packet
+        packet_filter2 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == ' \
+                         f'{mac_address})'
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
         file_name = f'5g_uni_broad_prob_req'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
@@ -610,21 +603,17 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
                 assert send_response
 
         logger().info('***** Disable the AP radio *****')
-        if pdu_state is True:
-            switch.interfaces.pdu_switch.turn_off()
-            pdu_state = False
+        switch.interfaces.pdu_switch.turn_off(10)
 
         logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n')
         time.sleep(150)
         wifi_sniffer.interfaces.capture.stop_capture()
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
             'Unable to find Unicast Probe request packet'
 
-        logger().info('***** Enable the AP radio *****')
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=90)
+
         file_name_rejoin = f'5G_Rejoin_dfs'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
 
@@ -651,11 +640,9 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -667,6 +654,7 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
@@ -675,15 +663,12 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
 
     '''Verify Rejoin Functionality with different regions enabled in 5GHZ band with non DFS channels US, EU, JP & 
        world mode'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -705,10 +690,15 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -735,9 +725,7 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     logger().info('***** Disable the AP radio *****')
-    if pdu_state is True:
-        switch.interfaces.pdu_switch.turn_off()
-        pdu_state = False
+    switch.interfaces.pdu_switch.turn_off(delay=10)
 
     logger().info('***** Wait... Enable the time sleep for 150 second for rejoin process *****')
     time.sleep(150)
@@ -747,11 +735,9 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
-        logger().info('***** Turn on the AP radio *****')
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
         wifi_sniffer.interfaces.capture.start_capture(capture_file='5g_rejoin')
 
         if connect_status is False:
@@ -776,11 +762,9 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -791,6 +775,7 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
         "band": 1,
     },
@@ -800,16 +785,14 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
+
 
     '''	Verify Rejoin Functionality with different regions enabled in 5GHZ band with DFS channels US, EU, JP & world 
     mode'''
     '''Please note - ASUS AP does not support Japan region so I removed the japan region entry '''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -845,10 +828,15 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
         logger().info(f"DUT MAC_Address: {mac_address}")
 
         logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
+
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
 
         packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -875,20 +863,16 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
 
         logger().info('***** Disable the AP radio *****')
         logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n')
-        if pdu_state is True:
-            switch.interfaces.pdu_switch.turn_off()
-            pdu_state = False
-        time.sleep(150)
+
+        logger().info('******* Turn off Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=150)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find Unicast Probe request packet'
 
-        logger().info('***** Turn on the AP radio *****')
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
         file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
@@ -916,11 +900,8 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_dut.interfaces.wifi.leave()
 
 
@@ -933,6 +914,7 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 2,
     },
 )
@@ -941,14 +923,11 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
 
     '''Verify Rejoin Functionality with different regions enabled in Dual band US, EU, JP & world mode'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_access_point.interfaces.wifi.config['channel'] = 36
     time.sleep(20)
     # Set the region value in AP side
@@ -970,10 +949,15 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
                      f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
@@ -1002,9 +986,7 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
 
     logger().info('***** Disable the AP radio *****')
-    if pdu_state is True:
-        switch.interfaces.pdu_switch.turn_off()
-        pdu_state = False
+    switch.interfaces.pdu_switch.turn_off(delay=10)
 
     logger().info('***** Wait... Enable the time sleep for 150 second for rejoin process *****')
     time.sleep(150)
@@ -1016,11 +998,8 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
-        logger().info('***** Enable the AP radio *****')
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
         file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
@@ -1047,11 +1026,9 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.parametrize("set_region_ap, set_region_dut", [('US', 1), ('Europe', 2), ('Asia', 4)])
@@ -1062,6 +1039,7 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.DFSChannelPassiveScan | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower,
         "band": 2,
     },
@@ -1071,16 +1049,13 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
     validation = True
-    global pdu_state
 
     '''	Verify Rejoin Functionality with different regions enabled in Dual band with DFS channels US, EU, JP & world 
     mode'''
     '''Please note - ASUS AP does not support Japan region so I removed the japan region entry '''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_access_point.interfaces.wifi.config['channel'] = 52
     # Set the region value in AP side
     wifi_access_point.interfaces.wifi.config['region'] = set_region_ap
@@ -1116,10 +1091,15 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
         logger().info(f"DUT MAC_Address: {mac_address}")
 
         logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
+
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
 
         packet_filter1 = f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1144,10 +1124,8 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
                 logger().info(f"Data transfer failed")
                 assert send_response
 
-        logger().info('***** Disable the AP radio *****')
-        if pdu_state is True:
-            switch.interfaces.pdu_switch.turn_off()
-            pdu_state = False
+        logger().info('******* Turn off Access point **********')
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         logger().info('\n\n***** Wait... Enable the time sleep for 150 second for rejoin process *****\n')
         time.sleep(150)
@@ -1156,11 +1134,9 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find Unicast Probe request packet'
 
-        logger().info('***** Turn on the AP radio *****')
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
         file_name_rejoin = f'5G_Rejoin_{set_region_ap}'
         wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name_rejoin)
 
@@ -1187,11 +1163,9 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        wifi_sniffer.interfaces.capture.start_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         wifi_dut.interfaces.wifi.leave()
 
 
@@ -1202,22 +1176,20 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
 def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
-    global pdu_state
 
     '''Check rejoin is happening or not when select channel as 36,48,165'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=30)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
-    channel_dict = {0:36,3:48,24:165}
+    channel_dict = {0: 36, 3: 48, 24: 165}
     channel_bitmap_5 = 0
     scan_feature_extend = 0
 
@@ -1254,17 +1226,23 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
         logger().info(f"*****Enable Max PSP in DUT******")
-        wifi_dut.interfaces.wifi.power_save(2, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(
-            power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-        )
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
 
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
+
+        time.sleep(5)
         # validate broadcast probe request packet
-        packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                         f'and (wlan.da == {ap_bssid}))'
-        # validate NULL data frame with PM bit set to '1'
-        packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+        packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {dut_mac_address})'
+        # validate NULL data frame with PM bit set to '1'
+        packet_filter3 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                         f'and (wlan.da == {ap_bssid}))'
 
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1291,22 +1269,18 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
             wifi_sniffer.interfaces.capture.stop_capture()
 
             logger().info(f"\n\n*****Sniffer validation for rejoin broadcast probe request ******\n")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
                 'Unable to find Broadcast Probe request packet'
 
-            if pdu_state is False:
-                switch.interfaces.pdu_switch.turn_on()
-                pdu_state = True
-            time.sleep(60)
+            logger().info('******* Turn on Access point **********')
+            switch.interfaces.pdu_switch.turn_on(delay=60)
             wifi_dut.interfaces.wifi.leave()
         except (AssertionError, IndexError, CLITransportException):
             assert False, 'Find exception'
         finally:
-            if pdu_state is False:
-                logger().info('\n\n Finally Turn on the AP ')
-                switch.interfaces.pdu_switch.turn_on()
-                pdu_state = True
-                time.sleep(60)
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info('******* Turn on Access point **********')
+            switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config(
@@ -1316,20 +1290,18 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 1,
     },
 )
 def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
     channel = 36
-    global pdu_state
 
     '''Check rejoin is happening or not when select channel as 36'''
-    logger().info(f'PDU state = {pdu_state}')
-    if pdu_state is False:
-        switch.interfaces.pdu_switch.turn_on()
-        pdu_state = True
-        time.sleep(60)
+    logger().info('******* Turn on Access point **********')
+    switch.interfaces.pdu_switch.turn_on(delay=60)
+
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
     wifi_access_point.interfaces.wifi.config['channel'] = channel
     wifi_access_point.interfaces.wifi.start_ap()
@@ -1355,17 +1327,24 @@ def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_du
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
 
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+
+    time.sleep(5)
     # validate broadcast probe request packet
-    packet_filter1 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
-                     f'and (wlan.da == {ap_bssid}))'
-    # validate NULL data frame with PM bit set to '1'
-    packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                      f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {dut_mac_address})'
+    # validate NULL data frame with PM bit set to '1'
+
+    packet_filter3 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x0024) and (wlan.sa == {dut_mac_address}) ' \
+                     f'and (wlan.da == {ap_bssid}))'
 
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1392,20 +1371,16 @@ def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_du
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info(f"\n\n*****Sniffer validation for rejoin broadcast probe request ******\n")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
-        if pdu_state is False:
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-        time.sleep(60)
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_dut.interfaces.wifi.leave()
 
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
-        if pdu_state is False:
-            logger().info('\n\n Finally Turn on the AP ')
-            switch.interfaces.pdu_switch.turn_on()
-            pdu_state = True
-            time.sleep(60)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)

@@ -175,7 +175,11 @@ def run_tcp_traffic(wifi_dut, remote_socket, dut_ip):
                                                                  server_ip=server_ip, server_port=server_port)
             logger().info(f"Number of bytes sent by dut {bytes_sent}")
             break
-        except:
+        except Exception as err:
+            logger().info(f"Error is {err}")
+            error_code = "0x9"
+            if error_code in str(err):
+                raise err
             logger().info(f"Unable to send data packets from DUT...retry:{count + 1}")
             t1.join()
             time.sleep(30)
@@ -654,7 +658,7 @@ def test_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.config(
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
-          "channel": 11, }
+          "channel": 11}
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
@@ -662,6 +666,7 @@ def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, r
                                                                  channel, utf_constants, teardown):
     validation = True
     test_run_time = utf_constants.get('time_duration')
+    expected_error_count = 2
     ping_count = utf_constants.get('ping_count')
     logger().info("********** configuring the sniffer with access point channel **********")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -701,14 +706,20 @@ def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, r
     sw = Stopwatch()
     logger().info(
         f"***** Starting TCP Socket creation and data transfer for {round((test_run_time / 60), 2)} min *****")
+    error_count = 0
     while sw.elapsed_sec <= test_run_time:
         time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
         logger().info(f"Remaining time to complete test is '{time_left}' minutes")
         logger().info("***** Initiating UDP TX traffic from DUT *****")
-        run_tcp_traffic(wifi_dut, remote_socket, dut_ip)
-        time.sleep(30)
-        logger().info("\n\n")
-
+        try:
+            run_tcp_traffic(wifi_dut, remote_socket, dut_ip)
+            time.sleep(30)
+            logger().info("\n\n")
+        except Exception as err:
+            logger().error(f"********** {str(err)}********")
+            if "0x9" in str(err):
+                error_count += 1
+    logger().info(f"***** error count observed : {error_count}")
     logger().info("Stop sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -724,8 +735,11 @@ def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, r
                      f'(wlan.fc.type_subtype == 0x0000)  or ' \
                      f'(wlan.fc.type_subtype == 0x000b)'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        "packet_count"], "Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet in sniffer"
-
+        "packet_count"], "Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet in " \
+                         "sniffer "
+    assert error_count <= expected_error_count, f"While doing data transfer observed error code of 0x9 which aborts " \
+                                                f"TCP data transfer '{expected_error_count}'times in 30 minutes of " \
+                                                f"test run "
     logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
     wifi_client.interfaces.wifi.leave()
 

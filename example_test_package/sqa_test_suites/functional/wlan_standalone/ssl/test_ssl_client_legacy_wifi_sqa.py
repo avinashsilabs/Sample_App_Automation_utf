@@ -180,11 +180,11 @@ def packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_
     return result
 
 
-def pdu_switch(switch, logger):
+def pdu_switch(switch, sleep_time, logger):
     logger.info("Turning off the AP")
     switch.interfaces.pdu_switch.turn_off()
     logger.info("Successfully powered off AP")
-    time.sleep(10)
+    time.sleep(sleep_time)
     logger.info("Again turning on the AP")
     switch.interfaces.pdu_switch.turn_on()
 
@@ -357,10 +357,10 @@ def test_ssl_client_testcase_TC19109(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_client_connect_close_sequence_testcase133(
+def test_ssl_client_connect_close_sequence_testcase_C19130(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, repeat
 ):
-    capture_filename = "test_ssl_client_connect_close_sequence_testcase133"
+    capture_filename = "test_ssl_client_connect_close_sequence_testcase_C19130"
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {ap_bssid}')
@@ -959,15 +959,18 @@ def test_ssl_client_tx_rejoin_length_1460_20_C19134(
     buffer_length0 = ssl_server.interfaces.ssl.config['buffer_length']
     buffer_length1 = 20
     port1 = ssl_server.interfaces.ssl.config['device_port1']
-    pkt_count = 10000
+    pkt_count = 5000
 
     wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+
     # DUT connects to AP after join_ap API is executed
     rejoin_params = [40, 6, 40, 0]
     dut_mac_address = join_get_ip_ssl(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   rejoin_params=rejoin_params)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
     # Open ssl client socket in the DUT
@@ -993,13 +996,15 @@ def test_ssl_client_tx_rejoin_length_1460_20_C19134(
         bytes_sent = (pkt_count * buffer_length)
         socket_no = [1]
         pkt_rcv_timeout = 90
+        sleep_time = 10
+
         for socket in socket_no:
             ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout)
-        sleep_time = 10
+        sleep_time = 0
         thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
         thread.start()
         result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=1, data_len=buffer_length, time_interval=550,
-                                                                     number_of_pkts=pkt_count, timeout=600)
+                                                                     number_of_pkts=pkt_count, timeout=700)
         bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
         assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
                                              f"not matched on socket {1} "
@@ -1048,13 +1053,16 @@ def test_ssl_client_rx_while_rejoining_C19135(
     port1 = ssl_server.interfaces.ssl.config['device_port1']
 
     wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+
     # DUT connects to AP after join_ap API is executed
     rejoin_params = [20, 6, 40, 0]
     # rejoin_params = [40, 6, 40, 0]
     dut_mac_address = join_get_ip_ssl(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   rejoin_params=rejoin_params)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
     # Open ssl client socket in the DUT
@@ -1081,7 +1089,7 @@ def test_ssl_client_rx_while_rejoining_C19135(
         socket_no = [1]
         for socket in socket_no:
             ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=buffer_length)
-        sleep_time = 10
+        sleep_time = 0
         thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
         thread.start()
         buffer_length_rx, buffer_rx = wifi_dut.interfaces.wifi.receive_from(socket_id=sock, data_len=buffer_length,

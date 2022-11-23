@@ -6,6 +6,7 @@ import time
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
+from utf import UtfDatabaseProperties
 
 
 def logger():
@@ -30,7 +31,28 @@ def logger():
     Author: Benazeer K
 """
 
-
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_dns_server_ip_with_dhcp_hs_c19297',
+                                                       test_case_id='c19297',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -122,6 +144,28 @@ def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_p
         assert True
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_dns_server_ip_when_set_statically_c19298',
+                                                       test_case_id='c19298',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -206,6 +250,28 @@ def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_a
         assert True
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_dns_server_when_dns_feature_not_enabled_c19299',
+                                                       test_case_id='c19299',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])

@@ -329,8 +329,9 @@ class BleThread_Advertise(ThreadBase):
         logger().info("\n***********{}**********\n".format(bt_client_address))
         for i in range(0, 3):
             time.sleep(20)
-            if self.adv_int > 1000:
-                time.sleep(10)
+            if self.adv_int:
+                if self.adv_int > 1000:
+                    time.sleep(20)
             # See that we found our device
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
             logger().info("\n***scan results:{}**********\n".format(found_devices))

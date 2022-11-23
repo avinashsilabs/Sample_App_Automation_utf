@@ -229,8 +229,8 @@ class BleThread_Scan(ThreadBase):
         logger().info(f"Advertising the Remote BLE device")
         bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
             bt_dut_address=self.bt_dut_address,
-            hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                           "0x40 0x00 "  # Advertising_Interval_Max
+            hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min
+                           "0x20 0x00 "  # Advertising_Interval_Max
                            "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
                            "0x00 "  # Own_Address_Type
                            "0x00 "  # Peer_Address_Type

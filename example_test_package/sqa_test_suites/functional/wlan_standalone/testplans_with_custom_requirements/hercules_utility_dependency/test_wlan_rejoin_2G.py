@@ -2,6 +2,7 @@ import re
 import time
 from utf.utils.iperf.iperf_utils import ping
 from retry import retry
+from utf import UtfDatabaseProperties
 from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap,
                                             RS9116CustomFeatureBitMap,
                                             RS9116ConfigFeatureBitMap,
@@ -10,7 +11,7 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes
                                             RS9116ExtTCPIPFeatureBitMap,
                                             RS9116CertificateType,
                                             RS9116SecurityMode, RS9116PowerSaveProcedureTypes, RS9116JoinFeatureBitMap,
-                                            RS9116RegionCode,
+                                            RS9116RegionCode, SocketOptions, SocketType
                                             )
 import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
@@ -164,16 +165,17 @@ def wifi_join(wifi_dut, wifi_access_point, ping_count=10):
     assert enable_bt_ps, "Failed to enable bt power save"
     logger().info("*****Enabled ENH Max PSP in DUT******")
 
+    status = False
     for count in range(5):
         try:
             logger().info("pinging to dut after power-save.....")
             status = ping_to_dut(dut_ip, ping_count)
-            assert status == 1, "DUT not responding for ping request......"
             logger().info("ping to DUT is successful....")
             break
         except:
             logger().info(f"ping to dut is failed...retry count->{count + 1}")
             time.sleep(15)
+    assert status, "DUT not responding for ping request......"
     return dut_ip
 
 
@@ -243,6 +245,7 @@ def delta_btwn_last_beacon_and_first_probe_req(wifi_sniffer, dut_mac_address, ap
 @retry(Exception, delay=15, tries=5)
 def ping_to_dut(dut_ip, ping_count=10):
     status = ping(dut_ip, ping_count)
+    assert status, "Failed to ping to DUT"
     return status
 
 
@@ -263,6 +266,28 @@ def clean_up_method(wifi_dut, switch):
     logger().info("\n ----------------------------Cleaning UP of DUT is Completed ----------------------------")
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_c19721',
+                                                       test_case_id='c19721',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -314,14 +339,12 @@ def test_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_co
                 else:
                     logger().info(f"Data transfer failed")
                     assert send_response
+
         logger().info("Start sniffer capture")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_c19721')
 
         logger().info('***** Turn off Access point *****')
         switch.interfaces.pdu_switch.turn_off(delay=150)
-
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
 
         packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -372,6 +395,28 @@ def test_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_co
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_max_retry_failure_c19722',
+                                                       test_case_id='c19722',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -435,7 +480,7 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
         time.sleep(2)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
+        time.sleep(5)
 
         logger().info("Start sniffer capture")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -463,6 +508,7 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -512,6 +558,28 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_scan_all_channels_c19723',
+                                                       test_case_id='c19723',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -590,7 +658,8 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
             time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
-            time.sleep(20)
+            logger().info("Delaying for some time to get the capture")
+            time.sleep(100)
 
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
@@ -621,6 +690,28 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_selected_channel_c19725',
+                                                       test_case_id='c19725',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -710,10 +801,12 @@ def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_du
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
             time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
-            time.sleep(20)
+            logger().info("Delaying for some time to get the capture")
+            time.sleep(100)
 
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
+            time.sleep(3)
 
             packet_filter1 = f'(wlan_radio.channel == {channel} ' \
                              f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and ' \
@@ -740,6 +833,28 @@ def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_du
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_max_retry_failure_with_security_mode_change_c19729',
+                                                       test_case_id='c19729',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -770,6 +885,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file='test_rejoin_max_retry_failure_with_security_mode_change_c19729')
+        time.sleep(3)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=6, beacon_missedcount=40,
                                         first_time_retry=0)
 
@@ -803,10 +919,13 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
+        time.sleep(5)
+
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure_c19729')
+        time.sleep(3)
 
+        logger().info("Changing the PSK of AP")
         wifi_access_point.interfaces.wifi.start_ap(security=SecurityMode.WPA2Enterprise)
 
         """validate rejoin retry failure"""
@@ -828,6 +947,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'( wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff and (wlan.sa == {dut_mac_address}))'
         packet_count = int(
@@ -849,6 +969,28 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_disable_c19733',
+                                                       test_case_id='c19733',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -936,6 +1078,7 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -946,7 +1089,6 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
         assert packet_count == (rejoin_max_value - 1), message
         logger().info(
             f"Successfully matched Broadcast probe request packet count:'{packet_count}' to one less than rejoin_max_value:'{rejoin_max_value}'")
-
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
         for error_code in recovery_error_codes:
@@ -958,6 +1100,28 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_psk_change_c19734',
+                                                       test_case_id='c19734',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1013,8 +1177,9 @@ def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_
                 break
         assert rejoin_msg == 1, f"rejoin fail event not found even after AP is switched off for {end_time} seconds"
 
-        logger().info("Stop sniffer finally")
+        logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         try:
             packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
@@ -1033,7 +1198,28 @@ def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_
     finally:
         clean_up_method(wifi_dut, switch)
 
-
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_with_disconnect_c19735',
+                                                       test_case_id='c19735',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1092,12 +1278,14 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
 
         # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_disconnect')
+        time.sleep(3)
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off(delay=120)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -1125,6 +1313,28 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_beacon_miss_counter_c19736',
+                                                       test_case_id='c19736',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1189,6 +1399,7 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         logger().info(
             "Validating time difference between last beacon received and first unicast and broadcast probe request from DUT")
@@ -1210,6 +1421,7 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         logger().info(
             "Again validating time difference between last beacon received and first unicast and broadcast probe request from DUT")
@@ -1229,6 +1441,28 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_scan_interval_1sec_c19737',
+                                                       test_case_id='c19737',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1316,6 +1550,7 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
         wifi_dut.interfaces.wifi.associated = False
 
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -1357,6 +1592,28 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_infinite_retry_c19738',
+                                                       test_case_id='c19738',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1369,19 +1626,22 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tx_wait_time": 16000,
     }
 )
 def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     """Verify rejoin functionality by setting number of retries to infinite"""
     try:
         tcp_socket_obj = IopTcpIpSockets()
-        send_bytes = 1000
+        send_bytes = 1450
         validation = True
+        rejoin_value = 0
+        end_time_sec = 300
 
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
         logger().info("Joining into wifi_access_point")
         dut_ip = wifi_join(wifi_dut, wifi_access_point)
@@ -1391,23 +1651,50 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
         time.sleep(5)
+        logger().info(f"Setting the tcp retry count for the socket_id->{tcp_socket_id} to {SocketOptions.TCP_MAX_RETRY}"
+                      f" seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(tcp_socket_id, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
         connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+
+        '''Verify first scenario, data transfer should resume once it is reconnected to the AP '''
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_max_retry_validation')
+
         if connect_status is False:
             logger().info("Unable to connect with Server")
             assert connect_status
         else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
-        # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure')
+            sw = Stopwatch()
+            check_flag = False
+            while sw.elapsed_sec < end_time_sec:
+                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes, timeout=60)
+                logger().info(f'SEND-RESPONSE = {send_response}')
+                if b"-1" in send_response:
+                    try:
+                        wifi_dut.interfaces.wifi.wlan_get_status()
+                    except:
+                        wifi_dut.interfaces.wifi.wlan_get_socket_info()
+                        break
+                time.sleep(1)
+                while sw.elapsed_sec < 30:
+                    send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes, timeout=60)
+                    logger().info(f'SEND-RESPONSE = {send_response}')
+                    if b"-1" in send_response:
+                        try:
+                            wifi_dut.interfaces.wifi.wlan_get_status()
+                        except:
+                            wifi_dut.interfaces.wifi.wlan_get_socket_info()
+                            break
+                    time.sleep(1)
+
+                if check_flag is not True:
+                    logger().info('***** Turn off Access point *****')
+                    switch.interfaces.pdu_switch.turn_off(delay=20)
+
+                    logger().info('******* Turn on Access point **********')
+                    switch.interfaces.pdu_switch.turn_on(delay=60)
+                    check_flag = True
+        time.sleep(5)
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off()
@@ -1430,7 +1717,7 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
         assert rejoin_msg == 0, f"rejoin fail event found from DUT which is not expected as per test step"
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1451,6 +1738,28 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_with_bgscan_c19739',
+                                                       test_case_id='c19739',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1476,6 +1785,11 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
         if wifi_dut.interfaces.wifi.associated is True:
             wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        logger().info("Start sniffer capture")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_with_bgscan')
+        time.sleep(3)
+
         wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
         time.sleep(2)
@@ -1492,6 +1806,7 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -1499,7 +1814,7 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
             'Unable to find Broadcast Probe request packet'
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=100)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping_to_dut(dut_ip, ping_count)
@@ -1521,6 +1836,28 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_first_time_retry_c19740',
+                                                       test_case_id='c19740',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1557,6 +1894,7 @@ def test_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point, wifi_du
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         # Try to validate M2 packets 4 times (becz rejoin_max=4), after first de-authentication packet.
         packet_filter3 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and radiotap.timestamp.ts >= ' \
@@ -1581,6 +1919,28 @@ def test_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point, wifi_du
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_hidden_ssid_c19741',
+                                                       test_case_id='c19741',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1607,6 +1967,9 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
         if wifi_dut.interfaces.wifi.associated is True:
             wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_hidden_ssid')
+        time.sleep(3)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
         logger().info("Initiating wlan Scan from DUT")
@@ -1655,12 +2018,14 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
 
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
+            time.sleep(5)
 
             packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                              f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
                 'Unable to find Broadcast Probe request packet'
 
+            logger().info("Turn on Access Point")
             switch.interfaces.pdu_switch.turn_on(delay=100)
 
             # Initiate ping from third party wifi-client to DUT
@@ -1682,6 +2047,28 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_in_us_region_c19742',
+                                                       test_case_id='c19742',
+                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -1710,6 +2097,7 @@ def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, s
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_US_region')
+        time.sleep(3)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
         logger().info("Joining into wifi_access_point")
@@ -1721,8 +2109,10 @@ def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, s
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off(delay=150)
+
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -1752,6 +2142,28 @@ def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, s
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_in_eu_region_c19743',
+                                                       test_case_id='c19743',
+                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -1779,6 +2191,7 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
         switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_UK_region')
+        time.sleep(3)
         # Set the region value in AP side
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
@@ -1791,8 +2204,10 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off(delay=150)
+
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -1801,7 +2216,7 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
             'Unable to find Broadcast Probe request packet'
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=100)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping_to_dut(dut_ip, ping_count)
@@ -1823,6 +2238,28 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_in_japan_region_C19744',
+                                                       test_case_id='C19744',
+                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -1863,8 +2300,10 @@ def test_rejoin_in_japan_region_C19744(wifi_sniffer, wifi_access_point, wifi_dut
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off(delay=150)
+
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -1894,6 +2333,28 @@ def test_rejoin_in_japan_region_C19744(wifi_sniffer, wifi_access_point, wifi_dut
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_in_worldwide_region_c19745',
+                                                       test_case_id='c19745',
+                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -1923,7 +2384,7 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_in_worldwide_region')
-        time.sleep(2)
+        time.sleep(3)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
         time.sleep(2)
 
@@ -1939,6 +2400,7 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
         packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -1946,7 +2408,7 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
             'Unable to find Broadcast Probe request packet'
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=100)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping_to_dut(dut_ip, ping_count)
@@ -1968,8 +2430,29 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
         clean_up_method(wifi_dut, switch)
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_eap_tls_c19730',
+                                                       test_case_id='c19730',
+                                                       notes='test notes'))
 # EAP Connection in TLS mode
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1986,10 +2469,12 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
                               | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tx_wait_time": 16000,
         "band": 0,
         "eap_cert": "wifi-user.pem"
     },
 )
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.radius_server("static_radius_server")
@@ -2003,21 +2488,25 @@ def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut
         ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
         dut_ssid = wifi_access_point.interfaces.wifi.ssid
         dut_security = wifi_access_point.interfaces.wifi.security
-        send_bytes = 1000
-        validation = True
+        send_bytes = 1450
+        end_time = 300
+        rejoin_value = 0
 
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
         logger().info("Start sniffer capture")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Start sniffer capture")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_c19730')
 
         logger().info("scanning for AP")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
         logger().info(scan_results)
 
         logger().info("Setting Rejoin Parameters in DUT")
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
         logger().info("DUT Joining to AP in EAP-TLS mode")
         wifi_dut.interfaces.wifi.eap_method(eap_method="TLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"",
                                             private_key="\"\"")
@@ -2057,74 +2546,34 @@ def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
         time.sleep(5)
+        logger().info(f"Setting the tcp retry count for the socket_id->{tcp_socket_id} to {SocketOptions.TCP_MAX_RETRY}"
+                      f" seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(tcp_socket_id, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
         connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
         if connect_status is False:
             logger().info("Unable to connect with Server")
             assert connect_status
+
         else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
+            sw = Stopwatch()
+            check_flag = False
+            while sw.elapsed_sec < end_time:
+                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                logger().info(f'SEND-RESPONSE = {send_response}')
+                time.sleep(1)
+                while sw.elapsed_sec < 30:
+                    send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                    logger().info(f'SEND-RESPONSE = {send_response}')
 
-        logger().info("Start sniffer capture")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
-        time.sleep(5)
+                if check_flag is not True:
+                    logger().info('***** Turn off Access point *****')
+                    switch.interfaces.pdu_switch.turn_off(delay=20)
 
-        logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+                    logger().info('******* Turn on Access point **********')
+                    switch.interfaces.pdu_switch.turn_on(delay=60)
+                    check_flag = True
 
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-        packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                         f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-
-        status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-        if not status:
-            logger().info("Unable to find Unicast Probe request packet")
-
-        logger().info("Start sniffer capture")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
-        time.sleep(5)
-
-        logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=100)
-
-        # Initiate ping from third party wifi-client to DUT
-        status = ping_to_dut(dut_ip, ping_count)
-        assert status, "Failed to ping to DUT"
-
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
-
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(5)
-        status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-        if not status:
-            logger().info("Unable to find Broadcast Probe request packet")
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
         for error_code in recovery_error_codes:
@@ -2134,10 +2583,32 @@ def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut
         raise e
     finally:
         clean_up_method(wifi_dut, switch)
+        wifi_sniffer.interfaces.capture.stop_capture()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_eap_ttls_c19731',
+                                                       test_case_id='c19731',
+                                                       notes='test notes'))
 # EAP Connection in TTLS mode
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -2156,9 +2627,11 @@ def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut
                               | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tx_wait_time": 16000,
         "band": 0,
     }
 )
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
@@ -2172,8 +2645,9 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
         ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
         dut_ssid = wifi_access_point.interfaces.wifi.ssid
         dut_security = wifi_access_point.interfaces.wifi.security
-        send_bytes = 1000
-        validation = True
+        send_bytes = 1450
+        end_time = 300
+        rejoin_value = 0
 
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
@@ -2181,12 +2655,15 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
         wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
         logger().info("Start sniffer capture")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Start sniffer capture")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_c19731')
 
         logger().info("Scanning for AP")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
         logger().info(scan_results)
         logger().info("Setting Rejoin parameters in DUT")
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
         logger().info("DUT Joining to AP in EAP-TTLS mode")
         wifi_dut.interfaces.wifi.eap_method(eap_method="TTLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"",
                                             private_key="\"\"")
@@ -2226,76 +2703,34 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
         time.sleep(5)
+        logger().info(f"Setting the tcp retry count for the socket_id->{tcp_socket_id} to {SocketOptions.TCP_MAX_RETRY}"
+                      f" seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(tcp_socket_id, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+
         connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
         if connect_status is False:
             logger().info("Unable to connect with Server")
+
             assert connect_status
         else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
+            sw = Stopwatch()
+            check_flag = False
+            while sw.elapsed_sec < end_time:
+                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                logger().info(f'SEND-RESPONSE = {send_response}')
+                time.sleep(1)
+                while sw.elapsed_sec < 30:
+                    send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                    logger().info(f'SEND-RESPONSE = {send_response}')
 
-        # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
-        logger().info("Start sniffer capture")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
-        time.sleep(5)
+                if check_flag is not True:
+                    logger().info('***** Turn off Access point *****')
+                    switch.interfaces.pdu_switch.turn_off(delay=20)
 
-        logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
-
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-        packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                         f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-
-        status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-        if not status:
-            logger().info("Unable to find Unicast Probe request packet")
-
-        logger().info("Start sniffer capture")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
-        time.sleep(5)
-
-        logger().info("****** Access point is going to turn on  ******")
-        switch.interfaces.pdu_switch.turn_on(delay=100)
-
-        # Initiate ping from third party wifi-client to DUT
-        status = ping_to_dut(dut_ip, ping_count)
-        assert status, "Failed to ping to DUT"
-
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
-
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        time.sleep(5)
-        status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-        if not status:
-            logger().info("Unable to find Broadcast Probe request packet")
+                    logger().info('******* Turn on Access point **********')
+                    switch.interfaces.pdu_switch.turn_on(delay=60)
+                    check_flag = True
 
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
@@ -2306,10 +2741,32 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
         raise e
     finally:
         clean_up_method(wifi_dut, switch)
+        wifi_sniffer.interfaces.capture.stop_capture()
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_rejoin_eap_peap_c19732',
+                                                       test_case_id='c19732',
+                                                       notes='test notes'))
 # EAP Connection in PEAP mode
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -2324,9 +2781,11 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tx_wait_time": 16000,
         "band": 0,
     }
 )
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.radius_server("static_radius_server")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
@@ -2340,18 +2799,22 @@ def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_du
         ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
         dut_ssid = wifi_access_point.interfaces.wifi.ssid
         dut_security = wifi_access_point.interfaces.wifi.security
-        send_bytes = 1000
-        validation = True
+        send_bytes = 1450
+        end_time = 300
+        rejoin_value = 0
 
         wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Start sniffer capture")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_c19732')
 
         logger().info("scanning for AP")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=dut_ssid)
         logger().info(scan_results)
 
         logger().info("Setting Rejoin parameters in DUT")
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
 
         logger().info("DUT Joining to AP in EAP-PEAP mode")
         wifi_dut.interfaces.wifi.eap_method(eap_method="PEAP", eap_inner_method="\\\"auth=MSCHAPV2\\\"",
@@ -2392,73 +2855,33 @@ def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_du
 
         tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
         time.sleep(5)
+        logger().info(f"Setting the tcp retry count for the socket_id->{tcp_socket_id} to {SocketOptions.TCP_MAX_RETRY}"
+                      f" seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(tcp_socket_id, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
         connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
         if connect_status is False:
             logger().info("Unable to connect with Server")
             assert connect_status
         else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
-        # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+            sw = Stopwatch()
+            check_flag = False
+            while sw.elapsed_sec < end_time:
+                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                logger().info(f'SEND-RESPONSE = {send_response}')
+                time.sleep(1)
+                while sw.elapsed_sec < 30:
+                    send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                    logger().info(f'SEND-RESPONSE = {send_response}')
 
-        logger().info("Start sniffer capture")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_unicast_prob_req')
-        time.sleep(5)
-        logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
+                if check_flag is not True:
+                    logger().info('***** Turn off Access point *****')
+                    switch.interfaces.pdu_switch.turn_off(delay=20)
 
-        packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
-                         f'wlan.fc.type_subtype == 0x0004 and !(wlan.da == ff:ff:ff:ff:ff:ff)) and (wlan.sa == {mac_address})'
-        packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                         f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+                    logger().info('******* Turn on Access point **********')
+                    switch.interfaces.pdu_switch.turn_on(delay=60)
+                    check_flag = True
 
-        status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-        if not status:
-            logger().info("Unable to find Unicast Probe request packet")
-
-        logger().info("Start sniffer capture")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_broadcast_prob_req')
-        time.sleep(5)
-
-        logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=100)
-
-        # Initiate ping from third party wifi-client to DUT
-        status = ping_to_dut(dut_ip, ping_count)
-        assert status, "Failed to ping to DUT"
-
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-            logger().info(f'SEND-RESPONSE = {send_response}')
-            if 'status 10' in str(send_response):
-                result = send_response.decode().replace("\r\n", '').strip()
-                match = re.findall(r"\d+", result)
-                if int(match[1]) == send_bytes:
-                    logger().info(f"Send {send_bytes} bytes successfully")
-            else:
-                logger().info(f"Data transfer failed")
-                assert send_response
-
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        time.sleep(5)
-        status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
-        if not status:
-            logger().info("Unable to find Broadcast Probe request packet")
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
         for error_code in recovery_error_codes:
@@ -2468,3 +2891,4 @@ def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_du
         raise e
     finally:
         clean_up_method(wifi_dut, switch)
+        wifi_sniffer.interfaces.capture.stop_capture()

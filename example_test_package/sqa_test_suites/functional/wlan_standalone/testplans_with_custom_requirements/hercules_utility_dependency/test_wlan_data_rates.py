@@ -2,15 +2,19 @@ import re
 import time
 
 import pytest as pytest
+from utf import UtfDatabaseProperties
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116DataRate, RS9116RejoinParams
 
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
+    RS9116PowerSaveProcedureTypes,
 )
+from utf.utils.stopwatch import Stopwatch
 
 
 def logger():
@@ -35,7 +39,7 @@ def logger():
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Sniffer(NUC device)
-    
+
     Author: Vivek Verma
 """
 
@@ -76,7 +80,44 @@ class IopTcpIpSockets:
             logger().info(f"Socket connected with server in: {retry + 1} time")
         return connect_status
 
+    def verify_data_rates(self):
+        packet_filter = '    Data rate:'
+        data_rates_list = []
 
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+        for find_filter in line:
+            if packet_filter in find_filter:
+                data_rates = find_filter.split(':')[1].strip().split(' ')[0].split('.')[0]
+                data_rates_list.append(data_rates)
+
+        filter_file.close()
+        return max(set(data_rates_list), key=data_rates_list.count)
+
+
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mgmt_data_rates_C19622',
+                                                       test_case_id='C19622',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -87,7 +128,8 @@ class IopTcpIpSockets:
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -100,7 +142,7 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_mgmt_data_rates')
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    
+
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
@@ -108,10 +150,16 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+
     # Verification of Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets
     # datarates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -144,6 +192,29 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
         'Unable to find Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_mgmt_data_rates_rts_cts_C19623',
+                                                       test_case_id='C19623',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -155,7 +226,8 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -180,10 +252,15 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
     logger().info(f'AP BSSID = {ap_bssid}')
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     """Verification of Block ack req/res, RTS/CTS mgmt packets data rates"""
     # Block Ack req & RTS
@@ -227,6 +304,29 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
         assert True
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_for_data_packet_C19624',
+                                                       test_case_id='C19624',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -238,7 +338,8 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -259,10 +360,16 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+
     """Verification of Data/Null/Qos packets data rates"""
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                      f'or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or ' \
@@ -292,6 +399,29 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
         'Unable to find Data/Null/Qos packets data rates'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_for_b_mode_C19625',
+                                                       test_case_id='C19625',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -303,7 +433,8 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -327,10 +458,16 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
     logger().info(f"DUT ip address : {dut_ip}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
@@ -374,6 +511,29 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
         'data rates'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_for_g_mode_C19626',
+                                                       test_case_id='C19626',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -385,7 +545,8 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -409,10 +570,15 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     # Validating Data/Qos/Null packet for 54 Mbps data rates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -454,6 +620,29 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
         'data rates'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_for_n_mode_C19627',
+                                                       test_case_id='C19627',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -466,7 +655,8 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -490,10 +680,15 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     # Verify Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth frame
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -532,6 +727,29 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
         'Unable to find the MCS rate 4 in data packets'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_for_data_packets_12mbps_C19628',
+                                                       test_case_id='C19628',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -543,7 +761,8 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -567,10 +786,15 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
     # Verify Data/Null/Qos packets
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} or ' \
                      f'wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
@@ -602,6 +826,28 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
         'Unable to find any packet for Data/Null/Qos packets'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_for_rts_cts_12mbps_C19629',
+                                                       test_case_id='C19629',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -613,7 +859,8 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -640,10 +887,15 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     # Validating Block ACK Req, RTS for data rates 12 Mbps
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -675,6 +927,29 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
         'Unable to find packets for Block ACK Req, RTS for data rates 12 Mbps'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_data_rates_eapol_C19631',
+                                                       test_case_id='C19631',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -686,7 +961,8 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -705,10 +981,15 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f"DUT ip address : {dut_ip}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
 
     """Verification of EAPOL packets for 1 Mbps data rates"""
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan_rsna_eapol.keydes.key' \
@@ -739,6 +1020,29 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
         'Unable to find packets for EAPOL packets for 1 Mbps data rates'
 
 
+pytestmark = [
+    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
+                                                          feature_name='smoke_tests',
+                                                          test_creation_date='2022-06-06',
+                                                          module_name='wifi',
+                                                          test_description='module desc',
+                                                          iot_req_id='IOTREQ-1194',
+                                                          tool_chain='tool_chain',
+                                                          test_case_version_num=1,
+                                                          test_suite_name='test_suite_name',
+                                                          phy_name='phy_name',
+                                                          vendor_result='vendor_result',
+                                                          vendor_build='vendor_build',
+                                                          vendor_name='vendor_name',
+                                                          portal_watch='true',
+                                                          test_parametric_data='p1'
+                                                          ))
+
+]
+@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
+                                                       test_case_name='test_basic_data_rates_C19634',
+                                                       test_case_id='C19634',
+                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -749,7 +1053,8 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
-        "custom_features": RS9116CustomFeatureBitMap.Default
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
@@ -775,10 +1080,15 @@ def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
     logger().info(f"DUT MAC_Address: {mac_address}")
 
     logger().info(f"*****Enable Max PSP in DUT******")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    wifi_dut.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
     """Verification of Basic data rates for Association req & Probe response"""
     # Assoc req & Basic data rates
     packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
@@ -832,3 +1142,162 @@ def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
             f"Assoc req = {result1['packet_count']}, Probe res = {result2['packet_count']}, Probe req = {result3['packet_count']}")
         logger().info("Sniffer validation Passed")
         assert True
+
+@pytest.mark.skip
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+def test_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_access_point, wifi_dut, rf_attenuator, utf_constants):
+    tcp_socket_obj = IopTcpIpSockets()
+    send_bytes = 1000
+    validation = True
+    rejoin_value = 150
+    end_time = 180
+    packet_filter6 = '    Data Rate:'
+
+    '''Verify data rate functionality of STAUT using AUTORATE as data rate with AP OPEN mode'''
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_auto_rates')
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+    scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
+    logger().info(f'\n\n{scan_results[0]}\n')
+    my_str = str(scan_results[0])
+    current_rssi = abs(int(my_str.strip('()').split(' ')[5]))
+    logger().info(f'Current RSSI = {current_rssi}')
+    logger().info(f'Make RSSI -35 for ideal condition')
+    if current_rssi < 35:
+        set_rssi = 35 - current_rssi
+    elif current_rssi > 35:
+        set_rssi = current_rssi - 35
+    elif current_rssi == 35:
+        set_rssi = 35
+
+    logger().info(f'SET RSSI value = {set_rssi}')
+
+    # set data rate in Auto mode
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Auto)
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+    logger().info(f"*****Enable Max PSP in DUT******")
+    wifi_dut.interfaces.wifi.power_save(2, 1)
+    wifi_dut.interfaces.wifi.bt_power_save(
+        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
+    )
+
+    # Broadcast probe request packet
+    packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+                     f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == ' \
+                     f'{dut_mac_address})'
+
+    # Association req/response packet
+    packet_filter2 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.addr == {ap_bssid} ' \
+                     f'or wlan.fc.type_subtype == 0 or wlan.fc.type_subtype == 1 or wlan.addr == {dut_mac_address}'
+
+    # Power save mode with pmt bit 1
+    packet_filter3 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && ' \
+                     f'(wlan.da == {ap_bssid}))'
+
+    # Data packets from DUT side
+    packet_filter5 = f'wlan.ta == {dut_mac_address} && wlan.ra == {ap_bssid} && (wlan.fc.type_subtype == 0x0028)'
+    #
+    tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
+    connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
+    if connect_status is False:
+        logger().info("Unable to connect with Server")
+        assert connect_status
+    else:
+        send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+        logger().info(f'SEND-RESPONSE = {send_response}')
+        if 'status 10' in str(send_response):
+            result = send_response.decode().replace("\r\n", '').strip()
+            match = re.findall(r"\d+", result)
+            if int(match[1]) == send_bytes:
+                logger().info(f"Send {send_bytes} bytes successfully")
+        else:
+            logger().info(f"Data transfer failed")
+            assert send_response
+        time.sleep(2)
+
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find Broadcast probe request packet'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count'], \
+        'Unable to find Association req/response packets'
+
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+        'Unable to find Power save mode with pmt bit 1'
+
+    if connect_status is False:
+        logger().info("Unable to connect with Server")
+
+        assert connect_status
+    else:
+        sw = Stopwatch()
+        db_value = 10
+        att_channel = 1
+        attenuation_data_rates_dict = dict()
+
+        file_name = 'attenuation_' + str(db_value)
+        logger().info('***** Set the attenuator *****')
+        # ideal_rssi = set_rssi + current_rssi
+        # set_db_value = int(ideal_rssi) + db_value
+        ideal_rssi = 10
+        set_db_value = int(ideal_rssi) + db_value
+        logger().info(f'\n\n Set the ideal RSSI = {ideal_rssi}\n')
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, ideal_rssi)
+
+        while sw.elapsed_sec < end_time:
+
+            time.sleep(10)
+
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+            logger().info(f'current time = {sw.elapsed_sec}, end time = {end_time}')
+            send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+            logger().info(f'SEND-RESPONSE = {send_response}')
+
+            logger().info(f'\n\n set_db_value = {set_db_value}\n')
+            wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
+            time.sleep(10)
+            sw1 = Stopwatch()
+            while sw1.elapsed_sec < 30:
+                logger().info(f'\n\n current time = {sw.elapsed_sec}\n')
+                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
+                logger().info(f'\n\n SEND-RESPONSE = {send_response}\n')
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1=packet_filter5,
+                                                                      packet_filter2=packet_filter6)['packet_count'], \
+                'Unable to find data packets'
+
+            attenuation_data_rates_dict[eval('set_db_value')] = tcp_socket_obj.verify_data_rates()
+            logger().info(f'Attenuation and Data Rates value = {attenuation_data_rates_dict}')
+            set_db_value = set_db_value + 10
+
+        logger().info(f'Attenuation and Data Rates value = {attenuation_data_rates_dict}')
+        wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+        wifi_dut.interfaces.wifi.leave()

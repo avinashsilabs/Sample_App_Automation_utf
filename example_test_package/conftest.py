@@ -15,6 +15,7 @@ from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
+from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS9116
 
@@ -106,11 +107,13 @@ def pytest_collection_modifyitems(config, items):
     if config.option.collectonly:
         generate_base_test_definitions_yaml(os.getcwd(), items)
 
-
 @pytest.fixture()
 def rs_helper(request):
     yield RSHelperCommands.create_instance()
 
+@pytest.fixture()
+def rs_helper_ble(request):
+    yield RSHelperCommandsBle.create_instance()
 
 @pytest.fixture(autouse=True, scope='function')
 def reset_on_test_mode_change(request, wiseconnect_duts):

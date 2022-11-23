@@ -647,4 +647,3 @@ def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_p
             switch.interfaces.pdu_switch.turn_on()
             pdu_state = True
             time.sleep(60)
-

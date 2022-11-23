@@ -898,7 +898,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                firmware_file_path: '/app/manifest/RS9116W.2.7.0.28.rps'
+                firmware_file_path: '/app/manifest/RS9116W.2.7.0.37.rps'
 
     raspi_iperf:
         interfaces:

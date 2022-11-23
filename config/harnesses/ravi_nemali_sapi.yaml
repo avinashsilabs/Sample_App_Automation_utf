@@ -167,6 +167,35 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    per_wiseconnect:
+        type: 'efx32'
+        subtype: 'efx32'
+        commander_options: '--serialno 000440192804' #configure secondary EVK serial number
+        defaults:
+            rs_command_instance: 'rs_cmd_instance'
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440192804' # configure secondary evk serial number
+            power_meter:
+                type: 'power_meter'
+                src_dir: 'utf_wiseconnect'
+            rs_cmd_instance:
+                type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
+
     rs9116_stm32_sapi:
 
         # The 'type' attribute is optional.  If it is present, the device will be created via a
@@ -1051,9 +1080,9 @@ defaults:
 
     logic_analyzer: 'saleae_logic_analyzer'
 
-    power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
-
     ble_client: 'bt_wiseconnect'
+
+    power_msrmt_dut: 'per_wiseconnect' #2nd evk per related config's
 
     ble_clients:
         - 'secondary_raspi_ble_client'

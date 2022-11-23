@@ -48,10 +48,13 @@ class device_scan_result:
             if previously_found_devices != found_devices:
                 logger().info(f"BLE scan results :{found_devices}")
                 previously_found_devices = found_devices
-            if (
-            bt_dut_address in found_devices
-            and found_devices[bt_dut_address]
-            == adv_data):
+
+            if bt_dut_address in found_devices:
+                if adv_data:
+                  if found_devices[bt_dut_address] == adv_data:
+                    return True
+                  else:
+                    return False
                 return True
         return False
 
@@ -472,7 +475,7 @@ def test_ble_advertise_connectable_power_1065ms_C20569(wifi_dut, ble_client, pow
 
         logger().info("Advertising DUT ")
 
-        logger().info("keeping the DUT in undirected_connectable ADV mode"  )
+        logger().info("keeping the DUT in undirected_connectable ADV mode")
 
         wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data=ble_advertising_data,ble_adv_type=128,
                                                        ble_adv_int_min=1704, ble_adv_int_max=1704, ble_adv_channel_map=7)
@@ -533,12 +536,13 @@ def test_ble_advertise_connectable_power_1065ms_C20569(wifi_dut, ble_client, pow
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 def test_ble_advertise_connectable_power_20ms_C20568(wifi_dut, ble_client, power_meter):
+
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_advertise_connectable_power_{int(time.time())}.log",
     ) as bt_logs:
         ble_advertising_data = 'Silabsautomation'
-
+        ble_adv_type = 131
         logger().info("Initializing BLE")
         # Set up DUT for BLE advertising
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -549,7 +553,7 @@ def test_ble_advertise_connectable_power_20ms_C20568(wifi_dut, ble_client, power
 
         logger().info("keeping the DUT in undirected_connectable ADV mode")
 
-        wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data=ble_advertising_data,ble_adv_type=128,
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data=ble_advertising_data, ble_adv_type=ble_adv_type,
                                                        ble_adv_int_min=0x20, ble_adv_int_max=0x20, ble_adv_channel_map=7)
 
         logger().info("Enabling power save")
@@ -581,7 +585,7 @@ def test_ble_advertise_connectable_power_20ms_C20568(wifi_dut, ble_client, power
 
         logger().info(f"fetched data from bt mon {bt_logs.device_adv_type}")
 
-        assert "Connectable undirected - ADV_IND (0x00)" in bt_logs.device_adv_type,\
+        assert "Non connectable undirected - ADV_NONCONN_IND (0x03)" in bt_logs.device_adv_type,\
             "Expected adv type not found in bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
         time.sleep(10)
@@ -870,6 +874,79 @@ def test_ble_per_1mbps_tx_10dBm_C20579(bt_dut, bt_client, power_meter):
     power_obj = power_number_output(power_meter=power_meter)
     power_obj.get_power_value()
     time.sleep(3)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
+        "ble_features": RS9116BLEFeatureBitMap.Default,
+    },
+)
+def test_ble_connect_with_idlelink_200ms_C20570(wifi_dut, ble_client, power_meter):
+    device_found=None
+
+    logger().info("Initializing BLE")
+    # Set up DUT for BLE advertising
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    logger().info("configure bt local name....")
+    wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name='Silabsautomation')
+
+    logger().info("Advertising DUT ")
+
+    wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data="NULL", ble_adv_type=128, ble_adv_int_min=2056, ble_adv_int_max=2056,
+                                                   ble_adv_channel_map=7)
+    logger().info("Initiating power save")
+
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+
+    logger().info("Initiating scan from remote device")
+
+    # Begin Scanning for BLE devices
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=bt_dut_address
+    )
+    assert bt_client_address is not None,"Unable to fetch BD address from remote BLE device"
+    scan_result = device_scan_result()
+
+    for i in range(0, 3):
+        device_found = scan_result.check_for_devices_in_scanned_results(ble_client=ble_client,
+                                                                        bt_dut_address=bt_dut_address,
+                                                                        adv_data=None)
+        if device_found:
+            logger().info("DUT found in scan results")
+            break
+    assert device_found, "DUT not found in scan results"
+
+    logger().info("initiating stop scanning")
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    logger().info("Initiating connection from remote device")
+
+    ble_client.interfaces.bluetooth.connect(bt_dut_address, min_conn_interval=0xa0,
+                                                 max_conn_interval=0xa0, conn_latency=0,
+                                                 supervision_timeout=3200)
+    time.sleep(10)
+    logger().info("started power meter process")
+    power_obj = power_number_output(power_meter=power_meter)
+    power_obj.get_power_value()
+
+    logger().info("Initiating disconnection from remote device")
+    ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
+    time.sleep(5)
+
+
 
 
 

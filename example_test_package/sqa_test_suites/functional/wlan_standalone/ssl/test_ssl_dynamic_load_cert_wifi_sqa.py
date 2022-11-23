@@ -2058,6 +2058,12 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
 
+    logger.info("Get ble device state")
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
+    logger.info(" Connected to the BLE device ")
+
     services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(services) > 0, "Unable to fetch services"
     assert len(chars) > 0, "Unable to get characteristics list from ble_client"
@@ -2080,17 +2086,31 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     # read value - Notifications not enabled
     result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     assert result == data1
-    device_ip = join_ap(wifi_dut, wifi_access_point)
+    ping_count = 10
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    time.sleep(5)
+    logger.info(f"wifi_join status: {status}")
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+    ip_fail = 1
+    for count in range(3):
+        try:
+            wifi_dut.interfaces.wifi.start_ip(timeout=25)
+            ip_fail = 0
+            break
+        except:
+            time.sleep(5)
+            logger.info(f"Retry_count:{count}")
+    assert ip_fail == 0, "Getting IP failed"
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+    ping(device_ip, ping_count)
+
 
     load_cert1 = ["open", 0, port1, cert1]
     result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
     logger.info(f"Loading certificate{result_load_certificate}")
-
-    logger.info("Get ble device state")
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
-    logger.info(" Connected to the BLE device ")
 
     wifi_dut.interfaces.wifi.close_socket(0)
     wifi_dut.interfaces.wifi.leave()

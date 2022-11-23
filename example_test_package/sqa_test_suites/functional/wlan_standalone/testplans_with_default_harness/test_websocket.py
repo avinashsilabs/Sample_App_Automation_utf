@@ -350,18 +350,11 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
     time.sleep(0.1)
     assert ws_handler.client_connected
-    wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=137, message="!")
-    logger().info("opcode 137 sent")
-    iter_count = 30
-    data = []
+    iter_count = 10
     for i in range(iter_count):
-        data.append(text_generator(size=5))
-        data_final = "".join(data)
-        wifi_dut.interfaces.wifi.send_data_over_websocket(0, opcode=129, message=data_final)
-        logger().info("send_data_over_websocket")
-        logger().info("opcode 129 sent")
+        wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=137, message="!")
+        logger().info("opcode 137 sent")
         time.sleep(2)
-        assert ws_handler.message_received == data_final
 
     wifi_dut.interfaces.wifi.websocket_close(sock)
     logger().info("websocket_close")

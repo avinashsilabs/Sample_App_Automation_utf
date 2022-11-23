@@ -3,6 +3,7 @@ import datetime
 import pytest as pytest
 
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap,RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.time_measurer import TimeMeasurer
@@ -48,6 +49,7 @@ class wifiJoinThread(ThreadBase):
         # add the power save here the below enable WIFI power save in the DUT
         logger().info("enabling wifi power save")
         enable_wifi_ps = self. wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        enable_wifi_ps = self. wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, 'failed to enable'
 
         # check the WLan connection here
@@ -80,6 +82,7 @@ class  WifiJoin_WlanRadioOff_onDUT(ThreadBase):
         # add the power save here the below enable WIFI power save in the DUT
         logger().info("enabling wifi power save")
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        enable_wifi_ps = self.wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, 'failed to enable'
         time.sleep(10)
         # check the WLan connection here
@@ -136,6 +139,7 @@ class A2DP_DUT_stream(ThreadBase):
                 logger().info("enabling bt power save")
 
                 enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+                enable_bt_ps = self.wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
                 assert enable_bt_ps, 'failed to enable'
 
                 # Ping dut
@@ -306,6 +310,9 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
                     )
                 self.wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 time.sleep(10)
+                #powersave
+                enable_bt_ps = self.wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_bt_ps, "failed to enable bt power save"
                 # Ping dut
                 assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(
                     dest_addr=bt_dut_address
@@ -388,6 +395,7 @@ class HTTP_download(ThreadBase):
         #powersave
         logger().info("enabling wifi power save")
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        enable_wifi_ps = self.wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, 'failed to enable'
 
         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
@@ -426,10 +434,12 @@ class Https_download(ThreadBase):
 
         logger().info("Enabling wifi power save")
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        enable_wifi_ps = self.wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, "failed to enable wifi power save"
 
         logger().info("Enabling bt power save")
         enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        enable_bt_ps = self.wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_bt_ps, "failed to enable bt power save"
         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
 
@@ -453,6 +463,7 @@ class sta_connect_ping_disconnect_reconnect(ThreadBase):
         # add the power save here the below enable WIFI power save in the DUT
         logger().info("enabling wifi power save")
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+        enable_wifi_ps = self.wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, 'failed to enable'
         logger().info("starts the dhcp in dut")
         result = self.wifi_dut.interfaces.wifi.start_ip()
@@ -1423,4 +1434,3 @@ def  test_A2DP_WLan_radioONOFF_C34709(wifi_dut,bt_client,wifi_access_point):
     A2DP_join_obj.start()
     wlan_radio_on_off_obj.wait_for_exit()
     A2DP_join_obj.wait_for_exit()
-

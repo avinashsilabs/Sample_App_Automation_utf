@@ -1,6 +1,7 @@
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict, logger
+from retry import retry
 from utf.interfaces.cli import CLITransport, CLITransportException
 from utf.interfaces.wifi import WlanError
 import sys
@@ -48,6 +49,12 @@ pytestmark = [
 ]
 
 ping_count = 10
+
+@retry(Exception, delay=15, tries=3)
+def ping_to_dut(dut_ip, ping_count=10):
+    status = ping(dut_ip, ping_count)
+    assert status, "Failed to ping to DUT"
+    return status
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1153,9 +1160,19 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
                                                          | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
 
-    result = wifi_dut.interfaces.wifi.start_ip()
-    dut_ip = result.ip.decode()
-    logger().info(f"DUT ip address : {dut_ip}")
+    dut_ip = None
+    for count in range(1, 4):
+        try:
+            ip_config = wifi_dut.interfaces.wifi.start_ip()
+            assert isinstance(ip_config,
+                              wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
+            dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+            break
+        except:
+            logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            time.sleep(10)
+    assert dut_ip, "ip setting in DUT has failed"
+    logger().info(f'DUT ip {dut_ip}')
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
@@ -1212,10 +1229,30 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
         else:
             assert result
 
-        result = wifi_dut.interfaces.wifi.start_ip()
-        dut_ip = result.ip.decode()
-        logger().info(f"DUT ip address : {dut_ip}")
-        status = ping(dut_ip, 20)
+        dut_ip = None
+        for count in range(1, 4):
+            try:
+                ip_config = wifi_dut.interfaces.wifi.start_ip()
+                assert isinstance(ip_config,
+                                  wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
+                dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                break
+            except:
+                logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+                time.sleep(10)
+        assert dut_ip, "ip setting in DUT has failed"
+        logger().info(f'DUT ip {dut_ip}')
+        time.sleep(5)
+        for count in range(5):
+            try:
+                logger().info("pinging to dut after power-save.....")
+                status = ping_to_dut(dut_ip, ping_count)
+                logger().info("ping to DUT is successful....")
+                break
+            except:
+                logger().info(f"ping to dut is failed...retry count->{count + 1}")
+                time.sleep(15)
+        assert status, "DUT not responding for ping request......"
         if status == 1:
             logger().info('#### Ping successful ####')
         else:

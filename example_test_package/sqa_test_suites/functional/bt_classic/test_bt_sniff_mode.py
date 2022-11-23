@@ -103,7 +103,7 @@ def sniff_mode_in_slave_role(bt_dut, bt_client,sniff_max_interval, sniff_min_int
             time.sleep(60)
             logger().info("pinging dut...")
             ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-            assert ping_response, f"Failed to ping BT client to DUT"
+            assert ping_response, "Failed to ping BT client to DUT"
             logger().info(f"l2ping response {ping_response}")
 
             time.sleep(2)
@@ -122,14 +122,19 @@ def sniff_mode_in_slave_role(bt_dut, bt_client,sniff_max_interval, sniff_min_int
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
             enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
+            assert enable_wifiPowersave, "Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
             enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_btPowersave, f"Failed to enable BT in Powersave"
+            assert enable_btPowersave, "Failed to enable BT in Powersave"
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
+            logger().info("pinging dut...")
+            ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+            assert ping_response, "Failed to ping BT client to DUT"
+            logger().info(f"l2ping response {ping_response}")
+
             end_time = datetime.now() + timedelta(seconds=30)
             while datetime.now() < end_time:
                 logger().info("==========Send the data from dut to bt client=========")
@@ -177,7 +182,7 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
             # Ping DUT
             ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
             logger().info(f"l2ping response {ping_response}")
-            assert ping_response, f"Failed to ping BT client to DUT"
+            assert ping_response, "Failed to ping BT client to DUT"
 
             time.sleep(2)
             logger().info("Configuring sniff mode in dut")
@@ -195,14 +200,19 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
             enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
+            assert enable_wifiPowersave, "Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
             enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_btPowersave, f"Failed to enable BT in Powersave"
+            assert enable_btPowersave, "Failed to enable BT in Powersave"
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
+            logger().info("pinging dut...")
+            ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+            assert ping_response, "Failed to ping BT client to DUT"
+            logger().info(f"l2ping response {ping_response}")
+
             end_time = datetime.now() + timedelta(seconds=30)
             while datetime.now() < end_time:
                 # Send the data from dut to bt client
@@ -275,7 +285,7 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
             time.sleep(60)
             logger().info("pinging dut...")
             ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-            assert ping_response, f"Failed to ping BT client to DUT"
+            assert ping_response, "Failed to ping BT client to DUT"
             logger().info(f"l2ping response {ping_response}")
 
             time.sleep(2)
@@ -294,11 +304,11 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
             enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
+            assert enable_wifiPowersave, "Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
             enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_btPowersave, f"Failed to enable BT in Powersave"
+            assert enable_btPowersave, "Failed to enable BT in Powersave"
 
             logger().info("Configuring sniff exit mode in dut ")
             bt_dut.interfaces.bluetooth.set_bt_sniff_exit_mode(bt_client_address=bt_client_address)
@@ -310,6 +320,11 @@ def exit_sniff_mode_in_slave_role(bt_dut, bt_client, sniff_max_interval, sniff_m
 
             logger().info("Checking the BT Connection for 30 seconds")
             time.sleep(30)
+            logger().info("pinging dut...")
+            ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+            assert ping_response, "Failed to ping BT client to DUT"
+            logger().info(f"l2ping response {ping_response}")
+
             end_time = datetime.now() + timedelta(seconds=30)
             while datetime.now() < end_time:
                 logger().info("==========Send the data from dut to bt client=========")

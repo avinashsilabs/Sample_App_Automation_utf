@@ -765,12 +765,15 @@ devices:
         interfaces:
             aws_iot:
                 type: 'aws_iot.python_thing'
-                client_id: 'Python-Thing'
-                hostname: 'a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com'
+                client_id: 'Python-Thing_Raspi'
+                hostname: 'a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com'
                 port: 8883
-                private_key: 'python-thing-private.pem.key'
-                root_ca: 'AWS-IoT-root-CA.crt'
-                client_cert: 'python-thing-certificate.pem.crt'
+                #private_key: 'python-thing-private.pem.key'
+                #root_ca: 'AWS-IoT-root-CA.crt'
+                #client_cert: 'python-thing-certificate.pem.crt'
+                private_key: 'private-key.key'
+                root_ca: 'start_field.pem'
+                client_cert: 'client-certificate.crt'
 
 
     aws_s3_boto3:
@@ -1065,6 +1068,8 @@ defaults:
     wifi_client: 'raspi_wifi'
 
     aws_s3: 'aws_s3_boto3'
+
+    aws_iot_client: 'python_aws_iot_thing'
 
     wifi_clients:
         - 'raspi_wifi'

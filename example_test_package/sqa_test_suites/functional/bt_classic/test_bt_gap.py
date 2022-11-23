@@ -1,5 +1,5 @@
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116ConfigFeatureBitMap,RS9116AsyncEventType
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116ConfigFeatureBitMap,RS9116AsyncEventType,RS9116PowerSaveProcedureTypes
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf_wiseconnect.interfaces.cli.rs_commands_base import RSCommandsBase
@@ -419,7 +419,6 @@ def test_pair_unpair_multiple_C19965(bt_dut,bt_client):
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
     # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
@@ -448,7 +447,7 @@ def test_pair_unpair_multiple_C19965(bt_dut,bt_client):
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
     time.sleep(2)
     for i in range(10):
-        logger().info("checking the connection stability in iteration",i)
+        logger().info(f"checking the connection stability in iteration{i}")
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
             ) as bt_server_socket:
@@ -460,12 +459,8 @@ def test_pair_unpair_multiple_C19965(bt_dut,bt_client):
             logger().info("enabling power save after bt connection...")
             if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
                 bt_dut.interfaces.bluetooth.set_sleep_gpio(True)
-                bt_dut.interfaces.bluetooth.power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-                    )
-                bt_dut.interfaces.bluetooth.bt_power_save(
-                    power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-                )
+                bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+                bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
             time.sleep(30)
             logger().info("pinging dut...")
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
@@ -477,43 +472,46 @@ def test_pair_unpair_multiple_C19965(bt_dut,bt_client):
             logger().info("disconnecting bt host....")
             bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
             logger().info("closing bt socket...")
-            logger().info(f"clearing the link key to un pair")
-            unpair=bt_dut.interfaces.bluetooth.clear_linkkey(bt_client_address)
-            assert unpair is not "success","the unpairing is not successful"
             bt_server_socket.close()
 
 def test_Init_DeInit_functionality_of_the_DUT_C19966(bt_dut,bt_client):
-    bt_local_name = "rs911x_bt_spp"
-    bt_pin_code = "4321"
-    pin_code = bt_pin_code
-    logger().info("starting bt module in dut.....")
-    bt_dut.interfaces.bluetooth.bt_start()
-    # status = rsi_bt_get_local_device_address(local_dev_addr);
-    logger().info("fetching dut bd address....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    logger().info(f"running the test_Init_DeInit_functionality_of_the_DUT for 5 Iterations ")
+    for i in range(5):
+        bt_local_name = "rs911x_bt_spp"
+        bt_pin_code = "4321"
+        pin_code = bt_pin_code
+        logger().info("starting bt module in dut.....")
+        bt_dut.interfaces.bluetooth.bt_start()
+        # status = rsi_bt_get_local_device_address(local_dev_addr);
+        logger().info("fetching dut bd address....")
+        bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+        # status = rsi_bt_get_local_name( & local_name);
+        logger().info("configuring bt name....")
+        bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+        logger().info("configuring eir data....")
+        bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
+        logger().info("configuring dut in slave role...")
+        bt_dut.interfaces.bluetooth.bt_set_slave_role()
+        # status = rsi_bt_spp_init();
+        logger().info("setting ssp mode...")
+        bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
 
-    # status = rsi_bt_get_local_name( & local_name);
-    logger().info("configuring bt name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
-    logger().info("configuring eir data....")
-    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
-    logger().info("configuring dut in slave role...")
-    bt_dut.interfaces.bluetooth.bt_set_slave_role()
-    # status = rsi_bt_spp_init();
-    logger().info("setting ssp mode...")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+        logger().info("configuring pin code..")
+        bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
+        # status = rsi_bt_set_connectable();
+        logger().info("configuring dut in connectable mode...")
+        bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-    logger().info("configuring pin code..")
-    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
-    # status = rsi_bt_set_connectable();
-    logger().info("configuring dut in connectable mode...")
-    bt_dut.interfaces.bluetooth.bt_set_connectable()
-    # status = rsi_bt_spp_init();
-    # logger().info("initialising dut in spp....")
-    # bt_dut.interfaces.bluetooth.bt_init()
-    logger().info("De-initialising dut in spp....")
-    bt_dut.interfaces.bluetooth.bt_deinit()
+        logger().info(f"enabling the powersave")
+        bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        time.sleep(10)
+        logger().info(f"disabling powersave")
+        bt_dut.interfaces.bluetooth.power_save(0,0)
+        bt_dut.interfaces.bluetooth.bt_power_save(0,0)
+
+        logger().info("De-initialising dut in spp....")
+        bt_dut.interfaces.bluetooth.bt_deinit()
 
 def test_stop_discovery_functionality_C19967(bt_dut,bt_client):
     bt_local_name = "rs911x_bt_spp"
@@ -524,7 +522,6 @@ def test_stop_discovery_functionality_C19967(bt_dut,bt_client):
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
     # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
@@ -544,13 +541,18 @@ def test_stop_discovery_functionality_C19967(bt_dut,bt_client):
     bt_dut.interfaces.bluetooth.bt_set_connectable()
 
     logger().info("Stopping the dut in discoverable mode...")
-    bt_dut.interfaces.bluetooth.bt_stop_discoverable()
+    bt_stop_discoverable_status=bt_dut.interfaces.bluetooth.bt_stop_discoverable()
+    assert bt_stop_discoverable_status is not "success","bt_stop_discoverable is not issued successfuly"
+
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
     logger().info("scanning for the DUT on the RD side")
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
     assert found is not None,"the DUT is found on the Scan results even after stopping discoverable"
     if found is None:
         logger().error(f"Dut was not found during the scan by bt client. The test case will fail.")
-
 
 def test_discovery_functionality_C19968(bt_dut,bt_client):
     bt_local_name = "rs911x_bt_spp"
@@ -561,7 +563,6 @@ def test_discovery_functionality_C19968(bt_dut,bt_client):
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
     # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
@@ -581,7 +582,13 @@ def test_discovery_functionality_C19968(bt_dut,bt_client):
     bt_dut.interfaces.bluetooth.bt_set_connectable()
 
     logger().info("Stopping the dut in discoverable mode...")
-    bt_dut.interfaces.bluetooth.bt_start_discoverable()
+    bt_start_discoverable_status=bt_dut.interfaces.bluetooth.bt_start_discoverable()
+    assert bt_start_discoverable_status is not "success","bt_start_discoverable is not issued success"
+
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
     logger().info("scanning for the DUT on the RD side")
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
     assert found is not None,"the DUT is Not found on the Scan results even after stopping discoverable"
@@ -597,8 +604,6 @@ def test_stopdiscovery_after_Discovery_functionality_C19970(bt_dut,bt_client):
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
     # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
@@ -616,20 +621,29 @@ def test_stopdiscovery_after_Discovery_functionality_C19970(bt_dut,bt_client):
     logger().info("configuring dut in connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-    logger().info("Stopping the dut in discoverable mode...")
-    bt_dut.interfaces.bluetooth.bt_start_discoverable()
-    logger().info("scanning for the DUT on the RD side")
-    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
-    assert found is not None, "the DUT is Not found on the Scan results even after stopping discoverable"
-    if found is None:
-        logger().error(f"Dut was found during the scan by bt client. The test case will fail.")
-    logger().info("Stopping the dut in discoverable mode...")
-    bt_dut.interfaces.bluetooth.bt_stop_discoverable()
-    logger().info("scanning for the DUT on the RD side")
-    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
-    assert found is not None, "the DUT is found on the Scan results even after stopping discoverable"
-    if found is None:
-        logger().error(f"Dut was not found during the scan by bt client. The test case will fail.")
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+    for i in range(5):
+        logger().info(f"currently in the iteration: {i}")
+        logger().info("Starting the dut in discoverable mode...")
+        bt_start_discoverable_status=bt_dut.interfaces.bluetooth.bt_start_discoverable()
+        assert bt_start_discoverable_status is not "success","issuing bt_start_discoverable has failed"
+        logger().info("scanning for the DUT on the RD side")
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
+        assert found is not None, "the DUT is Not found on the Scan results even after stopping discoverable"
+        if found is None:
+            logger().error(f"Dut was found during the scan by bt client. The test case will fail.")
+        logger().info("Stopping the dut in discoverable mode...")
+        bt_stop_discoverable_status=bt_dut.interfaces.bluetooth.bt_stop_discoverable()
+        assert bt_stop_discoverable_status is not "success","issuing bt_stop_discoverable has failed"
+
+        logger().info("scanning for the DUT on the RD side")
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
+        assert found is not None, "the DUT is found on the Scan results even after stopping discoverable"
+        if found is None:
+            logger().error(f"Dut was not found during the scan by bt client. The test case will fail.")
 
 def test_bt_spp_dut_as_slave_wrong_pin_C19963(wifi_dut, bt_client):
     with TimeMeasurer() as t:
@@ -641,6 +655,10 @@ def test_bt_spp_dut_as_slave_wrong_pin_C19963(wifi_dut, bt_client):
         assert bt_client_address is not None
 
         bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+
+        logger().info(f"enabling the powersave")
+        wifi_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         with bt_client.interfaces.bluetooth.bt_socket(
             mode=BTSocketRole.Server
@@ -661,7 +679,7 @@ def test_bt_spp_dut_as_slave_wrong_pin_C19963(wifi_dut, bt_client):
                     recieved_authentication_failure = b"4E05" in event.event_data
                     break
         assert recieved_authentication_failure
-        wifi_dut.interfaces.wifi.leave()
+
     logger().info(f"Scan in {t.duration} seconds")
 
 def test_limited_discovery_functionality_C19969(bt_dut,bt_client):
@@ -673,8 +691,6 @@ def test_limited_discovery_functionality_C19969(bt_dut,bt_client):
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-
     # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
@@ -692,13 +708,29 @@ def test_limited_discovery_functionality_C19969(bt_dut,bt_client):
     logger().info("configuring dut in connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-    logger().info("Starting the dut in limited discoverable mode...")
-    bt_dut.interfaces.bluetooth.bt_start_limited_discoverable()
-    logger().info("scanning for the DUT on the RD side")
-    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
-    assert found is not None, "the DUT is Not found on the Scan results even after stopping discoverable"
-    if found is None:
-        logger().error(f"Dut was found during the scan by bt client. The test case will fail.")
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+    for i in range(5):
+        logger().info(f"the Iteration Count:{i}")
+        logger().info("Starting the dut in limited discoverable mode...")
+        bt_start_limited_discoverable_Status = bt_dut.interfaces.bluetooth.bt_start_limited_discoverable()
+        assert bt_start_limited_discoverable_Status is not "success", "issuing bt_start_limited_discoverable has failed"
+        logger().info("scanning for the DUT on the RD side")
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
+        assert found is not None, "DUT address is not found in Inquiry"
+        if found is None:
+            logger().error(f"Dut is not found during the scan by bt client during the time out of limited discoverable. The test case will fail.")
+
+        logger().info("waiting for the limited discoverable to timeout")
+        time.sleep(10)
+        logger().info("scanning after the timeout")
+        logger().info("scanning for the DUT on the RD side")
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20,retry_counts=6)
+        assert found is not None, "address is found in Inquiry"
+        if found:
+            logger().error(f"Dut was found during the scan by bt client after the timeout of limited discoverable. The test case will fail.")
 
 def test_get_discoverable_Status_after_limited_discovery_C19972(bt_dut,bt_client):
     bt_local_name = "rs911x_bt_spp"
@@ -709,7 +741,6 @@ def test_get_discoverable_Status_after_limited_discovery_C19972(bt_dut,bt_client
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
     # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
@@ -728,15 +759,26 @@ def test_get_discoverable_Status_after_limited_discovery_C19972(bt_dut,bt_client
     logger().info("configuring dut in connectable mode...")
     bt_dut.interfaces.bluetooth.bt_set_connectable()
 
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
     logger().info("Starting the dut in limited discoverable mode...")
-    bt_dut.interfaces.bluetooth.bt_start_limited_discoverable()
+    bt_start_limited_discoverable_status=bt_dut.interfaces.bluetooth.bt_start_limited_discoverable()
+    assert bt_start_limited_discoverable_status is not "success","bt_start_limited_discoverable is not issued succesfuly"
     logger().info("issuing get discoverable status")
-    bt_dut.interfaces.bluetooth.bt_get_discoverable_status()
+    get_discover_Status = bt_dut.interfaces.bluetooth.bt_get_discoverable_status()
+    assert get_discover_Status is not "success", "issuing bt_get_discoverable_status has failed"
+
     logger().info("scanning for the DUT on the RD side")
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
     assert found is not None, "the DUT is Not found on the Scan results even after stopping discoverable"
     if found is None:
         logger().error(f"Dut was found during the scan by bt client. The test case will fail.")
+    time.sleep(10)
+    logger().info("issuing get discoverable status after timeout")
+    get_discover_Status = bt_dut.interfaces.bluetooth.bt_get_discoverable_status()
+    assert get_discover_Status is not "success", "issuing bt_get_discoverable_status has failed"
 
 def test_get_discoverable_Status_after_stop_discovery_functionality_C19973(bt_dut,bt_client):
     bt_local_name = "rs911x_bt_spp"
@@ -747,9 +789,7 @@ def test_get_discoverable_Status_after_stop_discovery_functionality_C19973(bt_du
     # status = rsi_bt_get_local_device_address(local_dev_addr);
     logger().info("fetching dut bd address....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
-    # status = rsi_bt_get_local_name( & local_name);
     logger().info("configuring bt name....")
     bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
     logger().info("configuring eir data....")
@@ -770,9 +810,358 @@ def test_get_discoverable_Status_after_stop_discovery_functionality_C19973(bt_du
     bt_dut.interfaces.bluetooth.bt_stop_discoverable()
     logger().info("scanning for the DUT on the RD side")
     logger().info("issuing get discoverable status")
-    bt_dut.interfaces.bluetooth.bt_get_discoverable_status()
+    get_discover_Status = bt_dut.interfaces.bluetooth.bt_get_discoverable_status()
+    assert get_discover_Status is not "success", "issuing bt_get_discoverable_status has failed"
+
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
     found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
     assert found is not None,"the DUT is found on the Scan results even after stopping discoverable"
     if found is None:
         logger().error(f"Dut was not found during the scan by bt client. The test case will fail.")
 
+def test_get_discoverable_Status_after_discovery_C19971(bt_dut,bt_client):
+    bt_local_name = "rs911x_bt_spp"
+    bt_pin_code = "4321"
+    pin_code = bt_pin_code
+    logger().info("starting bt module in dut.....")
+    bt_dut.interfaces.bluetooth.bt_start()
+    logger().info("fetching dut bd address....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    logger().info("configuring bt name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+    logger().info("configuring eir data....")
+    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
+    logger().info("configuring dut in slave role...")
+    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+    logger().info("setting ssp mode...")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+
+    logger().info("configuring pin code..")
+    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
+    # status = rsi_bt_set_connectable();
+    logger().info("configuring dut in connectable mode...")
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
+    logger().info("Stopping the dut in discoverable mode...")
+    bt_dut.interfaces.bluetooth.bt_start_discoverable()
+    logger().info("issuing get discoverable status")
+    get_discover_Status=bt_dut.interfaces.bluetooth.bt_get_discoverable_status()
+    assert get_discover_Status is not "success","issuing bt_get_discoverable_status has failed"
+
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+    logger().info("scanning for the DUT on the RD side")
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
+    assert found is not None, "the DUT is Not found on the Scan results even after stopping discoverable"
+    if found is None:
+        logger().error(f"Dut was found during the scan by bt client. The test case will fail.")
+
+def test_connectivity_ofDUT_scanned_remote_BT_with_correctPIN_C19961(wifi_dut,bt_client):
+    with TimeMeasurer() as t:
+
+        logger().info(f"enabling the DUT as SLAVE with pin as 1234")
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp(bt_pin_code="1234")
+        assert bt_dut_address is not None
+
+        logger().info(f"enabling the REF as MASTER with pin as 1234")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code="1234")
+        assert bt_client_address is not None
+
+        logger().info(f"now scanning for devices on REF")
+        bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+
+        logger().info(f"enabling the powersave")
+        wifi_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        logger().info(f"creating the connection b/w DUT and the REF")
+        with bt_client.interfaces.bluetooth.bt_socket(
+                mode=BTSocketRole.Server
+        ) as bt_server_socket:
+            # SPP Connection
+            with wifi_dut.interfaces.wifi.run_bt_task():
+                bt_server_socket.create_server()
+                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                time.sleep(1)
+                logger().info(f"checking if the connection established successfully")
+                assert connected is not "success","the connection is not successful"
+            bt_server_socket.close()
+
+    logger().info(f"Scan in {t.duration} seconds")
+
+def test_RemoteNameRequest_functionality_of_DUT_on_SD_when_bt_ison_C19978(bt_dut,bt_client):
+    bt_local_name = "rs911x_bt_spp"
+    bt_pin_code = "4321"
+    pin_code = bt_pin_code
+
+    logger().info("starting bt module in dut.....")
+    bt_dut.interfaces.bluetooth.bt_start()
+
+    logger().info("fetching dut bd address....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+
+    logger().info("configuring bt name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+
+    logger().info("configuring eir data....")
+    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
+
+    logger().info("configuring dut in slave role...")
+    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+
+    logger().info("setting ssp mode...")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+
+    logger().info("configuring pin code..")
+    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
+
+    logger().info("configuring dut in connectable mode...")
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
+
+    logger().info(f"enabling the powersave")
+    bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+    bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+    logger().info("initialising dut in spp....")
+    bt_dut.interfaces.bluetooth.bt_spp_init()
+
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+    assert bt_client_address, "failed to fetch client bt address"
+
+    logger().info("initiating remote name request")
+    bt_dut.interfaces.bluetooth.bt_remote_name_request_async(bt_client_address)
+
+def test_Get_services_functionality_ofDUT_C19987(bt_dut,bt_client):
+    bt_local_name = "rs911x_bt_spp"
+    bt_pin_code = "4321"
+    pin_code = bt_pin_code
+
+    logger().info("starting bt module in dut.....")
+    bt_dut.interfaces.bluetooth.bt_start()
+
+    logger().info("fetching dut bd address....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+
+    logger().info("configuring bt name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+
+    logger().info("configuring eir data....")
+    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
+
+    logger().info("configuring dut in slave role...")
+    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+
+    logger().info("setting ssp mode...")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+
+    logger().info("configuring pin code..")
+    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
+
+    logger().info("configuring dut in connectable mode...")
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
+
+    logger().info("initialising dut in spp....")
+    bt_dut.interfaces.bluetooth.bt_spp_init()
+
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+    assert bt_client_address, "failed to fetch client bt address"
+
+    # Added set class to 400100 to avoid [Errno 112] Host is down issue
+    bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
+    time.sleep(2)
+
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, "dut is in inactive state..."
+
+    time.sleep(10)
+    with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Server
+    ) as bt_server_socket:
+        with bt_dut.interfaces.bluetooth.run_bt_task():
+            bt_server_socket.create_server()
+            connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
+            assert connected, "failed to connect to bt dut"
+
+        logger().info("enabling power save after bt connection...")
+        bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        status=bt_dut.interfaces.bluetooth.bt_get_services(bt_client_address)
+        assert status is not "success","bt_get_services is not sucessfully issued"
+
+        time.sleep(60)
+        logger().info("pinging dut...")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
+
+
+        logger().info("disconnecting bt host....")
+        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
+        logger().info("closing bt socket...")
+        bt_server_socket.close()
+
+def test_bt_search_service_async_on_DUT_C19988(bt_dut,bt_client):
+    bt_local_name = "rs911x_bt_spp"
+    bt_pin_code = "4321"
+    pin_code = bt_pin_code
+
+    logger().info("starting bt module in dut.....")
+    bt_dut.interfaces.bluetooth.bt_start()
+
+    logger().info("fetching dut bd address....")
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+
+    logger().info("configuring bt name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+
+    logger().info("configuring eir data....")
+    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
+
+    logger().info("configuring dut in slave role...")
+    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+
+    logger().info("setting ssp mode...")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+
+    logger().info("configuring pin code..")
+    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
+
+    logger().info("configuring dut in connectable mode...")
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
+
+    logger().info("initialising dut in spp....")
+    bt_dut.interfaces.bluetooth.bt_spp_init()
+
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+    assert bt_client_address, "failed to fetch client bt address"
+
+    # Added set class to 400100 to avoid [Errno 112] Host is down issue
+    bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
+    time.sleep(2)
+
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, "dut is in inactive state..."
+
+    time.sleep(10)
+    with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Server
+    ) as bt_server_socket:
+        with bt_dut.interfaces.bluetooth.run_bt_task():
+            bt_server_socket.create_server()
+            connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
+            assert connected, "failed to connect to bt dut"
+
+        logger().info("enabling power save after bt connection...")
+        bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        search_service_status=bt_dut.interfaces.bluetooth.bt_search_service_async(bt_client_address)
+        assert search_service_status is not "success","bt_search_service_async has failed"
+
+        time.sleep(60)
+        logger().info("pinging dut...")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address
+        )
+
+        logger().info("disconnecting bt host....")
+        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
+
+        logger().info("closing bt socket...")
+        bt_server_socket.close()
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "disassociated"])
+def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
+    with TimeMeasurer() as t:
+        logger().info(f"Configuring DUT as SPP Master")
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave_without_agent(bt_dut_address)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
+
+        logger().info(f' initialize bt inquiry ')
+        found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                                inquiry_type=1,
+                                                                inquiry_duration_ms=10000,
+                                                                timeout=22,
+                                                                retry_counts=3)
+        if not found:
+            assert found, "Dut unable to find the bt client device. The test case may fail"
+        logger().info(f' bt inquiry successful')
+
+        logger().info(f"enabling powersave")
+        wifi_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        wifi_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        logger().info(f"Starting Raspberry PI as BT Server")
+        bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
+        logger().info(f'Create SPP Connection')
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            bt_client_socket.create_client()
+            result = ThreadBase.call_functions_simultaneously(
+                [(wifi_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 60)])
+            assert result[1] is None, "Unable to find BT client socket connection"
+            logger().info(f'SPP Connection Completed')
+
+        # Close connection
+        logger().info(f"BT client socket connection closing")
+        bt_client_socket.close()
+        time.sleep(2)
+
+        received_authentication_failure = False
+        time.sleep(1)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
+                    received_authentication_failure = b"4E18" in event.event_data
+                    break
+        assert received_authentication_failure, "Unable to receive authentication error code 4E18"
+    logger().info(f"Scan in {t.duration} seconds")
+
+#BT Inquiry command cancel
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=[ 'init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
+@pytest.mark.skip()
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "disassociated"])
+def test_bt_coex_cancel_inquiry_C20103( wifi_dut, bt_client):
+
+    logger().info(f' initialize bt inquiry ')
+    wifi_dut.interfaces.wifi.bt_start()
+    wifi_dut.interfaces.wifi.bt_inquiry()
+    time.sleep(2)
+    logger().info(f'bt inquiry successful')
+    # Cancel BT inquiry
+    wifi_dut.interfaces.wifi.bt_cancel_inquiry()
+    logger().info("Inquiry cancelled")

@@ -412,6 +412,40 @@ def test_standby_assoc_novus_li10_c20554(wifi_access_point, wifi_dut, remote_soc
         logger().info("exited from socket thread")
         wifi_obj.wait_for_exit()
 
+@pytest.mark.firmware_app("generic_test_agent_wt_aws_wt_ram_ret")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "set_send_feature_frame": True,
+            "rf_type":1,
+            "features_enable":49,
+
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wlan_power_save_withou_ram_ret_C20555(wifi_dut, power_meter):
+
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(8, 0)
+
+    time.sleep(10)
+    logger().info("starting power meter capture")
+    power_obj = power_number_output(power_meter=power_meter)
+
+    power_obj.get_power_value()
+
+    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
+    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 
