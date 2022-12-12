@@ -126,7 +126,7 @@ def test_single_remote_wifi_client_as_server_dut_as_ap(wifi_dut, wifi_clients, r
         },
         1: {
             "type": 'shell.ssh_shell',
-            "remote": "10.207.16.93",
+            "remote": "192.168.14.3",
             "username": "pi",
             "password": "raspberry",
             "use_paramiko_expect": False
@@ -152,7 +152,7 @@ def test_single_remote_wifi_client_as_server_dut_as_ap(wifi_dut, wifi_clients, r
 @pytest.mark.config(
     "remote_socket_factory",
     socket={
-        "remote_ip_list": ['10.207.16.93']
+        "remote_ip_list": ['192.168.14.3']
     }
 )
 #https://jira.silabs.com/browse/UTF-1802
@@ -163,6 +163,7 @@ def test_multiple_remote_wifi_clients_as_server_dut_as_ap(wifi_dut, wifi_clients
     device_ip="169.0.0.0"
     wifi_dut.interfaces.wifi.start_ap()
 
+    socket_count = 2 #sockets to open on each wifi client
     client_ips = []
     client_sockets = []
     for index, wifi_client in enumerate(wifi_clients):
@@ -170,12 +171,13 @@ def test_multiple_remote_wifi_clients_as_server_dut_as_ap(wifi_dut, wifi_clients
         device_ip = wifi_client.interfaces.wifi.client_gateway_ip
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 5
-        client_ips.append(host_ip)
-        if index == 0:
-            client_socket = remote_socket_factory.interfaces.socket.create_socket(interface="wlan0")
-        else:
-            client_socket = remote_socket_factory.interfaces.socket.create_socket(interface="wlan0", remote_index=index-1)
-        client_sockets.append(client_socket)
+        for _ in range(0, socket_count):
+            client_ips.append(host_ip) # four hosts totally
+            if index == 0:
+                client_socket = remote_socket_factory.interfaces.socket.create_socket(interface="wlan0")
+            else:
+                client_socket = remote_socket_factory.interfaces.socket.create_socket(interface="wlan0", remote_index=index-1)
+            client_sockets.append(client_socket)
     logger.info(f"Client IP address list: {client_ips}")
 
     server_base_port = 5001
@@ -192,7 +194,9 @@ def test_multiple_remote_wifi_clients_as_server_dut_as_ap(wifi_dut, wifi_clients
         time.sleep(2)
         wifi_dut.interfaces.wifi.connect_to_server(sock, client_ip, server_port=server_port)
 
-    data_sent = [get_random_data(20), get_random_data(20)]
+    data_sent = []
+    for _ in client_sockets:
+        data_sent.append(get_random_data(20))
 
     results = ThreadBase.call_functions_simultaneously(
         [(wifi_dut.interfaces.wifi.send_data, dut_sockets[index], len(data), data) for index, data in enumerate(data_sent)]
