@@ -17,7 +17,7 @@ from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
-from utf_wiseconnect.devices.rs911x import RS9116
+from utf_wiseconnect.devices.rs911x import RS9116, RS9117
 
 last_loaded_custom_app_name = None
 last_test_mode = None
@@ -37,12 +37,14 @@ def wiseconnect_duts(request: pytest.FixtureRequest, harness) -> Generator[List[
         None
     """
     wiseconnect_duts = harness.create_devices_for_role(request.fixturename, request)
-    dut = wiseconnect_duts[0] if isinstance(wiseconnect_duts[0], RS9116) else wiseconnect_duts[1]
-    wifi_interface = dut.create_interface("wifi")
-    yield wiseconnect_duts
+    try:
+        dut = wiseconnect_duts[0] if (isinstance(wiseconnect_duts[0], RS9116) or
+                                      isinstance(wiseconnect_duts[0], RS9117)) else wiseconnect_duts[1]
+        dut.create_interface("wifi")
+    except Exception as e:
+        get_logger().error(f"Failed to create interface wifi while creating devices for wiseconnect_duts with - {e}")
 
-    # Clean up WiseConnect Devices
-    get_logger().info(f"Cleaning up WiseConnect DUTs")
+    yield wiseconnect_duts
 
 
 @pytest.fixture()
