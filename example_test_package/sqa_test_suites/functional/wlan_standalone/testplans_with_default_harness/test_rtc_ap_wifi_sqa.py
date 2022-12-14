@@ -3,33 +3,12 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116OperatingMode, RS9116ExtCustomFeatureBitMap, \
     RS9116ExtTCPIPFeatureBitMap
-from utf import UtfDatabaseProperties
+from utf.utils.iperf.iperf_utils import ping
+
 import time
 from utf.utils.time_measurer import TimeMeasurer
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_wifi_set_get_rtc_TC19051',
-                                                       test_case_id='TC19051',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -42,13 +21,15 @@ pytestmark = [
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": 0,
         "config_features": 0,
+        "security": 'Open',
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.parametrize("channel", [1])
+@pytest.mark.config("wifi_client", wifi={'interface': 'wlan0', "channel": 3, "ssid": "check_rtc", "security": 'Open'})
+@pytest.mark.parametrize("channel", [3])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 # The test case checks whether the RTC timer functionality is working fine in Access point mode
-def test_wifi_set_get_rtc_TC19051(wifi_sniffer, wifi_dut, wifi_client, channel, tolerance_threshold, logger):
+def test_wifi_set_get_rtc_TC19051(wifi_sniffer, wifi_dut, wifi_client, channel, tolerance_threshold, logger, utf_constants):
     set_seconds = 30
     set_minutes = 6
     set_hour = 10
@@ -57,6 +38,7 @@ def test_wifi_set_get_rtc_TC19051(wifi_sniffer, wifi_dut, wifi_client, channel, 
     set_year = 2021
     set_week_day = 3
     wait_time = 50
+    ping_count = utf_constants.get("ping_count")
     set_time_sec = ((set_minutes * 60) + set_seconds)
     firmware_version = wifi_dut.interfaces.wifi.version()
     logger.info(f"Firmware version-> {firmware_version}")
@@ -78,17 +60,18 @@ def test_wifi_set_get_rtc_TC19051(wifi_sniffer, wifi_dut, wifi_client, channel, 
         logger.info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_set_get_rtc_TC19051')
         logger.info(" ********** DUT works as a Ap mode ********")
-        wifi_dut.interfaces.wifi.start_ap(channel=channel)
+        wifi_dut.interfaces.wifi.start_ap(channel=channel, ssid="check_rtc")
         logger.info(
             "This command is added to terminate existing wlan0 if it is already there. If it is not there it will "
             "throw "
             "warning please ignore below error")
-        wifi_client.interfaces.wifi.join()
+        wifi_client.interfaces.wifi.join(ssid="check_rtc")
         device_ip = wifi_client.interfaces.wifi.client_gateway_ip
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger.info(f"Dut IP: {device_ip}")
         logger.info(f"Host IP: {host_ip}")
-        assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 0.1
+        status = ping(device_ip, ping_count)
+        assert status, f"unable to ping to the {device_ip}"
     ap_up_logger_time = t.duration
     time.sleep(wait_time)
 

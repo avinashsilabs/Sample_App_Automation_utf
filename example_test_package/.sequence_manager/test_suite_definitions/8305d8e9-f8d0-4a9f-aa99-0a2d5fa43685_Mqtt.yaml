@@ -1,0 +1,52 @@
+id: 8305d8e9-f8d0-4a9f-aa99-0a2d5fa43685
+name: Mqtt_deployed_05.dec.22
+description: ''
+test_cases:
+  - test_case_id: 39d5e601e8f33fa3a572781b558080eb0113c750
+    iterations: 1
+  - test_case_id: a38d84d96da5059c1c3bc2eb08201d7b7c7b80ff
+    iterations: 1
+  - test_case_id: 9c0346403e60626c073e339039b7a5bb94c0dd6a
+    iterations: 1
+  - test_case_id: eb7d98a63b95870c02994af44d9e2a554fcb7896
+    iterations: 1
+  - test_case_id: 44aed33e3926594a08ce01d9d04e503382a203ca
+    iterations: 1
+  - test_case_id: 63b59887753f6faafc588d3449e5fe6da2daf172
+    iterations: 1
+  - test_case_id: 396013d452ff38f1bac1e07f824800daf42d2f4f
+    iterations: 1
+  - test_case_id: b1c498bc7f534ed3a7e4ae4b1ec4bd9892727ea9
+    iterations: 1
+  - test_case_id: bede7b986658e62341b7c4998c501be3e8949dd9
+    iterations: 1
+  - test_case_id: 29865f6a415f9c3dd8123f133bd34353aff14d3a
+    iterations: 1
+  - test_case_id: 02633a278ae0602e7d5b0fde4e3cb68f8af1ad82
+    iterations: 1
+  - test_case_id: 3dc8de0a8184c79c935b679bccaf7b0f72eed841
+    iterations: 1
+  - test_case_id: 13a17211a441798f47b92b82b3338bb3ec6bae93
+    iterations: 1
+  - test_case_id: 12afdd23cda0c2bc17df7b973eb96ab9c9c0e5d3
+    iterations: 1
+  - test_case_id: 25d69f7a16597feb8e3e3d2b134a45c8eeffef6f
+    iterations: 1
+  - test_case_id: 1e11efacc829c37505e39fa8b01a085d9a1dbcbc
+    iterations: 1
+  - test_case_id: d9233f9b9f483091f9bedc7724193947c441b6bc
+    iterations: 1
+  - test_case_id: 6b9e83dbeac176b6366022e27372bb1ff49a3755
+    iterations: 1
+  - test_case_id: ef15924e8aed51d73191f2f90efb4af00f874e86
+    iterations: 1
+  - test_case_id: 62b513d407a933bd2ea77f4144a82892db825857
+    iterations: 1
+  - test_case_id: 61a00eff8b9549443cfb7279186c4cf2771523ec
+    iterations: 1
+  - test_case_id: 5803ddc02fd8e80a916190e0a5bdb29b32a29fc7
+    iterations: 1
+  - test_case_id: 59ebc71830c8323e912bd0eed33bf77c8fd0177f
+    iterations: 1
+  - test_case_id: 3125639fd6ca0bee799159646b7f580cef946293
+    iterations: 1

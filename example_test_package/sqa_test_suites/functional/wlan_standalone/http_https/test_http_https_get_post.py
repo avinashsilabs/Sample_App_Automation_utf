@@ -106,7 +106,7 @@ def join_get_ip(wifi_dut, wifi_access_point, ping_count):
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index_long_lf.html", "index_long_crlf.html"})
+@pytest.mark.parametrize("index_path", {"index_long_lf.html", "index_long_crlf.html", "6KB.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_with_different_lengths_C19213(http_server, http_client, wifi_dut, wifi_access_point, index_path,
@@ -1180,7 +1180,7 @@ def test_http_server_closes_conn_before_C19230(http_server, wifi_dut, wifi_sniff
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html"})
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html", "index.html", "6KB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_post_functionality_different_urls_C19226(http_server, wifi_dut, http_client, wifi_access_point,
                                                         index_path, utf_constants, wifi_sniffer):

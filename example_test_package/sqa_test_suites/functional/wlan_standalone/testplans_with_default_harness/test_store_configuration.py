@@ -3,7 +3,7 @@ from utf.utils.iperf.iperf_utils import ping, ping_qos
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116StoreConfiguration, RS9116Region, RS9116RegionCode, RS9116ModuleType, \
     RS9116CustomFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CertificateType, RS9116PowerSaveProcedureTypes,\
-    RS9116ExtCustomFeatureBitMap
+    RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap
 from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 import time
 from utf.utils.logger import get_logger
@@ -126,7 +126,7 @@ class wifi_join:
         self.wifi_access_point = wifi_access_point
 
     def join_to_ap(self):
-        for i in range(0, 2):
+        for i in range(0, 3):
             try:
                 self.wifi_dut.interfaces.wifi.associated = False
                 logger().info("joining to the AP")
@@ -134,7 +134,7 @@ class wifi_join:
                 self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point, timeout=40)
                 return True
             except Exception as e:
-                if "Error code: 0x2" in str(e):
+                if "0x2" in str(e):
                     logger().info(f"Error found:{str(e)} ->"
                                   f" device already in connected step need to disconnect before connect")
                     logger().info("Initiating disconnect for cleanup")
@@ -143,9 +143,7 @@ class wifi_join:
                     logger().info("cfg disable")
                     # Enables the store configuration
                     self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
-                    if i == 2:
-                        raise
-                else:
+                if i == 2:
                     raise
 
 class wifi_eap_join:

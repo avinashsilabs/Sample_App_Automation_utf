@@ -545,10 +545,10 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
 @pytest.mark.parametrize("cipher_list", [
     [Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
-def test_ssl_client_cipher_list_testcase_TC19133(
+def test_ssl_client_cipher_list_testcase_TC19132(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cipher_list
 ):
-    capture_filename = "test_ssl_client_cipher_list_testcase_TC19133"
+    capture_filename = "test_ssl_client_cipher_list_testcase_TC19132"
     pkt_count = 20000
     buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
     port1 = ssl_server.interfaces.ssl.config['device_port1']

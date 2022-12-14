@@ -1,0 +1,90 @@
+id: b6ca4a09-c608-4b82-b673-af73d6ab6989
+name: bt_classic_deployed_05.dec.22
+description: ''
+test_cases:
+  - test_case_id: 257f93140dc3676c5d646ae2aa17121941c0aa95
+    iterations: 1
+  - test_case_id: ce278334286a18b713a4ee5e3e380fb56654fb30
+    iterations: 1
+  - test_case_id: fd3e4f2fcf6cfbb111464460aef227b700d011ab
+    iterations: 1
+  - test_case_id: cf16e23da3a587ee6002c8116ede424924275327
+    iterations: 1
+  - test_case_id: 6e210fde26bdcc0a20ce187ba87df396ffe127df
+    iterations: 1
+  - test_case_id: fd2f2867506a6299aedb7e5bb890b65125b1ee08
+    iterations: 1
+  - test_case_id: a0db493874b9de6e210a86dce4c2ebd5c278fbf5
+    iterations: 1
+  - test_case_id: af32cd514a4b5c2cd099f3a7b9b540a753d4268a
+    iterations: 1
+  - test_case_id: c1f41e5b94a45fb7d4823e3a829038101ecfefc0
+    iterations: 1
+  - test_case_id: 9c8dfac98957841aa9cb7c7018d2cc95013a9b09
+    iterations: 1
+  - test_case_id: 28cc6c14edd48b7c3b6f82efc0ff3b832f8daa96
+    iterations: 1
+  - test_case_id: 76efd12a33781a26f62fd18e7cca16fb6e81463d
+    iterations: 1
+  - test_case_id: b8ac62c48800426238d81341d1a9d934db6584c5
+    iterations: 1
+  - test_case_id: 02416f69797b170ff0f1e43ff2ef5f44f03fd96b
+    iterations: 1
+  - test_case_id: 774943c33624096d62fd04afc521b79bc855106f
+    iterations: 1
+  - test_case_id: d78e055cec00891570b1368d07b6bde18891bbde
+    iterations: 1
+  - test_case_id: e4093fb8193ea2118a9d1771f73c35571ac8daf6
+    iterations: 1
+  - test_case_id: e919f43b9a04f1c0080b0427b815a97553bc9a69
+    iterations: 1
+  - test_case_id: dcac696ab0b66c05b1a3a923d307c60c83ef54e8
+    iterations: 1
+  - test_case_id: 0df37a9ae674b4ce00f7f94e6a3480cefdcf08d4
+    iterations: 1
+  - test_case_id: 176cfe6f9caef9bb7037fb63c6c1b23f23ae6036
+    iterations: 1
+  - test_case_id: 344301b6156c8e882024ab6c78359dea9c846a33
+    iterations: 1
+  - test_case_id: b2ebbad0a04d462ae9dbc2cd10b1f16d29228b45
+    iterations: 1
+  - test_case_id: 6e989fa4a022c8882ffcb886e279c6642368b93d
+    iterations: 1
+  - test_case_id: ee690cb3937a75b61e0eb1ef7745194d29133e76
+    iterations: 1
+  - test_case_id: 6e6bceb392b065e4ace732a40342ea37cb3b8765
+    iterations: 1
+  - test_case_id: 99725a79c17a81ff196194ebf787dbd6f161cc4a
+    iterations: 1
+  - test_case_id: be9486f023775e237028cc836bc76bf5c243e618
+    iterations: 1
+  - test_case_id: 64f64ea770fe7e8ba03f5c8720d4f901a468f6fc
+    iterations: 1
+  - test_case_id: 17a1cbaed81755f557b817254d79e80114bf6c57
+    iterations: 1
+  - test_case_id: 1f1d2cefb5486c4835c704a9a2d9f86d695ddc12
+    iterations: 1
+  - test_case_id: 2b694650e6c56b2fa6612875bb1daf054c7fdf44
+    iterations: 1
+  - test_case_id: 74ba6a686654a9ed98281026eab7ab7aa3d1cdab
+    iterations: 1
+  - test_case_id: 288708bf445eb5ad3109115bd527a183dd753d79
+    iterations: 1
+  - test_case_id: 85ff1e498f3986978a498fbe1ab725da4da26e6b
+    iterations: 1
+  - test_case_id: 04c8fe9e338f2316e8163bb968a93c8ee50f4923
+    iterations: 1
+  - test_case_id: 7beea4b83e5f551b75844df6b827e3289698182e
+    iterations: 1
+  - test_case_id: ffcc056206ece4d09e0ef16999e24a31e3ad73e0
+    iterations: 1
+  - test_case_id: 7c8460285c2fbcb757840c6658bee182d2f46894
+    iterations: 1
+  - test_case_id: bf03713d6277c69a6eb5d784c1997414723bf726
+    iterations: 1
+  - test_case_id: 7dd133da38e73a9779dcff03c5bf2dd9070264ac
+    iterations: 1
+  - test_case_id: 68dfdfafb1e57f889802e1b77c02dc6d069f578e
+    iterations: 1
+  - test_case_id: a16bc33b1a49c2f3decab91cbf07ff0d7b7ab679
+    iterations: 1

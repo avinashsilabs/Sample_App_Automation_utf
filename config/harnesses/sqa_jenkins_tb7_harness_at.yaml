@@ -158,9 +158,10 @@ devices:
                 # is a statically configured access point, assumed
                 # to be set up ahead of time with the settings below
                 type: 'wifi.access_points.static'
-                security: WPA
-                ssid: 'Codecom123'
-                passphrase: 'thisisatestnework'
+                security: Open
+                ssid: 'SUN'
+                passphrase: 'SUNEARTH'
+                channel: 1
 
 
     # This represents another access point configuration.
@@ -172,26 +173,44 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '192.168.0.1'
+                ip_address: '192.168.1.101'
                 web_ui_port: 80
-                admin_password: '12345678'
-                security: WPA
-                ssid: 'Dlink-10-207-18-11'
-                passphrase: 'thisisatestnetwo11'
+                admin_password: 'test12345'
+                security: WPA2
+                ssid: 'SUN'
+                passphrase: 'SUNEARTH'
                 supports: 'wifi_ap'
                 channel: 1
 
+
+#    # This represents another access point configuration.
+#    asus_rt_ax3000_ap:
+#        interfaces:
+#            wifi:
+#                type: 'wifi.access_points.asus_rt_ax3000'
+#                ip_address: '10.207.18.163'
+#                admin_password: 'Jenkins@123'
+#                ssh_port: 1022
+#                ssid: "TESTTEST-ASUS"
+#                protected_management_frame: 'Disable'
 
     # This represents another access point configuration.
     asus_rt_ax3000_ap:
         interfaces:
             wifi:
                 type: 'wifi.access_points.asus_rt_ax3000'
-                ip_address: '10.207.18.107'
+                ip_address: '10.207.18.163'
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
-                ssid: "TESTTEST-ASUS"
+                ssid: 'Jenkins-TB7'
+                passphrase: '12345678'
                 protected_management_frame: 'Disable'
+                skip_assertion_failure: True
+                # radius server configuration
+                radius_ip: "10.207.18.171"
+                radius_port: "1812"
+                channel: 11
+                supports: 'wifi_ap'
 
     switched_ap:
         interfaces:
@@ -235,7 +254,6 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
-                region: 'Japan'
 
     raspi_wifi_ssh:
         interfaces:
@@ -409,7 +427,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'wlan0'
+                interface: 'eth0'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
@@ -426,7 +444,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'wlan0'
+                interface: 'eth0'
                 # (optional) username and password credentials for authentication to the broker
                 #            Defaults to authentication disabled
                 username: 'testuser'
@@ -445,7 +463,7 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'wlan0'
+                interface: 'eth0'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: true
@@ -518,25 +536,10 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
 
-    raspi_lighttpd_tls_dut:
-        interfaces:
-            linux_shell:
-                type: 'shell.shell'
-            http:
-                type: 'http.server.http_linux'
-                shell: 'linux_shell'
-                port: 443
-                interface: 'eth0'
-                tls_enabled: true
-                tls_key: 'server-key.pem'
-                tls_certificate: 'server-cert.pem'
-                tls_ca_chain: 'ca-cert.pem'
-
     raspi_http_client:
         interfaces:
             http:
                 type: 'http.client.requests_client'
-                disable_certificate_verification: True
 
     static_http:
         interfaces:
@@ -547,11 +550,41 @@ devices:
                 tls_enabled: true
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+#    airpcap:
+#        interfaces:
+#            local_shell:
+#                type: 'shell.ssh_shell'
+#                remote: 192.168.0.0  # configure sniffer NUC IP
+#                username: test       # sniffer NUC username
+#                password: test123    # sniffer NUC password
+#                use_paramiko_expect: false
+#            capture:
+#                default:
+#                type: 'wifi.sniffer.tshark'
+#                shell: 'local_shell'
+#                interface: 'wlp0s20f3'
+
+
+#    airpcap:
+#        interfaces:
+#            local_shell:
+#                type: 'shell.ssh_shell'
+#                remote: 10.207.18.171
+#                username: test
+#                # username: root
+#                password: test123
+#                use_paramiko_expect: false
+#            capture:
+#                default:
+#                type: 'wifi.sniffer.tshark'
+#                shell: 'local_shell'
+#                interface: 'wlp0s20f3'
+
     airpcap:
         interfaces:
             local_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.110  # configure sniffer NUC IP
+                remote: 10.207.18.171  # configure sniffer NUC IP
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
@@ -576,38 +609,8 @@ devices:
     keysight_power_analyzer:
         interfaces:
             power_meter:
-                type: 'power_meter.keysight_N6705'
+                type: 'power_meter.keysight_N6705_power_analyzer'
                 instrument_lan_ip_address: '10.207.19.83'
-
-    keysight_power_analyzer_winRM:
-        interfaces:
-            windows_shell: 
-                type: 'rem_mgmt.win_rm'
-                host_ip: '10.207.19.185'
-                username: 'test'
-                password: 'Silabs@20202'
-            power_meter:
-                type: 'power_meter.keysight_benchvue'
-                shell: 'windows_shell'
-                utf_power_meter_keysight_benchvue_cli_path: "C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe"
-                power_meter_visa_address: "USB0::0x2A8D::0x0F02::MY56005840::0::INSTR"
-                window_state: "Show"
-                data_log_file_name: "UTF_DataLog_"
-                data_log_file_name_is_append_date:  true
-                data_log_file_name_is_append_time: true 
-                data_log_folder_location: "C:\\UTF\\data_log"
-                data_log_start: "DatalogRunButton"
-                data_log_stop: "AfterElapsedTime"
-                data_log_stop_after_elapsed_time: 180
-                data_log_source: "Software"
-                data_log_sample_period: "Custom"
-                data_log_custom_sample_period: 1.00309
-                data_log_is_avg_enabled: true
-                data_log_is_min_enabled: true
-                data_log_is_max_enabled: true 
-                data_log_is_peak_to_peak_enabled: true
-                data_log_is_charge_c_enabled: true
-                data_log_is_charge_ah_enabled: true
 
     python_aws_iot_thing:
         interfaces:
@@ -697,7 +700,6 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_iperf:
         interfaces:
@@ -705,18 +707,6 @@ devices:
                 type: 'iperf'
                 # to zip all the iperf output files
                 zip_results: 'Y'
-
-    
-    secondary_raspi_iperf:
-        interfaces:
-            net_perf:
-                type: 'iperf.static_iperf'
-                # to zip all the iperf output files
-                zip_results: 'Y'
-                # host machine details where iperf is configuered
-                host_ip: "192.168.0.152"
-                host_username: "pi"
-                host_password: "raspberry"
 
     static_iperf:
         interfaces:
@@ -729,31 +719,19 @@ devices:
                 host_username: "test"
                 host_password: "test123"
 
-    raspi_ftp_server:
+    paho_client:
         interfaces:
-            vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
-                tls_enabled: false
-
-    raspi_ftp_server_tls:
-        interfaces:
-            vsftpd_ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
-                tls_enabled: true
-                tls_key: 'mosquitto-utf.silabs.com.key.pem'
-                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
-
-    raspi_ftp_client:
-        interfaces:
-            ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
-                tls_enabled: false
-    
-    raspi_ftp_client_tls:
-        interfaces:
-            ftplib_ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
-                tls_enabled: true
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.client.paho_client'
+                disable_certificate_verification: true
+            wifi:
+                # The 'wifi.access_points.linux' device type represents a linux-based access point
+                # running hostapd to create a soft AP
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                interface: 'eth0'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -802,7 +780,7 @@ defaults:
 
     mqtt_server: 'raspi_mosquitto'
 
-    mqtt_client: 'raspi_wifi'
+    mqtt_client: 'paho_client'
 
     http_server: 'raspi_lighttpd'
 
@@ -814,6 +792,8 @@ defaults:
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
     multicast_client: 'raspi_multicast'
+
+    switch: 'switched_ap'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -841,16 +821,12 @@ defaults:
 
     net_perf_client: 'raspi_iperf'
 
-    secondary_net_perf_client : 'secondary_raspi_iperf'
-
     wiseconnect_ui:
         mode: 'Client'
         band: '2.4'
         ssid: 'TESTTESTTEST'
         passphrase: 'thisisatestnetwork'
         channel: 1
-        capture_screenshot: false
-        screenshot_file_name: 'wiseconnect_screenshot'
 
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
@@ -865,24 +841,14 @@ defaults:
         db_value: 2
         att_enable: true
 
-    sntp_server:
-        server_ip: '10.8.4.11'
-
     aws_iot:
-        hostname: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
+        hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
         port: 8883
         client_id: "Python-Thing"
         thing_name: "Python-Thing"
-        certfile: "client-certificate.crt"
-        keyfile: "private-key.key"
-        cafile: "start_field.pem"
-
-    aws_server:
-        domain_name: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
-
-    ftp_server: 'raspi_ftp_server'
-
-    ftp_client: 'raspi_ftp_client'
+        certfile: "python-thing-certificate.pem.crt"
+        keyfile: "python-thing-private.pem.key"
+        cafile: "AWS-IoT-root-CA.crt"
 
     net_perf:
         server_options:
@@ -922,7 +888,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
+#        device: 'reset'
         wifi: 'init'
 
 end_state:

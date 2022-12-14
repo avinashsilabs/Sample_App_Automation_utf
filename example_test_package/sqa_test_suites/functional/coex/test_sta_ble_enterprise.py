@@ -184,13 +184,19 @@ class WifiThread(ThreadBase):
         with lock:
             ej = eap_join(self.wifi_dut, self.wifi_access_point, self.eap_type)
             ej.join_ap()
-            # Get IP through DHCP
-            result = self.wifi_dut.interfaces.wifi.start_ip()
-            assert isinstance(
-                result, self.wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
-            self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
+            for count in range(1, 4):
+                try:
+                    ip_config = self.wifi_dut.interfaces.wifi.start_ip()
+                    assert isinstance(ip_config,
+                                      self.wifi_dut.interfaces.wifi.IPConfig), \
+                        f"Failed to get IP address. Result = {ip_config}"
+                    self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                    break
+                except Exception as e:
+                    logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}"
+                                  f"\n Exception: {e}")
+                    time.sleep(10)
+            assert self.device_ip, "ip setting in DUT has failed"
             logger().info(f"Found device ip :{self.device_ip}")
 
             logger().info("Getting the DUT mac")
@@ -216,11 +222,16 @@ class WifiThread(ThreadBase):
         else:
             ping_count = 100
 
-        logger().info("Initiating ping")
-        # Initiate ping from third party wifi-client to DUT
-        status = ping(self.device_ip, ping_count)
-        assert status, "DUT is not responding to ping request from third party device"
-        logger().info("ping is successful")
+        for count in range(3):
+            try:
+                logger().info("pinging to dut after power-save.....")
+                status = ping(self.device_ip, ping_count)
+                assert status == 1, "DUT not responding for ping request......"
+                logger().info("ping to DUT is successful....")
+                break
+            except Exception as e:
+                logger().info(f"ping to dut is failed...retry count->{count + 1}"
+                              f"\n Exception: {e}")
 
         if self.net_perf_client:
             self.run_traffic()

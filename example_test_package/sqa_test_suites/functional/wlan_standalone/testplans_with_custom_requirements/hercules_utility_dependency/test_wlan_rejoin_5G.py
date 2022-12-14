@@ -1189,7 +1189,7 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
     switch.interfaces.pdu_switch.turn_on(delay=30)
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
-    channel_dict = {0: 36, 3: 48, 24: 165}
+    channel_dict = {0: 36, 3: 48, 23: 165}
     channel_bitmap_5 = 0
     scan_feature_extend = 0
 
@@ -1297,6 +1297,12 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
 def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
     channel = 36
+    channel_dict = {0: 36}
+    channel_bitmap_5 = 0
+    scan_feature_extend = 0
+
+    for count in channel_dict:
+        channel_bitmap_5 += 1 << count
 
     '''Check rejoin is happening or not when select channel as 36'''
     logger().info('******* Turn on Access point **********')
@@ -1312,7 +1318,12 @@ def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_du
     wifi_sniffer.interfaces.capture.start_capture(capture_file='c43022_basic_association')
 
     logger().info("Initiating channel scan only in 36 ...")
-    wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None)
+    scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                                   scan_bitmap_2_4=0,
+                                                                   scan_bitmap_5=channel_bitmap_5,
+                                                                   scan_feature=scan_feature_extend)
+    logger().info(scan_results)
+    assert len(scan_results) >= 1, "failed to scan...."
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point, channel=channel)
 

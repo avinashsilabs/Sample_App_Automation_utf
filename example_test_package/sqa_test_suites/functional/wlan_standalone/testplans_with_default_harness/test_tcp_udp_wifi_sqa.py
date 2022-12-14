@@ -929,7 +929,7 @@ def test_5tcp_5udp_dut_server_socket_c19353(wifi_access_point, wifi_dut, remote_
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
@@ -1411,12 +1411,8 @@ def test_wifi_socket_limit_c19359(wifi_sniffer, wifi_dut, wifi_access_point, rem
     # Association req & response packet & EAPOL 4 way handshake packet
     packet_filter2 = f'(wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1) || ' \
                      f'(wlan_rsna_eapol.keydes.key_info.key_type == 1) && (wlan.addr == {ap_bssid} || wlan.addr == {dut_mac_address})'
-    # DHCP discovery, offer, request, ack packet
-    packet_filter3 = f'((((dhcp.option.dhcp == 5)) || (dhcp.option.dhcp == 1)) || ' \
-                     f'(dhcp.option.dhcp == 2)) || (dhcp.option.dhcp == 3) && (wlan.addr == {ap_bssid} || ' \
-                     f'wlan.addr == {dut_mac_address})'
     # Verify PS-Poll & PWMGT bit
-    packet_filter4 = f'wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1 && (wlan.addr == {ap_bssid} || ' \
+    packet_filter3 = f'wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1 && (wlan.addr == {ap_bssid} || ' \
                      f'wlan.addr == {dut_mac_address})'
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
@@ -1424,9 +1420,15 @@ def test_wifi_socket_limit_c19359(wifi_sniffer, wifi_dut, wifi_access_point, rem
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
         'packet_count'], 'Unable to find Association req & response packet & EAPOL 4 way handshake packet'
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count'], 'Unable to find DHCP discovery, offer, request, ack packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'Unable to find Verify PS-Poll & PWMGT bit'
+
+    logger().info("passing passphrase and ssid to decrypt dhcp packets")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"decryption_key : {decryption_key}")
+    logger().info("DHCP decryption is in progress...this may take some time")
+    dhcp_list = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
+    logger().info(f"dhcp_list : {dhcp_list}")
+    assert dhcp_list, "DHCP packets not found"
 
     wifi_dut.interfaces.wifi.leave()
 

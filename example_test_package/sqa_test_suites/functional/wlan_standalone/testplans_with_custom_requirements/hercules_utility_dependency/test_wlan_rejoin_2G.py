@@ -46,7 +46,7 @@ def logger():
         8. verify rejoin & probe request packet with different security, different channels, and for different region(US/UK/Japan) 
         9. Note: TC - 19724 is duplicate, TC-19726/27/28 current UTF implementation doesn't support.
            TC-19730/31/32 are depend on TLS/TTLS/PEAP
-        
+
 
     setup requirement:
         1. DUT(RS9116)
@@ -54,7 +54,7 @@ def logger():
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. Sniffer(NUC device)
-        
+
       Modified by CG team : Considered PDU fix [UTF-1660 and updated the code]
 """
 
@@ -284,6 +284,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_c19721',
                                                        test_case_id='c19721',
@@ -413,6 +415,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_max_retry_failure_c19722',
                                                        test_case_id='c19722',
@@ -576,6 +580,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_scan_all_channels_c19723',
                                                        test_case_id='c19723',
@@ -708,6 +714,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_selected_channel_c19725',
                                                        test_case_id='c19725',
@@ -851,6 +859,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_max_retry_failure_with_security_mode_change_c19729',
                                                        test_case_id='c19729',
@@ -987,6 +997,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_disable_c19733',
                                                        test_case_id='c19733',
@@ -1118,6 +1130,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_psk_change_c19734',
                                                        test_case_id='c19734',
@@ -1198,6 +1212,7 @@ def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_
     finally:
         clean_up_method(wifi_dut, switch)
 
+
 pytestmark = [
     pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
                                                           feature_name='smoke_tests',
@@ -1216,6 +1231,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_with_disconnect_c19735',
                                                        test_case_id='c19735',
@@ -1246,7 +1263,7 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=1)
         time.sleep(2)
 
         logger().info("Joining into wifi_access_point")
@@ -1300,7 +1317,7 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_dut.interfaces.wifi.init()
         logger().info("Joining into wifi_access_point")
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_join(wifi_dut, wifi_access_point)
         time.sleep(3)
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
@@ -1331,6 +1348,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_beacon_miss_counter_c19736',
                                                        test_case_id='c19736',
@@ -1459,6 +1478,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_scan_interval_1sec_c19737',
                                                        test_case_id='c19737',
@@ -1610,6 +1631,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_infinite_retry_c19738',
                                                        test_case_id='c19738',
@@ -1641,7 +1664,8 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
 
         logger().info("Joining into wifi_access_point")
         dut_ip = wifi_join(wifi_dut, wifi_access_point)
@@ -1756,6 +1780,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_with_bgscan_c19739',
                                                        test_case_id='c19739',
@@ -1854,6 +1880,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_first_time_retry_c19740',
                                                        test_case_id='c19740',
@@ -1937,6 +1965,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_hidden_ssid_c19741',
                                                        test_case_id='c19741',
@@ -1956,7 +1986,7 @@ pytestmark = [
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'Hidden_SSID_C19741', "broadcast_ssid": False})
-def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
+def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, switch, rs_helper, utf_constants):
     """Rejoin functionality with hidden mode AP"""
     try:
         ping_count = utf_constants.get("ping_count")
@@ -1973,69 +2003,41 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
         logger().info("Initiating wlan Scan from DUT")
-        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(scan_results)
         assert len(scan_results) > 0, "scan_list not found"
 
         logger().info("Joining into wifi_access_point")
-        join_error = False
-        with pytest.raises(WlanError) as exc_info:
-            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-        logger().info(f"Join_Error: {exc_info.value}")
-        if exc_info.value.error_code:
-            join_error = True
-            logger().info("Received Access Point not found Error...Hence passing the testcase as per the test step")
+        dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+        logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
 
-        if not join_error:
-            ip_config = wifi_dut.interfaces.wifi.start_ip()
-            assert isinstance(ip_config,
-                              wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
-            dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            assert dut_ip, "ip setting in DUT has failed"
-            logger().info(f'DUT ip {dut_ip}')
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
 
-            logger().info("Initiating wlan power save on DUT")
-            enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_wifi_ps, "Failed to enable wifi power save"
+        time.sleep(2)
+        logger().info("\n\n ****** Access point is going to turn off  ******")
+        switch.interfaces.pdu_switch.turn_off(delay=150)
 
-            logger().info("Initiating bt power save on DUT")
-            enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_bt_ps, "Failed to enable bt power save"
-            logger().info("*****Enabled ENH Max PSP in DUT******")
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
-            # Initiate ping from third party wifi-client to DUT
-            status = ping_to_dut(dut_ip, ping_count)
-            assert status, "Failed to ping to DUT"
+        packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+                         f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
 
-            mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-            logger().info(f"DUT MAC_Address: {mac_address}")
+        logger().info("Turn on Access Point")
+        switch.interfaces.pdu_switch.turn_on(delay=100)
 
-            time.sleep(2)
-            logger().info("\n\n ****** Access point is going to turn off  ******")
-            switch.interfaces.pdu_switch.turn_off(delay=150)
+        # Initiate ping from third party wifi-client to DUT
+        status = ping_to_dut(dut_ip, ping_count)
+        assert status, "Failed to ping to DUT"
 
-            logger().info("Stop sniffer capture")
-            wifi_sniffer.interfaces.capture.stop_capture()
-            time.sleep(5)
-
-            packet_filter1 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
-                             f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
-                'Unable to find Broadcast Probe request packet'
-
-            logger().info("Turn on Access Point")
-            switch.interfaces.pdu_switch.turn_on(delay=100)
-
-            # Initiate ping from third party wifi-client to DUT
-            status = ping_to_dut(dut_ip, ping_count)
-            assert status, "Failed to ping to DUT"
-
-            if status:
-                logger().info('**** DUT successfully re-associated after AP power turn on ****')
-            else:
-                logger().info('DUT failed to reconnect after AP power turn on ')
+        if status:
+            logger().info('**** DUT successfully re-associated after AP power turn on ****')
+        else:
+            logger().info('DUT failed to reconnect after AP power turn on ')
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
         for error_code in recovery_error_codes:
@@ -2065,6 +2067,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_in_us_region_c19742',
                                                        test_case_id='c19742',
@@ -2160,6 +2164,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_in_eu_region_c19743',
                                                        test_case_id='c19743',
@@ -2256,6 +2262,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_in_japan_region_C19744',
                                                        test_case_id='C19744',
@@ -2351,6 +2359,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_in_worldwide_region_c19745',
                                                        test_case_id='c19745',
@@ -2448,6 +2458,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_eap_tls_c19730',
                                                        test_case_id='c19730',
@@ -2477,7 +2489,6 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.radius_server("static_radius_server")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, utf_constants):
     """Verify rejoin functionality in EAP-TLS mode"""
@@ -2604,6 +2615,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_eap_ttls_c19731',
                                                        test_case_id='c19731',
@@ -2635,7 +2648,6 @@ pytestmark = [
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-@pytest.mark.radius_server("static_radius_server")
 def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, utf_constants):
     """Verify rejoin functionality in EAP-TTLS mode"""
     try:
@@ -2762,6 +2774,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_rejoin_eap_peap_c19732',
                                                        test_case_id='c19732',
@@ -2786,7 +2800,6 @@ pytestmark = [
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-@pytest.mark.radius_server("static_radius_server")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])

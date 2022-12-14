@@ -49,7 +49,7 @@ class wifiJoinThread(ThreadBase):
         # add the power save here the below enable WIFI power save in the DUT
         logger().info("enabling wifi power save")
         enable_wifi_ps = self. wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-        enable_wifi_ps = self. wifi_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+        enable_wifi_ps = self. wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, 'failed to enable'
 
         # check the WLan connection here
@@ -139,7 +139,8 @@ class A2DP_DUT_stream(ThreadBase):
                 logger().info("enabling bt power save")
 
                 enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-                enable_bt_ps = self.wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+                enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
                 assert enable_bt_ps, 'failed to enable'
 
                 # Ping dut
@@ -311,7 +312,7 @@ class A2DP_and_AVRCP_with_Datastream(ThreadBase):
                 self.wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 time.sleep(10)
                 #powersave
-                enable_bt_ps = self.wifi_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+                enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
                 assert enable_bt_ps, "failed to enable bt power save"
                 # Ping dut
                 assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(

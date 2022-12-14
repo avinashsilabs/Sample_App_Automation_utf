@@ -379,6 +379,9 @@ class wifi_traffic_thread(ThreadBase):
                          self.iperf_time)
 
 
+pytestmark = [pytest.mark.ble_client("raspi_ble_client"), pytest.mark.config("wifi_access_point", wifi={"channel": 8})]
+
+
 @pytest.mark.skip("Needs test agent support for ble connection using LTK and IRK Keys, Jira:WIFI_BT_UTFHELP-1067")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1025,6 +1028,7 @@ def test_get_attribute_descriptors_value_C20190(firmware_loader, wifi_dut, wifi_
 
 
 # @pytest.mark.skip()
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1032,21 +1036,19 @@ def test_get_attribute_descriptors_value_C20190(firmware_loader, wifi_dut, wifi_
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 @pytest.mark.ble_client("raspi_ble_client")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
-def test_sta_ble_verify_msg_power_save_C20275(wifi_dut, wifi_sniffer, wifi_access_point, wifi_client, ble_client,
-                                              utf_constants):
+def test_sta_ble_verify_msg_power_save_C20275(firmware_loader, wifi_dut, wifi_sniffer, wifi_access_point, wifi_client,
+                                              ble_client, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
@@ -1273,7 +1275,8 @@ def test_wlan_and_ble_radio_on_off_C20202(wifi_dut, ble_client, wifi_access_poin
 
     sw = Stopwatch()
     while sw.elapsed_sec < test_run_time:
-        logger().info(f"Remaining time to complete this testcase is '{round(((test_run_time-sw.elapsed_sec) / 60), 2)}' minutes")
+        logger().info(
+            f"Remaining time to complete this testcase is '{round(((test_run_time - sw.elapsed_sec) / 60), 2)}' minutes")
         logger().info("Disabling wlan radio of the DUT")
         wifi_dut.interfaces.wifi.wlan_request_radio(0)
         logger().info("Disabled wlan radio of the DUT")

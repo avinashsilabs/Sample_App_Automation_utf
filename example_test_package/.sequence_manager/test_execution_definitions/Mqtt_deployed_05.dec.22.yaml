@@ -1,0 +1,844 @@
+root_path: example_test_package
+test_sequence:
+  - id: 39d5e601e8f33fa3a572781b558080eb0113c750
+    test_case_id: test_mqtt_authentication_ssl_TC19258
+    test_function: test_mqtt_authentication_ssl_TC19258
+    test_id: test_mqtt_authentication_ssl_TC19258::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt_ssl.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'ca_cert': 'ca-chain.cert.pem'})
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - mqtt_ssl
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: a38d84d96da5059c1c3bc2eb08201d7b7c7b80ff
+    test_case_id: test_mqtt_publish_while_rejoin_ssl_TC19274[1000-102400-0.5]
+    test_function: test_mqtt_publish_while_rejoin_ssl_TC19274
+    test_id: test_mqtt_publish_while_rejoin_ssl_TC19274[1000-102400-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt_ssl.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'ca_cert': 'ca-chain.cert.pem'})
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1000
+      - name: total_bytes
+        value: 102400
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - mqtt_ssl
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 9c0346403e60626c073e339039b7a5bb94c0dd6a
+    test_case_id: test_mqtt_publish_1mb_file_ssl_TC19286[1200-1024000-0.5]
+    test_function: test_mqtt_publish_1mb_file_ssl_TC19286
+    test_id: test_mqtt_publish_1mb_file_ssl_TC19286[1200-1024000-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt_ssl.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'ca_cert': 'ca-chain.cert.pem'})
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1200
+      - name: total_bytes
+        value: 1024000
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - mqtt_ssl
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: eb7d98a63b95870c02994af44d9e2a554fcb7896
+    test_case_id: test_mqtt_publish_max_len_ssl_TC19287[1370-102400-0.5]
+    test_function: test_mqtt_publish_max_len_ssl_TC19287
+    test_id: test_mqtt_publish_max_len_ssl_TC19287[1370-102400-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt_ssl.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'ca_cert': 'ca-chain.cert.pem'})
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1370
+      - name: total_bytes
+        value: 102400
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - mqtt_ssl
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 44aed33e3926594a08ce01d9d04e503382a203ca
+    test_case_id: test_mqtt_publish_max_len_ssl_ecdsa_TC19290[1370-102400-0.5]
+    test_function: test_mqtt_publish_max_len_ssl_ecdsa_TC19290
+    test_id: test_mqtt_publish_max_len_ssl_ecdsa_TC19290[1370-102400-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt_ssl.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'ca_cert': 'ca_ecdsa.crt'})
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls_ecdsa',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1370
+      - name: total_bytes
+        value: 102400
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - mqtt_ssl
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 63b59887753f6faafc588d3449e5fe6da2daf172
+    test_case_id: test_mqtt_feature_not_enabled_TC19244
+    test_function: test_mqtt_feature_not_enabled_TC19244
+    test_id: test_mqtt_feature_not_enabled_TC19244::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt_neg.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - mqtt_neg
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 396013d452ff38f1bac1e07f824800daf42d2f4f
+    test_case_id: test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252
+    test_function: test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252
+    test_id: test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: b1c498bc7f534ed3a7e4ae4b1ec4bd9892727ea9
+    test_case_id: test_mqtt_invalid_server_TC19242
+    test_function: test_mqtt_invalid_server_TC19242
+    test_id: test_mqtt_invalid_server_TC19242::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: bede7b986658e62341b7c4998c501be3e8949dd9
+    test_case_id: test_mqtt_common_clientid_TC19245
+    test_function: test_mqtt_common_clientid_TC19245
+    test_id: test_mqtt_common_clientid_TC19245::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 29865f6a415f9c3dd8123f133bd34353aff14d3a
+    test_case_id: test_mqtt_authentication_TC19246
+    test_function: test_mqtt_authentication_TC19246
+    test_id: test_mqtt_authentication_TC19246::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.mqtt_server('raspi_mosquitto_auth',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 02633a278ae0602e7d5b0fde4e3cb68f8af1ad82
+    test_case_id: test_mqtt_authentication_wrong_cred_TC19247
+    test_function: test_mqtt_authentication_wrong_cred_TC19247
+    test_id: test_mqtt_authentication_wrong_cred_TC19247::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.mqtt_server('raspi_mosquitto_auth',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 3dc8de0a8184c79c935b679bccaf7b0f72eed841
+    test_case_id: test_mqtt_keep_alive_60_TC19248[60-300]
+    test_function: test_mqtt_keep_alive_60_TC19248
+    test_id: test_mqtt_keep_alive_60_TC19248[60-300]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: keep_alive_time
+        value: 60
+      - name: idle_time
+        value: 300
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 13a17211a441798f47b92b82b3338bb3ec6bae93
+    test_case_id: test_mqtt_keep_alive_120_TC19249[120-600]
+    test_function: test_mqtt_keep_alive_120_TC19249
+    test_id: test_mqtt_keep_alive_120_TC19249[120-600]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: keep_alive_time
+        value: 120
+      - name: idle_time
+        value: 600
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 12afdd23cda0c2bc17df7b973eb96ab9c9c0e5d3
+    test_case_id: test_mqtt_keep_alive_300_TC19250[300-1200]
+    test_function: test_mqtt_keep_alive_300_TC19250
+    test_id: test_mqtt_keep_alive_300_TC19250[300-1200]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: keep_alive_time
+        value: 300
+      - name: idle_time
+        value: 1200
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 25d69f7a16597feb8e3e3d2b134a45c8eeffef6f
+    test_case_id: test_mqtt_keep_alive_disable_TC19251[0-120]
+    test_function: test_mqtt_keep_alive_disable_TC19251
+    test_id: test_mqtt_keep_alive_disable_TC19251[0-120]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: keep_alive_time
+        value: 0
+      - name: idle_time
+        value: 120
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 1e11efacc829c37505e39fa8b01a085d9a1dbcbc
+    test_case_id: test_mqtt_qos1_connect_sub_publish_TC19254
+    test_function: test_mqtt_qos1_connect_sub_publish_TC19254
+    test_id: test_mqtt_qos1_connect_sub_publish_TC19254::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: d9233f9b9f483091f9bedc7724193947c441b6bc
+    test_case_id: test_mqtt_retain_TC19256
+    test_function: test_mqtt_retain_TC19256
+    test_id: test_mqtt_retain_TC19256::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated','wifi_powersave_disable','mqtt_disconnect'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 6b9e83dbeac176b6366022e27372bb1ff49a3755
+    test_case_id: test_mqtt_unsubscribe_TC19260
+    test_function: test_mqtt_unsubscribe_TC19260
+    test_id: test_mqtt_unsubscribe_TC19260::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: ef15924e8aed51d73191f2f90efb4af00f874e86
+    test_case_id: test_mqtt_delete_retain_message_TC19262
+    test_function: test_mqtt_delete_retain_message_TC19262
+    test_id: test_mqtt_delete_retain_message_TC19262::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 62b513d407a933bd2ea77f4144a82892db825857
+    test_case_id: test_mqtt_init_after_rejoin_fail_TC19265[1000-102400-0.5]
+    test_function: test_mqtt_init_after_rejoin_fail_TC19265
+    test_id: test_mqtt_init_after_rejoin_fail_TC19265[1000-102400-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.mqtt_server('raspi_mosquitto',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1000
+      - name: total_bytes
+        value: 102400
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 61a00eff8b9549443cfb7279186c4cf2771523ec
+    test_case_id: test_mqtt_common_clientid_null_TC19269
+    test_function: test_mqtt_common_clientid_null_TC19269
+    test_id: test_mqtt_common_clientid_null_TC19269::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 5803ddc02fd8e80a916190e0a5bdb29b32a29fc7
+    test_case_id: test_mqtt_publish_qos1_TC19272[1000-102400-0.5]
+    test_function: test_mqtt_publish_qos1_TC19272
+    test_id: test_mqtt_publish_qos1_TC19272[1000-102400-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.mqtt_server('raspi_mosquitto',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1000
+      - name: total_bytes
+        value: 102400
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 59ebc71830c8323e912bd0eed33bf77c8fd0177f
+    test_case_id: test_mqtt_tx_after_rejoin_testcaseC19273[1000-102400-0.5]
+    test_function: test_mqtt_tx_after_rejoin_testcaseC19273
+    test_id: test_mqtt_tx_after_rejoin_testcaseC19273[1000-102400-0.5]::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.mqtt_server('raspi_mosquitto',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','powersave_disable','disassociated'])
+    test_params:
+      - name: publish_len
+        value: 1000
+      - name: total_bytes
+        value: 102400
+      - name: pkt_delay
+        value: 0.5
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 3125639fd6ca0bee799159646b7f580cef946293
+    test_case_id: test_mqtt_sequence_TC19277
+    test_function: test_mqtt_sequence_TC19277
+    test_id: test_mqtt_sequence_TC19277::1
+    test_module: sqa_test_suites/functional/wlan_standalone/mqtt/test_mqtt.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'rejoin_max_retry':
+        10,'scan_interval': 6,'beacon_missed_count': 40,'first_time_retry':
+        0,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - functional
+      - mqtt
+      - sqa_test_suites
+      - wlan_standalone
+    description: null
+    library_name: ''
+    visible: true
+    iterations: 1

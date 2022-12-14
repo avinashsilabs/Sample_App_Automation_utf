@@ -12,6 +12,7 @@ from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict, ping
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
+from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from numpy import arange
 import random
 import string
@@ -40,6 +41,92 @@ def __print_throughput(iperf_throughput: dict):
 
 def logger():
     return get_logger(__name__)
+
+
+def text_generator(size=200):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
+
+
+def dut_clean_up(wifi_dut):
+    logger().info("\n\n ########## Cleaning UP the DUT ###########")
+    try:
+        logger().info("BLE disconnect from DUT")
+        for device_address in wifi_dut.interfaces.wifi.bt_devices_address:
+            try:
+                wifi_dut.interfaces.wifi.bt_disconnect(device_address)
+            except:
+                pass
+        logger().info("Closing all opened sockets")
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger().info("Disconnect from AP")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
+        wifi_dut.interfaces.wifi.inited = False
+        time.sleep(3)
+    except:
+        logger().info("******* Recovering the DUT using reset **********")
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(20)
+    logger().info("\n *********** Cleaning UP of DUT is Completed ***********")
+
+def dut_recovery(wifi_dut, error):
+    recovery_error_codes = ['0xffffffe2', '0xffffffd5']
+    for error_code in recovery_error_codes:
+        if error_code in str(error):
+            logger().info('******* Initiating DUT Recovery using Reset **********')
+            wifi_dut.interfaces.wifi.reset()
+
+
+class spp_loopback(ThreadBase):
+    def __init__(self, bt_server_socket, wifi_dut, recv_text, logger):
+        super().__init__()
+        self.bt_server_socket = bt_server_socket
+        self.wifi_dut = wifi_dut
+        self.recv_text = recv_text
+        self.timeout = logger
+
+    def run(self):
+        # Sending BT data for 80 seconds
+        recv_text = text_generator(size=30)
+        time.sleep(5)
+        sw = Stopwatch()
+        logger().info(f"BT DATA transfer for 80 seconds")
+        while sw.elapsed_sec < 80:
+            # thread_lock.acquire()
+            time.sleep(0.5)
+            sent = self.bt_server_socket.send(
+                recv_text
+            )  # Dut is programmed to send back data
+
+            assert sent
+            data = self.bt_server_socket.recv(timeout=10)
+            assert data is not None
+            assert data.decode() == recv_text
+
+
+class spp_loopback_ssl(ThreadBase):
+    def __init__(self, bt_server_socket, wifi_dut, recv_text, logger):
+        super().__init__()
+        self.bt_server_socket = bt_server_socket
+        self.wifi_dut = wifi_dut
+        self.recv_text = recv_text
+        self.timeout = logger
+
+    def run(self):
+        recv_text = text_generator(size=30)
+        time.sleep(5)
+        sw = Stopwatch()
+        logger().info(f"BT DATA transfer for 25 seconds")
+        while sw.elapsed_sec < 25:
+            time.sleep(0.5)
+            sent = self.bt_server_socket.send(
+                recv_text
+            )  # Dut is programmed to send back data
+
+            assert sent
+            data = self.bt_server_socket.recv(timeout=10)
+            assert data is not None
+            assert data.decode() == recv_text
 
 
 class BleThreadDisconnection(ThreadBase):
@@ -1182,6 +1269,306 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
     wifi_sniffer.interfaces.capture.stop_capture()
 
 
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "bt_disconnect"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "band": 2
+    },
+)
+def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol):
+    filter_pack_obj = FilterPacket()
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wlan_bt_data_transfer_tcp_rx_c20759.log_{int(time.time())}"):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_bt_connected_tcp_rx_c20751')
+
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {dut_mac_address}")
+            wifi_dut.interfaces.wifi.start_ip()
+            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+            wifi_dut.interfaces.wifi.socket_config(total_sockets=1, total_tcp_sockets=1, total_udp_sockets=0,
+                                                   tcp_tx_only_sockets=0,
+                                                   tcp_rx_only_sockets=1, udp_tx_only_sockets=0, udp_rx_only_sockets=0,
+                                                   tcp_rx_high_performance_sockets=1, tcp_rx_window_size_cap=10,
+                                                   tcp_rx_window_div_factor=10)
+
+            bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+            assert bt_dut_address is not None
+
+            bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+            assert bt_client_address is not None
+
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+            assert found, "device not found"
+
+            with bt_client.interfaces.bluetooth.bt_socket(
+                    mode=BTSocketRole.Server
+            ) as bt_server_socket:
+                # SPP Connection
+                with wifi_dut.interfaces.wifi.run_bt_task():
+                    bt_server_socket.create_server()
+                    connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                    assert connected
+                    recv_text = "zvnpoinewnqflkwdnfvoiwnvkwln"
+                    time.sleep(2)
+
+                    spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
+                    spp_obj.start()
+                ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+                iter_count = 3
+                for i in range(0, iter_count):
+                    filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                              suspend_bt_task=0, suspend_ble_task=0, enable_async_socket=1,
+                                                              enable_socket_config=1
+                                                              )
+
+                logger().info(f"verifying BT connection after IPERF completion")
+                assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                    dest_addr=bt_dut_address
+                )
+                bt_server_socket.close()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as error:
+        dut_clean_up(wifi_dut)
+        raise
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "bt_disconnect"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "band": 2
+    },
+)
+def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol):
+    filter_pack_obj = FilterPacket()
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wlan_bt_data_transfer_tcp_tx_c20758.log_{int(time.time())}"):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_bt_connected_tcp_rx_c20751')
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {dut_mac_address}")
+            wifi_dut.interfaces.wifi.start_ip()
+            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+            bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+            assert bt_dut_address is not None
+
+            bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+            assert bt_client_address is not None
+
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+            assert found, "device not found"
+
+            with bt_client.interfaces.bluetooth.bt_socket(
+                    mode=BTSocketRole.Server
+            ) as bt_server_socket:
+                # SPP Connection
+                with wifi_dut.interfaces.wifi.run_bt_task():
+                    bt_server_socket.create_server()
+                    connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                    assert connected
+                    recv_text = "zvnoinewnqflkwdnfvoiwnvkwln"
+                    time.sleep(2)
+
+                    spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
+                    spp_obj.start()
+                ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
+                iter_count = 3
+                for i in range(0, iter_count):
+                    filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                              suspend_bt_task=0, suspend_ble_task=0)
+                time.sleep(2)
+                logger().info(f"verifying BT connection after IPERF completion")
+                assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                    dest_addr=bt_dut_address
+                )
+
+            bt_server_socket.close()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as error:
+        dut_clean_up(wifi_dut)
+        raise
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "bt_disconnect"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "band": 2
+    },
+)
+def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol):
+    filter_pack_obj = FilterPacket()
+    try:
+
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wlan_bt_data_transfer_udp_rx_c20757.log_{int(time.time())}"):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_bt_connected_tcp_rx_c20751')
+
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {dut_mac_address}")
+            wifi_dut.interfaces.wifi.start_ip()
+            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+            time.sleep(2)
+            logger().info("Fetching DUT fw version ")
+            wifi_dut.interfaces.wifi.version()
+
+            bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+            assert bt_dut_address is not None
+
+            bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+            assert bt_client_address is not None
+
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+            assert found, "device not found"
+
+            with bt_client.interfaces.bluetooth.bt_socket(
+                    mode=BTSocketRole.Server
+            ) as bt_server_socket:
+                # SPP Connection
+                with wifi_dut.interfaces.wifi.run_bt_task():
+                    bt_server_socket.create_server()
+                    connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                    assert connected
+                    recv_text = "zvnoinewnqflkwdnfvoiwnvkwln"
+                    time.sleep(2)
+
+                    spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
+                    spp_obj.start()
+
+                    ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
+                iter_count = 3
+                for i in range(0, iter_count):
+                    filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                              suspend_bt_task=0, suspend_ble_task=0, enable_async_socket=1,
+                                                              enable_socket_config=1
+                                                              )
+
+                logger().info(f"verifying BT connection after IPERF completion")
+                assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                    dest_addr=bt_dut_address
+                )
+                bt_server_socket.close()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as error:
+        dut_clean_up(wifi_dut)
+        raise
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "bt_disconnect"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "band": 2
+    },
+)
+def test_wlan_bt_data_transfer_udp_tx_c20756(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol):
+    filter_pack_obj = FilterPacket()
+    try:
+
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wlan_bt_data_transfer_udp_tx_c20756.log_{int(time.time())}"):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_bt_connected_udp_tx_c20748')
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {dut_mac_address}")
+            wifi_dut.interfaces.wifi.start_ip()
+            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+            bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+            assert bt_dut_address is not None
+
+            bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+            assert bt_client_address is not None
+
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+            assert found, "device not found"
+
+            with bt_client.interfaces.bluetooth.bt_socket(
+                    mode=BTSocketRole.Server
+            ) as bt_server_socket:
+                # SPP Connection
+                with wifi_dut.interfaces.wifi.run_bt_task():
+                    bt_server_socket.create_server()
+                    connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                    assert connected
+                    recv_text = "zvnpoinewnqflkwdnfvoiwnvkwln"
+                    time.sleep(2)
+
+                    spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
+                    spp_obj.start()
+                ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
+                iter_count = 3
+                for i in range(0, iter_count):
+                    filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
+                                                              suspend_bt_task=0, suspend_ble_task=0)
+                time.sleep(2)
+                logger().info(f"verifying BT connection after IPERF completion")
+                assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                    dest_addr=bt_dut_address
+                )
+
+            bt_server_socket.close()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+            wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as error:
+        dut_clean_up(wifi_dut)
+        raise
+
+
 #####################SSL Throughput Test Cases###############################
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1358,6 +1745,212 @@ def test_ssl_standalone_testcase_rx_C20778(
     time.sleep(1)
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
+
+
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | RS9116ExtTCPIPFeatureBitMap.TCP_ACK_CORRECT,
+        "band": 0,
+        "set_send_feature_frame": 1,
+        "ca_cert": "ca-chain.cert.pem",
+    },
+)
+def test_ssl_wlan_bt_data_transfer_tcp_tx_C20760(
+        wifi_sniffer, bt_client, wifi_access_point, wifi_dut, ssl_server):
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    time.sleep(2)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_ssl_wlan_bt_data_transfer_testcase_tx_C20760')
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+    wifi_dut.interfaces.wifi.start_ip()
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    time.sleep(2)
+    logger().info("Fetching DUT fw version....")
+    wifi_dut.interfaces.wifi.version()
+    bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+    assert bt_dut_address is not None
+
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+    assert bt_client_address is not None
+
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+    if not found:
+        logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
+    # thread_lock = threading.Lock()
+    with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Server
+    ) as bt_server_socket:
+        # SPP Connection
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            bt_server_socket.create_server()
+            connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+            assert connected
+            recv_text = "9cDKpYOnOJeqYPsL987v"
+            time.sleep(1)
+            spp_obj = spp_loopback_ssl(bt_server_socket, wifi_dut, recv_text, logger)
+            spp_obj.start()
+            time.sleep(3)
+        pkt_count = 30000
+        buffer_length = 1370
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        bytes_sent = (pkt_count * buffer_length)
+        iterations = 2
+        for count in range(1, iterations):
+            logger().info(f"###############Iteration{count}###############################")
+            ssl_server.interfaces.ssl.start_server()
+            logger().info(f"###Open ssl client socket in the DUT###")
+            # thread_lock .acquire()
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            assert sock == 0, "Socket id received is wrong. expected is 0"
+            logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+            logger().info(f"# Enable ssl option for socket opened")
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+            local_port = randint(5001, 60000)
+            logger().info(f"*******Socket binds at device_ip with port 5001 in DUT*****")
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+            logger().info(f"****ssl socket opened in DUT connects to the server****")
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+            server_socket_no = 1
+            if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+                ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+            wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, time_interval=480)
+            bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
+            result = wifi_dut.interfaces.wifi.close_socket(sock)
+            assert b"success" in result, "unable to close opened ssl socket in the dut"
+            logger().info("Successfully closed opened socket in the DUT")
+            # thread_lock.release()
+            time.sleep(2)
+            ssl_server.interfaces.ssl.stop_server()
+
+            time.sleep(2)
+        time.sleep(3)
+        logger().info("DUT is going to leave AP")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+
+
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "band": 0,
+        "set_send_feature_frame": 1,
+        "ca_cert": "ca-chain.cert.pem",
+    },
+)
+def test_ssl_wlan_bt_data_transfer_tcp_rx_C20761(
+        wifi_sniffer, bt_client, wifi_access_point, wifi_dut, ssl_server):
+    with BleLogs(start_collecting_logs=True,
+                 bt_log_path=f"reports/test_ssl_standalone_testcase_rx_C20778.log_{int(time.time())}"):
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_ssl_wlan_bt_data_transfer_tcp_rx_C20761')
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        time.sleep(2)
+        logger().info("Fetching DUT fw version....")
+        wifi_dut.interfaces.wifi.version()
+        bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
+        assert bt_dut_address is not None
+
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+        assert bt_client_address is not None
+
+        found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+        if not found:
+            logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
+
+        with bt_client.interfaces.bluetooth.bt_socket(
+                mode=BTSocketRole.Server
+        ) as bt_server_socket:
+            # SPP Connection
+            with wifi_dut.interfaces.wifi.run_bt_task():
+                bt_server_socket.create_server()
+                connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+                assert connected
+                recv_text = "9cDKpYOnOJeqYPsL987v"
+                time.sleep(2)
+                spp_obj = spp_loopback_ssl(bt_server_socket, wifi_dut, recv_text, logger)
+                spp_obj.start()
+            pkt_count = 30000
+            buffer_length = 1370
+            port1 = ssl_server.interfaces.ssl.config['device_port1']
+            bytes_sent = (pkt_count * buffer_length)
+
+            iterations = 2
+            for count in range(1, iterations):
+                logger().info(f"###############Iteration{count}###############################")
+                ssl_server.interfaces.ssl.start_server()
+                wifi_dut.interfaces.wifi.socket_config(total_sockets=1, total_tcp_sockets=1, total_udp_sockets=0,
+                                                       tcp_tx_only_sockets=0,
+                                                       tcp_rx_only_sockets=1, udp_tx_only_sockets=0, udp_rx_only_sockets=0,
+                                                       tcp_rx_high_performance_sockets=1, tcp_rx_window_size_cap=44,
+                                                       tcp_rx_window_div_factor=10)
+                sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
+                                                                       socket_flag=SocketType.ASYNCHRONOUS)
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                logger().info(f" *****# Enable ssl option for socket opened *****#")
+                wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                           SocketOptions.SSL_ENABLE)
+
+                wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, 38,
+                                                           128)
+
+                local_port = randint(5001, 60000)
+                logger().info(f"#*****Socket binds with device_ip and Port number 5001 in DUT****#")
+                wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+                logger().info(f"#****ssl socket opened in DUT connects to the server****#")
+                wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
+                server_socket_no = 1
+                pkt_count = 50000
+                duration = 60
+                with TimeMeasurer() as t:
+                    ssl_server.interfaces.ssl.send_data_socket(server_socket_no, pkt_count, msg_length=buffer_length,
+                                                               duration=duration)
+                time_duration = t.duration
+                result = wifi_dut.interfaces.wifi.close_socket(sock)
+                time.sleep(2)
+                assert b"success" in result, "unable to close opened ssl socket in the dut"
+                logger().info("Successfully closed opened socket in the DUT")
+                bytes_sent = ssl_server.interfaces.ssl.data_send_stats(server_socket_no)
+                result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+                bytes_received = int(result.split(b":")[1])
+                logger().info(f"bytes sent by remote peer -> {bytes_sent}")
+                logger().info(f"bytes received on socket {sock} -> {bytes_received}")
+                logger().info(f"SSL rx throughput ->  {(bytes_received * 8) / (1000 * 1000 * time_duration)} Mbps")
+                ssl_server.interfaces.ssl.stop_server()
+        logger().info("DUT is going to leave the AP")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(1)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+
 
 
 

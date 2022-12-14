@@ -16,6 +16,8 @@ from utf.utils.iperf.iperf_utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.utils.iperf.iperf_utils import ping
+from retry import retry
+import subprocess
 
 iperf_started = False
 ping_count = 30
@@ -43,7 +45,8 @@ def wifi_join(wifi_dut, wifi_access_point):
     time.sleep(5)
 
     ip_fail = 1
-    for count in range(3):
+    device_ip = None
+    for count in range(5):
         try:
             result = wifi_dut.interfaces.wifi.start_ip()
             assert isinstance(result, wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {result}"
@@ -52,7 +55,7 @@ def wifi_join(wifi_dut, wifi_access_point):
             break
         except:
             logger().info(f"Get IP address through dhcp process is failed. retry count -> {count + 1}")
-            time.sleep(1)
+            time.sleep(15)
     assert ip_fail == 0, "ip setting in DUT has failed"
     logger().info(f'DUT ip {device_ip}')
 
@@ -65,21 +68,23 @@ def wifi_join(wifi_dut, wifi_access_point):
     enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
-    time.sleep(15)
+    time.sleep(5)
 
-    for count in range(3):
+    status = False
+    for count in range(5):
         try:
-            logger().info("pinging to dut.....")
+            logger().info("pinging to dut after power save.....")
             status = ping(device_ip, ping_count)
-            assert status == 1, "DUT not responding for ping request......"
-            logger().info("ping to DUT is successful....")
+            assert status, "DUT not responding for ping request......"
             break
         except:
             logger().info(f"DUT not responding for ping request..retry count -> {count + 1}")
-            time.sleep(1)
+            time.sleep(15)
+    assert status, "DUT not responding for ping request......"
     return device_ip
 
 
+@retry(Exception, delay=15, tries=5)
 def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_needed=True, skip_scan=False,
                      secure_connect=False, expected="RSI_BLE_ENCRYPT_STARTED_EVENT"):
     ble_dut_address = ble_dut_address
@@ -102,9 +107,12 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
                 wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
                 wifi_dut.interfaces.wifi.ble_stop_scanning()
         except Exception as e:
-            logger().info("*************** Exception block for stop advertising and stop scanning ***************")
-            ble_client.interfaces.bluetooth.stop_advertising()
-            wifi_dut.interfaces.wifi.ble_stop_scanning()
+            try:
+                logger().info("*************** Exception block for stop advertising and stop scanning ***************")
+                ble_client.interfaces.bluetooth.stop_advertising()
+                wifi_dut.interfaces.wifi.ble_stop_scanning()
+            except:
+                pass
             raise e
         logger().info("Initiating BLE connection with ble_client")
         wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, expected=expected, timeout=120)
@@ -132,14 +140,25 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
                         wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
             logger().info(f"See that we found our device:'{ble_dut_address}'")
         except Exception as e:
-            logger().info("*************** Exception block for stop advertising and stop scanning ***************")
-            wifi_dut.interfaces.bluetooth.ble_stop_advertising()
-            ble_client.interfaces.wifi.stop_scanning()
+            logger().info("*************** Exception block for stop advertising and stop scanning")
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
+            ble_client.interfaces.bluetooth.stop_scanning()
             raise e
+        logger().info("Initiating BLE Connection from ble_client")
         if secure_connect:
-            ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address)
+            connect_state = ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address, timeout=500)
+            assert connect_state, "Unable to connect to DUT BLE from raspi"
         else:
-            ble_client.interfaces.bluetooth.connect(ble_dut_address)
+            conn_params = {"min_conn_interval": 40,
+                           "max_conn_interval": 40,
+                           "conn_latency": 0,
+                           "supervision_timeout": 200}
+
+            ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address,
+                                                    min_conn_interval=conn_params["min_conn_interval"],
+                                                    max_conn_interval=conn_params["max_conn_interval"],
+                                                    conn_latency=conn_params["conn_latency"],
+                                                    supervision_timeout=conn_params["supervision_timeout"])
         time.sleep(2)
         logger().info("BLE slave connection success")
     return ble_client_address, ble_dut_address
@@ -180,16 +199,24 @@ def __print_throughput(iperf_throughput: dict):
         logger().info("Iperf throughput printed successfully")
 
 
-def check_connection_status(wifi_dut, ble=False, wlan=False):
+def check_connection_status(wifi_dut, ble=False, wlan=False, ble_clients=None, ble_dut_address=None):
     if ble:
-        logger().info("Checking connection status of BLE")
+        logger().info("\n********************* Checking connection status of BLE from DUT ********************")
         state = wifi_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
-        logger().info("DUT is not disconnected from BLE")
+        assert state_int == BLEDeviceState.Connected, "DUT is not connected to remote BLE device"
+        logger().info("\n***************** DUT is not disconnected from remote BLE device ********************")
+
+        if ble_clients:
+            for ble_client in ble_clients:
+                logger().info(f"\n************ Checking connection status of BLE from '{ble_client.name}' ************")
+                status = ble_client.interfaces.bluetooth.get_connection_status(ble_dut_address)
+                logger().info(f"Connection status in remote device '{ble_client.name}' is:{status}")
+                assert status, f"Remote device '{ble_client.name}' is not connected to DUT '{ble_dut_address}'"
+                logger().info(f"\n********** '{ble_client.name}' still connected to DUT '{ble_dut_address}' **********")
 
     if wlan:
-        logger().info("Checking connection status of Wi-Fi")
+        logger().info("\n*********************** Checking connection status of Wi-Fi *************************")
         events = wifi_dut.interfaces.wifi.get_async_events()
         disconnect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Disconnect]
         count_disconnect = set()
@@ -198,7 +225,7 @@ def check_connection_status(wifi_dut, ble=False, wlan=False):
             logger().info(f"Disconnect Events:{count_disconnect}")
             assert False, f"DUT is not connected to Wi-Fi"
         assert len(disconnect_events) == 0
-        logger().info(f"DUT is not disconnected from Wi-Fi")
+        logger().info(f"\n**********************  DUT is not disconnected from Wi-Fi *************************")
 
 
 class wifi_traffic_thread(ThreadBase):
@@ -379,6 +406,26 @@ class FilterPacket:
         return status
 
 
+@retry(Exception, delay=15, tries=5)
+def ping_with_custom_size(device_ip, ping_counts=10, byte_size=64):
+    command = ["ping", "-c", str(ping_counts), "-s", str(byte_size), device_ip]
+    result = subprocess.run(command, capture_output=True)
+    rc = result.returncode
+    stdout = result.stdout.decode("utf-8")
+    stderr = result.stderr.decode("utf-8")
+    if rc != 0 or stderr:
+        logger().info(f"{command} command exited with code {rc} with output {stderr}")
+    else:
+        logger().info(f"{command} command exited with code {rc} with output {stdout}")
+    assert rc == 0 and stderr == "", "Failed to ping to DUT"
+    return rc == 0 and stderr == ""
+
+
+pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
+              pytest.mark.ble_clients(["raspi_ble_client", "secondary_raspi_ble_client"]),
+              pytest.mark.config("wifi_access_point", wifi={"channel": 4})]
+
+
 # ##### DUAL ROLE PR1 ######
 # @pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -400,7 +447,8 @@ class FilterPacket:
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
+                             "ble_stop_scan", "ble_disconnect"])
 def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20201(wifi_dut, wifi_sniffer,
                                                                                     wifi_access_point, wifi_client,
                                                                                     ble_clients, net_perf_client,
@@ -458,9 +506,10 @@ def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20
         logger().info(f"See that we found our device:'{ble_dut_address}'")
     except Exception as e:
         logger().info("*************** Exception block for stop advertising and stop scanning ***************")
-        wifi_dut.interfaces.bluetooth.ble_stop_advertising()
-        ble_client2.interfaces.wifi.stop_scanning()
+        ble_client2.interfaces.bluetooth.stop_scanning()
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
         raise e
+
     # ble_client2.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address)
     # time.sleep(2)
     # logger().info("BLE slave connection successful")
@@ -503,10 +552,11 @@ def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
 
-    logger().info("Initiating BLE disconnection from DUT--->MASTER")
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1)
     logger().info("Initiating BLE disconnection from remote device--->MASTER")
     ble_client2.interfaces.bluetooth.disconnect(ble_dut_address)
+    time.sleep(10)
+    # logger().info("Initiating BLE disconnection from DUT--->MASTER")
+    # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1)
 
 
 # @pytest.mark.skip()
@@ -527,20 +577,21 @@ def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20
     },
 )
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
+                             "ble_stop_scan", "ble_disconnect"])
 def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi_dut, ble_clients, wifi_access_point,
-                                                                            wifi_client, wifi_sniffer,
+                                                                            wifi_client, wifi_sniffer, rs_helper,
                                                                             utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
     assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    ble_client1 = ble_clients[0]
-    ble_client2 = ble_clients[1]
+    ble_client1 = ble_clients[1]
+    ble_client2 = ble_clients[0]
 
     validation = True
     time_duration = utf_constants.get("time_duration")
-    ping_count_bytes = utf_constants.get("ping_count")
+    ping_counts = utf_constants.get("ping_count")
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C20267')
@@ -565,17 +616,17 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi
     logger().info(f"+++ Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address2, _ = ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address, secure_connect=True,
                                               start_needed=False)
-    logger().info(f"+++ BLE SLAVE CONNECTION SUCCESSFUL")
 
-    logger().info(f"Initiating wlan ping with {ping_count_bytes} bytes")
-    status = ping(device_ip, ping_count_bytes)
-    assert status == 1, "DUT not responding for ping request......"
+    logger().info(f"Initiating wlan ping with size '300' bytes for ping_counts:'{ping_counts}'")
+    # status = rs_helper.ping_with_custom_size(device_ip, ping_counts, byte_size=300)
+    status = ping_with_custom_size(device_ip, ping_counts, byte_size=300)
+    assert status, "DUT not responding for ping request......"
     logger().info("ping to DUT is successful....")
 
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
@@ -614,10 +665,11 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi
         'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
 
     logger().info(f"Initiating Clean up after end of test steps")
-    logger().info(f"Disconnect from DUT Master")
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1, timeout=30)
     logger().info(f"Disconnect from Remote device which is Master")
     ble_client2.interfaces.bluetooth.disconnect(ble_dut_address)
+    time.sleep(10)
+    # logger().info(f"Disconnect from DUT Master")
+    # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1, timeout=30)
 
 
 # @pytest.mark.skip()
@@ -638,9 +690,10 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi
     },
 )
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
+                             "ble_stop_scan", "ble_disconnect"])
 def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi_dut, ble_clients, wifi_access_point,
-                                                                            wifi_client, wifi_sniffer,
+                                                                            wifi_client, wifi_sniffer, rs_helper,
                                                                             utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -651,7 +704,7 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi
 
     validation = True
     time_duration = utf_constants.get("time_duration")
-    ping_count_bytes = utf_constants.get("ping_count")
+    ping_counts = utf_constants.get("ping_count")
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C20268')
@@ -682,15 +735,16 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi
     ble_client_address2, _ = ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address, start_needed=False)
     logger().info(f"*** BLE_MASTER CONNECTION SUCCESSFUL")
 
-    logger().info(f"Initiating wlan ping with {ping_count_bytes} bytes")
-    status = ping(device_ip, ping_count_bytes)
-    assert status == 1, "DUT not responding for ping request......"
+    logger().info(f"Initiating wlan ping with size '300' bytes for ping_counts:'{ping_counts}'")
+    # status = rs_helper.ping_with_custom_size(device_ip, ping_counts, byte_size=300)
+    status = ping_with_custom_size(device_ip, ping_counts, byte_size=300)
+    assert status, "DUT not responding for ping request......"
     logger().info("ping to DUT is successful....")
 
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -723,10 +777,11 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
 
-    logger().info(f"Disconnect from DUT Master")
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address2, timeout=30)
     logger().info(f"Disconnect from Remote device which is Master")
     ble_client2.interfaces.bluetooth.disconnect(ble_dut_address)
+    time.sleep(10)
+    # logger().info(f"Disconnect from DUT Master")
+    # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address2, timeout=30)
 
 
 # @pytest.mark.skip()
@@ -749,15 +804,16 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
+                             "ble_stop_scan", "ble_disconnect"])
 def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client,
                                                     wifi_client, ble_clients, protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
     assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    ble_client1 = ble_clients[0]
-    ble_client2 = ble_clients[1]
+    ble_client1 = ble_clients[1]
+    ble_client2 = ble_clients[0]
 
     validation = True
     time_duration = utf_constants.get("time_duration")
@@ -782,6 +838,7 @@ def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi
 
     logger().info("++++ Initiating BLE SLAVE IN DUT FIRST")
     wifi_dut.interfaces.wifi.ble_start_advertising()
+    time.sleep(3)
     logger().info("Begin Scanning for BLE devices")
     ble_client2.interfaces.bluetooth.close()
     ble_client_address2 = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -791,9 +848,12 @@ def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi
     found_devices = ble_client2.interfaces.bluetooth.get_devices()
     logger().info(f"ble_scan_list:\n{found_devices}")
     assert wifi_dut.interfaces.wifi.ble_address in found_devices, "Unable to find our DUT"
-    assert (found_devices[wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
+    assert (found_devices[
+                wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
     logger().info(f"See that we found our device:'{ble_dut_address}'")
-    ble_client2.interfaces.bluetooth.connect(dev_addr=ble_dut_address, min_conn_interval=20, max_conn_interval=20, supervision_timeout=200)
+    time.sleep(3)
+    ble_client2.interfaces.bluetooth.connect(dev_addr=ble_dut_address, min_conn_interval=20, max_conn_interval=20,
+                                             supervision_timeout=200)
     time.sleep(2)
     logger().info("BLE slave connection success")
 
@@ -808,7 +868,7 @@ def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
@@ -847,14 +907,14 @@ def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi
         'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
 
     logger().info(f"Initiating Clean up after end of test steps")
-    logger().info(f"Disconnect from DUT Master")
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1, timeout=30)
     logger().info(f"Disconnect from Remote device which is Master")
     ble_client2.interfaces.bluetooth.disconnect(ble_dut_address)
+    time.sleep(10)
+    # logger().info(f"Disconnect from DUT Master")
+    # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1, timeout=30)
 
 
 # ################################# PR2 ############################################
-
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_C20349', "security": "WPA2"})
@@ -879,7 +939,8 @@ def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
+                             "ble_stop_scan", "ble_disconnect"])
 def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_when_ble_in_connection_C20349(wifi_dut,
                                                                                                              wifi_sniffer,
                                                                                                              wifi_access_point,
@@ -930,13 +991,13 @@ def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_w
     time.sleep(10)
 
     logger().info(f"Checking connection status, when data transfer is in progress")
-    check_connection_status(wifi_dut, ble=True, wlan=True)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
     t1.wait_for_exit(True)
 
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -968,5 +1029,6 @@ def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_w
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
 
-    logger().info("Initiating BLE disconnection from remote device")
+    logger().info("Initiating BLE disconnection from remote device which is master")
     ble_client2.interfaces.bluetooth.disconnect(ble_dut_address)
+    time.sleep(10)

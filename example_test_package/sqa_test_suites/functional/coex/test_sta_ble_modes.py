@@ -1,34 +1,17 @@
-import pytest
-import time
 import re
+import time
 from datetime import datetime, date
-from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.logger import get_logger
+import pytest
 from utf.utils.iperf.iperf_utils import ping
-from utf.interfaces.wifi import WlanError
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
-from utf_wiseconnect.devices.rs911x import (
-    RS9116CoexMode,
-    RS9116TCPIPFeatureBitMap,
-    RS9116ExtTCPIPFeatureBitMap,
-    RS9116CertificateType,
-    RS9116FeatureBitMap,
-    RS9116ConfigFeatureBitMap,
-    RS9116ExtCustomFeatureBitMap,
-    RS9116PowerSaveModes,
-    SocketOptions,
-    SocketType,
-    Cipher,
-    DeviceConstants, RS9116PowerSaveProcedureTypes
-)
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
-    RS9116ConfigFeatureBitMap, \
-    RS9116CustomFeatureBitMap
-from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
-import string
-import random
-from random import randint
+from utf.utils.time_measurer import TimeMeasurer
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
+    RS9116ConfigFeatureBitMap
+from utf_wiseconnect.devices.rs911x import (
+    RS9116TCPIPFeatureBitMap,
+    RS9116PowerSaveProcedureTypes
+)
 
 ble_client_address = None
 ble_dut_address = None
@@ -56,7 +39,7 @@ def logger():
 
     Author: Jyothi Nagireddy
 
-    Note: This testplan has a dependancy with dlink & tenda
+    Note: This test-plan has a dependency with dlink & tenda
 """
 
 
@@ -149,7 +132,7 @@ class WifiThread_PSKMODE(ThreadBase):
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
         time.sleep(10)
         logger().info(f"this thread is used for wifi join")
-        with TimeMeasurer() as t:
+        with TimeMeasurer():
             logger().info(f"Scan for the AP's")
             # ap_mac = self.wifi_dut.interfaces.wifi.scan(ssid=None)
             ap_mac = self.wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
@@ -170,9 +153,9 @@ class WifiThread_PSKMODE(ThreadBase):
             logger().info(f"Device mac address: {dut_mac_address}")
             logger().info("DUT to power save in Wifi+bluetooth mode")
             self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                     RS9116PowerSaveProcedureTypes.FastPowerSave)
             self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
             time.sleep(15)
             if not self.tcp_bypass:
                 logger().info(f"Initiate ping from third party wifi-client to DUT")
@@ -180,56 +163,20 @@ class WifiThread_PSKMODE(ThreadBase):
                 assert status == 1, "DUT not responding for ping request......"
                 logger().info("ping to DUT is successful....")
 
-            #Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-            packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
-                             f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-
             packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
-
-            packet_filter3 = f'wlan.sa == {dut_mac_address} and ' \
-                             f'wlan.fc.pwrmgt == 1 and wlan.fc.type_subtype == 0x0028'
 
             # Validate the eapol 4 key
             packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                              f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
-            # Validate dhcp
-            packet_filter5 = f'(dhcp) && (wlan.addr == {ap_bssid}) && (wlan.addr == {dut_mac_address})'
-
-            # Validating the ps poll frames
-            packet_filter7 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
-
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
-            packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
-
-            logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                                 'in sniffer'
-
-            logger().info(f"Validating QOS  NULL data frames with power management bit")
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-                'packet_count'], 'Unable to find power management bit in QOS null frames in sniffer capture'
-
-            if not self.tcp_bypass:
-                logger().info(
-                    f"Validating DHCP frames from AP & DUT"
-                )
-                decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
-                logger().info(f"decryption_key : {decryption_key}")
-                dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key,
-                                                                               ["dhcp"])
-                logger().info(f"dhcp_list : {dhcp_list}")
-                assert dhcp_list == True, "DHCP packets not found"
+            packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and ' \
+                             f'wlan.da == {ap_bssid})'
 
             logger().info("Validating eapol4 packet")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
                 'packet_count'], 'Unable to find eapol4 packet in sniffer '
-            logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7)[
-                'packet_count'], 'Unable to find ps polls in sniffer capture'
 
             logger().info("Validating time between two packets")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
@@ -248,7 +195,7 @@ class WifiThread_PSKMODE(ThreadBase):
             time_str1 = time_str1[:-3]
             time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
             logger().info(f'probe req time {time_object1}')
-            # Calcuting the reponse time of eapol4
+            # Calculating the response time of eapol4
             time_str2 = time_stamp_list[1]
             time_str2 = time_str2[:-3]
             time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
@@ -258,7 +205,7 @@ class WifiThread_PSKMODE(ThreadBase):
             datetime2 = datetime.combine(date1, time_object2)
             time_taken = datetime2 - datetime1
             time_taken = time_taken.total_seconds()
-            assert time_taken <= 60
+            assert time_taken <= 0.04, f"time taken to connect is: {time_taken}"
             logger().info(f"time taken to connect is: {time_taken}")
 
 
@@ -285,7 +232,7 @@ class WifiThread_PMKmode(ThreadBase):
         time.sleep(10)
         logger().info(f"this thread is used for wifi join")
 
-        with TimeMeasurer() as t:
+        with TimeMeasurer():
             logger().info(f"Scan for the AP's")
             ap_mac = self.wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
             ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
@@ -308,63 +255,27 @@ class WifiThread_PMKmode(ThreadBase):
 
             logger().info("DUT to power save in Wifi+bluetooth mode")
             result = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert result
             result = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert result
             time.sleep(15)
 
-            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-            packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                             f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
-                             f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-
             packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
-
-            packet_filter3 = f'wlan.sa == {dut_mac_address} and ' \
-                             f'wlan.fc.pwrmgt == 1 and wlan.fc.type_subtype == 0x0028'
 
             # Validate the eapol 4 key
             packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                              f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
-            # Validate dhcp
-            packet_filter5 = f" (dhcp) && (wlan.addr == {ap_bssid}) && (wlan.addr == {dut_mac_address})"
-
-            # Validating the ps poll frames
-            packet_filter7 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
-
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
-            packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
-
-            logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                                 'in sniffer'
-
-            logger().info(f"Validating QOS  NULL data frames with power management bit")
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-                'packet_count'], 'Unable to find power management bit in QOS null frames in sniffer capture'
-
-            if not self.tcp_bypass:
-                logger().info(
-                    f"Validating DHCP frames from AP & DUT"
-                )
-                decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
-                logger().info(f"decryption_key : {decryption_key}")
-                dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key,
-                                                                               ["dhcp"])
-                logger().info(f"dhcp_list : {dhcp_list}")
-                assert dhcp_list == True, "DHCP packets not found"
+            packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and' \
+                             f' wlan.da == {ap_bssid})'
 
             logger().info("Validating eapol4 packet")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
                     'packet_count'], 'Unable to find eapol4 packet in sniffer '
-            logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7)[
-                'packet_count'], 'Unable to find ps polls in sniffer capture'
 
             logger().info("Validating time between two packets")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
@@ -383,7 +294,7 @@ class WifiThread_PMKmode(ThreadBase):
             time_str1 = time_str1[:-3]
             time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
             logger().info(f'probe req time {time_object1}')
-            # Calcuting the reponse time of eapol4
+            # Calculating the response time of eapol4
             time_str2 = time_stamp_list[1]
             time_str2 = time_str2[:-3]
             time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
@@ -393,7 +304,7 @@ class WifiThread_PMKmode(ThreadBase):
             datetime2 = datetime.combine(date1, time_object2)
             time_taken = datetime2 - datetime1
             time_taken = time_taken.total_seconds()
-            assert time_taken <= 60
+            assert time_taken <= 0.04, f"time taken to connect is: {time_taken}"
             logger().info(f"time taken to connect is: {time_taken}")
 
 
@@ -433,6 +344,11 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
 
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file="psk_sniffer")
+
     logger().info(f"Join Wi-Fi Access Point")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     time.sleep(5)
@@ -447,61 +363,26 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
 
     logger().info("DUT to power save in Wifi+bluetooth mode")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
     time.sleep(15)
 
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
-                     f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
-
     packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
-
-    packet_filter3 = f'wlan.sa == {dut_mac_address} and ' \
-                     f'wlan.fc.pwrmgt == 1 and wlan.fc.type_subtype == 0x0028'
 
     # Validate the eapol 4 key
     packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                      f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
-    # Validate dhcp
-    packet_filter5 = f" (dhcp) && (wlan.addr == {ap_bssid}) && (wlan.addr == {dut_mac_address})"
-
-    # Validating the ps poll frames
-    packet_filter7 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
-
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
-
-    logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                         'in sniffer'
-
-    logger().info(f"Validating QOS  NULL data frames with power management bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count'], 'Unable to find power management bit in QOS null frames in sniffer capture'
-
-    if not tcp_bypass:
-        logger().info(
-            f"Validating DHCP frames from AP & DUT"
-        )
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        logger().info(f"decryption_key : {decryption_key}")
-        dhcp_list = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key,
-                                                                       ["dhcp"])
-        logger().info(f"dhcp_list : {dhcp_list}")
-        assert dhcp_list == True, "DHCP packets not found"
+    packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and ' \
+                     f'wlan.da == {ap_bssid})'
 
     logger().info("Validating eapol4 packet")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
         'packet_count'], 'Unable to find eapol4 packet in sniffer '
-    logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7)[
-        'packet_count'], 'Unable to find ps polls in sniffer capture'
+
     logger().info("Validating time between two packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
 
@@ -519,7 +400,7 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     time_str1 = time_str1[:-3]
     time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
     logger().info(f'probe req time {time_object1}')
-    # Calcuting the reponse time of eapol4
+    # Calculating the response time of eapol4
     time_str2 = time_stamp_list[1]
     time_str2 = time_str2[:-3]
     time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
@@ -529,7 +410,7 @@ def connect_with_psk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     datetime2 = datetime.combine(date1, time_object2)
     time_taken = datetime2 - datetime1
     time_taken = time_taken.total_seconds()
-    assert time_taken <= 60
+    assert time_taken <= 0.04, f"time taken to connect is: {time_taken}"
     logger().info(f"time taken to connect is: {time_taken}")
 
     logger().info("Disabling power save mode wlan+bt")
@@ -548,6 +429,12 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     ssid = wifi_access_point.interfaces.wifi.ssid
     ap_mac = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
     ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
+
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file="pmk_sniffer")
+
     logger().info(f"Joining into Wi-Fi with pmk")
     wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
                                       wifi_access_point.interfaces.wifi.passphrase)
@@ -568,56 +455,24 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert result
     result = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert result
     time.sleep(15)
 
-    # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-    packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
-                     f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid})|| wlan.addr == {dut_mac_address})'
     packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
-
-    packet_filter3 = f'wlan.sa == {dut_mac_address} and ' \
-                     f'wlan.fc.pwrmgt == 1 and wlan.fc.type_subtype == 0x0028'
 
     # Validate the eapol 4 key
     packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                      f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
 
-    # Validate dhcp
-    packet_filter5 = f" (dhcp) && (wlan.addr == {ap_bssid}) && (wlan.addr == {dut_mac_address})"
-    # Validating the ps poll frames
-    packet_filter7 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
-
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and wlan.da == {ap_bssid})'
-
-    logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
-                         'in sniffer'
-    logger().info(f"Validating QOS  NULL data frames with power management bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-                'packet_count'], 'Unable to find power management bit in QOS null frames in sniffer capture'
-    if not tcp_bypass:
-        logger().info(
-            f"Validating DHCP frames from AP & DUT"
-        )
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        logger().info(f"decryption_key : {decryption_key}")
-        dhcp_list = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key,
-                                                                       ["dhcp"])
-        logger().info(f"dhcp_list : {dhcp_list}")
-        assert dhcp_list == True, "DHCP packets not found"
+    packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and ' \
+                     f'wlan.da == {ap_bssid})'
 
     logger().info("Validating eapol4 packet")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
         'packet_count'], 'Unable to find eapol4 packet in sniffer '
-    logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7)[
-        'packet_count'], 'Unable to find ps polls in sniffer capture'
 
     logger().info("Validating time between two packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
@@ -636,7 +491,7 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     time_str1 = time_str1[:-3]
     time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
     logger().info(f'probe req time {time_object1}')
-    # Calcuting the reponse time of eapol4
+    # Calculating the response time of eapol4
     time_str2 = time_stamp_list[1]
     time_str2 = time_str2[:-3]
     time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
@@ -646,7 +501,7 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
     datetime2 = datetime.combine(date1, time_object2)
     time_taken = datetime2 - datetime1
     time_taken = time_taken.total_seconds()
-    assert time_taken <= 60
+    assert time_taken <= 0.04, f"time taken to connect is: {time_taken}"
     logger().info(f"time taken to connect is: {time_taken}")
 
     logger().info("Disabling power save mode wlan+bt")
@@ -658,12 +513,12 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -673,7 +528,7 @@ def connect_with_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "123456789zx",
                                                "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_threading_sta_ble_dut_tkip_psk_C20211(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
+def test_threading_sta_ble_dut_tkip_psk_c20211(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
     ble_mode = "ble_slave"
     testcase = "sta with tkip psk + ble connection as a slave_C20211"
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
@@ -684,14 +539,15 @@ def test_threading_sta_ble_dut_tkip_psk_C20211(wifi_dut, ble_client, wifi_access
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
+
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -701,7 +557,7 @@ def test_threading_sta_ble_dut_tkip_psk_C20211(wifi_dut, ble_client, wifi_access
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "12123456789zx",
                                                "security": "WPA2", "cipher": 'AES', })
-def test_threading_sta_ble_AES_psk_C20212(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_aes_psk_c20212(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     testcase = "sta with AES pmk + ble connection as a slave_C20212"
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
@@ -712,14 +568,15 @@ def test_threading_sta_ble_AES_psk_C20212(wifi_dut, wifi_access_point, wifi_snif
     with Cleanup_Thread(wifi_dut, ble_client, ble_mode):
         time.sleep(5)
 
+
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -729,7 +586,7 @@ def test_threading_sta_ble_AES_psk_C20212(wifi_dut, wifi_access_point, wifi_snif
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "12345676789zx",
                                                "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_C20213(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
+def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_c20213(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
     ble_mode = "ble_mode"
     testcase = "sta with tkip psk + ble connection as a slave_C20213"
 
@@ -754,12 +611,12 @@ def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_C20213(wifi_dut, ble_client, wifi
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -769,7 +626,7 @@ def test_wpa_tkip_using_pmk_wlan_ble_mode_loop_C20213(wifi_dut, ble_client, wifi
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeytwobytesofsize",
                                                "passphrase": "1234556789zx",
                                                "security": "WPA2", "cipher": 'AES'})
-def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
+def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_c20214(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
     ble_mode = "ble_slave"
     testcase = "Join time with AES PMK + ble connection as a slave_C20214"
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
@@ -793,13 +650,13 @@ def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
         "band": 0
     }
 )
@@ -807,11 +664,12 @@ def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_C20214(wifi_dut, ble_client, wifi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA", "cipher": 'TKIP', "standard": '11g'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_modes_tkip_psk_c20252(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     testcase = "testcase for tkip with psk + ble_C20252"
 
-    with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase, tcp_bypass=True), BleThread_connection(wifi_dut, ble_client, ble_mode):
+    with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase, tcp_bypass=True), \
+            BleThread_connection(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
 
     logger().info("Cleanup Thread Execution Starts...")
@@ -831,13 +689,13 @@ def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wi
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
         "band": 0
     }
 )
@@ -846,7 +704,7 @@ def test_threading_sta_ble_modes_tkip_psk_C20252(wifi_dut, wifi_access_point, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_modes_aes_psk_c20253(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     testcase = "testcase for AES with psk + ble_C20253"
 
@@ -871,13 +729,13 @@ def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wif
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
         "band": 0
     }
 )
@@ -887,7 +745,7 @@ def test_threading_sta_ble_modes_AES_psk_C20253(wifi_dut, wifi_access_point, wif
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA", "cipher": 'TKIP',
                           "standard": '11bg'})
-def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_modes_tkip_pmk_c20254(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     testcase = "testcase for tkip with pmk + ble_C20254"
 
@@ -912,13 +770,13 @@ def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wi
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi=
-    {
+    wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
         "band": 0
     }
 )
@@ -927,7 +785,7 @@ def test_threading_sta_ble_modes_tkip_pmk_C20254(wifi_dut, wifi_access_point, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_modes_AES_pmk_C20255(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_modes_aes_pmk_c20255(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
     testcase = "testcase for AES with pmk + ble_20255"
 

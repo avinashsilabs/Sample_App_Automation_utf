@@ -1,4 +1,7 @@
 import pytest
+from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
+from utf.utils.stopwatch import Stopwatch
+from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,\
     RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116CustomFeatureBitMap,RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
@@ -59,6 +62,41 @@ class ble_adv(ThreadBase):
 
         logger().info(f"ble client add..{bt_client_address}")
         time.sleep(5)
+
+
+class DutBleScanning():
+
+    def start_scan(self, wifi_dut, ble_client, ble_dut, ble_scan_type):
+        logger().info(f"Start DUT")
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "Unable to get ble_client_address"
+
+        logger().info(f"\n\n Start scanning and connect to ble client \n\n")
+        result = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address,
+                                                             ble_scan_type=ble_scan_type, timeout=120)
+
+        logger().info(f"\n\n ****Enabling Wlan and BLE power save**** \n\n")
+        # # Enables the wlan power save in DUT
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        # # Enables the bt power save in DUT
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, 'failed to enable wlan power save'
+        assert enable_bt_ps, 'failed to enable bt power save'
+
+        logger().info(f"\n\n scan result '{result}\n\n")
+        assert result, "no bt device found"
+        logger().info(f"Stopping ble-client advertising")
+        ble_client.interfaces.bluetooth.stop_advertising()
+        time.sleep(2)
+        logger().info("stop scanning")
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        time.sleep(2)
+        ble_client.interfaces.bluetooth.close()
+        time.sleep(2)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1483,3 +1521,183 @@ def test_thePowersavemode2_functionality_of_DUT_C19859(wifi_dut, ble_client):
     logger().info(f"Currently we are supporting this "
                   f"Check weather the DUT is able receive adverse report in 3 channel are not using sniffer")
     logger().info(f"found BT client address of {bt_client_address}")
+
+#written by Benazeer K
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+def test_c19838_verify_ble_passive_scanning_on_dut(wifi_dut, ble_dut, ble_client):
+    #test case to verify BLE Passive Scan on DUT
+    with BleLogs(start_collecting_logs=True,
+             bt_log_path=f"reports/test_C19838_verify_ble_passive_scanning_on_dut.log_{int(time.time())}"):
+        ble_obj = DutBleScanning()
+        ble_obj.start_scan(wifi_dut, ble_client, ble_dut, ble_scan_type=0)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+def test_c19837_verify_ble_active_scanning_on_dut(wifi_dut, ble_dut, ble_client):
+    # test case to verify BLE Passive Scan on DUT
+    with BleLogs(start_collecting_logs=True,
+                 bt_log_path=f"reports/test_C19837_verify_ble_active_scanning_on_dut.log_{int(time.time())}"):
+        ble_obj = DutBleScanning()
+        ble_obj.start_scan(wifi_dut, ble_client, ble_dut, ble_scan_type=1)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_disconnect"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+def test_c19835_c19836_ble_conn_discon_verification(wifi_dut, ble_client):
+    with BleLogs(start_collecting_logs=True,
+                 bt_log_path=f"reports/test_c19835_c19836_ble_conn_discon_verification.log_{int(time.time())}"):
+        # Start DUT
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address is not None
+        logger().info(f"Configuring Remote LE device in Undirected connectable advertising mode")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+            bt_dut_address=bt_dut_address,
+            hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                           "0x40 0x00 "  # Advertising_Interval_Max
+                           "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                           "0x00 "  # Own_Address_Type
+                           "0x00 "  # Peer_Address_Type
+                           "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                           "0x07 "  # Advertising_Channel_Map
+                           "0x00"  # Advertising_Filter_Policy
+        , scan_resp_name_params = "0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                    "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                    "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                    "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+        )
+        assert bt_client_address is not None
+
+        logger().info("Start scanning and connect to ble client")
+        result = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+
+        logger().info("Enabling Wlan and BLE power save ")
+        # # Enables the wlan power save in DUT
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        # # Enables the bt power save in DUT
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, 'failed to enable wlan power save'
+        assert enable_bt_ps, 'failed to enable bt power save'
+
+        logger().info(f" scan result '{result}")
+        assert result, "no bt device found"
+
+        timeout = 120
+        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+        wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+
+        logger().info("Check connection status of BLE")
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
+        logger().info("DUT is not disconnected from BLE")
+
+        ## Disconnect
+        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_advertising"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+    },
+)
+def test_c19830_powersave3_dut_adv_mode(firmware_loader, wifi_dut, ble_dut, ble_client):
+    # test case to verify BLE Passive Scan on DUT
+    with BleLogs(start_collecting_logs=True,
+                 bt_log_path=f"reports/test_c19830_powersave3_dut_adv_mode.log_{int(time.time())}"):
+        set_local_name = "BLE_GAP_TESTPLAN"
+        logger().info(f"Setting BLE local name {set_local_name}")
+        wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
+        status = wifi_dut.interfaces.wifi.bt_get_local_name()
+        logger().info(f"getting the local name : {status}")
+        assert set_local_name == status, "Set local name and get local name not matched "
+        logger().info(f"DUT BLE start")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+
+        logger().info(f"start advertising")
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+
+        logger().info("Enabling Wlan and BLE power save ")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, 'failed to enable wlan power save'
+        assert enable_bt_ps, 'failed to enable bt power save'
+
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        time.sleep(10)
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            found_devices = ble_client.interfaces.bluetooth.get_devices()
+            logger().info(f"{found_devices}")
+            if bt_dut_address in found_devices and \
+                    found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+                device_found = True
+                break
+
+        ble_client.interfaces.bluetooth.stop_scanning()
+        assert device_found
+
+        logger().info(f"\n\n Stopping ble-client advertising \n\n")
+        ble_client.interfaces.bluetooth.stop_advertising()
+        time.sleep(2)
+
+        ble_client.interfaces.bluetooth.close()
+        time.sleep(2)
+
+

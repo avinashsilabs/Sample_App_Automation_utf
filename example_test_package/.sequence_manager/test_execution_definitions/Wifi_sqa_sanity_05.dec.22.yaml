@@ -19,7 +19,6 @@ test_sequence:
         'Europe'})
       - pytest.mark.start_state('wifi_dut',wifi='init')
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -31,6 +30,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_EU_2_4_C34786[TCP]
     description: null
     library_name: ''
     visible: true
@@ -54,7 +54,6 @@ test_sequence:
         'US'})
       - pytest.mark.start_state('wifi_dut',wifi='init')
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -66,6 +65,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_US_2_4_C34785[TCP]
     description: null
     library_name: ''
     visible: true
@@ -89,7 +89,6 @@ test_sequence:
         'US'})
       - pytest.mark.start_state('wifi_dut',wifi='init')
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -101,6 +100,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_US_5Ghz_C34789[TCP]
     description: null
     library_name: ''
     visible: true
@@ -124,7 +124,6 @@ test_sequence:
         'Europe'})
       - pytest.mark.start_state('wifi_dut',wifi='init')
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -136,6 +135,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_EU_5Ghz_C34790[TCP]
     description: null
     library_name: ''
     visible: true
@@ -159,7 +159,6 @@ test_sequence:
         'Asia'})
       - pytest.mark.start_state('wifi_dut',wifi='init')
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -171,6 +170,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_WORLD_5Ghz_C34792[TCP]
     description: null
     library_name: ''
     visible: true
@@ -194,7 +194,6 @@ test_sequence:
         pytest.mark.config('wifi_access_point',wifi={'region': 'US','channel':
         6})
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -206,6 +205,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_US_dual_band_C34793[TCP]
     description: null
     library_name: ''
     visible: true
@@ -226,7 +226,6 @@ test_sequence:
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.config('wifi_access_point',wifi={'channel': 11,'region':
         'Asia'})
@@ -241,6 +240,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_WORLD_2_4_C34788[TCP]
     description: null
     library_name: ''
     visible: true
@@ -264,7 +264,6 @@ test_sequence:
         pytest.mark.config('wifi_access_point',wifi={'region':
         'Europe','channel': 12})
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -276,6 +275,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_EU_dual_band_C34794[TCP]
     description: null
     library_name: ''
     visible: true
@@ -299,7 +299,6 @@ test_sequence:
         pytest.mark.config('wifi_access_point',wifi={'region': 'Asia','channel':
         1})
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
     test_params:
@@ -311,6 +310,7 @@ test_sequence:
       - smoke_test
       - sqa_test_suites
       - wifi_sqa_sanity
+    test_case_name: test_join_WORLD_dual_band_C34796[TCP]
     description: null
     library_name: ''
     visible: true
@@ -499,17 +499,21 @@ test_sequence:
     test_module: >-
       sqa_test_suites/functional/wlan_standalone/testplans_with_custom_requirements/hercules_utility_dependency/test_wlan_rejoin_2G.py
     test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
         RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
         RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'custom_features':
-        RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost})
+        RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'region':
+        1,'region_code': RS9116RegionCode.Japan,'module_type': 1})
       - >-
-        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
-      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
-      - pytest.mark.start_state('wifi_dut',wifi='init')
-      - pytest.mark.start_state('wifi_dut_module',wifi=['reset','init'])
+        pytest.mark.config('wifi_access_point',wifi={'region': 'US','channel':
+        11})
     test_params: []
     version: 0
     enabled: true
@@ -520,6 +524,7 @@ test_sequence:
       - testplans_with_custom_requirements
       - wlan_rejoin_2G
       - wlan_standalone
+    test_case_name: test_rejoin_in_japan_region_C19744
     description: null
     library_name: ''
     visible: true
@@ -541,7 +546,6 @@ test_sequence:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
-      - 'pytest.mark.config(''wifi_client'',wifi={''interface'': ''eth0''})'
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','disable_store_config'])
       - >-
@@ -558,6 +562,7 @@ test_sequence:
       - store_configuration
       - testplans_with_default_harness
       - wlan_standalone
+    test_case_name: test_wireless_config_WPA2_C19093[TCP]
     description: null
     library_name: ''
     visible: true
@@ -748,11 +753,11 @@ test_sequence:
     library_name: ''
     visible: true
     iterations: 1
-  - id: fb72a4045e5898b29def2c54e2653c6190a1417d
+  - id: b12f13d879325196f48c972eec2d07c2da92d352
     test_case_id: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080[TCP]
     test_function: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080
     test_id: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080[TCP]::1
-    test_module: sqa_test_suites/functional/coex/test_sta_bt_ble_dual_mode.py
+    test_module: sqa_test_suites/functional/mult_raspi/test_sta_bt_ble_dual_mode.py
     test_markers:
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
@@ -775,18 +780,19 @@ test_sequence:
     version: 0
     enabled: true
     labels:
-      - coex
       - functional
+      - mult_raspi
       - sqa_test_suites
       - sta_bt_ble_dual_mode
+    test_case_name: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080[TCP]
     library_name: ''
     visible: true
     iterations: 1
-  - id: fdff0b32cd38ecb780d35f8d31885303cc274c56
+  - id: 14879ab4183412cbbebabeb1f43049c10479aaf8
     test_case_id: test_bt_ble_connection_with_dual_mode_functionality_C19998
     test_function: test_bt_ble_connection_with_dual_mode_functionality_C19998
     test_id: test_bt_ble_connection_with_dual_mode_functionality_C19998::1
-    test_module: sqa_test_suites/functional/bt_classic/test_bt_ble.py
+    test_module: sqa_test_suites/functional/mult_raspi/test_bt_ble.py
     test_markers:
       - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
       - >-
@@ -806,9 +812,10 @@ test_sequence:
     enabled: true
     labels:
       - bt_ble
-      - bt_classic
       - functional
+      - mult_raspi
       - sqa_test_suites
+    test_case_name: test_bt_ble_connection_with_dual_mode_functionality_C19998
     library_name: ''
     visible: true
     iterations: 1
@@ -882,6 +889,7 @@ test_sequence:
       - bt_hid
       - functional
       - sqa_test_suites
+    test_case_name: test_interrupt_data_after_hid_conn_C20021
     library_name: ''
     visible: true
     iterations: 1
@@ -910,6 +918,7 @@ test_sequence:
       - bt_hid
       - functional
       - sqa_test_suites
+    test_case_name: test_hid_connectivity_SSP_with_IO_capa_keyboard_only_C20027
     library_name: ''
     visible: true
     iterations: 1

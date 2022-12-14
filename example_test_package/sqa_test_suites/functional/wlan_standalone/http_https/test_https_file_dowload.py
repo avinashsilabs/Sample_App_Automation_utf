@@ -43,12 +43,12 @@ def logger():
 device_port = 5001
 
 def fw_download_from_aws_server(wifi_dut, aws_s3):
-    status = aws_s3.interfaces.s3.upload_file('/app/manifest/RS9116W.2.7.0.37.rps',
-                                              "utf-test", "RS9116W.2.7.0.37.rps")
+    status = aws_s3.interfaces.s3.upload_file('/app/manifest/RS9116W.2.7.0.39.rps',
+                                              "utf-test", "RS9116W.2.7.0.39.rps")
     assert status is True, f"unable to upload"
     logger().info(f"upload successful")
-    url = aws_s3.interfaces.s3.get_file_url("utf-test", "eu-west-2", "RS9116W.2.7.0.37.rps")
-    assert url == "https://utf-test.s3.eu-west-2.amazonaws.com/RS9116W.2.7.0.37.rps"
+    url = aws_s3.interfaces.s3.get_file_url("utf-test", "eu-west-2", "RS9116W.2.7.0.39.rps")
+    assert url == "https://utf-test.s3.eu-west-2.amazonaws.com/RS9116W.2.7.0.39.rps"
     result = wifi_dut.interfaces.wifi.get_firmware_image(url)
     assert result, "fetched data is empty,failed to get data"
 

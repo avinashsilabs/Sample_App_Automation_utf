@@ -460,10 +460,10 @@ def test_ble_connect_with_200ms_4dBm_C20576(wifi_dut, ble_client, power_meter):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertise_connectable_power_1065ms_C20569(wifi_dut, ble_client, power_meter):
+def test_ble_advertise_non_connectable_power_1065ms_C20569(wifi_dut, ble_client, power_meter):
     with BleLogs(
         start_collecting_logs=True,
-        bt_log_path=f"./test_ble_advertise_connectable_power_{int(time.time())}.log",
+        bt_log_path=f"./test_ble_non_advertise_connectable_power_{int(time.time())}.log",
     ) as bt_logs:
         ble_advertising_data = 'Silabsautomation'
 
@@ -508,7 +508,7 @@ def test_ble_advertise_connectable_power_1065ms_C20569(wifi_dut, ble_client, pow
 
         logger().info(f"fetched data from bt mon {bt_logs.device_adv_type}")
 
-        assert "Connectable undirected - ADV_IND (0x00)" in bt_logs.device_adv_type,\
+        assert "Non connectable undirected - ADV_NONCONN_IND (0x03)" in bt_logs.device_adv_type, \
             "Expected adv type not found in bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
 

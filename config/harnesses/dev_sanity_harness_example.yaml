@@ -281,6 +281,7 @@ devices:
                 security: WPA2
                 ssid: 'Azeez123'
                 passphrase: '12345678'
+                channel: 11
 
 
     # This represents another access point configuration.
@@ -315,23 +316,8 @@ devices:
                 channel: 11
                 supports: 'wifi_ap'
                 # radius server configuration
-                radius_ip: '10.207.18.190'
-                radius_port: '1812'
-    airpcap:
-        interfaces:
-            local_shell:
-                type: 'shell.ssh_shell'
-                remote: 10.207.18.190
-                username: slwifi
-                password: Qwertyuiop@12
-                use_paramiko_expect: false
-            capture:
-                default:
-                type: 'wifi.sniffer.tshark'
-                shell: 'local_shell'
-                interface: 'wlo1'
-            #   capture_file: 'Test_Enhanced_'
-
+                radius_ip: "10.207.18.189"
+                radius_port: "1812"
     switched_ap:
         interfaces:
             wifi:
@@ -434,6 +420,23 @@ devices:
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
                 interface: 'eth0'
+
+    raspi_ip_remote_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_remote_socket'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
+                buffer_length: 1470
+                no_of_pkts: 500
+                socket_type: 0   #0- TCP, 1 - UDP
+                interface: 'eth0'
+                primary_interface: 'eth0'
+                primary_port: 5001
+
     raspi_bt_client:
         interfaces:
             linux_shell:
@@ -456,7 +459,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.50.40'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
 
@@ -516,7 +519,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.50.40'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -692,6 +695,25 @@ devices:
                 tls_enabled: true
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    airpcap:
+        interfaces:
+            local_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.18.190  # configure sniffer NUC IP
+                username: slwifi       # sniffer NUC username
+                password: Qwertyuiop@12    # sniffer NUC password
+                use_paramiko_expect: false
+            capture:
+                default:
+                type: 'wifi.sniffer.tshark'
+                shell: 'local_shell'
+                interface: 'wlp0s20f3'
+            live_capture:
+                host_address: 10.207.18.190
+                type: 'wifi.sniffer.pyshark_live_sniffer'
+                shell: 'local_shell'
+                interface: 'wlp0s20f3'
+
     saleae_logic_analyzer:
         interfaces:
             logic_analyzer:
@@ -745,12 +767,15 @@ devices:
         interfaces:
             aws_iot:
                 type: 'aws_iot.python_thing'
-                client_id: 'Python-Thing'
-                hostname: 'a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com'
+                client_id: 'Python-Thing_Raspi'
+                hostname: 'a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com'
                 port: 8883
-                private_key: 'python-thing-private.pem.key'
-                root_ca: 'AWS-IoT-root-CA.crt'
-                client_cert: 'python-thing-certificate.pem.crt'
+                #private_key: 'python-thing-private.pem.key'
+                #root_ca: 'AWS-IoT-root-CA.crt'
+                #client_cert: 'python-thing-certificate.pem.crt'
+                private_key: 'private-key.key'
+                root_ca: 'start_field.pem'
+                client_cert: 'client-certificate.crt'
 
 
     aws_s3_boto3:
@@ -838,7 +863,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                firmware_file_path: '/app/manifest/RS9116W.2.7.0.37.rps'
+                firmware_file_path: '/app/manifest/RS9116W.2.7.0.39.rps'
 
     raspi_iperf:
         interfaces:
@@ -964,6 +989,13 @@ devices:
             # the docker image to run
             ble_vul_sniffer:
                 type: 'bluetooth.sniffer.sweyntooth'
+                docker_host: 'sweyntooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            sweyntooth_docker:
+                type: 'docker'
                 ip_address: '10.207.16.89'
                 container_name: "utf_sweyntooth"
                 image: 'utfsilabs/utf_sweyntooth'
@@ -971,10 +1003,6 @@ devices:
                 is_execute_raspi_manager_scripts: false
                 username: pi
                 password: 'raspberry'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x239a
-                pid: 0x8029
             linux_shell:
                 type: 'shell.shell'
 
@@ -985,6 +1013,13 @@ devices:
             # the docker image to run
             bt_vul_sniffer:
                 type: 'bluetooth.sniffer.braktooth'
+                docker_host: 'braktooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            braktooth_docker:
+                type: 'docker'
                 ip_address: '10.207.18.161'
                 container_name: "utf_braketooth"
                 image: 'utfsilabs/utf_braktooth'
@@ -992,10 +1027,6 @@ devices:
                 is_execute_raspi_manager_scripts: false
                 username: 'test'
                 password: 'test123'
-                shell: 'linux_shell'
-                port: 'auto'
-                vid: 0x0403
-                pid: 0x6010
             linux_shell:
                 type: 'shell.shell'
 
@@ -1044,6 +1075,8 @@ defaults:
 
     aws_s3: 'aws_s3_boto3'
 
+    aws_iot_client: 'python_aws_iot_thing'
+
     wifi_clients:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
@@ -1059,6 +1092,9 @@ defaults:
     logic_analyzer: 'saleae_logic_analyzer'
 
     power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
+
+    power_meters:
+        - 'nrf_ppk2_device'
 
     ble_client: 'raspi_ble_client'
 
@@ -1081,6 +1117,7 @@ defaults:
     #ssl_server: 'raspi_ssl_server_static'
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
+    # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
 
@@ -1094,7 +1131,7 @@ defaults:
     bt_vulnerability_sniffer: 'bt_braktooth'
 
     wifi:
-        ssid: 'Azeez123'
+        ssid: 'Dev_Sanez123'
         security: WPA2
         channel: 11
         passphrase: '12345678'
@@ -1106,7 +1143,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/RS9116W.2.7.0.5.rps'
+        http_url: '/RS9116W.2.7.0.13.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1114,8 +1151,7 @@ defaults:
         enable_ppp: 0
         afe_type: 1
         features_enable: 0
-        enable_async_socket: 0
-        enable_socket_config: 0
+        board_type: "rs9116"
 
     wiseconnect_web: 'wiseconnect_web'
 

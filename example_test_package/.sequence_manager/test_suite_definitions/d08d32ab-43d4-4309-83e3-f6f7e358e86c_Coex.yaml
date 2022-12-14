@@ -1,0 +1,190 @@
+id: d08d32ab-43d4-4309-83e3-f6f7e358e86c
+name: coex_deployed_05.dec.22
+description: ''
+test_cases:
+  - test_case_id: 80dc2770d2fb14ac0b8f8f08254fe8560945cb1e
+    iterations: 1
+  - test_case_id: 029bf08844c471f089dc67ecb640ed8b416dacad
+    iterations: 1
+  - test_case_id: fcf845a1b0237af6cfb4f36c81f88f85d530ca11
+    iterations: 1
+  - test_case_id: 83289f8ff0419e3c0832d672cd39237c2d965b4c
+    iterations: 1
+  - test_case_id: 8e360b8e82b38730959bcbd630bbb4f81a5ce1de
+    iterations: 1
+  - test_case_id: 21eda875419d83f7b5c8c1f80bdaa9948092d3ac
+    iterations: 1
+  - test_case_id: 3f311dc4eff9a9b37caac53c0c95216cf97df212
+    iterations: 1
+  - test_case_id: 658c997a698c8e8d10723636ce0cfb90def7d3bb
+    iterations: 1
+  - test_case_id: 9af91bca73f01cf88e07713e5f1f948dbddf8fe3
+    iterations: 1
+  - test_case_id: 874388099f649e1e4a6a191e111674751ab62d4d
+    iterations: 1
+  - test_case_id: 40062ca012a9ab7003951149fa4414a3365f078a
+    iterations: 1
+  - test_case_id: cee625572c3515b12ddef38163e90c4f4d6ce8fa
+    iterations: 1
+  - test_case_id: 0538c065844e8adeb5b6c7899d52912be78d8efb
+    iterations: 1
+  - test_case_id: c084a8a4a7ba1d6c746ec0bf3f949b2c489db621
+    iterations: 1
+  - test_case_id: ff2a23e3b231a270feddb912d5a19249c96fb02e
+    iterations: 1
+  - test_case_id: ec81a931bdc1509b21322e37730b7e51d3c3d4c9
+    iterations: 1
+  - test_case_id: aea57d2394133b33673810d021269272835c5c1d
+    iterations: 1
+  - test_case_id: 6f837d43a417d19c9c1e75447241e96467de30ba
+    iterations: 1
+  - test_case_id: f93c5b6ab68619f9fb140c71b189cb45bd5598ee
+    iterations: 1
+  - test_case_id: fed64e8a479e8db983a6b008bdeeef682c209d20
+    iterations: 1
+  - test_case_id: 07dbe7af2c43bbe9761f53564c2046a4c1444a63
+    iterations: 1
+  - test_case_id: 98202076b20f369bb25f6df1109a6ae2ad60bb59
+    iterations: 1
+  - test_case_id: f603f8fad8de45f987d8dd80fbaac7f0f39ed1bf
+    iterations: 1
+  - test_case_id: e43253ebc92a2c8c51dbebcf0e237eabc9f33754
+    iterations: 1
+  - test_case_id: 1cf0f036867fd9c5473f1b4f9ea90683d36e5e94
+    iterations: 1
+  - test_case_id: edb131968984d831fb068e442f96b37dbb68d4c9
+    iterations: 1
+  - test_case_id: 2908cba6d5bf3e03d85307fa62825115a3eb0081
+    iterations: 1
+  - test_case_id: e13e4640a66afd1249d9d48931b1ad9168394539
+    iterations: 1
+  - test_case_id: 82bae79913b7dd7b98f53ef58cdbbb9933fd4df8
+    iterations: 1
+  - test_case_id: 1675fb27b4322616050fbe5f87a651477b103791
+    iterations: 1
+  - test_case_id: 2663dd8d55699093bbece28137cc8ee72d3b278e
+    iterations: 1
+  - test_case_id: 6adc438a194122a4500b03ec2dd3f38819e944b7
+    iterations: 1
+  - test_case_id: 06e17502254ea5b0190d4c8104c59a366d0b3597
+    iterations: 1
+  - test_case_id: 2227b7f0834256200f02ff916b624ef3f3e41173
+    iterations: 1
+  - test_case_id: 466fb428687ebe3877360138823a48b8f293bca8
+    iterations: 1
+  - test_case_id: d35d33f2e363364b5c7db77a1b8be6e2433adef8
+    iterations: 1
+  - test_case_id: 40a38a9c8bcb9c2d64d6fc3806e414d868cb9324
+    iterations: 1
+  - test_case_id: 9d1c7758ea5f35ff51e6eec4cd96b3abc5797fbc
+    iterations: 1
+  - test_case_id: b496a1ed01c12feb6e5d764e05d8459ca7ec8bda
+    iterations: 1
+  - test_case_id: 65f8564d139f92187eb13ce31383ddeb1fce3363
+    iterations: 1
+  - test_case_id: ee4499cf88c3d97305a875cab46780797f574903
+    iterations: 1
+  - test_case_id: 5aaea5ad0fa0090b3a6e1d4d83c15d11bf77f7aa
+    iterations: 1
+  - test_case_id: d21a70d2e88e9dcea26f8583696b47860de0841c
+    iterations: 1
+  - test_case_id: 456cd42377aece709d0a87e51ea16ebc73e76f1c
+    iterations: 1
+  - test_case_id: 5305e80bb5ed051c68a0fae2d0ff486dd49aab82
+    iterations: 1
+  - test_case_id: c10af4dc5a704d63173ca3cea0591d2d5fa77b0a
+    iterations: 1
+  - test_case_id: b199a7416a28d822efca35d65a7a6d03f221721f
+    iterations: 1
+  - test_case_id: f7334da6bf6c72da5ae309d95267c8f91cf2b178
+    iterations: 1
+  - test_case_id: cc6fdd61e17228f3572876ca4ad818ac89ab2adc
+    iterations: 1
+  - test_case_id: 596a585518b8c631480e82f8efa8377b6f2cb2e1
+    iterations: 1
+  - test_case_id: 80ced9d8140e687e188cf1e46cdacf0c3a6341c3
+    iterations: 1
+  - test_case_id: d532942e7a8bf2f6f6a603bc63c3fda4c94bcee1
+    iterations: 1
+  - test_case_id: d1a0de9ceffc7562e28e1245d238ea3941e8ea02
+    iterations: 1
+  - test_case_id: 5a2ff02d1362e81cbca7bf90e27845e4625a6a7b
+    iterations: 1
+  - test_case_id: 0a4d279074565c430eb35e682863bedd1db0c617
+    iterations: 1
+  - test_case_id: 0c6daf296bdcac7dc89e1e702baed012306829fc
+    iterations: 1
+  - test_case_id: d549a87d12c58532b72b9d4dd27b43ffc7cc46e1
+    iterations: 1
+  - test_case_id: bbe04d2e559f039a0fea44504391d31a87a5763b
+    iterations: 1
+  - test_case_id: 55749fbed7c8eb9e2f2a1df0e052b9800ab4140c
+    iterations: 1
+  - test_case_id: 47daf531dad75e7ae4296ed252c068a8620db5f4
+    iterations: 1
+  - test_case_id: bd06310e3896ca17455416047b1b097a1ed36887
+    iterations: 1
+  - test_case_id: d50b4af55fe86baa2922a0c7f8c6ea736fe92784
+    iterations: 1
+  - test_case_id: 4741717e430fd433cbd92fa963115d6c47d09d5d
+    iterations: 1
+  - test_case_id: d352d59c060150224a3ffe38d71bbd97cfdb7031
+    iterations: 1
+  - test_case_id: 7b5e5ea83d318d08887e61988ea81b96d5b534ba
+    iterations: 1
+  - test_case_id: c3b97d8f2f1aaf4b66fc19db47d760ca2e046efc
+    iterations: 1
+  - test_case_id: f606fad4f6000149c361eb17a834f5761b9c6daa
+    iterations: 1
+  - test_case_id: a552e4d963fe39a6bc552bf0aa9787d274d7189f
+    iterations: 1
+  - test_case_id: 597bf67b2eca03de340bd2fc585e51a88b0c87f6
+    iterations: 1
+  - test_case_id: 0cb2e6a3446b0c0733930c44c05c4f779bcaf4f6
+    iterations: 1
+  - test_case_id: b296af7ab4777510a01ad405bda575142abba224
+    iterations: 1
+  - test_case_id: dd79aeb46b5712d37a9ba6f792c4cccb5a1b8555
+    iterations: 1
+  - test_case_id: a81b58ab7b5f529d3ea72119f5c82002bc54fd3f
+    iterations: 1
+  - test_case_id: 63d092d841d7da91adb1df946872d70b000808f2
+    iterations: 1
+  - test_case_id: 88e328483258ae412aee2fb0c2d3a6a8bbe85341
+    iterations: 1
+  - test_case_id: ad7850eb0e68b81f1374f1f1bb588c5f0170fb3d
+    iterations: 1
+  - test_case_id: 7989211d9928f126a34283b6099f1613d65a8445
+    iterations: 1
+  - test_case_id: 4a6bed41c80cfd0cf18a1ad5ae1085758022b9fb
+    iterations: 1
+  - test_case_id: b80ec27d7826618a8c245b3d755833d85a31196c
+    iterations: 1
+  - test_case_id: dfe4c2a78b8fceb9370615394a8957cf5114a3ec
+    iterations: 1
+  - test_case_id: 5d9f4eeac5add77669ce28abb8f60f8c8f2dee3e
+    iterations: 1
+  - test_case_id: 35808d62986159f8e778c7d05030ae9710979fa1
+    iterations: 1
+  - test_case_id: 277e852b89d0b43a6b3e9d6192c8f78b7a14c544
+    iterations: 1
+  - test_case_id: 35808d62986159f8e778c7d05030ae9710979fa1
+    iterations: 1
+  - test_case_id: 2ee78c7818e3e6518133071ddf780e632389ece0
+    iterations: 1
+  - test_case_id: 4f66c77b2599411e34c80f1f77255ff260357537
+    iterations: 1
+  - test_case_id: 74ae4b2eb28ecda858703594958ece1a9bb68e65
+    iterations: 1
+  - test_case_id: d820f75d376ec97a73d87be7bf35418e9fdfc85f
+    iterations: 1
+  - test_case_id: b12f13d879325196f48c972eec2d07c2da92d352
+    iterations: 1
+  - test_case_id: 6e82f57c5ec9b61e40d29fa74448e9da718be62c
+    iterations: 1
+  - test_case_id: bb11cb632a9060bdc3ceb24efeb5755ec2466684
+    iterations: 1
+  - test_case_id: 3bc43fc25b1af13576bd9907d0db671073acf794
+    iterations: 1
+  - test_case_id: e50dc2dba0ea309025e96642f009d2dd54e138ab
+    iterations: 1

@@ -46,7 +46,6 @@ def reset_USB_Device():
             usb_bus = usb_dev_details[1]
             usb_dev = usb_dev_details[3][:3]
             usb_dev_path = '/dev/bus/usb/%s/%s' % (usb_bus, usb_dev)
-
     try:
         if usb_dev_path != "":
             logger().info("Trying to reset USB Device: " + usb_dev_path)
@@ -56,70 +55,74 @@ def reset_USB_Device():
         else:
             logger().info("Device not found.")
     except:
-        logger().info("Failed to reset the USB Device.")
+        assert False, '\n\n ***Setup Issue*** Unable to detect Sweyntooth (NRF) Board.. Please reconnect the Board..!!\n\n'
     finally:
-        try:
+        if device_file:
             os.close(device_file)
-        except:
-            pass
-
+            
 def ble_vulnerability(ble_dut, ble_vulnerability_sniffer, test_duration, script_name, only_ADV=False):
-    ble_dut_address = ble_dut.interfaces.wifi.ble_start()
-    assert ble_dut_address is not None
-    time.sleep(2)
-    ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
-            dut_address=ble_dut_address,
-            log_file=f"reports/"+script_name+".log_"+str(int(time.time()))
-        )
-    if ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising: 
-        logger().info(f"\n\n ***** DUT {ble_dut_address} is in Advertising State *****\n\n")
-    else:
-        ble_dut.interfaces.wifi.ble_start_advertising()
-        logger().info(f"\n\n ***** Advertising started Successfully on DUT : {ble_dut_address} *****\n\n")
-    sw = Stopwatch()
-    prev_state ='1'
-    while sw.elapsed_sec < test_duration:
-        current_state = ble_dut.interfaces.wifi.ble_get_device_state()
-        assert current_state, "Failed to get device state, DUT got crashed or went into bad state"
-        if current_state ==BLEDeviceState.Disconnected:
-            logger().info("\n\n ***** DUT is disconnected ***** current state : {} prev state : {}\n\n".format(current_state, prev_state))
+    log_file=f"reports/"+script_name+".log_"+str(int(time.time()))
+    state_change = False
+    try:
+        ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+        assert ble_dut_address is not None
+        time.sleep(2)
+        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
+                dut_address=ble_dut_address,
+                log_file=log_file
+            )
+        if ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising: 
+            logger().info(f"\n\n ***** DUT {ble_dut_address} is in Advertising State *****\n\n")
+        else:
             ble_dut.interfaces.wifi.ble_start_advertising()
-            prev_state=BLEDeviceState.Advertising
-        elif current_state==BLEDeviceState.Connected:
-            time.sleep(2)
-            if prev_state==BLEDeviceState.Advertising:
-                logger().info("\n\n ***** DUT is Connected ***** current state : {} prev state : {}\n\n".format(current_state, prev_state))
-                prev_state=current_state
+            logger().info(f"\n\n ***** Advertising started Successfully on DUT : {ble_dut_address} *****\n\n")
+        sw = Stopwatch()
+        prev_state ='1'
+        while sw.elapsed_sec < test_duration:
+            current_state = ble_dut.interfaces.wifi.ble_get_device_state()
+            assert current_state, "Failed to get device state, DUT got crashed or went into bad state"
+            if current_state ==BLEDeviceState.Disconnected:
+                logger().info("\n\n ***** DUT is disconnected ***** current state : {} prev state : {}\n\n".format(current_state, prev_state))
+                ble_dut.interfaces.wifi.ble_start_advertising()
+                prev_state=BLEDeviceState.Advertising
+            elif current_state==BLEDeviceState.Connected:
                 time.sleep(2)
-                count=0
-            while(ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Connected and sw.elapsed_sec < test_duration):
-                    if count==120:
-                        count=0
+                if prev_state==BLEDeviceState.Advertising:
+                    logger().info("\n\n ***** DUT is Connected ***** current state : {} prev state : {}\n\n".format(current_state, prev_state))
+                    prev_state=current_state
+                    time.sleep(2)
+                    count=0
+                while(ble_dut.interfaces.wifi.ble_get_device_state()>=BLEDeviceState.Connected and sw.elapsed_sec < test_duration):
+                    state_change=True
+                    while(count<=60):
                         logger().info("\n\n ***** Looks like 3rd party script stoped execution form last 120 sec, So Re-executing 3rd party script *****\n\n")
                         logger().info("\n\n ***** Before restart of 3rd party script state OF DUT is {}: 'Connected state' *****\n\n".format(current_state))
                         ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.stop_capture()
-                        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
-                                dut_address=ble_dut_address,
-                        log_file=f"reports/"+script_name+".log_"+str(int(time.time()))
-                        )
-                    time.sleep(1)
-                    count = count+1
-        elif current_state==BLEDeviceState.Advertising:
-            time.sleep(2)
-            count=0
-            if not only_ADV:
-                while(ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising and sw.elapsed_sec < test_duration):
-                    if count==30:
-                        count=0
-                        logger().info("\n\n ***** Looks like 3rd party script stoped execution form last 30 sec, So Re-executing 3rd party script *****\n\n")
-                        logger().info("\n\n ***** Before restart of 3rd party script state OF DUT is {}: Advertising *****\n\n".format(current_state))
-                        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.stop_capture()
-                        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
-                                   dut_address=ble_dut_address,
-                        log_file=f"reports/test_bt_vul_sniffer.log_{int(time.time())}"
-                        )
-                    time.sleep(1)
-                    count = count+1
+                        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(dut_address=ble_dut_address,log_file=f"reports/"+script_name+".log_rerun")
+                        time.sleep(1)
+                        count+=1
+            elif current_state==BLEDeviceState.Advertising:
+                time.sleep(2)
+                count=0
+                while(ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising and sw.elapsed_sec < test_duration and not only_ADV):
+                        while(count<=30):
+                            logger().info("\n\n ***** Looks like 3rd party script stoped execution form last 30 sec, So Re-executing 3rd party script *****\n\n")
+                            logger().info("\n\n ***** Before restart of 3rd party script state OF DUT is {}: Advertising *****\n\n".format(current_state))
+                            ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.stop_capture()
+                            ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(dut_address=ble_dut_address,log_file=f"reports/"+script_name+".log_rerun")
+                        time.sleep(1)
+                        count+=1
+    except Exception as e:
+        if "could not open port" in str(e):
+            assert False, "\n\n ******Setup issue... NRF Dongle went into bad state...Please reconnect NRF Dongle ******\n\n"
+    finally:
+        with open(log_file, 'r') as file:
+            sniffer_logs = file.read()
+            logger().info("\n\n ************* Printing Sniffer capture logs *************** \n\n")
+            logger().info(sniffer_logs)
+            assert "BTLE_CONNECT_REQ" in sniffer_logs or state_change, "Failed... Attack from 3rd party script is not found...!"
+            logger().info("\n\n *****Found 'BTLE_CONNECT_REQ' string in sniffer capture Or found DUT state is changed to connected state and DUT is stable throughout the test case So making the test case PASS**\n\n")
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -139,7 +142,8 @@ def test_verify_dut_with_llid_dealock_script_C18750(ble_dut, ble_client, ble_vul
     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="llid_dealock")
     ble_client.interfaces.bluetooth.close()
     reset_USB_Device()
-    
+
+"""Test case is blocked with https://jira.silabs.com/browse/UTF-2154"""
 # @pytest.mark.config(
 #     "wifi_dut",
 #     wifi={
@@ -153,10 +157,10 @@ def test_verify_dut_with_llid_dealock_script_C18750(ble_dut, ble_client, ble_vul
 #         "script": "DA14580_exploit_att_crash.py"
 #     },
 # )
-# def test_verify_dut_with_DA14580_exploit_att_crash_script_C18751(ble_dut, ble_client, ble_vulnerability_sniffer):
+# def test_verify_dut_with_DA14580_exploit_att_crash_script_C18751(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
 #     #Test case to verify DUT behaviour after executing DA14580_exploit_att_crash.py script
 #     test_duration = utf_constants.get("test_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration)
+#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="llid_dealock")
 #     ble_client.interfaces.bluetooth.close()
 
 @pytest.mark.config(
@@ -239,6 +243,7 @@ def test_verify_dut_with_sequential_att_deadlock_script_C18755(ble_dut, ble_clie
     ble_client.interfaces.bluetooth.close()
     reset_USB_Device()
 
+"""Tese case is blocked with https://jira.silabs.com/browse/UTF-2150"""
 # @pytest.mark.config(
 #     "wifi_dut",
 #     wifi={
@@ -255,7 +260,7 @@ def test_verify_dut_with_sequential_att_deadlock_script_C18755(ble_dut, ble_clie
 # def test_verify_dut_with_Telink_zero_ltk_installation_script_C18756(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
 #     #Test case to verify DUT behaviour after executing Telink_zero_ltk_installation.py script
 #     test_duration = utf_constants.get("test_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration)
+#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="Telink_zero_ltk_installation")
 #     ble_client.interfaces.bluetooth.close()
 #     reset_USB_Device()
 
@@ -299,22 +304,23 @@ def test_verify_dut_with_DA14680_exploit_silent_overflow_script_C18758(ble_dut, 
     ble_client.interfaces.bluetooth.close()
     reset_USB_Device()
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-    },
-)
-@pytest.mark.config(
-    "ble_vulnerability_sniffer",
-    ble_vul_sniffer={
-        "script": "CC_connection_req_crash.py"
-    },
-)
-def test_verify_dut_with_CC_connection_req_crash_script_C18759(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
-    #Test case to verify DUT behaviour after executing CC_connection_req_crash.py script
-    test_duration = utf_constants.get("test_duration")
-    ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="CC_connection_req_crash.py",only_ADV=True)
-    ble_client.interfaces.bluetooth.close()
-    reset_USB_Device()
+"""Test Case is blocked with https://jira.silabs.com/browse/UTF-2154"""
+# @pytest.mark.config(
+#     "wifi_dut",
+#     wifi={
+#         "oper_mode": 0,
+#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+#     },
+# )
+# @pytest.mark.config(
+#     "ble_vulnerability_sniffer",
+#     ble_vul_sniffer={
+#         "script": "CC_connection_req_crash.py"
+#     },
+# )
+# def test_verify_dut_with_CC_connection_req_crash_script_C18759(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
+#     #Test case to verify DUT behaviour after executing CC_connection_req_crash.py script
+#     test_duration = utf_constants.get("test_duration")
+#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="CC_connection_req_crash.py",only_ADV=True)
+#     ble_client.interfaces.bluetooth.close()
+#     reset_USB_Device()

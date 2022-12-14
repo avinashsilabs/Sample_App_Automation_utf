@@ -277,8 +277,8 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
     # resolve characteristics of battery profile
     uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(ble_remote_dev_address=bt_client_address,
                     start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
-    assert BatteryLevelCharacteristic.UUID in uuids
-    index = uuids.index(BatteryLevelCharacteristic.UUID)
+    assert BatteryLevelCharacteristic.BLEVEL_UUID in uuids
+    index = uuids.index(BatteryLevelCharacteristic.BLEVEL_UUID)
 
     assert char_properties[index].isdigit()
     assert BatteryLevelCharacteristic.prop_int == int(char_properties[index])

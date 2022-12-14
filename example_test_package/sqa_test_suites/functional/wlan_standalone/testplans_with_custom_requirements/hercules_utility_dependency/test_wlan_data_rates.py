@@ -1,14 +1,13 @@
 import re
 import time
-
 import pytest as pytest
 from utf import UtfDatabaseProperties
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116AsyncEventType, \
-    RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116DataRate, RS9116RejoinParams
-
+    RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116DataRate, RS9116RejoinParams, RS9116ExtCustomFeatureBitMap, \
+    RS9116BTFeatureBitMap
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
     RS9116ExtTCPIPFeatureBitMap, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116CustomFeatureBitMap,
