@@ -235,6 +235,48 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
+# For now as we are not sure about the changes required on the DUT side the start_smp_scan is tested using mobile
+@pytest.mark.skip()
+def test_ble_gatt_client_slave(ble_client, logger):
+    logger.info("""
+        Put the mobile in advertising mode.. 
+        Make sure that local name is part of advertisement
+        Assign the device local name to the local_name variable...""")
+
+    bt_dut_address = None # to be determined once the device is found in scanning
+    local_name = "ROG_Phone3"
+
+    # Begin Scanning for BLE devices
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address="0", service_classes=[BatteryService])
+    assert bt_client_address is not None
+
+    logged_devices = [] # to avoid logging the device again
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 100:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        for key, value in found_devices.items():
+            # The following condition can be skipped if you are not interested in logging the devices
+            if key not in logged_devices:
+                logger.info(f"found_devices[bt_dut_address] - {key} : {value}")
+                logged_devices.append(key)
+            if found_devices[key] == local_name:
+                device_found = True
+                bt_dut_address = key
+        if device_found:
+            break
+        time.sleep(0.5)
+
+    assert device_found
+
+    # connecting to dut
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    logger.info("Sleeping for 30 sec.. Perform Gatt operations on mobile and check if it is working...")
+    time.sleep(60)
+
+
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
 def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, ble_client, logger):
