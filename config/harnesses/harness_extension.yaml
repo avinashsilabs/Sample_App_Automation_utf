@@ -1,0 +1,8 @@
+devices:
+  si917:
+    skip_markers: [ 'wifi_5g', 'bt_classic' ]
+    interfaces:
+      wifi:
+        re_map:
+          coex_mode: { 8: 12 }
+#          coex_mode: { RS9116CoexMode.DualBluetoothBLE: RS9116CoexMode.BLE}
