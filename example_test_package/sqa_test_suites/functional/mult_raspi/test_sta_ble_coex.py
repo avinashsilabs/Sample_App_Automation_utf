@@ -514,13 +514,15 @@ class ble_continuous_scan_thread(ThreadBase):
 
 
 class ble_scan_thread(ThreadBase):
-    def __init__(self, wifi_dut, ble_client, mode, ble_client_address=None, ble_dut_address=None, scan_count=1):
+    def __init__(self, wifi_dut, ble_client, mode, ble_client_address=None, ble_dut_address=None,
+                 ble_scan_filter_type=0, scan_count=1):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
         self.ble_client_address = ble_client_address
         self.ble_dut_address = ble_dut_address
         self.mode = mode
+        self.ble_scan_filter_type = ble_scan_filter_type
         self.scan_count = scan_count
 
     def run(self):
@@ -547,6 +549,7 @@ class ble_scan_thread(ThreadBase):
                 try:
                     logger().info(f"Start scanning for ble client")
                     self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
+                                                                     ble_scan_filter_type=self.ble_scan_filter_type,
                                                                      timeout=100)
                     self.wifi_dut.interfaces.wifi.ble_stop_scanning()
                     time.sleep(3)
@@ -773,16 +776,11 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_in_progress_c20324(
             logger().info("starting bt module in dut.....")
             bt_dut.interfaces.bluetooth.bt_start()
 
-            logger().info("fetching dut bd address....")
-            bd_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-
             logger().info("configuring bt name....")
             bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
 
             logger().info("fetching dut bd name....")
             bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
-
-            logger().info(f"DUT local BD address: '{bd_dut_address}'")
             logger().info(f"DUT local BD name: '{bd_local_name}'")
 
             ble_mode = "ble_master"
@@ -1376,7 +1374,9 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_c20319(w
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
-def test_Active_scan_func_of_ble_when_sta_connect_c20320(wifi_dut, ble_client, wifi_access_point, ssid, wifi_sniffer,
+@pytest.mark.firmware_app("test_coex_custom")
+def test_Active_scan_func_of_ble_when_sta_connect_c20320(firmware_loader, wifi_dut, ble_client, wifi_access_point, ssid,
+                                                         wifi_sniffer,
                                                          recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -1409,23 +1409,45 @@ def test_Active_scan_func_of_ble_when_sta_connect_c20320(wifi_dut, ble_client, w
             logger().info(f"Start ble client")
             ble_client.interfaces.bluetooth.close()
             time.sleep(3)
-            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                bt_dut_address=ble_dut_address,
+                hci_adv_params="0x20 0x00 0x20 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x07 0x00")
             assert ble_client_address, "Unable to get ble_client_address"
+            wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address)
             time.sleep(3)
 
             logger().info(f"Start scanning for ble client")
-            wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=80)
-            wifi_dut.interfaces.wifi.ble_stop_scanning()
+            wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_filter_type=1,
+                                                        timeout=80)
+
+            logger().info("Wait for 20 sec")
+            time.sleep(20)
+
+            wifi_dut.interfaces.wifi.ble_stop_scanning(timeout=120)
             logger().info(f"Scanning success")
+
+            adv_scan_resp = False
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            if len(events):
+                for event in events:
+                    if event.event_type == RS9116AsyncEventType.Adv_Report:
+                        adv_scan_resp = "report_type:4" in str(event.event_data)
+                        break
+            assert adv_scan_resp, f"Did not 'report_type:4' message"
+            logger().info("Received report_type:4 message")
 
             logger().info("Initiating Wi-Fi disconnection on DUT")
             wifi_leave(wifi_dut)
 
             logger().info("wlan+ble scan thread execution starts...")
-            with wifi_scan_thread(wifi_dut, ssid, scan_count=5), ble_scan_thread(wifi_dut, ble_client, ble_mode,
-                                                                                 ble_client_address=ble_client_address,
-                                                                                 scan_count=2):
-                time.sleep(15)
+            t1 = wifi_scan_thread(wifi_dut, ssid, scan_count=5)
+            t2 = ble_scan_thread(wifi_dut, ble_client, ble_mode, ble_client_address=ble_client_address,
+                                 ble_scan_filter_type=1, scan_count=2)
+            t1.start()
+            time.sleep(15)
+            t2.start()
+            t1.wait_for_exit(True)
+            t2.wait_for_exit(True)
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
@@ -1775,7 +1797,7 @@ def test_dual_role_ble_gpio_based_power_save_c20279(wifi_dut, ble_clients, wifi_
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -1862,7 +1884,7 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_c20316
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
-@pytest.mark.firmware_app("test_multi_gatt_conn")
+# @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1877,14 +1899,13 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_c20316
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_c20330(firmware_loader, wifi_dut,
-                                                                            wifi_access_point,
+def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_c20330(wifi_access_point, recovery, wifi_client,
                                                                             ble_client, wifi_sniffer, net_perf_client,
-                                                                            wifi_client, protocol, ssid, recovery):
+                                                                            wifi_dut, protocol, ssid):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     try:
-        iter_count = 5
+
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_c20330.log_{int(time.time())}"):
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1905,9 +1926,7 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_c20330(firm
             bssid = wifi_access_point.interfaces.wifi.bssid
             logger().info(f'AP BSSID = {bssid}')
 
-            data = []
-            for i in range(iter_count):
-                data.append(text_generator(size=4))
+            data = text_generator(size=20)
             ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
             bt_local_name = "rs9116_test_C20330"
             logger().info("configuring bd local name....")
@@ -1926,7 +1945,7 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_c20330(firm
             logger().info("Adding custom characteristic declaration to the custom service")
             wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
             logger().info("Adding characteristic value attribute to the service")
-            wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[0])
+            wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data)
 
             logger().info("Start ble client")
             ble_client.interfaces.bluetooth.close()
@@ -1964,17 +1983,17 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_c20330(firm
             ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                     char_uid=char_uid)
 
-            logger().info("Sending notifications from DUT")
-            for i in range(iter_count):
-                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[i])
-                wifi_dut.interfaces.wifi.ble_notify_value()
+            logger().info("Sending 20 bytes of data from DUT")
+            wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+            time.sleep(10)
 
             logger().info("Validating received notifications on ble_client")
             notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
             logger().info(f"Notifications: {notifications}")
             notification_len = len(notifications)
-            for i in range(0, notification_len):
-                assert notifications[i] == data[i], "Received wrong data in ble_client"
+            assert notification_len, "Notification not received in ble_client"
+            assert notifications[0] == data, "Received wrong data in ble_client"
+            logger().info(f"Notification received on remote device is: {notifications[0]}")
 
             t1 = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=100)
             t1.start()
@@ -2826,10 +2845,7 @@ def test_ble_and_Wlan_data_transfer_for_5min_c20309(wifi_dut, ble_client, wifi_a
             wifi_sniffer.interfaces.capture.start_capture(capture_file='test_case_C20309')
             time.sleep(3)
 
-            # data = []
-            # for i in range(5):
-            #     data.append(text_generator(size=4))
-
+            data = text_generator(size=20)
             ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
             bt_local_name = "rs9116_test_C20309"
             logger().info("configuring bd local name....")
@@ -2914,13 +2930,6 @@ def test_ble_and_Wlan_data_transfer_for_5min_c20309(wifi_dut, ble_client, wifi_a
             ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                     char_uid=char_uid)
 
-            # logger().info("Sending notifications from DUT")
-            # for i in range(5):
-            #     wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data[i])
-            #     wifi_dut.interfaces.wifi.ble_notify_value()
-            #     time.sleep(3)
-
-            data = "testwentybytesofdata"
             logger().info("Sending 20 bytes of data from DUT")
             wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
             time.sleep(10)
@@ -2930,13 +2939,8 @@ def test_ble_and_Wlan_data_transfer_for_5min_c20309(wifi_dut, ble_client, wifi_a
             logger().info(f"Notifications: {notifications}")
             notification_len = len(notifications)
             assert notification_len, "Notification not received in ble_client"
-            for i in range(notification_len):
-                assert notifications[i] == data, "Received wrong data in ble_client"
-
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(2)
+            assert notifications[0] == data, "Received wrong data in ble_client"
+            logger().info(f"Notification received on remote device is: {notifications[0]}")
 
             logger().info("Checking connection status of BLE")
             check_connection_status(wifi_dut, ble=True)
@@ -2947,30 +2951,68 @@ def test_ble_and_Wlan_data_transfer_for_5min_c20309(wifi_dut, ble_client, wifi_a
 
             logger().info("Initiating BLE connection and disconnection from raspi")
             for i in range(1, iteration_count + 1):
-                logger().info(f"Initiating BLE disconnection...iteration: '{i}'")
+                logger().info(f"\n\nInitiating BLE disconnection...iteration: '{i}'")
                 ble_client.interfaces.bluetooth.disconnect(ble_dut_addr)
                 logger().info(f"Disconnect completed...iteration: '{i}'")
                 time.sleep(10)
 
-                logger().info(f"Re-Initiating BLE connection...iteration: '{i}'")
+                logger().info(f"\n\nRe-Initiating BLE connection...iteration: '{i}'")
+                data = text_generator(size=20)
                 ble_client.interfaces.bluetooth.close()
-                time.sleep(3)
-                ble_dut_addr = wifi_dut.interfaces.wifi.ble_start()
-                assert ble_dut_addr, f"Unable to get ble_dut_address"
+                ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
                 time.sleep(3)
                 wifi_dut.interfaces.wifi.ble_start_advertising()
                 time.sleep(5)
+
+                ble_client_addr = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
+                assert ble_client_addr, "ble client address not found"
+                time.sleep(5)
+                ble_client.interfaces.bluetooth.stop_scanning()
+                found_devices = ble_client.interfaces.bluetooth.get_devices()
+                assert wifi_dut.interfaces.wifi.ble_address in found_devices, "Unable to find our DUT"
+
                 ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_addr,
                                                         min_conn_interval=conn_params["min_conn_interval"],
                                                         max_conn_interval=conn_params["max_conn_interval"],
                                                         conn_latency=conn_params["conn_latency"],
                                                         supervision_timeout=conn_params["supervision_timeout"])
-                logger().info(f"DUT successfully connected to {ble_client.name} Device...iteration: '{i}'")
-                logger().info("Wait for 10 sec and check ble connection status")
                 time.sleep(10)
+                logger().info(f"DUT successfully connected to {ble_client.name} Device...iteration: '{i}'")
+
+                service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+                char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+                services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(services) > 0, "Unable to fetch services"
+                assert len(chars) > 0, "Unable to get characteristics list from ble_client"
+
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                    services=services,
+                    service_uid=service_uid,
+                    char_uid=char_uid)
+                assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
+                assert len(char_props) > 0, "Unable to get char_props"
+
+                logger().info("Subscribing to notifications on ble_client")
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+
+                logger().info("Sending 20 bytes of data from DUT")
+                wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                time.sleep(5)
+                logger().info("Validating received notifications on ble_client")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(f"Notifications: {notifications}")
+                notification_len = len(notifications)
+                assert notification_len, "Notification not received in ble_client"
+                assert notifications[0] == data, "Received wrong data in ble_client"
+                logger().info(f"Notification received on remote device is: '{notifications[0]}'")
+
                 logger().info("Checking ble connection still persists")
                 check_connection_status(wifi_dut, ble=True)
+                ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
 
+            t1.wait_for_exit(True)
             # QOS data Packets should be observed with More data Bit set to 1
             packet_filter1 = f'wlan.ta == {bssid} && wlan.ra == {dut_mac_address} && wlan.fc.moredata==1'
 
@@ -2988,10 +3030,8 @@ def test_ble_and_Wlan_data_transfer_for_5min_c20309(wifi_dut, ble_client, wifi_a
             logger().info("Validating PS Polls with Power Management Bit")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
                 'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
-            t1.wait_for_exit(True)
             ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
             ble_client.interfaces.bluetooth.close()
-            # wifi_dut.interfaces.wifi.wireless_deinit()
             time.sleep(3)
     except Exception as error:
         dut_recovery(wifi_dut, error)

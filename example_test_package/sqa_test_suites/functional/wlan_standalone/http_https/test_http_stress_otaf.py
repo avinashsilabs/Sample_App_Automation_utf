@@ -4,6 +4,7 @@ from utf_wiseconnect.devices.rs911x import (RS9116TCPIPFeatureBitMap,RS9116ExtTC
     RS9116AsyncEventType
     )
 from utf import UtfDatabaseProperties
+from utf.utils.stopwatch import Stopwatch
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 import time
@@ -73,83 +74,87 @@ pytestmark = [
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-        t_end = time.time() + 60 * time_lapse
-        while time.time() < t_end:
-            """ ******* SERVER CHECKS ******* """
-            logger().info("checking weather server is running....")
-            server_stat = http_server.interfaces.http.started
-            assert server_stat == True,"server is inactive"
-            logger().info(f'http server state is {server_stat}')
+def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    sw = Stopwatch()
+    logger().info(f"Time duration is {time_duration} Mins")
+    while sw.elapsed_sec < time_duration:
+        """ ******* SERVER CHECKS ******* """
+        logger().info("checking weather server is running....")
+        server_stat = http_server.interfaces.http.started
+        assert server_stat == True,"server is inactive"
+        logger().info(f'http server state is {server_stat}')
 
-            logger().info("fetching server ip....")
-            host_ip = get_host_ip()
-            logger().info(f"server ip is {host_ip}")
+        logger().info("fetching server ip....")
+        host_ip = get_host_ip()
+        logger().info(f"server ip is {host_ip}")
 
-            logger().info("pinging to server ip....")
-            status = ping(host_ip, 10)
-            assert status == 1, "unable to ping to server"
+        logger().info("pinging to server ip....")
+        status = ping(host_ip, 10)
+        assert status == 1, "unable to ping to server"
 
-            logger().info(" ====== configuring the sniffer with access point channel ====== ")
-            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
-            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_over_night_C19793')
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_over_night_C19793')
 
-            logger().info("fetching the DUT version...")
-            wifi_dut.interfaces.wifi.version()
+        logger().info("fetching the DUT version...")
+        wifi_dut.interfaces.wifi.version()
 
-            logger().info("joining ap....")
-            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        logger().info("joining ap....")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-            logger().info("starting dhcp....")
-            wifi_dut.interfaces.wifi.start_ip()
+        logger().info("starting dhcp....")
+        wifi_dut.interfaces.wifi.start_ip()
 
-            start_time = time.perf_counter_ns()
-            async_timestamp = 0
-            time.sleep(2)
+        start_time = time.perf_counter_ns()
+        async_timestamp = 0
+        time.sleep(2)
 
-            logger().info("Performing fw upgrade on DUT....")
-            wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
-            time.sleep(120)
+        logger().info("Performing fw upgrade on DUT....")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+        time.sleep(120)
 
-            logger().info("fetching otaf upgrade status....")
-            wifi_dut.interfaces.wifi.get_http_otaf_status()
-            time.sleep(10)
+        logger().info("fetching otaf upgrade status....")
+        wifi_dut.interfaces.wifi.get_http_otaf_status()
+        time.sleep(10)
 
-            logger().info("fetching otaf async events after the upgrade....")
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            if len(events):
-                for event in events:
-                    if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
-                        async_timestamp = event.timestamp
+        logger().info("fetching otaf async events after the upgrade....")
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
+                    async_timestamp = event.timestamp
 
-            if not async_timestamp:
-                logger().info(f"Asynchronous message is not received after otaf over http")
-            else:
-                time_duration = (async_timestamp - start_time) / 1000000000
-                logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+        if not async_timestamp:
+            logger().info(f"Asynchronous message is not received after otaf over http")
+        else:
+            time_duration_taken = (async_timestamp - start_time) / 1000000000
+            logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
 
-            if time_duration > 40:
-                logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
-            else:
-                logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+        if time_duration_taken > 45:
+            logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration_taken}")
+        else:
+            logger().info(f"Time taken to upgrade firmware using http otaf {time_duration_taken} seconds")
 
-            time.sleep(2)
-            logger().info("resetting DUT....")
-            wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
-            time.sleep(5)
+        time.sleep(2)
+        logger().info("resetting DUT....")
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+        time.sleep(5)
 
-            logger().info("Initialising DUT after the reset....")
-            wifi_dut.interfaces.wifi.dut_init()
-            time.sleep(10)
+        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
 
-            logger().info("fetching DUT version after init....")
-            wifi_dut.interfaces.wifi.version()
+        wifi_dut.interfaces.wifi.associated = False
 
-            logger().info("Stop Sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture()
-            time.sleep(10)
+        logger().info("fetching DUT version after init....")
+        wifi_dut.interfaces.wifi.version()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(10)
 
 
 pytestmark = [
@@ -190,60 +195,64 @@ pytestmark = [
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-        t_end = time.time() + 60 * time_lapse
-        while time.time() < t_end:
-            """ ******* SERVER CHECKS ******* """
-            logger().info("checking server stats....")
-            server_stat = http_server.interfaces.http.started
-            assert server_stat == True,"server is inactive"
-            logger().info(f'http server state is {server_stat}')
+def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    sw = Stopwatch()
+    logger().info(f"Time duration is {time_duration} Mins")
+    while sw.elapsed_sec < time_duration:
+        """ ******* SERVER CHECKS ******* """
+        logger().info("checking server stats....")
+        server_stat = http_server.interfaces.http.started
+        assert server_stat == True,"server is inactive"
+        logger().info(f'http server state is {server_stat}')
 
-            logger().info("fetching server ip....")
-            host_ip = get_host_ip()
-            logger().info(f"server ip is {host_ip}")
+        logger().info("fetching server ip....")
+        host_ip = get_host_ip()
+        logger().info(f"server ip is {host_ip}")
 
-            logger().info("pinging to server ip....")
-            status = ping(host_ip, 10)
-            assert status == 1, "unable to ping to server"
+        logger().info("pinging to server ip....")
+        status = ping(host_ip, 10)
+        assert status == 1, "unable to ping to server"
 
-            logger().info(" ====== configuring the sniffer with access point channel ====== ")
-            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
-            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_with_corrupted_rps_over_night_C19794')
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_with_corrupted_rps_over_night_C19794')
 
-            logger().info("dut fw version before upgrade...")
-            wifi_dut.interfaces.wifi.version()
+        logger().info("dut fw version before upgrade...")
+        wifi_dut.interfaces.wifi.version()
 
-            logger().info("joining ap....")
-            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        logger().info("joining ap....")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-            logger().info("starting dhcp....")
-            wifi_dut.interfaces.wifi.start_ip()
+        logger().info("starting dhcp....")
+        wifi_dut.interfaces.wifi.start_ip()
 
-            logger().info("performing fw upgrade on dut with corrupted rps....")
-            wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
-            time.sleep(40)
-            with pytest.raises(WlanError) as exc_info:
-                wifi_dut.interfaces.wifi.get_http_otaf_status()
-            assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
+        logger().info("performing fw upgrade on dut with corrupted rps....")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted.rps")
+        time.sleep(40)
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.get_http_otaf_status()
+        assert exc_info.value.error_code == 0xBB41 | 0xfffd, "observed wrong error code expected is 0xBB41"
 
-            time.sleep(5)
-            logger().info("resetting DUT....")
-            wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
-            time.sleep(10)
+        time.sleep(5)
+        logger().info("resetting DUT....")
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+        time.sleep(10)
 
-            logger().info("Initialising DUT after the reset....")
-            wifi_dut.interfaces.wifi.dut_init()
-            time.sleep(10)
+        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
 
-            logger().info("fetching the fw version after init....")
-            wifi_dut.interfaces.wifi.version()
+        wifi_dut.interfaces.wifi.associated = False
 
-            logger().info("Stop Sniffer capture...")
-            wifi_sniffer.interfaces.capture.stop_capture()
-            time.sleep(10)
+        logger().info("fetching the fw version after init....")
+        wifi_dut.interfaces.wifi.version()
+
+        logger().info("Stop Sniffer capture...")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(10)
 
 
 pytestmark = [
@@ -284,61 +293,65 @@ pytestmark = [
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-        t_end = time.time() + 60 * time_lapse
-        while time.time() < t_end:
-            """ ******* SERVER CHECKS ***** """
-            logger().info("checking weather server is running....")
-            server_stat = http_server.interfaces.http.started
-            assert server_stat == True,"server is inactive"
-            logger().info(f'http server state is {server_stat}')
+def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    sw = Stopwatch()
+    logger().info(f"Time duration is {time_duration} Mins")
+    while sw.elapsed_sec < time_duration:
+        """ ******* SERVER CHECKS ***** """
+        logger().info("checking weather server is running....")
+        server_stat = http_server.interfaces.http.started
+        assert server_stat == True,"server is inactive"
+        logger().info(f'http server state is {server_stat}')
 
-            logger().info("fetching server ip....")
-            host_ip = get_host_ip()
-            logger().info(f"server ip is {host_ip}")
+        logger().info("fetching server ip....")
+        host_ip = get_host_ip()
+        logger().info(f"server ip is {host_ip}")
 
-            logger().info("pinging to server ip....")
-            status = ping(host_ip, 10)
-            assert status == 1, "unable to ping to server"
+        logger().info("pinging to server ip....")
+        status = ping(host_ip, 10)
+        assert status == 1, "unable to ping to server"
 
-            logger().info(" ====== configuring the sniffer with access point channel ====== ")
-            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
-            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_non_rps_over_night_C19795')
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_non_rps_over_night_C19795')
 
-            logger().info("dut fw version before upgrade...")
-            wifi_dut.interfaces.wifi.version()
+        logger().info("dut fw version before upgrade...")
+        wifi_dut.interfaces.wifi.version()
 
-            logger().info("Joining ap....")
-            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        logger().info("Joining ap....")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
-            logger().info("configuring dhcp...")
-            result = wifi_dut.interfaces.wifi.start_ip()
-            assert isinstance(
-                result, wifi_dut.interfaces.wifi.IPConfig
-            ), f"Failed to get IP address. Result = {result}"
-            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            logger().info(f'device ip {device_ip}')
+        logger().info("configuring dhcp...")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'device ip {device_ip}')
 
-            logger().info("performing fw upgrade on dut....")
-            wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4.xml")
-            with pytest.raises(WlanError) as exc_info:
-                wifi_dut.interfaces.wifi.get_http_otaf_status()
-            assert exc_info.value.error_code == 0xBBE2, "observed wrong error code expected is 0xBBE2"
+        logger().info("performing fw upgrade on dut....")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/cgi-bin/cgi_example.py")
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.get_http_otaf_status()
+        assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xfffd"
 
-            time.sleep(5)
-            logger().info("resetting DUT....")
-            wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
-            time.sleep(10)
+        time.sleep(5)
+        logger().info("resetting DUT....")
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+        time.sleep(10)
 
-            logger().info("Initialising DUT after the reset....")
-            wifi_dut.interfaces.wifi.dut_init()
-            time.sleep(10)
+        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
 
-            logger().info("Fetching the DUT version...")
-            wifi_dut.interfaces.wifi.version()
+        wifi_dut.interfaces.wifi.associated = False
 
-            logger().info("Stop Sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture()
-            time.sleep(10)
+        logger().info("Fetching the DUT version...")
+        wifi_dut.interfaces.wifi.version()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(10)

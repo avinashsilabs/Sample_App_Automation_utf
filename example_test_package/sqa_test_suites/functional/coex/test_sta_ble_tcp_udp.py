@@ -19,7 +19,10 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116TCPIPFeatureBi
                                             RS9116ExtCustomFeatureBitMap, RS9116PowerSaveModes, SocketOptions, Cipher,
                                             SocketType, RS9116AsyncEventType, RS9116StoreConfiguration, RS9116MqttQos,
                                             RS9116CustomFeatureBitMap, DeviceConstants, RS9116OperatingMode, RS9116Band,
-                                            RS9116PowerSaveProcedureTypes)
+                                            RS9116PowerSaveProcedureTypes, RS9116BTFeatureBitMap)
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
+from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService
+from utf.utils.time_measurer import TimeMeasurer
 
 lock = threading.RLock()
 
@@ -249,7 +252,7 @@ def run_udp_traffic(wifi_dut, remote_socket, dut_ip):
 
         assert send_data_length == len(
             data_received), "data length sent by DUT and received on remote peer is not matching"
-        logger().info("data length sent by DUT and received on remote peer is matching")
+        logger().info("data sent by DUT and received on remote peer is matching")
     return udp_port
 
 
@@ -303,7 +306,7 @@ def verify_sniffer_valiadation(wifi_sniffer, dut_mac_address, ap_bssid):
 
     logger().info("Validating broadcast probe request packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find probe request packets'
+        'packet_count'], 'Unable to find broadcast probe request packets'
 
     logger().info("Validating association request and association response packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
@@ -327,7 +330,7 @@ def dut_recovery(wifi_dut, error):
 
 
 def dut_clean_up(wifi_dut, ble_client_address=None):
-    logger().info("\n\n ---------------------------- Cleaning UP the DUT ----------------------------")
+    logger().info("\n\n ---------------------------- Cleaning UP the DUT -------------------------------")
     try:
         if ble_client_address:
             logger().info("BLE disconnect from DUT")
@@ -347,7 +350,7 @@ def dut_clean_up(wifi_dut, ble_client_address=None):
             f"******* Exception occurred while cleaning up the DUT\nException is:{err}\nRecovering the DUT using reset **********")
         wifi_dut.interfaces.wifi.reset()
         time.sleep(20)
-    logger().info("\n ---------------------------- Cleaning UP of DUT is Completed ----------------------------")
+    logger().info("\n ---------------------------- Cleaning UP of DUT is Completed -------------------")
 
 
 @pytest.fixture()
@@ -448,7 +451,7 @@ class WifiRejoinThread(ThreadBase):
         verify_sniffer_valiadation(self.wifi_sniffer, dut_mac_address, ap_bssid)
 
 
-pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
+pytestmark = [pytest.mark.ble_client("raspi_ble_client"), pytest.mark.config('wifi_access_point',wifi={'channel': 8}),
               pytest.mark.ble_clients(["raspi_ble_client", "secondary_raspi_ble_client"])]
 
 
@@ -457,15 +460,18 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
-    }
+    },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -475,10 +481,12 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_verify_tcp_udp_tx_data_transfer_c20224(recovery, remote_socket, rs_helper, utf_constants, wifi_sniffer,
                                                 wifi_dut, wifi_access_point, wifi_client, net_perf_client, ble_client):
-    logger().info(
-        "testcase : Verify WLAN TCP, UDP Tx data transfer with variable size(1-1460 bytes) after BLE connection")
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
     ble_client_address = None
     try:
+        logger().info(
+            "testcase : Verify WLAN TCP, UDP Tx data transfer with variable size(1-1460 bytes) after BLE connection")
         logger().info("configuring the Sniffer with the channel")
         testcase = 'verify_tcp_udp_tx_data_transfer_c20224'
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -559,15 +567,18 @@ def test_verify_tcp_udp_tx_data_transfer_c20224(recovery, remote_socket, rs_help
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
-    }
+    },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -579,6 +590,8 @@ def test_verify_tcp_udp_tx_data_transfer_c20224(recovery, remote_socket, rs_help
 def test_tcp_data_transfer_functionality_while_rejoin_c20225(utf_constants, rs_helper, wifi_sniffer, recovery, wifi_dut,
                                                              wifi_access_point, wifi_client, net_perf_client, protocol,
                                                              ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
     ble_client_address = None
     try:
         testcase = "test_TCP_functionality_while_rejoin_C20225"
@@ -616,15 +629,18 @@ def test_tcp_data_transfer_functionality_while_rejoin_c20225(utf_constants, rs_h
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
-    }
+    },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -635,6 +651,8 @@ def test_tcp_data_transfer_functionality_while_rejoin_c20225(utf_constants, rs_h
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_udp_functionality_while_rejoin_c20226(utf_constants, rs_helper, wifi_sniffer, recovery, wifi_dut, protocol,
                                                wifi_access_point, wifi_client, net_perf_client, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
     ble_client_address = None
     try:
         testcase = "test_UDP_functionality_while_rejoin_C20226"
@@ -665,3 +683,181 @@ def test_udp_functionality_while_rejoin_c20226(utf_constants, rs_helper, wifi_sn
         raise error
     finally:
         dut_clean_up(wifi_dut, ble_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "cipher": "AES"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_verify_wlan_scan_and_ble_scan_c20199(wifi_access_point, recovery, wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
+    try:
+        logger().info(
+            "testcase : Verify WLAN scan and BLE scan")
+
+        logger().info(f"Set up DUT for BLE master role")
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        logger().info("Started BLE in DUT")
+        assert ble_dut_address, f"Unable to fetch ble dut address"
+        try:
+            logger().info("Start ble client for advertising")
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(3)
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+            assert ble_client_address, "Unable to get ble_client_address"
+            time.sleep(5)
+            logger().info("Start scanning and connect to ble client")
+            wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+            time.sleep(5)
+            logger().info("BLE scanning successful from DUT")
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
+        except Exception as err:
+            logger().info(
+                "*************** Exception block for stop advertising and stop scanning ***************")
+            ble_client.interfaces.bluetooth.stop_advertising()
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
+            raise err
+        time.sleep(3)
+        logger().info("\n\n************************* Initiating wlan_scan from DUT ****************************")
+        with TimeMeasurer() as t:
+            scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        logger().info(scan_results)
+        assert len(scan_results) > 0, "scan_list not found"
+        logger().info(f"\n***************** wlan_scan successful in {t.duration} seconds *****************\n")
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "cipher": "AES"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_read_char_value_of_remote_ble_when_wlan_is_in_connected_state_c20188(firmware_loader, utf_constants, rs_helper,
+                                                                              wifi_sniffer, recovery, wifi_access_point,
+                                                                              wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
+    ble_client_address = None
+    try:
+        logger().info(
+            "testcase : Read the characteristic value by UUID of remote BLE device when WLAN is in connected state")
+
+        time_duration = utf_constants.get("time_duration")
+        capture_filename = "test_c20188"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        time.sleep(3)
+
+        logger().info("start ble GATT service in DUT")
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert ble_dut_address, "Unable to find ble_dut_address"
+        time.sleep(3)
+
+        scan_success, connect_success = False, False
+        for count in range(5):
+            try:
+                if not scan_success:
+                    ble_client.interfaces.bluetooth.close()
+                    time.sleep(2)
+                    service_class = [HeartRateService]
+                    logger().info("Configuring heart rate profile with advertising on remote device")
+                    ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address,
+                                                                                       service_classes=service_class)
+                    time.sleep(3)
+                    logger().info("Start scanning and connect to ble client")
+                    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+                    wifi_dut.interfaces.wifi.ble_stop_scanning()
+                    time.sleep(5)
+                    scan_success = True
+                if not connect_success:
+                    logger().info(f"Initiating connection this can take some time...")
+                    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=120)
+                    connect_success = True
+                    time.sleep(5)
+                    logger().info(f"BLE master connection successful from DUT...")
+                    break
+            except Exception as err:
+                logger().info("*************** Exception block for stop advertising and stop scanning ***************")
+                ble_client.interfaces.bluetooth.stop_advertising()
+                ble_client.interfaces.bluetooth.close()
+                wifi_dut.interfaces.wifi.ble_stop_scanning()
+                if count == 4:
+                    raise err
+        assert connect_success, "DUT BLE failed to connect to remote device"
+
+        logger().info("Fetching HeartRateService profile from RD1")
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_client_address, timeout=30)
+        assert HeartRateService.UUID.lower() in uuids, "Unable to get HeartRateService profile of RD from DUT"
+
+        start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=ble_client_address, uuid=int(HeartRateService.UUID, 16))
+        assert start_handle, "Unable to fetch the RD address"
+        assert end_handle, "Unable to get HeartRateService profile from RD"
+
+        # Rasied Jira for below API: https://jira.silabs.com/browse/WIFI_BT_UTFHELP-1576
+        result = wifi_dut.interfaces.wifi.ble_get_char_value_by_uuid(ble_client_address, start_handle, end_handle,
+                                                                     uuid=int(HeartRateService.UUID, 16))
+        # logger().info(f"Result: {result}")
+
+        dut_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+        logger().info(f"device_ip, device_mac : {dut_ip}, {dut_mac_address}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid}')
+
+        time_minutes = round((time_duration / 60), 2)
+        logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
+        time.sleep(time_duration)
+        check_connection_status(wifi_dut, ble=True, wlan=True)
+
+        logger().info("Validating sniffer packets")
+        verify_sniffer_valiadation(wifi_sniffer, dut_mac_address, ap_bssid)
+    except Exception as error:
+        dut_recovery(wifi_dut, error)
+        raise error
+    finally:
+        dut_clean_up(wifi_dut, ble_client_address)
+

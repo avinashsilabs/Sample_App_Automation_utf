@@ -11,6 +11,7 @@ from utf import UtfDatabaseProperties
 def logger():
     return get_logger(__name__)
 
+
 """
     setup requirement:
         1. DUT(RS9116)
@@ -46,20 +47,22 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_c19056',
                                                        test_case_id='c19056',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
@@ -72,7 +75,7 @@ def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
-    channels_list_2g = [1,2,3,4,5,6,7,8,9,10,11]
+    channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     validation = True
 
     # Fetches the DUT mac address
@@ -89,11 +92,11 @@ def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
 
         time.sleep(2)
 
-        for i in range(0,3):
+        for i in range(0, 3):
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            assert (len(scan_results) >= 1),"Scan failed"
+            assert (len(scan_results) >= 1), "Scan failed"
             logger().info(scan_results)
             time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -124,20 +127,22 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_check_rssi_c19060',
                                                        test_case_id='c19060',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan Response Based on RSSI
 def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
@@ -153,7 +158,7 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
     logger().info(scan_results)
     scan_count = len(scan_results)
-    assert scan_count > 0,"Scan results not found"
+    assert scan_count > 0, "Scan results not found"
     previous_rssi = 0
     for count in scan_results:
         assert previous_rssi >= count.rssi, "scan result is not based on the rssi"
@@ -180,21 +185,22 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_ssid_32bytes_c19064',
                                                        test_case_id='c19064',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
-
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_ssid_32bytes_c19064"
@@ -217,11 +223,11 @@ def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     # Enables the bt power save in DUT
     logger().info("Setting DUT in bt power save...")
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    ssid_list = ['test123test123test123test123test', 'test1*@test1*#test1*@test1*$test', 'test12.test12.test12.test12.test',\
+    ssid_list = ['test123test123test123test123test', 'test1*@test1*#test1*@test1*$test',
+                 'test12.test12.test12.test12.test', \
                  '了是不了是不了是不了']
 
     for ssid in ssid_list:
-
         # initiates the access point with channel given in list
         logger().info(f"Setting access point with ssid {ssid}...")
         wifi_access_point.interfaces.wifi.start_ap(ssid=ssid)
@@ -256,20 +262,22 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_selective_channel_c19058',
                                                        test_case_id='c19058',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_selective_channel_c19058"
@@ -308,7 +316,7 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
 
         time.sleep(5)
 
-        for i in range(0,3):
+        for i in range(0, 3):
             # enables the scan in DUT with the given channel bitmap value
             logger().info("Initiating selective channel scan in DUT...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
@@ -317,18 +325,28 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
                                                                            scan_feature=scan_feature_extend)
             time.sleep(5)
             logger().info(scan_results)
-            assert len(scan_results) >= 1,"scan results not found"
+            assert len(scan_results) >= 1, "scan results not found"
             for count in scan_results:
-                assert (count.rf_channel in channel_list),f"Scan should happen only in selected channels"
+                assert (count.rf_channel in channel_list), f"Scan should happen only in selected channels"
 
-
-
+        logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info(f"Validate Probe req(Broadcast)")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+
+        logger().info("Checking broadcast probe request in other than selected channels")
+        for ch in channel_list:
+            if ch != channel:
+                logger().info(f"\n\nChecking broadcast probe request in channel:'{ch}'")
+                packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {ch})"
+                status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+                if status:
+                    assert False, "Found broadcast probe request in other than selected channel"
+                logger().info("DUT did not send broadcast probe request to other than selected channel")
+        logger().info(f"*************** DUT scans successfully in selected for channel:'{channel}' ***************\n\n")
     logger().info("DUT scan successfully in selected channels")
 
 
@@ -351,24 +369,25 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_selective_channel_c19059',
                                                        test_case_id='c19059',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,3,6,11
 def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point):
-
     testcase = "test_scan_selective_channel_c19059"
     validation = True
 
@@ -406,7 +425,7 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
 
         time.sleep(5)
 
-        for i in range(0,2):
+        for i in range(0, 2):
 
             # enables the scan in DUT with the given channel bitmap value
             logger().info("Initiating the selective channel scan in dut...")
@@ -417,11 +436,9 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
             time.sleep(5)
 
             logger().info(scan_results)
-            assert len(scan_results) >= 1,"Scan results not found"
+            assert len(scan_results) >= 1, "Scan results not found"
             for count in scan_results:
                 assert (count.rf_channel in channel_list), "Scan should happen only in selected channels"
-
-
 
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -429,6 +446,17 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+
+        logger().info("Checking broadcast probe request in other than selected channels")
+        for ch in channel_list:
+            if ch != channel:
+                logger().info(f"\n\nChecking broadcast probe request in channel:'{ch}'")
+                packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {ch})"
+                status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+                if status:
+                    assert False, "Found broadcast probe request in other than selected channel"
+                logger().info("DUT did not send broadcast probe request to other than selected channel")
+        logger().info(f"*************** DUT scans successfully in selected for channel:'{channel}' ***************\n\n")
     logger().info("DUT scan successfully in all channels")
 
 
@@ -451,84 +479,93 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_selective_channel_c19057',
                                                        test_case_id='c19057',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality for channles 1-11
 def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point):
+    testcase = "test_scan_selective_channel_c19057"
+    validation = True
 
-        testcase = "test_scan_selective_channel_c19057"
-        validation = True
+    # Fetches the DUT mac address
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
 
-        # Fetches the DUT mac address
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"Device mac address: {dut_mac_address}")
+    packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
 
-        packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
 
-        # Enables the wifi power save in DUT
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    # Enables the bt power save in DUT
+    logger().info("Setting DUT in bt power save...")
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
+    channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    channel_bitmap_2_4 = 0
+    scan_expected_time = 0
+    for count in channel_list:
+        channel_bitmap_2_4 += 1 << (count - 1)
+        scan_expected_time += 100
+        channel_bitmap_5 = 0
+        scan_feature_extend = 0
 
-        # Enables the bt power save in DUT
-        logger().info("Setting DUT in bt power save...")
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-        channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-        channel_bitmap_2_4 = 0
-        scan_expected_time = 0
-        for count in channel_list:
-            channel_bitmap_2_4 += 1 << (count - 1)
-            scan_expected_time += 100
+    for channel in channel_list:
+        logger().info(f"configuring the Sniffer with the channel : {channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
 
-            channel_bitmap_5 = 0
-            scan_feature_extend = 0
+        # initiates the access point with channel given in list
+        logger().info("Starting access point with custom channel...")
+        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+        time.sleep(5)
 
-        for channel in channel_list:
+        for i in range(0, 2):
+            # enables the scan in DUT with the given channel bitmap value
+            logger().info("Initiating selective channel scan from dut...")
+            scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                                           scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                           scan_bitmap_5=channel_bitmap_5,
+                                                                           scan_feature=scan_feature_extend)
+            time.sleep(10)
+            logger().info(scan_results)
+            assert len(scan_results) >= 1, "Scan results not found"
+            channel_selected = 0
+            for count in scan_results:
+                assert (count.rf_channel in channel_list), "Scan should happen only in selected channels"
 
-            logger().info(f"configuring the Sniffer with the channel : {channel}")
-            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
-            # initiates the access point with channel given in list
-            logger().info("Starting access point with custom channel...")
-            wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-            time.sleep(5)
+        logger().info(f"Validate Probe req(Broadcast)")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
+        logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
 
-            for i in range(0,2):
-
-                # enables the scan in DUT with the given channel bitmap value
-                logger().info("Initiating selective channel scan from dut...")
-                scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
-                                                                               scan_bitmap_2_4=channel_bitmap_2_4,
-                                                                               scan_bitmap_5=channel_bitmap_5,
-                                                                               scan_feature=scan_feature_extend)
-                time.sleep(10)
-                logger().info(scan_results)
-                assert len(scan_results) >= 1,"Scan results not found"
-                channel_selected = 0
-                for count in scan_results:
-                    assert (count.rf_channel in channel_list), "Scan should happen only in selected channels"
-
-
-            wifi_sniffer.interfaces.capture.stop_capture()
-
-            logger().info(f"Validate Probe req(Broadcast)")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
-            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
-        logger().info("DUT scans successfully in selected channels")
+        logger().info("Checking broadcast probe request in other than selected channels")
+        for ch in channel_list:
+            if ch != channel:
+                logger().info(f"\n\nChecking broadcast probe request in channel:'{ch}'")
+                packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {ch})"
+                status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+                if status:
+                    assert False, "Found broadcast probe request in other than selected channel"
+                logger().info("DUT did not send broadcast probe request to other than selected channel")
+        logger().info(f"*************** DUT scans successfully in selected for channel:'{channel}' ***************\n\n")
+    logger().info("DUT scans successfully in selected channels")
 
 
 pytestmark = [
@@ -550,6 +587,8 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_us_region_2_4_c19067',
                                                        test_case_id='c19067',
@@ -570,7 +609,6 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality in us region
 def test_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point):
-
     logger().info("Configured DUT in US region")
 
     testcase = "test_scan_us_region_2_4_c19067"
@@ -588,12 +626,12 @@ def test_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point):
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
 
-        for i in range(0,2):
+        for i in range(0, 2):
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
             time.sleep(10)
-            assert (len(scan_results) >= 1),"scan failed"
+            assert (len(scan_results) >= 1), "scan failed"
             logger().info(scan_results)
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -624,20 +662,22 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_max_aps_c19061',
                                                        test_case_id='c19061',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality with max scan of dut
 def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
@@ -658,7 +698,9 @@ def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
 
     # enables the scan in DUT with the given channel bitmap value
     logger().info("Initiating the selective channel scan ...")
-    scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel,ssid=None,scan_bitmap_2_4=channel_bitmap_2_4,scan_feature=scan_feature_extend)
+    scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=None,
+                                                                   scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                   scan_feature=scan_feature_extend)
     logger().info(scan_results)
     logger().info(len(scan_results))
     if len(scan_results) == 11:
@@ -686,26 +728,27 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_hidden_scan_all_channels_c19062',
                                                        test_case_id='c19062',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point',wifi ={"ssid": 'test_ssid', "broadcast_ssid": False})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_ssid', "broadcast_ssid": False})
 # This case verifies the scan in hidden mode of AP for all channels
-def test_hidden_scan_all_channels_c19062(wifi_sniffer,wifi_dut,wifi_access_point):
-
+def test_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_hidden_scan_all_channels_c19062"
 
     validation = True
@@ -732,15 +775,15 @@ def test_hidden_scan_all_channels_c19062(wifi_sniffer,wifi_dut,wifi_access_point
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
 
-    for i in range(0,3):
+    for i in range(0, 3):
         # enables the scan in DUT with the given channel bitmap value
         logger().info("Initiating scan...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0,ssid=wifi_access_point.interfaces.wifi.ssid)
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(scan_results)
         time.sleep(10)
-        assert len(scan_results) >= 1,"scan failed"
+        assert len(scan_results) >= 1, "scan failed"
         for count in scan_results:
-                assert count.ssid == wifi_access_point.interfaces.wifi.ssid
+            assert count.ssid == wifi_access_point.interfaces.wifi.ssid
     wifi_sniffer.interfaces.capture.stop_capture()
 
     logger().info(f"Validate Probe req(Broadcast)")
@@ -768,25 +811,26 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_hidden_scan_sel_chan_c19063',
                                                        test_case_id='c19063',
                                                        notes='test notes'))
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            }
-        )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config('wifi_access_point',wifi ={"ssid":"hidden_ssid", "broadcast_ssid": False})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "hidden_ssid", "broadcast_ssid": False})
 # Verifies the scan in selected channels with the ap set in hidden mode
-def test_hidden_scan_sel_chan_c19063(wifi_sniffer,wifi_dut,wifi_access_point):
-
+def test_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_hidden_scan_sel_chan_c19063"
 
     validation = True
@@ -808,8 +852,8 @@ def test_hidden_scan_sel_chan_c19063(wifi_sniffer,wifi_dut,wifi_access_point):
     # Enables the rejoin feature on DUT
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
-    channel = [1,5,9]
-    channel_list = [1,5,9]
+    channel = [1, 5, 9]
+    channel_list = [1, 5, 9]
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
     for count in channel_list:
@@ -828,10 +872,12 @@ def test_hidden_scan_sel_chan_c19063(wifi_sniffer,wifi_dut,wifi_access_point):
         # enables the scan in DUT with the given channel bitmap value
         time.sleep(5)
 
-        for i in range(0,2):
+        for i in range(0, 2):
             logger().info("Initiating Scan...")
-            scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=wifi_access_point.interfaces.wifi.ssid,\
-                                                                           scan_bitmap_2_4=channel_bitmap_2_4,scan_feature=scan_feature_extend)
+            scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel,
+                                                                           ssid=wifi_access_point.interfaces.wifi.ssid, \
+                                                                           scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                           scan_feature=scan_feature_extend)
             time.sleep(5)
             logger().info(scan_results)
             assert len(scan_results) >= 1
@@ -868,6 +914,8 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_in_US_region_for_channel_12_13_14_c19068',
                                                        test_case_id='c19068',
@@ -901,7 +949,7 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     # Enables the rejoin feature on DUT
     logger().info("Enabling rejoin...")
     wifi_dut.interfaces.wifi.rejoin()
-    channel_list =[12,13,14]
+    channel_list = [12, 13, 14]
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
     scan_feature_extend = 0
@@ -913,9 +961,9 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
         # enables the scan in DUT with the given channel bitmap value
         logger().info("Initiating Scan...")
         wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
-                                                                   scan_bitmap_2_4=channel_bitmap_2_4,
-                                                                   scan_feature=scan_feature_extend)
-    assert exc_info.value.error_code == 0xA,"Observing wrong error expected error code is 0xA"
+                                                        scan_bitmap_2_4=channel_bitmap_2_4,
+                                                        scan_feature=scan_feature_extend)
+    assert exc_info.value.error_code == 0xA, "Observing wrong error expected error code is 0xA"
 
 
 pytestmark = [
@@ -937,6 +985,8 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_all_channels_in_EU_region_c19070',
                                                        test_case_id='c19070',
@@ -975,12 +1025,12 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_clie
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
 
         time.sleep(2)
-        for i in range(0,2):
+        for i in range(0, 2):
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
             time.sleep(10)
-            assert (len(scan_results) >= 1),"scan failed"
+            assert (len(scan_results) >= 1), "scan failed"
             logger().info(scan_results)
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1013,6 +1063,8 @@ pytestmark = [
                                                           ))
 
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_scan_all_channels_in_japan_region_c19071',
                                                        test_case_id='c19071',
@@ -1052,12 +1104,12 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_c
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
         time.sleep(2)
-        for i in range(0,3):
+        for i in range(0, 3):
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
             time.sleep(15)
-            assert (len(scan_results) >= 1),"Scan Failed"
+            assert (len(scan_results) >= 1), "Scan Failed"
             logger().info(scan_results)
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1068,5 +1120,6 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_c
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
         logger().info("DUT scan successfully in all channels")
     logger().info("dut is able to scan successfully in Japan region")
+
 
 

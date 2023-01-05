@@ -1999,12 +1999,10 @@ def test_connection_and_transfer_of_index1_index2_when_trying_loadcert_index0_TC
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect"])
-def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,
-                                                           net_perf_client, ssl_server,
+def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_dut, wifi_access_point, ble_client, ssl_server,
                                                            wifi_client, logger, cert1):
     port1 = ssl_server.interfaces.ssl.config['device_port1']
-    data1 = "abcd"
-    # ping_count = 10
+    data1 = "testcase__bledatatransfer_&_loadcertificate__19652"
     ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
     bt_local_name = "test_C19652"
     logger.info("configuring bd local name....")
@@ -2058,12 +2056,6 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
     char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
 
-    logger.info("Get ble device state")
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
-    state_int = int(state) if state.isdigit() else -1
-    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
-    logger.info(" Connected to the BLE device ")
-
     services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(services) > 0, "Unable to fetch services"
     assert len(chars) > 0, "Unable to get characteristics list from ble_client"
@@ -2078,14 +2070,20 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_du
     ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
     ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
 
-    logger.info("Sending notifications from DUT")
-
-    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
-    wifi_dut.interfaces.wifi.ble_notify_value()
+    logger.info("Sending 50 bytes of data from DUT")
+    wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data1)
 
     # read value - Notifications not enabled
     result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     assert result == data1
+
+
+    logger.info("Get ble device state")
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
+    logger.info(" Connected to the BLE device ")
+
     ping_count = 10
     wifi_dut.interfaces.wifi.scan(ssid=None)
     status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

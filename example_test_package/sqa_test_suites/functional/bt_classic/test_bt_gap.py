@@ -2,7 +2,8 @@ import pytest
 
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
-    RS9116ExtCustomFeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType
+    RS9116ExtCustomFeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, RS9116BTFeatureBitMap, \
+    RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CustomFeatureBitMap
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
@@ -36,14 +37,14 @@ def clean_up_method(dut, dut_type="bt_dut"):
     try:
         if dut_type == "bt_dut":
             logger().info("Disabling WLAN Power Save in DUT...")
-            dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveDisabled, timeout=120)
+            dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
             logger().info("Disabling BT Power Save in DUT...")
-            dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled, timeout=120)
+            dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled)
         else:
             logger().info("Disabling WLAN Power Save in DUT...")
-            dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled, timeout=120)
+            dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
             logger().info("Disabling BT Power Save in DUT...")
-            dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled, timeout=120)
+            dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled)
     except Exception as e:
         logger().error(f"Exception: {e}")
 
@@ -53,12 +54,14 @@ pytestmark = [
         "wifi_dut",
         wifi={
             "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.
-            BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.
-            FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+            "bt_features": RS9116BTFeatureBitMap.Default,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         }
     )
 ]
@@ -107,7 +110,6 @@ def test_bt_connectable_c19974(bt_dut, bt_client):
         bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
         time.sleep(2)
 
-        time.sleep(5)
         with bt_client.interfaces.bluetooth.bt_socket(
                 mode=BTSocketRole.Server
         ) as bt_server_socket:
@@ -193,7 +195,6 @@ def test_bt_non_connectable_c19975(bt_dut, bt_client):
 
     # Added set class to 400100 to avoid [Error no 112] Host is down issue
     bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
-    time.sleep(2)
 
     time.sleep(10)
     with bt_client.interfaces.bluetooth.bt_socket(
@@ -362,7 +363,6 @@ def test_bt_connec_and_non_connectable_c19977(bt_dut, bt_client):
 
         # Added set class to 400100 to avoid [Error no 112] Host is down issue
         bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
-        time.sleep(2)
 
         time.sleep(3)
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=duration,
@@ -477,19 +477,19 @@ def test_pair_unpair_multiple_c19965(bt_dut, bt_client):
         bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
         for i in range(5):
             time.sleep(2)
-            logger().info(f"checking the connection stability in iteration: {i}")
+            logger().info(f"checking the connection stability in iteration: {i + 1}")
             with bt_client.interfaces.bluetooth.bt_socket(
                     mode=BTSocketRole.Server
             ) as bt_server_socket:
                 with bt_dut.interfaces.bluetooth.run_bt_task():
                     bt_server_socket.create_server()
                     connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-                    assert connected, f"failed to connect to bt dut in iteration: {i}"
+                    assert connected, f"failed to connect to bt dut in iteration: {i+1}"
 
                 time.sleep(3)
                 status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
                 logger().info(f"connectable state is:{status}")
-                assert status is not None, f"failed to fetch connectable status in iteration: {i}"
+                assert status is not None, f"failed to fetch connectable status in iteration: {i+1}"
 
                 logger().info("enabling power save after bt connection...")
                 if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
@@ -1172,10 +1172,15 @@ def test_bt_search_service_async_on_DUT_C19988(bt_dut, bt_client):
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+            "bt_features": RS9116BTFeatureBitMap.Default,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "disassociated"])
@@ -1228,18 +1233,4 @@ def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
                     break
         assert received_authentication_failure, "Unable to receive authentication error code 4E18"
     logger().info(f"Scan in {t.duration} seconds")
-
-
-# BT Inquiry command cancel
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    }
-)
 

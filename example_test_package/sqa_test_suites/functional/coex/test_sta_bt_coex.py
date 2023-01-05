@@ -177,7 +177,7 @@ class BtSpp_role_switch(ThreadBase):
             bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
             assert bt_client_address, "Unable to get BT client address"
             logger().info(f"Raspberry PI is BT-MASTER  with MAC address {bt_client_address} ")
-            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20,retry_counts=3)
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
             assert found, f"Dut unable to find the bt client device:{bt_dut_address}"
 
             logger().info(f"Starting Raspberry PI as BT Server")
@@ -641,7 +641,7 @@ class ServerSocketXferThread(ThreadBase):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_mode_C20088(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_mode_C20088(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     validation = True
     with TimeMeasurer() as t:
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -747,7 +747,7 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut,wifi_access_point,bt_client,utf_c
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_mode_C20090(wifi_dut,bt_client,wifi_access_point,utf_constants,rs_helper):
+def test_bt_coex_mode_C20090(wifi_dut, bt_client, wifi_access_point, utf_constants, rs_helper):
     mode = "master_to_slave"
     logger().info("Joining into Wi-Fi")
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
@@ -778,7 +778,7 @@ def test_bt_coex_mode_C20090(wifi_dut,bt_client,wifi_access_point,utf_constants,
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_mode_C20091(wifi_dut,bt_client,wifi_access_point,utf_constants,rs_helper):
+def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point, utf_constants, rs_helper):
     mode = "slave_to_master"
     logger().info("Joining into Wi-Fi")
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
@@ -810,7 +810,7 @@ def test_bt_coex_mode_C20091(wifi_dut,bt_client,wifi_access_point,utf_constants,
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,tx_rx_duration=60):
+def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -907,7 +907,7 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer,wifi_dut,wifi_access_
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,tx_rx_duration=60):
+def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     validation = True
     with TimeMeasurer() as t:
@@ -1001,7 +1001,7 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer,wifi_dut,wifi_access_
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,tx_rx_duration=60):
+def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     validation = True
     with TimeMeasurer() as t:
@@ -1090,7 +1090,7 @@ def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer,wifi_dut,wifi_access
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,tx_rx_duration=60):
+def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -1185,7 +1185,7 @@ def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer,wifi_dut,wifi_access
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_OOR_C20096(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,rf_attenuator):
+def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, rf_attenuator):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1307,7 +1307,7 @@ def test_bt_coex_OOR_C20096(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,ut
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1421,7 +1421,7 @@ def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer,wifi_dut
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1538,7 +1538,7 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer,wifi_dut,wifi_access_po
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1651,8 +1651,8 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer,wifi_dut,wifi_access_p
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated" , "clear_certs"])
-def test_bt_coex_eap_C20100(radius_server,wifi_sniffer,wifi_dut,wifi_access_point,bt_client,net_perf_client,wifi_client,
-                            protocol,utf_constants,rs_helper,tx_rx_duration=30):
+def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_point, bt_client, net_perf_client, wifi_client,
+                            protocol, utf_constants, rs_helper, tx_rx_duration=30):
     send_text = text_generator(size=20)
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -1764,7 +1764,7 @@ def test_bt_coex_eap_C20100(radius_server,wifi_sniffer,wifi_dut,wifi_access_poin
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_inquiry_C20101(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,tx_rx_duration=60):
+def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
     validation = True
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1830,7 +1830,7 @@ def test_bt_coex_inquiry_C20101(wifi_sniffer,wifi_dut,wifi_access_point,bt_clien
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_noremote_C20102(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     event_found = 0
     validation = True
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
@@ -1912,7 +1912,7 @@ def test_bt_coex_noremote_C20102(wifi_sniffer,wifi_dut,wifi_access_point,bt_clie
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     validation = True
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1929,7 +1929,7 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer,wifi_dut,wifi_access_point,b
 
     logger().info(f' initialize bt inquiry ')
     wifi_dut.interfaces.wifi.bt_start()
-    wifi_dut.interfaces.wifi.bt_inquiry(inquiry_duration_ms=20000)
+    wifi_dut.interfaces.wifi.bt_inquiry(inquiry_duration_ms=20000, max_device_cnt=9)
     logger().info(f'bt inquiry successful')
     time.sleep(1)
     # Cancel BT inquiry
@@ -1968,7 +1968,7 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer,wifi_dut,wifi_access_point,b
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_wrong_pin_C20104(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_wrong_pin_C20104(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     with TimeMeasurer() as t:
         validation = True
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -2054,7 +2054,7 @@ def test_bt_coex_wrong_pin_C20104(wifi_sniffer,wifi_dut,wifi_access_point,bt_cli
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_without_pin_C20105(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_without_pin_C20105(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     with TimeMeasurer() as t:
         validation = True
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -2146,7 +2146,7 @@ def test_bt_coex_without_pin_C20105(wifi_sniffer,wifi_dut,wifi_access_point,bt_c
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_without_pin_C20106(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_without_pin_C20106(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     with TimeMeasurer() as t:
         validation = True
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -2241,7 +2241,7 @@ def test_bt_coex_without_pin_C20106(wifi_sniffer,wifi_dut,wifi_access_point,bt_c
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_remote_unpair_C20107(wifi_sniffer,wifi_dut, wifi_access_point, bt_client):
+def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, bt_client):
     validation = True
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -2357,7 +2357,7 @@ def test_bt_spp_remote_unpair_C20107(wifi_sniffer,wifi_dut, wifi_access_point, b
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_unbond_C20108(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     with TimeMeasurer() as t:
         validation = True
         logger().info(f" ====== configuring the sniffer with access point channel ====== ")
@@ -2443,7 +2443,7 @@ def test_bt_coex_unbond_C20108(wifi_sniffer,wifi_dut,wifi_access_point,bt_client
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_rssi_C20109(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     validation = True
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -2521,7 +2521,7 @@ def test_bt_coex_rssi_C20109(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,u
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_BD_C20110(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -2620,10 +2620,10 @@ def test_bt_coex_BD_C20110(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20111(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_sta_bt_C20111(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "single"
     testcase = "test_sta_bt_C20111"
-    wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,utf_constants,rs_helper)
+    wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
     bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode, 60)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
@@ -2658,10 +2658,10 @@ def test_sta_bt_C20111(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_con
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20112(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_sta_bt_C20112(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "numbers"
     testcase = "test_sta_bt_C20112"
-    wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,utf_constants,rs_helper)
+    wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
     bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
@@ -2696,10 +2696,10 @@ def test_sta_bt_C20112(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_con
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20113(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_sta_bt_C20113(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "paragraph"
     testcase = "test_sta_bt_C20113"
-    wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,utf_constants,rs_helper)
+    wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
     bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
@@ -2734,10 +2734,10 @@ def test_sta_bt_C20113(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_con
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20114(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_sta_bt_C20114(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "special_characters"
     testcase = "test_sta_bt_C20114"
-    wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,utf_constants,rs_helper)
+    wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
     bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode, 60)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
@@ -2772,10 +2772,10 @@ def test_sta_bt_C20114(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_con
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20115(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper):
+def test_sta_bt_C20115(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "different_language"
     testcase = "test_sta_bt_C20115"
-    wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut,wifi_access_point,testcase,utf_constants,rs_helper)
+    wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
     bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode, 60)
     clean_obj = Cleanupactivity(wifi_dut)
     wlan_obj.start()
@@ -2809,7 +2809,7 @@ def test_sta_bt_C20115(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_con
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20116(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,rs_helper,tx_rx_duration=60):
+def test_sta_bt_C20116(wifi_sniffer,wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -2934,7 +2934,7 @@ def test_sta_bt_C20116(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_con
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20117(wifi_sniffer,wifi_access_point,wifi_dut,bt_client,utf_constants,rs_helper):
+def test_sta_bt_C20117(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, utf_constants, rs_helper):
     send_text = "支那支那支那支那支那支那"
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -3050,8 +3050,8 @@ def test_sta_bt_C20117(wifi_sniffer,wifi_access_point,wifi_dut,bt_client,utf_con
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer,wifi_dut,wifi_access_point,bt_client,utf_constants,
-                                                rs_helper,wifi_networked_dut,remote_socket_factory,num_sockets):
+def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                                rs_helper, wifi_networked_dut, remote_socket_factory, num_sockets):
     send_text = text_generator(size=20)
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -3171,8 +3171,8 @@ def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer,wifi_dut,wifi_acces
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE},)
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_buffer_tcp_C20119(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,bt_client,remote_socket,
-                                   remote_socket_factory,net_perf_client,protocol,utf_constants,rs_helper):
+def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client, remote_socket,
+                                   remote_socket_factory, net_perf_client, protocol, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -3289,8 +3289,8 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer,wifi_dut,wifi_access_point,wifi_
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE},)
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,bt_client,remote_socket,
-                                          remote_socket_factory,net_perf_client,protocol,utf_constants,rs_helper):
+def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client, remote_socket,
+                                          remote_socket_factory, net_perf_client, protocol, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     with TimeMeasurer() as t:
@@ -3432,8 +3432,8 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer,wifi_dut,wifi_access_poin
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_point,wifi_client,bt_client,protocol,utf_constants,
-                                              rs_helper,rf_attenuator,remote_socket_factory,remote_socket,wifi_networked_dut):
+def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,protocol, utf_constants,
+                                              rs_helper, rf_attenuator, remote_socket_factory, remote_socket, wifi_networked_dut):
     with TimeMeasurer() as t:
         validation = True
         logger().info(f" ====== configuring the sniffer with access point channel ====== ")
@@ -3492,7 +3492,7 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_
         db_value = 5
         att_channel = 1
         wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, db_value)
-        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer,use_server_socket=True)
+        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer, use_server_socket=True)
         logger().info(f"sent tcp data packets : {buffer_length_tx}")
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(f'\n\n{scan_results[0]}\n')
@@ -3501,7 +3501,7 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer,wifi_dut,wifi_access_
         logger().info(f'Current RSSI = {current_rssi}')
         db_value = 5
         wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, db_value)
-        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer,use_server_socket=True)
+        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer, use_server_socket=True)
         logger().info(f"sent tcp data packets : {buffer_length_tx}")
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(f'\n\n{scan_results[0]}\n')

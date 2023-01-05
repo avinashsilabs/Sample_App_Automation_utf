@@ -163,7 +163,7 @@ devices:
                 ip_address: '10.207.16.95'
                 web_ui_port: 8080
                 admin_password: 'bhuvgycft'
-                ssid: "TESTTEST-DLINK_3"
+                ssid: "TESTTEST-DLIN_3"
                 channel: 1
                 cipher: 'AES'
 
@@ -172,7 +172,7 @@ devices:
             wifi:
                 type: 'wifi.access_points.static'
                 security: WPA2
-                ssid: 'TESTTEST-DLINK_3'
+                ssid: 'TESTTEST-DLIN_3'
                 passphrase: 'thisisatestnetwork'
                 channel: 1
                 cipher: 'AES'

@@ -28,6 +28,8 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
             UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch(),
             UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu:2022_09_14",
+            UtfLauncherCmdOption.username: "pi",
+            UtfLauncherCmdOption.password: "raspberry",
         }
 
 

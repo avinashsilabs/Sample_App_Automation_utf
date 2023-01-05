@@ -18,7 +18,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtCustomFeatureBitMap,
     RS9116CustomFeatureBitMap,
     RS9116TCPIPFeatureBitMap, RS9116CoexMode,
-    SocketType,
+    SocketType, RS9116AsyncEventType
 )
 
 """Test Author = Rakesh Nayini
@@ -888,3 +888,92 @@ def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, r
 
     logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
     wifi_client.interfaces.wifi.leave()
+
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "band": RS9116Band.TwoPointFourGHz,
+        "client_socket_limit": 10,
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
+          "channel": 11, }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, channel, utf_constants, protocol):
+    validation = True
+    iter_count = utf_constants.get('iter_count')
+    ping_count = utf_constants.get('ping_count')
+    dut_mac_address = None
+    for count in range(1, iter_count):
+        logger().info(f"Initiating test for iteration: {count}")
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_TCP_data_C19466 -' + str(count))
+        time.sleep(3)
+        ip_dict = wifi_dut.interfaces.wifi.ip
+        if not ip_dict:
+            wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode=mode, static_ip=static_ip,
+                                                             static_subnet=static_subnet,
+                                                             static_gateway=static_gateway)
+            logger().info(" ********** Starting DUT as an AP ********* ")
+            wifi_dut.interfaces.wifi.start_ap(channel=channel)
+            time.sleep(10)
+        logger().info(" ********** Raspberry Pi client connecting to DUT ********* ")
+        client_join(wifi_client, ssid="RS9116_AP")
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        logger().info(f"********* Host IP *********: {host_ip}")
+        logger().info("***** Pinging to DUT from wifi_client  *****")
+        ping_from_client(dut_ip, ping_count)
+        logger().info("***** Ping successful *****")
+        time.sleep(5)
+        if not dut_mac_address:
+            dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        raspi_mac = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info(f"Raspi-STA MAC_Address: {raspi_mac}")
+        logger().info("***** Initiating TCP RX traffic from DUT *****")
+        run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+                remote_terminate = event.event_data
+                assert remote_terminate, f"unable to find remote terminate event"
+                logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
+        logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
+        wifi_client.interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(f"*********Validating the beacon frame in sniffer **********")
+        packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype==8)'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], "not found beacon from DUT"
+        logger().info("********* Beacon found from DUT********")
+        logger().info(f"Validate Probe req(Broadcast/Unicast), authentication ,association, eapol")
+        packet_filter2 = f'(wlan.addr == {dut_mac_address}) && (wlan.addr == {raspi_mac}) && (eapol) or ' \
+                         f'!(wlan.fc.type_subtype == 0x0008) or' \
+                         f'(wlan.fc.type_subtype == 0x0000)  or ' \
+                         f'(wlan.fc.type_subtype == 0x000b)'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            "packet_count"], "Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet in sniffer"
+        time.sleep(10)
+        logger().info(f"Iteration '{count}' completed")

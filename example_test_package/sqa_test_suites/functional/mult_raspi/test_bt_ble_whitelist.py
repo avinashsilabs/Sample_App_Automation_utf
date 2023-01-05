@@ -202,12 +202,10 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
             assert ble_dut_address, f"Unable to get ble_dut_address"
         try:
             wifi_dut.interfaces.wifi.ble_start_advertising()
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
                 bt_dut_address=ble_dut_address,
             )
-            assert (
-                    bt_client_address is not None
-            ), "failed to initiate ble in remote device"
+            assert ble_client_address, "Unable to get ble_client_address from remote device"
             logger().info("keeping the time sleep to complete smp scan")
             time.sleep(4)
             # self.ble_client.interfaces.bluetooth.stop_scanning()
@@ -259,7 +257,7 @@ def bt_disconnect(wifi_dut, bt_client_address, bt_socket):
 
 def ble_disconnect(wifi_dut, ble_client_address):
     # Ble disconnect
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=30)
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=120)
     time.sleep(3)
     logger().info("Successfully disconnected from BLE SLAVE Device")
 

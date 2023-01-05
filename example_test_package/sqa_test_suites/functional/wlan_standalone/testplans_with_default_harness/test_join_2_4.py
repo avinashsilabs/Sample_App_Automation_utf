@@ -50,30 +50,6 @@ class FilterPacket:
 # configure ping_count to ping dut
 ping_count = 10
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                      test_case_name='test_Connectivity_with_11n_only_mode_AP_C19707',
-                                                      test_case_id='C19707',
-                                                      notes='test notes'))
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -111,31 +87,6 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
 
     rs_helper.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac)
 
-
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Connectivity_with_hidden_mode_AP_C19708',
-                                                       test_case_id='C19708',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-ASUS-hidden","broadcast_ssid": False})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -167,30 +118,6 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
             'packet_count'], 'Unable to find hidden in sniffer '
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Joining_time_PMK_C19711',
-                                                       test_case_id='C19711',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -256,30 +183,6 @@ def test_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_sniffer, rs_h
         assert time_taken <= 0.4
         logger().info(f"time taken to connect is: {time_taken}")
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Join_time_providing_PSK_C19712',
-                                                       test_case_id='C19712',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -331,30 +234,6 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
         assert time_taken <= 0.4
         logger().info(f"time taken to connect is: {time_taken}")
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Joining_by_rsi_psk_command_C19714',
-                                                       test_case_id='C19714',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"passphrase": 'test123@random'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -379,30 +258,6 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
 
         rs_helper.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Join_providing_PMK_C19715',
-                                                       test_case_id='C19715',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -433,30 +288,6 @@ def test_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer, rs
         wifi_sniffer.interfaces.capture.stop_capture()
         rs_helper.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Joining_to_PMK_in_module_by_wrong_PSK_C19716',
-                                                       test_case_id='C19716',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "pmkwithwrongpsk", "passphrase": 'thisisatestnetwork', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -495,29 +326,6 @@ def test_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_access_poin
     logger().info(f"test executed in {t.duration} seconds")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_wifi_join_PMK_without_SSID_C19717',
-                                                       test_case_id='C19717',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testwithnossid", "passphrase": 'Testing_pmk', "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -533,30 +341,6 @@ def test_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point):
             logger().info(f"Dut Tried to connect to ap with wrong password, observed error code 0x0003 which is expected")
     logger().info(f"test executed in {t.duration} seconds")
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_wifi_join_pmk_with_space_before_redpine_ssid_C19718',
-                                                       test_case_id='C19718',
-                                                       notes='test notes'))
 @pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"ssid": " redpine", "passphrase": 'Testing_pmk', "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -592,30 +376,6 @@ def test_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_acce
         wifi_sniffer.interfaces.capture.stop_capture()
         rs_helper.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_psk_with_64_different_characters_C19719',
-                                                       test_case_id='C19719',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi=
 {"ssid": "Testssid", "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnmkloirgrgrtyuio1234567890o", "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -643,30 +403,6 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
 
         rs_helper.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720',
-                                                       test_case_id='C19720',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
                                                "passphrase": "123456789qwertyuio123456789qwertyuio123456789zxcvbnm123456789zx",
                                                "security": "WPA2"})
@@ -706,30 +442,6 @@ def test_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wif
 
     logger().info(f"Associated and ping in {t.duration} seconds")
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_Init_Scan_Join_Disconnect_30min_C19710',
-                                                       test_case_id='C19710',
-                                                       notes='test notes'))
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'testing', "security": 'WPA2', "channel": 7})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

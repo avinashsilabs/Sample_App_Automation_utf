@@ -8,6 +8,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116CoexMode, 
     RS9116PowerSaveProcedureTypes, DeviceConstants
 import time
 from typing import Dict
+from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
@@ -25,7 +26,7 @@ import uuid
         2. create DUT as access point and join DUT to 3rd party access point
         3. Initiate ping from the dut and vice versa
         4.Disconnect dut and connect again
-        
+
     Note:1.EFR reset is used  as DUT reset is not working
         2.execute_number fixture used to run test case multiple times
     Author: Aravind 
@@ -1419,3 +1420,107 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
     logger().info(f"PS-POLL packets are captured in the sniffer")
     logger().info("device reset")
     wifi_dut.interfaces.wifi.reset()
+
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.dut("rs9116_sapi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.ConcurrentMode,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.PSKSecurity,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "RS9116_AP_C19317", "passphrase": "12345678", "channel": 8
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19317", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.firmware_app("test_concurrent_mode")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["disassociated"])
+def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer, wifi_access_point, utf_constants,
+                                                  wifi_client, wifi_dut, switch):
+    try:
+        logger().info(f"***************testcase: C19317 *******************")
+        ping_count = utf_constants.get("ping_count")
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_max_retry_failure_c19317')
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=10, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
+        logger().info(f"preparing wifi_dut as STA - STA Mode")
+        logger().info("joining to 3rd party AP")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        logger().info("fetching ip address through DHCP")
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        access_point_ip = wifi_dut.interfaces.wifi.ip.gateway
+        wifi_dut.interfaces.wifi.ping(server_ip=access_point_ip)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC: {dut_mac_address}")
+        logger().info("DUT Station Mode")
+        logger().info("dut station mode ip: " + device_ip_dut_as_client)
+        logger().info("access point ip: " + str(access_point_ip))
+        logger().info(f"preparing wifi_dut as access point - AP Mode")
+        ap_mac = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'ap mac is {ap_mac}')
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info("Bringing up DUT in AP mode")
+        wifi_dut.interfaces.wifi.start_ap()
+        logger().info("joining 3rd party client to DUT ap")
+        time.sleep(10)
+        wifi_client.interfaces.wifi.join()
+        logger().info("fetching gateway ip of ap")
+        device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
+        logger().info("fetching p address of 3rd party sta")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info("dut ap mode ip: " + device_ip_dut_as_ap)
+        logger().info("wifi_client ip: " + host_ip)
+        status = ping(host_ip, ping_count)
+        assert status == 1, "failed to ping to client"
+        time.sleep(2)
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
+        logger().info("******* Turn off access point and waiting for Rejoin error*******")
+        switch.interfaces.pdu_switch.turn_off(delay=150)
+        """validate rejoin retry failure"""
+        logger().info("Checking for rejoin fail event from dut, this may take some time....")
+        sw = Stopwatch()
+        rejoin_msg = 0
+        end_time = 200
+        while sw.elapsed_sec <= end_time:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            if len(events):
+                for event in events:
+                    if event.event_type == RS9116AsyncEventType.RejoinError:
+                        rejoin_msg = 1
+                        logger().info(
+                            "******** Rejoin error found from DUT, which is expected as per the test step ********")
+            if rejoin_msg:
+                break
+        assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off for 350 seconds"
+
+    finally:
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+
+

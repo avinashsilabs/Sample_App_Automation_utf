@@ -380,7 +380,7 @@ devices:
         interfaces:
             http:
                 type: 'http.server.static'
-                hostname: 'reports.savage.zone'
+                hostname: 'letsencrypt.org'
                 port: 443
                 tls_enabled: true
                 tls_ca_chain: 'isrg-root.pem'

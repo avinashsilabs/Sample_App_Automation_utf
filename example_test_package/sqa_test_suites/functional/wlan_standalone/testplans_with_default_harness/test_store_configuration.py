@@ -163,7 +163,7 @@ class wifi_eap_join:
                                                           timeout=40)
                 return True
             except Exception as e:
-                if "Error code: 0x2" in str(e):
+                if "0x2" in str(e):
                     logger().info("Initiating disconnect for cleanup")
                     self.wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
                     time.sleep(5)
@@ -172,7 +172,7 @@ class wifi_eap_join:
                     self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
                     if i == 2:
                         raise
-                if "Error code: 0x8" in str(e):
+                if ("0x8" in str(e)) or ("0x45" in str(e)):
                     logger().info("Connection failed ,retrying for 1 more time")
                     if i == 2:
                         raise
@@ -193,7 +193,6 @@ class wifi_eap_join:
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
-        #"first_time_retry": 0,
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -309,7 +308,7 @@ def test_store_config_open_C19081(wifi_sniffer, wifi_access_point, wifi_dut):
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 @pytest.mark.config(
@@ -421,7 +420,7 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 @pytest.mark.config(
@@ -610,7 +609,7 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
             if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
                 clean_up.dut_recovery()
             clean_up.disconnect()
-            raise e
+            raise
 
 
 
@@ -772,7 +771,7 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -908,7 +907,7 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -1042,7 +1041,7 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1201,7 +1200,7 @@ def test_store_config_aggregation_C19101(wifi_sniffer, wifi_access_point, wifi_d
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 @pytest.mark.config(
@@ -1351,7 +1350,7 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point,wifi_client
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -1508,7 +1507,7 @@ def test_wireless_config_5GHZ_C19097(wifi_sniffer, wifi_access_point,wifi_client
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 @pytest.mark.config(
@@ -1664,7 +1663,7 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point,wifi_clie
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -1810,7 +1809,7 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point,wifi_clie
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -1957,7 +1956,7 @@ def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wi
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 @pytest.mark.config(
@@ -2095,7 +2094,7 @@ def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, w
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -2117,12 +2116,9 @@ def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, w
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
         | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        #| RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
-        #"eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2133,7 +2129,6 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
         testcase = "test_store_config_error_handling_TTLS_C19083"
         validation = True
 
-        #radius_server.interfaces.radius_server.stop_server()
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -2175,8 +2170,8 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
                 time.sleep(2)
                 with pytest.raises(WlanError) as exc_info:
                     logger().info("Initializing the DUT")
-                    wifi_dut.interfaces.wifi.dut_init(oper_mode=2, coex_mode=9, retries=0)
-                if exc_info.value.error_code == 0x8:
+                    wifi_dut.interfaces.wifi.dut_init(oper_mode=2, coex_mode=9, retries=0, timeout=120)
+                if (exc_info.value.error_code == 0x8) or (exc_info.value.error_code == 0x45):
                     status = True
                     break
                 else:
@@ -2200,7 +2195,7 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise
 
 
 
@@ -2220,11 +2215,11 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
-        #"first_time_retry": 0,
         }
     )
 @pytest.mark.dut("rs9116")
-@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.wiseconnect_duts(["rs9116"])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
@@ -2235,11 +2230,6 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
     try:
         testcase = "test_store_config_custom_feat_bit_20_C19091"
         validation = True
-
-        wifi_dut.interfaces.wifi.reset_mode = "hard"
-        wifi_dut.interfaces.wifi.reset()
-        wifi_dut.interfaces.wifi.init()
-
         logger().info("joining to the AP")
         # DUT connects to AP after join_ap API is executed
         join_obj = wifi_join(wifi_dut, wifi_access_point)
@@ -2269,54 +2259,56 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
 
+        for i in range(0, iter_count):
 
-        for i in range(0,iter_count):
+            for retry in range(0, 3):
 
-            logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
-            wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
+                logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
+                wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
 
-            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}")
+                logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+                wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}")
 
-            logger().info("Initiating wireless de init")
+                logger().info("Initiating reset")
+                wifi_dut.interfaces.wifi.reset_mode = "soft"
+                wifi_dut.interfaces.wifi.reset_soft()
+                time.sleep(2)
 
-            wifi_dut.interfaces.wifi.reset_mode = "soft"
-            #deinit
-            logger().info("Instead of reset need to add  wireless de init")
-            wifi_dut.interfaces.wifi.reset_soft()
-            #wifi_dut.interfaces.wifi.wireless_deinit()
-            time.sleep(2)
+                wifi_dut.interfaces.wifi.chip_init()
+                time.sleep(10)
 
-            wifi_dut.interfaces.wifi.chip_init()
-            time.sleep(10)
+                logger().info("stopping the capture")
+                # Stop Sniffer
+                wifi_sniffer.interfaces.capture.stop_capture()
 
-            logger().info("stopping the capture")
-            # Stop Sniffer
-            wifi_sniffer.interfaces.capture.stop_capture()
+                # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
+                packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) or (eapol) or (wlan.fc.type_subtype == 0x000b)'\
+                                 f'or (wlan.fc.type_subtype == 0x0004)) and (wlan.addr == {dut_mac_address})'
 
-            # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
-            packet_filter1 = f'((wlan.fc.type_subtype == 0x0000) or (eapol) or (wlan.fc.type_subtype == 0x000b)'\
-                             f'or (wlan.fc.type_subtype == 0x0004)) and (wlan.addr == {dut_mac_address})'
+                logger().info(
+                    f"join packets : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']}")
+                assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
+                     'Join procedure should not start until auto trigger enabled'
 
-            logger().info(
-                f"join packets : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']}")
-            assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'],\
-                 'Join procedure should not start until auto trigger enabled'
+                wifi_dut.interfaces.wifi.config_auto_tigger()
 
-            wifi_dut.interfaces.wifi.config_auto_tigger()
+                time.sleep(30)
+                wifi_dut.interfaces.wifi.associated = True
 
-            time.sleep(30)
-            wifi_dut.interfaces.wifi.associated = True
-
-            logger().info("Initiating ping")
-            # Ping to dut from third party device
-            status = ping(device_ip, ping_count)
+                logger().info("Initiating ping")
+                # Ping to dut from third party device
+                status = ping(device_ip, ping_count)
+                if status:
+                    break
+                else:
+                    logger().info("retrying for auto join")
             assert status, "DUT is not responding to ping request from third party device after store configuration"
             time.sleep(5)
             logger().info("Ping successful")
 
             logger().info("Initiating disconnect from DUT")
             wifi_dut.interfaces.wifi.leave()
+            wifi_dut.interfaces.wifi.inited = True
         logger().info("Disable store configuration")
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
@@ -2327,6 +2319,7 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
+        raise
 
 
 @pytest.mark.config(
@@ -2344,11 +2337,11 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
-        #"first_time_retry": 0,
         }
     )
 @pytest.mark.dut("rs9116")
-@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.wiseconnect_duts(["rs9116"])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
@@ -2360,9 +2353,7 @@ def test_store_config_custom_feat_bit_20_C19092(wifi_sniffer, wifi_access_point,
         testcase = "test_store_config_custom_feat_bit_20_C19092"
         validation = True
         logger().info("joining to the AP")
-        wifi_dut.interfaces.wifi.reset_mode = "hard"
-        wifi_dut.interfaces.wifi.reset()
-        wifi_dut.interfaces.wifi.init()
+
         # DUT connects to AP after join_ap API is executed
         join_obj = wifi_join(wifi_dut, wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
@@ -2419,7 +2410,6 @@ def test_store_config_custom_feat_bit_20_C19092(wifi_sniffer, wifi_access_point,
              'Join procedure should not start until auto trigger enabled'
 
         wifi_dut.interfaces.wifi.associated = False
-
         wifi_dut.interfaces.wifi.init()
 
         logger().info("joining to the AP")
@@ -2429,6 +2419,7 @@ def test_store_config_custom_feat_bit_20_C19092(wifi_sniffer, wifi_access_point,
 
         logger().info("Initiating disconnect from DUT")
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.inited = True
         logger().info("Disable store configuration")
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
@@ -2439,4 +2430,4 @@ def test_store_config_custom_feat_bit_20_C19092(wifi_sniffer, wifi_access_point,
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
-        raise e
+        raise

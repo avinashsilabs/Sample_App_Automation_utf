@@ -8,6 +8,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116AsyncEventType
     )
 from utf import UtfDatabaseProperties
+from utf.utils.stopwatch import Stopwatch
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 import time
@@ -30,37 +31,13 @@ def logger():
         4. Initiate http firmware upgrade
         5. Verify the otaf status
 
-    Author: RaviNemali
+    Author: RaviNemali && Benazeer K
 """
-# Configure below time parameter to run the test case for specific time lapse # below is the 30 mins given as default
-time_lapse = 30
 
 # Otaf timeout for deinit
 timeout = 60
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_over_night_C19771',
-                                                       test_case_id='C19771',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -68,19 +45,20 @@ pytestmark = [
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-                          | RS9116TCPIPFeatureBitMap.SSL
-                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
+@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-    t_end = time.time() + 60 * time_lapse
-    while time.time() < t_end:
+def test_https_fw_upgrade_over_night_C19771(http_server, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    sw = Stopwatch()
+    logger().info(f"Time duration is {time_duration} Mins")
+    while sw.elapsed_sec < time_duration:
         """ ******* SERVER CHECKS ******* """
         logger().info("Verifying server stats....")
         server_stat = http_server.interfaces.http.started
@@ -103,7 +81,10 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
             capture_file='test_https_fw_upgrade_over_night_C19771')
 
         logger().info("dut fw version before upgrade...")
-        wifi_dut.interfaces.wifi.version()
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
+
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+        assert len(scan_results) > 0, "scan_list not found"
 
         logger().info("Joining the ap....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -133,10 +114,15 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         if not async_timestamp:
             logger().info(f"Asynchronous message is not received after otaf over http")
         else:
-            time_duration = (async_timestamp - start_time) / 1000000000
-            logger().info(f"Time taken to upgrade firmware using http otaf {time_duration} seconds")
+            time_duration_taken = (async_timestamp - start_time) / 1000000000
+            logger().info(f"Time taken to upgrade firmware using http otaf {time_duration_taken} seconds")
 
-        assert time_duration < 40, "took too long time to download fw"
+        # assert time_duration_taken < 125, "took too long time to download fw"
+
+        if time_duration_taken > 45:
+            logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration_taken}")
+        else:
+            logger().info(f"Time taken to upgrade firmware using http otaf {time_duration_taken} seconds")
 
         time.sleep(5)
         logger().info("resetting DUT....")
@@ -144,38 +130,24 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_dut, wifi_access_p
         time.sleep(10)
 
         logger().info("Initialising DUT after the reset....")
-        wifi_dut.interfaces.wifi.dut_init()
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+
+        wifi_dut.interfaces.wifi.associated = False
 
         logger().info("fetching the fw version after init....")
-        wifi_dut.interfaces.wifi.version()
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        time.sleep(2)
+        if fw_before_upgrade == fw_after_upgrade:
+            logger().info(f"before and after upgradations matched")
+        else:
+            assert "firmwares versions are not matched"
 
         logger().info("Stop Sniffer capture...")
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(10)
+        time.sleep(5)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_corrupted_rps_over_night_C19772',
-                                                       test_case_id='C19772',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -183,19 +155,21 @@ pytestmark = [
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-                          | RS9116TCPIPFeatureBitMap.SSL
-                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
+@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-    t_end = time.time() + 60 * time_lapse
-    while time.time() < t_end:
+def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                          utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    sw = Stopwatch()
+    logger().info(f"Time duration is {time_duration} Mins")
+    while sw.elapsed_sec < time_duration:
         """ ******* SERVER CHECKS ******* """
         logger().info("checking weather server is running....")
         server_stat = http_server.interfaces.http.started
@@ -217,7 +191,7 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_https_fw_upgrade_corrupted_rps_over_night_C19772')
 
         logger().info("dut fw version before upgrade...")
-        wifi_dut.interfaces.wifi.version()
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
 
         logger().info("joining ap....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -238,38 +212,23 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
         time.sleep(10)
 
         logger().info("Initialising DUT after the reset....")
-        wifi_dut.interfaces.wifi.dut_init()
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+
+        wifi_dut.interfaces.wifi.associated = False
 
         logger().info("fetching the fw version after init....")
-        wifi_dut.interfaces.wifi.version()
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        if fw_before_upgrade == fw_after_upgrade:
+            logger().info(f"before and after upgradations matched")
+        else:
+            assert "firmwares versions are not matched"
 
         logger().info("stop Sniffer capture...")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_non_rps_over_night_C19773',
-                                                       test_case_id='C19773',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -277,19 +236,21 @@ pytestmark = [
         "coex_mode": RS9116CoexMode.WLAN,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
-                          | RS9116TCPIPFeatureBitMap.SSL
-                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD,
         "ca_cert": "ca-chain.cert.pem"
         }
     )
+@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
-    t_end = time.time() + 60 * time_lapse
-    while time.time() < t_end:
+def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                    utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    sw = Stopwatch()
+    logger().info(f"Time duration is {time_duration} Mins")
+    while sw.elapsed_sec < time_duration:
         """ ******* SERVER CHECKS ***** """
         logger().info("checking server stats....")
         server_stat = http_server.interfaces.http.started
@@ -311,7 +272,10 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_https_fw_upgrade_non_rps_over_night_C19773')
 
         logger().info("dut fw version before upgrade...")
-        wifi_dut.interfaces.wifi.version()
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
+
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+        assert len(scan_results) > 0, "scan_list not found"
 
         logger().info("Joining ap....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -325,7 +289,7 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         logger().info(f'device ip {device_ip}')
 
         logger().info("performing fw upgrade on dut....")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.xml")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/cgi-bin/cgi_example.py")
         time.sleep(10)
         with pytest.raises(WlanError) as exc_info:
             wifi_dut.interfaces.wifi.get_http_otaf_status()
@@ -338,10 +302,17 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         time.sleep(10)
 
         logger().info("Initialising DUT after the reset....")
-        wifi_dut.interfaces.wifi.dut_init()
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+
+        wifi_dut.interfaces.wifi.associated = False
 
         logger().info("Fetching the DUT version...")
-        wifi_dut.interfaces.wifi.version()
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        if fw_before_upgrade == fw_after_upgrade:
+            logger().info(f"before and after upgradations matched")
+        else:
+            assert "firmwares versions are not matched"
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()

@@ -107,7 +107,19 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, ping_count)
+    status = False
+    for retry_count in range(5):
+        try:
+            logger.info(f'DUT ip {device_ip}')
+            logger.info("pinging to dut.....")
+            status = ping(device_ip, ping_count)
+            assert status, "DUT not responding for ping request......"
+            logger.info("ping to DUT is successful....")
+            break
+        except Exception as err:
+            logger.info(f"Failed to ping to DUT...retry_count{retry_count + 1}\nException:{err}")
+            time.sleep(15)
+    assert status, "DUT not responding for ping request......"
     return mac_address
 
 

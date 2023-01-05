@@ -425,6 +425,7 @@ pytestmark = [
 def test_mqtt_publish_while_rejoin_ssl_TC19274(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
         ):
+    count_rejoin = set()
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -475,9 +476,20 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
                     thread.start()
                 try:
                     wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
+                    events = wifi_dut.interfaces.wifi.get_async_events()
+                    rejoin_error_events = [event for event in events if
+                                           event.event_type == RS9116AsyncEventType.RejoinError]
+                    if len(rejoin_error_events):
+                        count_rejoin.add(str(rejoin_error_events[0]))
                 except:
-                    time.sleep(120)
-                    wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
+                    logger.info("Exception Occured")
+                    assert False
+                finally:
+                    if(len(count_rejoin)):
+                        logger.info("***** Rejoin Error Occured, publishing data again ****")
+                        time.sleep(60)
+                        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
+                count_rejoin.clear()
                 send_count = send_count + 1
                 if send_count == int((send_pkts / 4)):
                     ap_power_off = 1

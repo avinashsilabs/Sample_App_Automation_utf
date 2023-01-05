@@ -41,9 +41,11 @@ pytestmark = [
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "bt_features": 0,
+            "ble_features": 0,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
-
+            "band": 0,
             }
         )
     ]

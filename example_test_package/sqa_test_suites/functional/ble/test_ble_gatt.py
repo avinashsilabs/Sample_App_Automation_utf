@@ -1,5 +1,6 @@
 import time
 import pytest
+import re
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
@@ -14,18 +15,16 @@ def logger():
     return get_logger(__name__)
 
 
-""" Author: Sirisha Ayyagari/RaviNemali
+""" Author: Achal Raghav / RaviNemali
 This test plan aims to verify the BLE_GATT services test cases
-setup requirement:
+
+Setup requirement:
         1. DUT(RS9116)
         2. EFR32
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
-Step1: 1. Configuration of DUT in 2G mode
-Step2 : Do Scan the AP
-Step3: Connect to the AP
-Step4 : Fetch all/particular profiles and characteritics 
-This test case needs a sqa_test_agent_multi_gatt.hex file to be loaded on EFR merged in m18.
+
+This test case needs a sqa_test_agent_multi_gatt.hex file to be loaded on EFR merged in m34.
 
 """
 
@@ -107,12 +106,12 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
     logger().info(f"bt_server_ip is {bt_dut_address}")
     assert bt_dut_address is not None, "failed to load bt address"
-    logger().info(" ******* Fetching ble client address ******* ")
+    logger().info(" ******* Fetching BLE CLIENT address ******* ")
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address, service_classes=[BatteryService])
     logger().info(f"bt_server_ip is {bt_client_address}")
     assert bt_client_address is not None, "Could not get the client address"
-    logger().info(" *******Scanning and connecting to ble client ******* ")
+    logger().info(" ******* Scanning and Connecting to BLE CLIENT ******* ")
 
     # Start scanning and connect to ble client
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
@@ -172,12 +171,12 @@ def test_fetch_characteristis_from_RD1_C19863(ble_dut, ble_client):
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
     assert bt_dut_address is not None, "failed to load bt address"
-    logger().info(" ******* Fetching ble client address ******* ")
+    logger().info(" ******* Fetching BLE CLIENT address ******* ")
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address, service_classes=[BatteryService])
     assert bt_client_address is not None
-    logger().info(" *******Scanning and connecting to ble client ******* ")
+    logger().info(" ******* Scanning and connecting to BLE CLIENT ******* ")
     # Start scanning and connect to ble client
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
@@ -228,7 +227,7 @@ def test_fetch_characteristis_from_RD1_C19863(ble_dut, ble_client):
 
     # Disconnect
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-    logger().info("issued BLE disconnect....")
+    logger().info("Issued BLE Disconnect....")
 
 
 @pytest.mark.config(
@@ -249,7 +248,7 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
     assert bt_dut_address is not None, "failed to load bt address"
-    logger().info(" ******* Fetching ble client address ******* ")
+    logger().info(" ******* Fetching BLE CLIENT address ******* ")
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address, service_classes=[BatteryService])
@@ -279,8 +278,11 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
     # resolve battery profile
     start_handle, end_handle = ble_dut.interfaces.bluetooth.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
                                                                               uuid=int(BatteryService.UUID, 16))
+    logger().info(f"Start handle is {start_handle} and data type is {type(start_handle)}")
     assert start_handle is not None, "failed to fetch the RD1 address.."
     assert end_handle is not None, "failed to fetch the UUID.."
+
+    ble_dut.interfaces.bluetooth.ble_get_att_value_async(ble_remote_dev_address=bt_client_address, char_property=14)
 
     # Disconnect
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
@@ -300,11 +302,18 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
                     },
                     )
 def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
+
+    service_uid = "0000180d-0000-1000-8000-00805f9b34fb"
+    char_uid = "0000180f-0000-1000-8000-00805f9b34fb"
     #start BLE in DUT
     logger().info(" ******* Start BLE GATT Service ******* ")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "Failed to load bt address..."
+
+    #adding service, attributes, values
     ble_dut.interfaces.bluetooth.ble_add_service(uid=0x180D)
+    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x180F)
+    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x180F)
     logger().info("enabled battery service")
 
     #Advertise data from DUT
@@ -333,6 +342,18 @@ def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected,  "Device isn't in connected state"
 
+    servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+    assert len(servs) > 0, "no services fetched"
+    assert len(chars) > 0, "fetched characters are empty"
+
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                service_uid=service_uid,
+                                                                                                char_uid=char_uid)
+    logger().info(f"char_path is {char_path}")
+    assert char_path, "characters are empty"
+    assert len(char_props) > 0, "length of characters is 0"
+
+    ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
     #Disconnection
     logger().info("Disconnecting from dut...")
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
@@ -346,11 +367,23 @@ def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+
 def test_linkloss_profilesfrom_RD1_C19874(ble_dut, ble_client):
+
+    service_uid = "00001803-0000-1000-8000-00805f9b34fb"
+    char_uid = "00002a06-0000-1000-8000-00805f9b34fb"
+
     # BLE DUT initialization
-    logger().info(" ******* start ble GATT service ******* ")
+    logger().info(" ******* Start BLE GATT service ******* ")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "Failed to load bt address..."
+
+    #adding services, attributes and values
+    ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1803)
+    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A06)
+    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A06)
+
+
 
     ble_dut.interfaces.bluetooth.ble_start_advertising()
     # Enables the wifi power save in dut
@@ -381,23 +414,50 @@ def test_linkloss_profilesfrom_RD1_C19874(ble_dut, ble_client):
     assert state_int == BLEDeviceState.Connected , "Device isn't in connected state"
     logger().info(" Connected to the BLE device ")
 
+    servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+    assert len(servs) > 0, "no services fetched"
+    assert len(chars) > 0, "fetched characters are empty"
+
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                service_uid=service_uid,
+                                                                                                char_uid=char_uid)
+
+    logger().info(f"char_path is {char_path}")
+    assert char_path, "characters are empty"
+    assert len(char_props) > 0, "length of characters is 0"
+    for i in range(0,3):
+        data = str(i)
+        logger().info(f"The data being sent is {data}")
+        ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data)
+        time.sleep(1)
+        result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+        logger().info(f"The data recieved is {result}")
+        assert result == data, "Data isn't matching"
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
     time.sleep(1)
 
-
+@pytest.mark.skip(reason="This testcase is still in development")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
     }
 )
+
 def test_ble_multi_connect_disconnect_C19875(ble_dut, ble_client):
     # Start BLE Service
     logger().info(".....Starting BLE Service.....")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address is not None, "failed to load bt address"
     ble_dut.interfaces.bluetooth.ble_start_advertising()
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+    # Enables the bt power save in dut
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(5)
 
     # Begin Scanning for BLE devices through bt client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)

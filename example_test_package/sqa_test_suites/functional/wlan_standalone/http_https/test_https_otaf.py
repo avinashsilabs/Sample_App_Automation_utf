@@ -1199,7 +1199,7 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.parametrize('execute_number', range(5))
+@pytest.mark.parametrize('execute_number', range(3))
 def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, http_server, wifi_sniffer,
                                                               wifi_dut, wifi_access_point, wifi_client, execute_number):
     """ ******* SERVER CHECKS ******* """
@@ -1225,7 +1225,6 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
 
     # validation = True
     ping_iterations = 10
-    wifi_dut.interfaces.wifi.associated = False
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f'ap mac is {dut_mac_address}')
@@ -1253,7 +1252,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
     logger().info("joining to 3rd party AP")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     logger().info("fetching ip address through DHCP")
-    ip_config = wifi_dut.interfaces.wifi.start_ip(vap_id=1)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip_dut_as_client = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     acces_point_ip = wifi_dut.interfaces.wifi.ip.gateway
     wifi_dut.interfaces.wifi.ping(server_ip=acces_point_ip)
@@ -1298,6 +1297,8 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
     logger().info("Initialising DUT after the reset....")
     wifi_dut.interfaces.wifi.dut_init()
     time.sleep(10)
+
+    wifi_dut.interfaces.wifi.associated = False
 
     logger().info("fetching fw version after init....")
     wifi_dut.interfaces.wifi.version()

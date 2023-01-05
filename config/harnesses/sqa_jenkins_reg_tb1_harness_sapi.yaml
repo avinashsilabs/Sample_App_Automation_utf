@@ -311,13 +311,15 @@ devices:
                 ip_address: '10.207.18.181'
                 admin_password: 'admin@1234'
                 ssh_port: 22
-                ssid: "ASUS_AP"
+                ssid: "SQA-Jenkins-TB1"
+                passphrase: '12345678'
                 #channel: 5
                 protected_management_frame: 'Disable'
                 skip_assertion_failure: True
                 # radius server configuration
-                radius_ip: "192.168.50.118"    # "10.207.18.142"    #"192.168.50.118"
+                radius_ip: "10.207.18.142"    #"192.168.50.118"
                 radius_port: "1812"
+                
     switched_ap:
         interfaces:
             wifi:

@@ -1229,20 +1229,6 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
         else:
             assert result
 
-        dut_ip = None
-        for count in range(1, 4):
-            try:
-                ip_config = wifi_dut.interfaces.wifi.start_ip()
-                assert isinstance(ip_config,
-                                  wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
-                dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-                break
-            except:
-                logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}")
-                time.sleep(10)
-        assert dut_ip, "ip setting in DUT has failed"
-        logger().info(f'DUT ip {dut_ip}')
-        time.sleep(5)
         for count in range(5):
             try:
                 logger().info("pinging to dut after power-save.....")

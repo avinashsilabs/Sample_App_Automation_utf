@@ -270,6 +270,16 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
     return ble_client_address, ble_dut_address
 
 
+def http_download(wifi_dut, http_server, http_client, index_path):
+    http_server.interfaces.http.interface = "eth0"
+    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+    # API used to get the https data
+    status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, timeout=500,
+                                                        skip_data_print=0)
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+    assert content == content1, "http server file content and downloaded file contents are not same"
+
+
 def bt_disconnect(wifi_dut, bt_client_address, bt_socket):
     # Close BT connection
     wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
@@ -554,11 +564,6 @@ class connect_disconnect_bt_thread(Thread):
         logger().info("BT Connect-Disconnect thread completed")
 
 
-
-
-
-
-
 pytestmark = [pytest.mark.bt_client("raspi_bt_client"), pytest.mark.ble_client("secondary_raspi_ble_client"),
               pytest.mark.firmware_app("test_coex_custom")]
 
@@ -650,7 +655,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(firmware_loader, wifi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.ble_client("secondary_raspi_ble_client")
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -937,6 +942,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(firmware_loader, wifi_s
             ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
             logger().info(f"ble_client_address:'{ble_client_address}', ble_dut_address:'{ble_dut_address}'")
 
+            http_server.interfaces.http.interface = "eth0"
             wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
             # API used to get the https data
             status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
@@ -1143,29 +1149,27 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(firmware_loade
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.ble_client("secondary_raspi_ble_client")
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ca_cert": "ca-chain.cert.pem"
     },
 )
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
 def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(firmware_loader, wifi_sniffer, recovery, wifi_dut,
-                                                                 wifi_access_point, ble_client, bt_client, wifi_client,
-                                                                 net_perf_client, protocol):
+                                                                 wifi_access_point, ble_client, bt_client, http_client,
+                                                                 http_server, index_path):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     try:
@@ -1198,11 +1202,10 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(firmware_loader
             logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
             ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
             logger().info(f"ble_client_address:'{ble_client_address}', ble_dut_address:'{ble_dut_address}'")
+            time.sleep(5)
 
-            logger().info(
-                f"Initiating {protocol} traffic with client '{wifi_client.name}' and BT Connect-Disconnect thread")
-            t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip,
-                                     iperf_time=100)
+            logger().info("Initiating http_download and BT Connect-Disconnect thread")
+            t1 = Thread(target=http_download, args=(wifi_dut, http_server, http_client, index_path))
             t2 = connect_disconnect_bt_thread(wifi_dut, bt_client, bt_mode, bt_client_address, bt_dut_address,
                                               bt_socket, iter_count=5)
 
@@ -1235,29 +1238,27 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(firmware_loader
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.ble_client("secondary_raspi_ble_client")
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ca_cert": "ca-chain.cert.pem"
     },
 )
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
-def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(firmware_loader, wifi_sniffer, recovery,
-                                                                  wifi_access_point, wifi_dut, bt_client, ble_client,
-                                                                  net_perf_client, wifi_client, protocol):
+def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(firmware_loader, wifi_sniffer, recovery, wifi_dut,
+                                                                  wifi_access_point, ble_client, bt_client, http_client,
+                                                                  http_server, index_path):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     try:
@@ -1291,16 +1292,17 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(firmware_loade
             logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
             ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
             logger().info(f"ble_client_address:'{ble_client_address}', ble_dut_address:'{ble_dut_address}'")
+            time.sleep(10)
 
-            logger().info(
-                f"Initiating {protocol} traffic with client '{wifi_client.name}' and BLE Connect-Disconnect thread")
-            t1 = wifi_traffic_thread(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, device_ip,
-                                     iperf_time=200)
+            logger().info("Initiating http_download and BLE Connect-Disconnect thread")
+            t1 = Thread(target=http_download, args=(wifi_dut, http_server, http_client, index_path))
+            t2 = Thread(target=connect_disconnect_ble, args=(wifi_dut, ble_client, ble_dut_address, 5))
+
             t1.start()
-            time.sleep(3)
-            logger().info(f"Initiating BLE Connect-Disconnect thread")
-            connect_disconnect_ble(wifi_dut, ble_client, ble_dut_address, iter_count=5)
+            t2.start()
+
             t1.join()
+            t2.join()
 
             logger().info("Checking connection status of BT, BLE, Wi-Fi")
             check_connection_status(wifi_dut)
@@ -1678,4 +1680,3 @@ def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(firmware_loa
         raise error
     finally:
         dut_clean_up(wifi_dut, ble_client_address, bt_client_address, bt_socket)
-

@@ -330,11 +330,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '192.168.1.4'
+                hostname: '10.207.18.232'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 1
+                outlet: 2
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -367,7 +367,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 192.168.50.40
+                remote: 10.207.18.233
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -379,7 +379,7 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
-                ip_address: '192.168.50.40'
+                ip_address: '10.207.18.233'
 
     raspi_ble_client:
         interfaces:
@@ -458,7 +458,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.50.40'
+                ip_address: '10.207.18.233'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
@@ -518,7 +518,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.50.40'
+                ip_address: '10.207.18.233'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
@@ -880,7 +880,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "192.168.50.40"
+                host_ip: "10.207.18.233"
                 host_username: "pi"
                 host_password: "raspberry"
 
