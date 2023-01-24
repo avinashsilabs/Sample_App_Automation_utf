@@ -347,7 +347,7 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '192.168.1.4'
+                hostname: '10.207.18.235'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
@@ -766,17 +766,17 @@ devices:
         interfaces:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
+                wsdl: 'http://10.207.19.186:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
                 timeout: 120000
             wcf_file_transfer_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                wsdl: 'http://10.207.19.186:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
                 power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
                 file_transfer_service: 'wcf_file_transfer_service'
-                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
+                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005845::0::INSTR'
                 window_state: 'Show'
 
     python_aws_iot_thing:
@@ -1288,9 +1288,11 @@ defaults:
         data_log_is_peak_to_peak_enabled: true
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
-        scope_scope_save_as: 'UTF_Scope_'
+        scope_points: 512
+        scope_file_name: 'UTF_Scope_'
+        scope_folder_location: 'C:\\UTF\\scope'
         scope_trigger_mode: 'Auto'
-        scope_trigger_source: 'ScopeRunButton'
+        scope_stop_after_elapsed_time: 60
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
 
     sniffer_ellysis_bt_tracker:

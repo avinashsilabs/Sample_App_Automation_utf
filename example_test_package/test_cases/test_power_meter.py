@@ -44,9 +44,8 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     # Parse result as throughput object
     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
     __print_throughput(parsed_result)
-    assert parsed_result["Output"] is not None 
+    assert parsed_result["Output"] is not None
     
-
 @pytest.mark.power_meter("keysight_benchvue_power_analyzer_win_rm")
 def test_power_meter_keysight_benchvue_win_rm(power_meter):
     # Init power meter as datalogger/scope
@@ -82,3 +81,17 @@ def test_power_meter_using_nrf_ppk(power_meters):
     parsed_result = power_meters[0].interfaces.power_meter.process_output()
     __print_throughput(parsed_result)
     assert parsed_result["Output"] is not None 
+    
+def test_power_meter_keysight_benchvue_win_wcf_scope(power_meter):
+    # Init power meter by specifying module name as datalogger or scope
+    power_meter.interfaces.power_meter.init_power_meter()
+    # Init power meter module 
+    power_meter.interfaces.power_meter.init_power_meter_module("scope")
+    # set power meter out put channels
+    power_meter.interfaces.power_meter.set_output_channels_settings([{"channel": "1", "emulation_mode": "Current Measure", "trace_current": True, "trace_power": True},{"channel": "2", "emulation_mode": "Voltage Measure", "trace_voltage": True, "trace_current": False, "trace_power": True}])
+    # start capture power meter datalog/scope
+    power_meter.interfaces.power_meter.start_capture()
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Scp File Name"] is not None  
