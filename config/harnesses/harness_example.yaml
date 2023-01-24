@@ -358,6 +358,52 @@ devices:
                 # back to the persistent state after reboot or power cycle
                 use_persistent_state: false
 
+    switched_ap1:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+                switch_config: 'pdu_switch'
+            pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '10.207.18.235'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 1
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
+    switched_ap2:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+                switch_config: 'pdu_switch'
+            pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '10.207.18.235'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 2
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
     # This represents another access point configuration.
     raspi_wifi:
         interfaces:
@@ -1134,6 +1180,10 @@ defaults:
     remote_socket_factory: "ip_socket_factory"
 
     switch: 'switched_ap'
+
+    switches:
+        - 'switched_ap1'
+        - 'switched_ap2'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:

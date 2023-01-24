@@ -23,3 +23,19 @@ def test_pdu_switch_state(wifi_access_point):
    logger().info("pdu switch state : " + str(state))
    assert state == 'false'
    
+def test_pdu_switches(switches):
+   # swtich #1
+    switches[0].interfaces.pdu_switch.turn_on()
+    state = switches[0].interfaces.pdu_switch.get_state()
+    logger().info("pdu switch one state : " + str(state))
+    assert state == 'true'
+    time.sleep(30)
+    switches[0].interfaces.pdu_switch.turn_off()
+    state = switches[0].interfaces.pdu_switch.get_state()
+    logger().info("pdu switch one state : " + str(state))
+    assert state == 'false'
+    # swtich #2
+    switches[1].interfaces.pdu_switch.turn_on()
+    time.sleep(30)
+    switches[1].interfaces.pdu_switch.turn_off()
+   
