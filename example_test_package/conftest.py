@@ -18,10 +18,17 @@ from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS9116, RS9117
+from time import sleep
 
 last_loaded_custom_app_name = None
 last_test_mode = None
 default_test_mode = None
+
+
+@pytest.fixture(autouse=True, scope="module")
+def reset_dut():
+    commander.reset_device()
+    sleep(5)
 
 
 @pytest.fixture()
