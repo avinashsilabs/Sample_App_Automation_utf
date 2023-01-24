@@ -10,6 +10,9 @@ from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import Batt
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.bluetooth import BLEConnectError
+from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes
+from utf.utils import ibeacon_scan_utility
+import bluetooth._bluetooth as bluez
 
 
 def logger():
@@ -64,6 +67,63 @@ def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+# https://github.com/bowdentheo/BLE-Beacon-Scanner/blob/master/BeaconScanner.py
+def test_ble_ibeacon_scanning(wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    # Start DUT
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    logger().info(f"bt_dut_address: {bt_dut_address} ")
+
+    assert bt_dut_address is not None
+    wifi_dut.interfaces.wifi.ble_start_advertising(ibeacon_info=1)
+
+    enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_ps, "failed to enable WLAN power save"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    dev_id = 0
+    try:
+        sock = bluez.hci_open_dev(dev_id)
+        logger().info("*** Looking for BLE Beacons ***")
+    except:
+        logger().info("Error accessing bluetooth")
+
+    ibeacon_scan_utility.hci_enable_le_scan(sock)
+    # Scans for iBeacons
+    sw = Stopwatch()
+    device_found = False
+    while sw.elapsed_sec < 30:
+        returned_list = ibeacon_scan_utility.parse_events(sock, 10)
+        for item in returned_list:
+            if "mac_address" in item and item.get("mac_address") == bt_dut_address.lower():
+                logger().info(item)
+                device_found = True
+                break
+        if device_found:
+            break
+
+    if device_found:
+        assert item["type"] == "iBeacon"
+        assert item["uuid"] == "fb0b57a2-8228-44cd-913a-94a122ba1206"
+        assert item["major"] == 4386
+        assert item["minor"] == 13124
+        assert item["tx_power"] == 51
 
 
 @pytest.mark.config(
