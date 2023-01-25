@@ -545,7 +545,6 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
-                remote_ip_list: ['10.207.16.93', '10.207.16.88']
 
 
     ble_sweyntooth:
