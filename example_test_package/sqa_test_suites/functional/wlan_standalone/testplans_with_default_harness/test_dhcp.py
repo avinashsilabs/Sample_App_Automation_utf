@@ -10,7 +10,8 @@ from utf_wiseconnect.devices.rs911x import (
 import time
 import pytest
 from utf.utils.logger import get_logger
-
+from datetime import datetime
+import uuid
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
@@ -136,7 +137,8 @@ def test_verify_static_ip_allocation_to_dut_c19292(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
-@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120"})
+@pytest.mark.parametrize("dhcp_lease", [120])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120", "security": 'OPEN'})
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -149,16 +151,16 @@ def test_verify_static_ip_allocation_to_dut_c19292(
     },
 )
 def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
-        wifi_sniffer, wifi_dut, wifi_access_point
+        wifi_sniffer, wifi_dut, wifi_access_point, dhcp_lease
 ):
     """============Configure DHCP renewal time to 2 min and verify DHCP renewal functionality============="""
     validation = True
-
+    capture_filename = "test_dhcp_renewal_time_to_2_min_renewal_func"
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
     )
     wifi_sniffer.interfaces.capture.start_capture(
-        capture_file="test_dhcp_renewal_time_to_2_min_renewal_func"
+        capture_file=capture_filename
     )
     time.sleep(3)
 
@@ -222,7 +224,7 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
 
     logger().info("passing passphrase and ssid to decrypt dhcp packets")
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    logger().info("DHCP decryption is in progress")
+    logger().info("DHCP decryption is in progress : Validating the DORA process")
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
     assert status == True, "DUT mac not found in DHCP packet"
@@ -230,15 +232,51 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
     logger().info("Sniffer validation for dhcp packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"], \
         'Unable to find the power save sniffer packets'
+    packet_filter = f"wlan.addr == {dut_mac_address} && dhcp"
+    logger().info("calling the method from tshark filter_time_stamp")
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'((wlan.addr == {dut_mac_address}) && (!(ip.dst == 255.255.255.255) && (dhcp.option.dhcp == ' \
+                     f'3))) && wlan.fc.retry == 0 '
+
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
+    result = wifi_sniffer.interfaces.capture.fetch_packet_time_stamp(packet_filter,
+                                                                     wlan_filter_file)
+    assert result, f"Unable to find the time stamp for the {packet_filter}"
+    logger().info(f"DHCP request packet list {result}")
+    result.pop(0)  # Pop the first element because always the reference packet will be set to 0
+    if len(result) >= 2:
+        for i in range(1, len(result) - 1):
+            if (dhcp_lease / 2) - 5 < (float(result[i + 1]) - float(result[i])) <= ((dhcp_lease / 2) + 10):
+                logger().info(f"DHCP request packet found for {dhcp_lease / 2} seconds lease time and the dhcp request "
+                              f"packet time is {(float(result[i + 1]) - float(result[i]))}")
+            elif (dhcp_lease / 2) - 5 < (float(result[i + 1]) - float(result[i])) <= ((dhcp_lease * 87.5) / 100):
+                logger().info(
+                    f"DHCP request packet found for 87.5% of lease time time and the dhcp request packet time "
+                    f"difference is {(float(result[i + 1]) - float(result[i]))}")
+            else:
+                assert False, "Unable to find dhcp request packet even after 87.5% of lease time"
+    else:
+        assert False, "DHCP list doesnot contain two request time stamps to compare"
 
 
-### still some enchancements has to done for it, because dut has not sending IP change notification.
+# still some enchancements has to done for it, because dut has not sending IP change notification.
 @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
-                    wifi={"dhcp_start": "192.168.50.60", "dhcp_end": "192.168.50.90", "dhcp_lease": "120"})
+                    wifi={"dhcp_start": "192.168.50.60", "dhcp_end": "192.168.50.90", "dhcp_lease": "120",
+                          "security": 'OPEN'})
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -255,9 +293,9 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
 def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_point):
     """============Configure DHCP renewal time to 2 min and verify DHCP renewal functionality============="""
     validation = True
-
+    capture_filename = 'test_dhcp_ip_change_notification'
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_dhcp_ip_change_notification')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
     time.sleep(3)
 
     for count in range(1, 3):
@@ -333,11 +371,12 @@ def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
-@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120"})
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120", "security": 'OPEN'})
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("dhcp_lease", [120])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -350,16 +389,16 @@ def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_
     },
 )
 def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
-        wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol
+        wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, dhcp_lease
 ):
     """============Verify TCP-Tx functionality while DHCP renewal============="""
     validation = True
-
+    capture_filename = "test_tcp_tx_functionality_while_dhcp_renewal"
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
     )
     wifi_sniffer.interfaces.capture.start_capture(
-        capture_file="test_tcp_tx_functionality_while_dhcp_renewal"
+        capture_file=capture_filename
     )
     time.sleep(3)
 
@@ -434,7 +473,9 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
     tp = net_perf_client.interfaces.net_perf.process_output()
     assert tp, "failed to get throughtput..."
     __print_throughput(tp)
-
+    logger().info(f"For validating the time difference between two request packets adding the sleep for 200 seconds to "
+                  f"achieve the lease time of {dhcp_lease} seconds")
+    time.sleep(200)
     packet_filter1 = f"((wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype == 0x0024)) && (wlan.fc.pwrmgt == 1)"
 
     time.sleep(10)
@@ -450,7 +491,7 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
 
     logger().info("passing passphrase and ssid to decrypt dhcp packets")
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    logger().info("DHCP decryption is in progress")
+    logger().info("DHCP decryption is in progress : Validating the DORA process")
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
     assert status == True, "DUT mac not found in DHCP packet"
@@ -458,6 +499,40 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
     logger().info("Sniffer validation for dhcp packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)["packet_count"], \
         'Unable to find the power save sniffer packets'
+    packet_filter = f"wlan.addr == {dut_mac_address} && dhcp"
+    logger().info("calling the method from tshark filter_time_stamp")
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'((wlan.addr == {dut_mac_address}) && (!(ip.dst == 255.255.255.255) && (dhcp.option.dhcp == ' \
+                     f'3))) && wlan.fc.retry == 0 '
+
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
+    result = wifi_sniffer.interfaces.capture.fetch_packet_time_stamp(packet_filter,
+                                                                     wlan_filter_file)
+    assert result, f"Unable to find the time stamp for the {packet_filter}"
+    result.pop(0)  # Pop the first element
+    if len(result) >= 2:
+        for i in range(1, len(result) - 1):
+            if (dhcp_lease / 2) - 5 < (float(result[i + 1]) - float(result[i])) <= ((dhcp_lease / 2) + 10):
+                logger().info(f"DHCP request packet found for {dhcp_lease / 2} seconds lease time and the dhcp request "
+                              f"packet time is {(float(result[i + 1]) - float(result[i]))}")
+            elif (dhcp_lease / 2) - 5 < (float(result[i + 1]) - float(result[i])) <= ((dhcp_lease * 87.5) / 100):
+                logger().info(
+                    f"DHCP request packet found for 87.5% of lease time time and the dhcp request packet time "
+                    f"difference is {(float(result[i + 1]) - float(result[i]))}")
+            else:
+                assert False, "Unable to find dhcp request packet even after 87.5% of lease time"
+    else:
+        assert False, "DHCP list doesnot contain two request time stamps to compare"
 
 
 @pytest.mark.start_state("wifi_dut", wifi=["init"])

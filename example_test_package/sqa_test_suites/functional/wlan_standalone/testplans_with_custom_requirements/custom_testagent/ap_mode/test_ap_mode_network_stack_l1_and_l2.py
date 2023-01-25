@@ -1,7 +1,9 @@
 import time
 from random import randint
 from threading import Thread
-
+from utf.interfaces.wifi import WlanError
+from utf.utils import get_random_data
+from utf.utils.thread_base import ThreadBase
 import pytest
 from retry import retry
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -52,6 +54,151 @@ mode = 'static'
 static_ip = '192.168.100.76'
 static_subnet = '255.255.255.0'
 static_gateway = '192.168.100.76'
+
+
+class MultiSocketsConnectionTx():
+    def __init__(self, wifi_dut, wifi_client, remote_socket_factory, utf_constants,  host_ip=None, dut_ip=None, socket_count=None, dut_socket_close=False, remote_close=False):
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+        self.remote_socket_factory = remote_socket_factory
+        self.utf_constants = utf_constants
+        self.host_ip = host_ip
+        self.dut_ip = dut_ip
+        self.socket_count = socket_count
+        self.dut_socket_close = dut_socket_close
+        self.remote_close = remote_close
+
+    def joining_to_client(self):
+        dut_mac_address = None
+        ping_count = self.utf_constants.get('ping_count')
+        ip_dict = self.wifi_dut.interfaces.wifi.ip
+        if not ip_dict:
+            self.wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode=mode, static_ip=static_ip,
+                                                                  static_subnet=static_subnet,
+                                                                  static_gateway=static_gateway)
+            logger().info(" ********** Starting DUT as an AP ********* ")
+            self.wifi_dut.interfaces.wifi.start_ap()
+            time.sleep(10)
+        logger().info(" ********** Raspberry Pi client connecting to DUT ********* ")
+        client_join(self.wifi_client, ssid="RS9116_AP")
+        time.sleep(10)
+        self.dut_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"********* Dut IP **********: {self.dut_ip}")
+        logger().info(f"********* Host IP *********: {self.host_ip}")
+        logger().info("***** Pinging to DUT from wifi_client  *****")
+        ping_from_client(self.dut_ip, ping_count)
+        logger().info("***** Ping successful *****")
+        time.sleep(5)
+        if not dut_mac_address:
+            dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
+        raspi_mac = self.wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info(f"Raspi-STA MAC_Address: {raspi_mac}")
+        return dut_mac_address, raspi_mac
+
+    def multi_sockets_tx(self, socket_count=None):
+        self.socket_count = socket_count
+        client_ips = []
+        client_sockets = []
+        for _ in range(1, self.socket_count + 1):
+            client_ips.append(self.host_ip)
+            client_socket = self.remote_socket_factory.interfaces.socket.create_socket()
+            client_sockets.append(client_socket)
+        server_base_port = 5001
+        dut_sockets = []
+        for index, client_socket in enumerate(client_sockets):
+            client_ip = client_ips[index]
+            server_port = server_base_port + index
+            client_socket.start_server(server_ip=client_ip, port=server_port)
+            time.sleep(2)
+            logger().info(f"opening socket_id_{index}")
+            tcp_socket_id = self.wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            if isinstance(tcp_socket_id, int):
+                logger().info(f"Socket open successfully : {tcp_socket_id}")
+            else:
+                logger().error(f"Unable to open socket id: {tcp_socket_id}")
+                raise RuntimeError(tcp_socket_id)
+            dut_sockets.append(tcp_socket_id)
+            time.sleep(5)
+            bind_response = self.wifi_dut.interfaces.wifi.bind(tcp_socket_id, self.dut_ip, server_port)
+            if bind_response.decode().split(">")[1].replace("'", '').strip() == 'success':
+                logger().info(f"Bind socket successfully: {bind_response}")
+            else:
+                logger().error(f"Unable to bind socket: {bind_response}")
+                raise RuntimeError(bind_response)
+            time.sleep(3)
+            retry_limit: int = 2
+            connect_status = False
+            for retry in range(1, retry_limit):
+                logger().info(f"connecting to the server")
+                connect_response = self.wifi_dut.interfaces.wifi.connect_to_server(tcp_socket_id, self.host_ip, server_port=server_port)
+                logger().info(f"Connect response : {connect_response}")
+                if connect_response.decode() == '':
+                    logger().info(f"Unable to connect socket: {connect_response} in {retry} try")
+                    if retry < retry_limit:
+                        pass
+                elif connect_response.decode().split(">")[1].strip() == 'success':
+                    logger().info(f"Socket connected successfully in {retry} try")
+                    connect_status = True
+                    break
+                logger().info(f"Socket connected with server in: {retry + 1} time")
+            if connect_status is False:
+                logger().info("Unable to connect with Server")
+                assert connect_status
+        data_sent = []
+        for _ in client_sockets:
+            data_sent.append(get_random_data(20))
+
+        results = ThreadBase.call_functions_simultaneously(
+            [(self.wifi_dut.interfaces.wifi.send_data, dut_sockets[index], len(data), data) for index, data in
+             enumerate(data_sent)]
+        )
+        for index, client_socket in enumerate(client_sockets):
+            data = data_sent[index]
+            logger().info(f"Data sent to client {index} - {data}")
+            data_recv = client_socket.recv_data_tcp(len(data))
+            logger().info(f"Data received in client {index} - {data_recv}")
+            assert data_recv == data
+        if self.remote_close:
+            logger().info(f"closing the sockets on remote side")
+            self.remote_socket_factory.interfaces.socket.close_all()
+            time.sleep(15)
+            events = self.wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+                    remote_terminate = event.event_data
+                    assert remote_terminate, f"unable to find remote terminate event"
+                    logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
+                    break
+        if self.dut_socket_close:
+            for index, client_socket in enumerate(client_sockets):
+                result = self.wifi_dut.interfaces.wifi.close_socket(dut_sockets[index])
+                assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id -> {dut_sockets[index]}"
+                logger().info(f"Successfully close socket_id -> {dut_sockets[index]}")
+        logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
+        self.wifi_client.interfaces.wifi.leave()
+
+class Cleanup:
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def dut_clean_up(self):
+        logger().info("\n\n ---------------------------- Cleaning UP the DUT -------------------------------")
+        try:
+            logger().info("Closing all opened sockets")
+            self.wifi_dut.interfaces.wifi.close_sockets()
+            logger().info("Disconnect from AP")
+            self.wifi_dut.interfaces.wifi.leave()
+            self.wifi_dut.interfaces.wifi.associated = False
+            self.wifi_dut.interfaces.wifi.inited = False
+            time.sleep(3)
+        except:
+            logger().info("******* Recovering the DUT using reset **********")
+            self.wifi_dut.interfaces.wifi.reset()
+            time.sleep(20)
+        logger().info("\n ---------------------------- Cleaning UP of DUT is Completed -------------------")
 
 
 def run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol, iperf_time=60):
@@ -253,7 +400,6 @@ def teardown(wifi_dut):
         wifi_dut.interfaces.wifi.reset()
 
 
-# @pytest.mark.skip()
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -349,7 +495,6 @@ def test_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_d
         logger().info(f"Iteration '{count + 1}' completed")
 
 
-# @pytest.mark.skip()
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -445,7 +590,7 @@ def test_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_client, wifi_d
         logger().info(f"Iteration '{count + 1}' completed")
 
 
-# @pytest.mark.skip()
+
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -541,7 +686,7 @@ def test_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_client, wifi_d
         logger().info(f"Iteration '{count + 1}' completed")
 
 
-# @pytest.mark.skip()
+
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -637,7 +782,7 @@ def test_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_d
         logger().info(f"Iteration '{count + 1}' completed")
 
 
-# @pytest.mark.skip()
+
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -744,7 +889,6 @@ def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, r
     wifi_client.interfaces.wifi.leave()
 
 
-# @pytest.mark.skip()
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -977,3 +1121,171 @@ def test_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, net_perf_client, wifi_du
             "packet_count"], "Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet in sniffer"
         time.sleep(10)
         logger().info(f"Iteration '{count}' completed")
+
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "band": RS9116Band.TwoPointFourGHz,
+        "client_socket_limit": 4,
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
+          "channel": 11, }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
+    iter_count = utf_constants.get('iter_count')
+    try:
+        for count in range(1, iter_count+1):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file="multi_sockets_C19482")
+            socket_obj = MultiSocketsConnectionTx(wifi_dut, wifi_client, remote_socket_factory, utf_constants,
+                                                  remote_close=True)
+            socket_obj.joining_to_client()
+            for retry_count in range(5):
+                try:
+                    socket_obj.multi_sockets_tx(socket_count=4)
+                    logger().info(f"closing the socket on dut")
+                    wifi_dut.interfaces.wifi.close_sockets()
+                    logger().info("Stop sniffer finally")
+                    wifi_sniffer.interfaces.capture.stop_capture()
+                    break
+                except Exception as e:
+                    logger().info(f"socket Connection Failed...retry_count{retry_count + 1}")
+                    if retry_count == 4:
+                        raise e
+                    time.sleep(10)
+            logger().info(f"Iteration '{count}' completed")
+    finally:
+        cleanup_obj = Cleanup(wifi_dut)
+        cleanup_obj.dut_clean_up()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "band": RS9116Band.TwoPointFourGHz,
+        "client_socket_limit": 10,
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
+          "channel": 11, }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_DUTAP_open_10_client_sockets_send_tx_C19473(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
+    iter_count = utf_constants.get('iter_count')
+    try:
+        for count in range(1, iter_count + 1):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file="multi_sockets_C19482")
+            socket_obj = MultiSocketsConnectionTx(wifi_dut, wifi_client, remote_socket_factory, utf_constants,
+                                                  remote_close=True)
+            socket_obj.joining_to_client()
+            for retry_count in range(5):
+                try:
+                    socket_obj.multi_sockets_tx(socket_count=10)
+                    logger().info(f"closing the socket on dut")
+                    wifi_dut.interfaces.wifi.close_sockets()
+                    logger().info("Stop sniffer finally")
+                    wifi_sniffer.interfaces.capture.stop_capture()
+                    break
+                except Exception as e:
+                    wifi_dut.interfaces.wifi.close_sockets()
+                    logger().info(f"socket Connection Failed...retry_count{retry_count + 1}")
+                    if retry_count == 4:
+                        raise e
+                    time.sleep(10)
+            logger().info(f"Iteration '{count}' completed")
+    finally:
+        cleanup_obj = Cleanup(wifi_dut)
+        cleanup_obj.dut_clean_up()
+
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "band": RS9116Band.TwoPointFourGHz,
+        "client_socket_limit": 10,
+        "security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678"
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
+          "channel": 11, }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
+    try:
+        socket_limit = 11
+        client_ips = []
+        client_sockets = []
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="multi_sockets_C19472")
+        socket_obj = MultiSocketsConnectionTx(wifi_dut, wifi_client, remote_socket_factory, utf_constants)
+        socket_obj.joining_to_client()
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        for _ in range(1, socket_limit + 1):
+            client_ips.append(host_ip)
+            client_socket = remote_socket_factory.interfaces.socket.create_socket()
+            client_sockets.append(client_socket)
+        server_base_port = 5001
+        dut_sockets = []
+        for index, client_socket in enumerate(client_sockets):
+            client_ip = client_ips[index]
+            server_port = server_base_port + index
+            client_socket.start_server(server_ip=client_ip, port=server_port)
+            time.sleep(2)
+            logger().info(f"opening socket_id_{index}")
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+            dut_sockets.append(sock)
+            wifi_dut.interfaces.wifi.bind(sock, dut_ip, server_port)
+            time.sleep(2)
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
+        wifi_client.interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as err:
+            error_code = "0xffffffff"
+            if error_code in str(err):
+                logger().info(f"expected error code : {error_code}")
+            else:
+                raise err
+    finally:
+        cleanup_obj = Cleanup(wifi_dut)
+        cleanup_obj.dut_clean_up()

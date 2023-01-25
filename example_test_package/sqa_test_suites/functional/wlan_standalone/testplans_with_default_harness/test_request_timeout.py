@@ -5,8 +5,9 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, 
 import time
 import pytest
 from utf.utils.logger import get_logger
+from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.iperf.iperf_utils import ping
+from utf.utils.iperf.iperf_utils import print_dict, ping
 from datetime import datetime
 import uuid
 import re
@@ -458,6 +459,126 @@ def test_request_timeout_scan_500misc(wifi_sniffer, wifi_dut, wifi_access_point)
     wifi_dut.interfaces.wifi.leave()
     logger().info(f"Sniffer validation for probe request")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake
+                    | RS9116FeatureBitMap.PSKSecurity,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+    },
+)
+@pytest.mark.parametrize("channel", [4])
+@pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
+def test_sta_keep_alive_10sec_with_traffic_C19637(wifi_sniffer, wifi_dut, wifi_access_point, channel, net_perf_client,
+                                     protocol, wifi_client):
+    """=============================this test_case to validate keep-alive for 10secs=========================="""
+    logger().info("*** Open security validation *****")
+    time_delta = 10
+    arp_time_delta_obj = FilterPacket()
+    capture_filename = 'test_sta_keep_alive_10sec_with_traffic_C19637'
+    keep_alive_time = 4
+    validation = True
+    logger().info(f"Sniffer starts on configured channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    time.sleep(2)
+    logger().info(f"Setting keep_alive feature in DUT")
+    wifi_dut.interfaces.wifi.set_timeout(feature=keep_alive_time, timeout=10)
+    time.sleep(2)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Actual MAC_Address: {mac_address}")
+
+    logger().info(f"DUT is join the third party AP")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    ip_config = wifi_dut.interfaces.wifi.start_ip()
+
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger().info(f"DUT ip address : {device_ip}")
+
+    logger().info(f"*****Initiating Power_save Mode2 in DUT******")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    time.sleep(2)
+    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+    status = ping(device_ip, ping_count)
+    assert status is True, "DUT is not responding to ping request from third party device"
+    logger().info(f"ping is successful")
+    time.sleep(2)
+
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip)
+
+    # starting iperf
+    net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+    net_perf_client.interfaces.net_perf.start()
+
+    # open socket and send traffic
+    wifi_dut.interfaces.wifi.send_traffic_from_device(
+        host_ip,
+        device_ip,
+        net_perf_client.interfaces.net_perf.server_port,
+        net_perf_client.interfaces.net_perf.protocol,
+        net_perf_client.interfaces.net_perf.client_options,
+    )
+
+    # get and print throughput
+    tp = net_perf_client.interfaces.net_perf.process_output()
+    if tp is not None:
+        print_dict("##     ", tp)
+
+    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and ' \
+                     f'wlan.sa == {mac_address} and wlan.da == ff:ff:ff:ff:ff:ff ' \
+                     f'and arp.proto.type == 0x0800 and wlan.fc.pwrmgt == 1'
+    packet_filter2 = 'Address Resolution Protocol (ARP Announcement)'
+
+    packet_filter3 = f'((wlan.addr == {mac_address} && wlan.fc.type_subtype == 0) && (wlan.supported_rates == 0x96))' \
+                     f' && (wlan.supported_rates == 0x24) && (wlan.ht.capabilities == 0x012c)'
+
+    time.sleep(50)
+    logger().info(f"Sniffer is going to stop")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(2)
+    logger().info(f"DUT is going to leave")
+    wifi_dut.interfaces.wifi.leave()
+    logger().info(f"Sniffer validation for ARP packets")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"Decryption key is {decryption_key}")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+
+    """=============================Validation of time delta between keep-alive packets=========================="""
+    arp_packets_time_delta_list = arp_time_delta_obj.delta_between_arp_packet()
+    arp_packets_time_delta_list.pop(0)
+    arp_packets_time_delta_list.pop(0)
+    logger().info(f'APR packet time delta list after removing 0 = {arp_packets_time_delta_list}')
+    for time_diff in arp_packets_time_delta_list:
+        logger().info(int(time_diff))
+        is_between = int(time_diff) in range(0, time_delta + 2)
+        if is_between is False:
+            logger().info(is_between)
+            status = is_between
+            break
+        else:
+            logger().info(is_between)
+            status = is_between
+    assert status, "packets are not received in expected time"
+    time.sleep(1)
 
 ###commented because still facing issue with auth_timeout_with_100msec
 # @pytest.mark.start_state("wifi_dut", device="reset", wifi="init")

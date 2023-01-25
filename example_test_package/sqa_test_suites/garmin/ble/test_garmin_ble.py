@@ -51,16 +51,14 @@ class BleDeviceState():
 
     def dut_as_master(self, ble_dut, ble_remote, ble_dut_address, smp_flag, rs_helper_ble):
         ble_remote_address=rs_helper_ble.ble_advertise_on_remote(adv_device=ble_remote, ble_dut_address=ble_dut_address)
-        rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, ble_client_address=ble_remote_address, timeout=60)
-        rs_helper_ble.ble_stop_scanning_on_dut(scan_device=ble_dut)
+        time.sleep(5)
         if smp_flag:
             rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, ble_remote_address=ble_remote_address, smp_flag=True)
         else:
             rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, ble_remote_address=ble_remote_address, smp_flag=False)
-            #dut as master without smp_flag connetion api is not available WIFI_BT_UTFHELP-1169
+        return ble_remote_address
 
     def dut_as_slave(self, ble_dut, ble_remote, ble_dut_address, smp_flag, rs_helper_ble):
-        rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
         ble_remote_address=rs_helper_ble.ble_scanning_on_remote(scan_device=ble_remote, bt_dut_address=ble_dut_address)
         rs_helper_ble.ble_stop_scanning_on_remote(scan_device=ble_remote, bt_dut_address=ble_dut_address)
         if smp_flag:
@@ -211,19 +209,23 @@ def test_C91277_dual_role_connection_stability_secure_and_unencrypted(ble_dut, b
         connection_time=180
         loop=4
         ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-        
+
+        rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, timeout=120)
+        rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
+
         for i in range(loop):
+            logger().info("\n\n *** Iteration :  {} ***\n\n".format(i+1))
             if i%2==0:
-                ble_remote_address=ble_obj.dut_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, smp_flag=False, rs_helper_ble=rs_helper_ble)
-                ble_obj.dut_as_master(ble_dut=ble_dut, ble_remote=ble_remote_slave, ble_dut_address=ble_dut_address, smp_flag=True, rs_helper_ble=rs_helper_ble)
+                ble_obj.dut_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, smp_flag=False, rs_helper_ble=rs_helper_ble)
+                ble_remote_slave_add = ble_obj.dut_as_master(ble_dut=ble_dut, ble_remote=ble_remote_slave, ble_dut_address=ble_dut_address, smp_flag=True, rs_helper_ble=rs_helper_ble)
             else:
-                ble_obj.dut_as_master(ble_dut=ble_dut, ble_remote=ble_remote_slave, ble_dut_address=ble_dut_address, smp_flag=True, rs_helper_ble=rs_helper_ble)
-                ble_remote_address=ble_obj.dut_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, smp_flag=False, rs_helper_ble=rs_helper_ble)
+                ble_remote_slave_add = ble_obj.dut_as_master(ble_dut=ble_dut, ble_remote=ble_remote_slave, ble_dut_address=ble_dut_address, smp_flag=True, rs_helper_ble=rs_helper_ble)
+                ble_obj.dut_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, smp_flag=False, rs_helper_ble=rs_helper_ble)
 
             time.sleep(connection_time)
-            rs_helper_ble.ble_disconnect_from_DUT(ble_dut=ble_dut, ble_remote_address=ble_remote_address)
+            rs_helper_ble.ble_disconnect_from_DUT(ble_dut=ble_dut, ble_remote_address=ble_remote_slave_add, ble_dut_address=ble_dut_address, start_adv=True)                                     
             ble_remote_slave.interfaces.bluetooth.close()
-            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, start_adv=True)
             ble_remote_master.interfaces.bluetooth.close()
     except Exception as e:
         logger().info("\n got exception: {}".format(str(e)))
@@ -231,5 +233,4 @@ def test_C91277_dual_role_connection_stability_secure_and_unencrypted(ble_dut, b
     else:
         logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     finally:
-        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_remote_slave:BleDeviceState.standby, ble_remote_master:BleDeviceState.advertising})
-
+        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_remote_slave:BleDeviceState.advertising, ble_remote_master:BleDeviceState.advertising})

@@ -120,7 +120,7 @@ def test_http_get_with_different_lengths_C19213(http_server, http_client, wifi_d
     join_get_ip(wifi_dut, wifi_access_point, ping_count)
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
-    logger().info("fetching the data from server bt get method")
+    logger().info(f"fetching the data from server bt get method for {index_path}")
     status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
     assert status, "failed to fetch the http data"
     assert content, "failed to load the http data"
@@ -346,7 +346,7 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, htt
 )
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html"})
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html", "6KB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):
@@ -357,7 +357,7 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut, ht
     join_get_ip(wifi_dut, wifi_access_point, ping_count)
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
-    logger().info("http functionality using post method")
+    logger().info(f"http functionality using post method {index_path}")
     status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
                                                          post_data="hellothisisfordifferenturlsusedtopostthed"
                                                                    "atoverthehttppostprotocol")
@@ -1200,7 +1200,7 @@ def test_https_post_functionality_different_urls_C19226(http_server, wifi_dut, h
                      f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
     wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
-    logger().info("http functionality using post method")
+    logger().info(f"http functionality using post method {index_path}")
     status, content = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
                                                          post_data="hellothisisfordifferenturlsusedtopostthed"
                                                                    "atoverthehttppostprotocol")

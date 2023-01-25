@@ -274,7 +274,7 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, 
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.parametrize("index_path", {"index.html", "index_long_crlf.html"})
+@pytest.mark.parametrize("index_path", {"index.html", "index_long_crlf.html", "6KB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):

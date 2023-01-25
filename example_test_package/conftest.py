@@ -44,12 +44,6 @@ def wiseconnect_duts(request: pytest.FixtureRequest, harness) -> Generator[List[
         None
     """
     wiseconnect_duts = harness.create_devices_for_role(request.fixturename, request)
-    try:
-        dut = wiseconnect_duts[0] if (isinstance(wiseconnect_duts[0], RS9116) or
-                                      isinstance(wiseconnect_duts[0], RS9117)) else wiseconnect_duts[1]
-        dut.create_interface("wifi")
-    except Exception as e:
-        get_logger().error(f"Failed to create interface wifi while creating devices for wiseconnect_duts with - {e}")
 
     yield wiseconnect_duts
 
@@ -124,8 +118,9 @@ def rs_helper(request):
 def rs_helper_ble(request):
     yield RSHelperCommandsBle.create_instance()
 
+
 @pytest.fixture(autouse=True, scope='function')
-def reset_on_test_mode_change(request, wiseconnect_duts):
+def reset_on_test_mode_change(request, wiseconnect_duts, harness):
     """
     This fixture checks for change in test mode between last executed test case and current test case
     and does commander, soft reset on device if there is change
@@ -133,6 +128,7 @@ def reset_on_test_mode_change(request, wiseconnect_duts):
     Args:
         request: ``FixtureRequest`` This object provides context of requesting test case
         wiseconnect_duts: ``List[Device]`` list of devices on which reset happens
+        harness: ``Harness`` This object represents test bed configuration
 
     Returns:
         None
@@ -145,6 +141,12 @@ def reset_on_test_mode_change(request, wiseconnect_duts):
     else:
         current_test_mode = default_test_mode
     global last_test_mode
+    dut = harness.create_device(current_test_mode)
+    wifi_interface = dut.create_interface("wifi")
+    if isinstance(wiseconnect_duts[0], RS9116) or isinstance(wiseconnect_duts[0], RS9117):
+        wiseconnect_duts[0] = dut
+    else:
+        wiseconnect_duts[1] = dut
     if current_test_mode != last_test_mode:
         commander.reset_device()
         for device in wiseconnect_duts:

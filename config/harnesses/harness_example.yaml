@@ -829,12 +829,9 @@ devices:
         interfaces:
             aws_iot:
                 type: 'aws_iot.python_thing'
-                client_id: 'Python-Thing_Raspi'
-                hostname: 'a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com'
+                client_id: 'test_thing_2_Raspi'
+                hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
                 port: 8883
-                #private_key: 'python-thing-private.pem.key'
-                #root_ca: 'AWS-IoT-root-CA.crt'
-                #client_cert: 'python-thing-certificate.pem.crt'
                 private_key: 'private-key.key'
                 root_ca: 'start_field.pem'
                 client_cert: 'client-certificate.crt'
@@ -1260,16 +1257,16 @@ defaults:
         server_ip: '10.8.4.11'
 
     aws_iot:
-        hostname: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
+        hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
         port: 8883
-        client_id: "Python-Thing"
-        thing_name: "Python-Thing"
+        client_id: "test_thing_2"
+        thing_name: "test_thing_2"
         certfile: "client-certificate.crt"
         keyfile: "private-key.key"
         cafile: "start_field.pem"
 
     aws_server:
-        domain_name: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
+        domain_name: "a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"
 
     ftp_server: 'raspi_ftp_server'
 
@@ -1379,5 +1376,7 @@ constants:
         value: 10
     iter_count:
         value: 5
+    upgrade_fw:
+        value: "/RS9116W.2.7.0.39.rps"
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']

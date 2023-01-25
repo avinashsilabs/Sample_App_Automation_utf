@@ -36,6 +36,7 @@ pytestmark = [
 def logger():
     return get_logger(__name__)
 
+
 def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
     inq_type = 1
     duration = 10000
@@ -57,9 +58,14 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
         wifi_dut.interfaces.wifi.bt_start()
 
         iter_count = utf_constants.get("iter_count")
-        for i in range(iter_count):
+        if not iter_count:
+            logger().info("In Harness file iter_count is set as 0, So by default making iter_count as 3 if required "
+                          "do modify the harness")
+            iter_count = 3
+
+        for i in range(1, int(iter_count + 1)):
             # start BT inquiry with RSSI from DUT
-            logger().info(f'******Start BT inquiry with RSSI from DUT******')
+            logger().info(f'******Start BT inquiry with RSSI from DUT****** for the iteration {i}')
             wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
             time.sleep(duration / 1000)
 
@@ -73,7 +79,7 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
                 if bt_client_address in event_data and 'Inquiry_type = 1' in event_data:
                     logger().info(f'Remote BT address found ==> {bt_client_address}')
                     logger().info(f'Inquiry Type ==> {inq_type}')
-                    break
+
             # Check for Class of Device in the inquiry results and extract RSSI value from it.
             if cod in event_data:
                 test_data = event_data.split('COD = 203040')[1].strip(', RSSI :')
@@ -81,7 +87,7 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
                 logger().info(f'Remote device COD ==> {cod}')
                 logger().info(f'RSSI ==> {test_data}')
                 found = 1
-                break
+
             else:
                 logger().info(f'BT address {bt_client_address} not found')
 
@@ -91,7 +97,9 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
         else:
             logger().info(f'BT address,Inquiry type,COD,RSSI are found in inquiry results')
             assert True
+    logger().info(f"Found the device for {found} no of times and the bt inquiry happened for {iter_count} times")
     logger().info(f"Test case executed in {t.duration} seconds")
+
 
 def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T3561 in testrail
     inq_type = 2
@@ -114,9 +122,14 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T356
         wifi_dut.interfaces.wifi.bt_start()
 
         iter_count = utf_constants.get("iter_count")
-        for i in range(iter_count):
+        if not iter_count:
+            logger().info("In Harness file iter_count is set as 0, So by default making iter_count as 3 if required "
+                          "do modify the harness")
+            iter_count = 3
+
+        for i in range(1, int(iter_count + 1)):
             # start BT inquiry with RSSI from DUT
-            logger().info(f'******Start BT inquiry with RSSI from DUT******')
+            logger().info(f'******Start BT inquiry with RSSI from DUT****** for iteration {i}')
             wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
             time.sleep(duration / 1000)
 
@@ -130,8 +143,9 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T356
                 if bt_client_address in event_data and 'Inquiry_type = 2' in event_data:
                     logger().info(f'Remote BT address found ==> {bt_client_address}')
                     logger().info(f'Inquiry Type ==> {inq_type}')
-                    break
-            # Check for Class of Device in the inquiry results and extract RSSI value, remote device name and name length from it.
+
+            # Check for Class of Device in the inquiry results and extract RSSI value, remote device name and name
+            # length from it.
             if cod in event_data:
                 test_data = event_data.split('COD = 203040')[1].strip(', RSSI :')
                 rssi_val = test_data.split(',')[0].strip()
@@ -142,8 +156,8 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T356
                 device_name = test_data.split('name:')[1].split(',')[0].split('\n')[0]
                 logger().info(f'Remote device name ==> {device_name}')
                 if int(length) != 0:
-                    found = 1
-                    break
+                    found = found + 1
+
             else:
                 logger().info(f'BT address {bt_client_address} not found')
 
@@ -151,9 +165,12 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T356
             logger().info(f'BT address/Inquiry type/COD/RSSI are not found')
             assert False
         else:
-            logger().info(f'BT address, Inquiry type, COD, RSSI, remote device name and name length are found in inquiry results')
+            logger().info(
+                f'BT address, Inquiry type, COD, RSSI, remote device name and name length are found in inquiry results')
             assert True
+    logger().info(f"Found the device for {found} no of times and the bt inquiry happened for {iter_count} times")
     logger().info(f"Test case executed in {t.duration} seconds")
+
 
 def test_bt_standard_inquiry_C19983(wifi_dut, bt_client, utf_constants):
     inq_type = 0
@@ -172,16 +189,17 @@ def test_bt_standard_inquiry_C19983(wifi_dut, bt_client, utf_constants):
         wifi_dut.interfaces.wifi.bt_start()
         time.sleep(3)
         # start BT standard inquiry from DUT
-        logger().info(f'******Start BT standard inquiry from DUT******')
-        wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
-        time.sleep(duration / 1000)
+        iter_count = 3
+        for i in range(1, int(iter_count + 1)):
+            logger().info(f'******Start BT standard inquiry from DUT******')
+            wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
+            time.sleep(duration / 1000)
 
-        # Get Asynchronous messages
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        assert len(events) > 0
-        # Search for Inquiry type and Remote BT device address
-        iter_count = utf_constants.get("iter_count")
-        for i in range(iter_count):
+            # Get Asynchronous messages
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            assert len(events) > 0
+            # Search for Inquiry type and Remote BT device address
+
             for event in events:
                 event_data = str(event.event_data.decode())
                 if bt_client_address in event_data and 'Inquiry_type = 0' in event_data:
@@ -198,21 +216,24 @@ def test_bt_standard_inquiry_C19983(wifi_dut, bt_client, utf_constants):
                 assert False
     logger().info(f"Test case executed in {t.duration} seconds")
 
-def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):
-        inq_type = 1
-        duration = 10000
-        max_no_dev = 10
-        event_found = 0
-        with TimeMeasurer() as t:
-            # Configure Raspberry pi in slave mode
-            logger().info(f'******Configure Raspberry pi in slave mode******')
-            bt_client_address = bt_client.interfaces.bluetooth.start_slave()
-            assert bt_client_address is not None
 
-            # BT initialization
-            logger().info(f'******BT initialization******')
-            wifi_dut.interfaces.wifi.bt_start()
-            # start BT inquiry with RSSI from DUT
+def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):
+    inq_type = 1
+    duration = 10000
+    max_no_dev = 10
+    event_found = 0
+    with TimeMeasurer() as t:
+        # Configure Raspberry pi in slave mode
+        logger().info(f'******Configure Raspberry pi in slave mode******')
+        bt_client_address = bt_client.interfaces.bluetooth.start_slave()
+        assert bt_client_address is not None
+
+        # BT initialization
+        logger().info(f'******BT initialization******')
+        wifi_dut.interfaces.wifi.bt_start()
+        # start BT inquiry with RSSI from DUT
+        iter_count = 3
+        for i in range(1, int(iter_count + 1)):
             logger().info(f'******Start BT inquiry with RSSI from DUT******')
             wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
             time.sleep(duration / 1000)
@@ -231,27 +252,30 @@ def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):
                     break
             if event_found == 0:
                 assert False, logger().info(f"inquiry complete event not found")
-        logger().info(f"Test case executed in {t.duration} seconds")
+    logger().info(f"Test case executed in {t.duration} seconds")
+
 
 def test_bt_inq_complete_no_dev_C19985(wifi_dut, bt_client):
-        inq_type = 1
-        duration = 10000
-        max_no_dev = 10
-        event_found = 0
-        #device_found = 0
-        with TimeMeasurer() as t:
-            # Configure Raspberry pi in slave mode
-            logger().info(f'******Configure Raspberry pi in slave mode******')
-            bt_client_address = bt_client.interfaces.bluetooth.start_slave()
-            assert bt_client_address is not None
-            #Disable scan
-            logger().info(f'******Disable PIscan in Raspberry Pi ******')
-            bt_client.interfaces.bluetooth.bt_adapter.set_noscan()
+    inq_type = 1
+    duration = 10000
+    max_no_dev = 10
+    event_found = 0
+    # device_found = 0
+    with TimeMeasurer() as t:
+        # Configure Raspberry pi in slave mode
+        logger().info(f'******Configure Raspberry pi in slave mode******')
+        bt_client_address = bt_client.interfaces.bluetooth.start_slave()
+        assert bt_client_address is not None
+        # Disable scan
+        logger().info(f'******Disable PIscan in Raspberry Pi ******')
+        bt_client.interfaces.bluetooth.bt_adapter.set_noscan()
 
-            # BT initialization
-            logger().info(f'******BT initialization******')
-            wifi_dut.interfaces.wifi.bt_start()
-            # start BT inquiry with RSSI from DUT
+        # BT initialization
+        logger().info(f'******BT initialization******')
+        wifi_dut.interfaces.wifi.bt_start()
+        # start BT inquiry with RSSI from DUT
+        iter_count = 3
+        for i in range(1, int(iter_count + 1)):
             logger().info(f'******Start BT inquiry with RSSI from DUT******')
             wifi_dut.interfaces.wifi.bt_inquiry(inq_type, duration, max_no_dev)
             time.sleep(duration / 1000)
@@ -270,6 +294,7 @@ def test_bt_inq_complete_no_dev_C19985(wifi_dut, bt_client):
             if bt_client_address not in event_data:
                 event_found = 1
                 assert True
+                break
             if event_found == 0:
                 assert False, logger().info(f"inquiry complete event not found")
-        logger().info(f"Test case executed in {t.duration} seconds")
+    logger().info(f"Test case executed in {t.duration} seconds")

@@ -57,17 +57,19 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
         ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+
+        logger().info("======= start ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("======= enable power save")
+        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
+
         for i in range(1, 11):
             logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-            logger().info("======= enable power save")
-            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
-
+            time.sleep(0.2)
             logger().info("======= start scanning in remote ble device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
             assert bt_client_address, "failed to start scan in remote device"
@@ -137,6 +139,9 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client):
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
+            time.sleep(0.2)
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
 
 @pytest.mark.config(
@@ -163,16 +168,18 @@ def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
         ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+
+        logger().info("======= start ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("======= enable power save")
+        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
+
         for i in range(1, 11):
             logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-            logger().info("======= enable power save")
-            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
 
             logger().info("======= start scanning in remote ble device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
@@ -235,6 +242,9 @@ def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client):
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
+            time.sleep(0.2)
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
 @pytest.mark.config(
     "wifi_dut",
@@ -260,17 +270,17 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
         ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+
+        logger().info("======= start ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("======= enable power save")
+        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
         for i in range(1, 11):
             logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-            logger().info("======= enable power save")
-            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
-
             logger().info("======= start scanning in remote ble device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
             assert bt_client_address, "failed to start scan in remote device"
@@ -331,6 +341,9 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client):
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
+            time.sleep(0.2)
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
 @pytest.mark.config(
     "wifi_dut",
@@ -358,17 +371,18 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
         ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+
+        logger().info("======= start ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("======= enable power save")
+        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
+
         for i in range(1, 11):
             logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-            logger().info("======= enable power save")
-            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
-
             logger().info("======= start scanning in remote ble device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
             assert bt_client_address, "failed to start scan in remote device"
@@ -430,6 +444,9 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
+            time.sleep(0.2)
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
 @pytest.mark.config(
     "wifi_dut",
@@ -457,16 +474,18 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
         ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+
+        logger().info("======= start ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("======= enable power save")
+        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
+
         for i in range(1, 11):
             logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-            logger().info("======= enable power save")
-            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
 
             logger().info("======= start scanning in remote ble device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
@@ -529,6 +548,9 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client):
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
+            time.sleep(0.2)
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
 @pytest.mark.config(
     "wifi_dut",
@@ -556,16 +578,18 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
         ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+
+        logger().info("======= start ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("======= enable power save")
+        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
+
         for i in range(1, 11):
             logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-            logger().info("======= enable power save")
-            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
 
             logger().info("======= start scanning in remote ble device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
@@ -637,6 +661,9 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client):
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
+            time.sleep(0.2)
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
 
 # ======= Data length Master Test cases

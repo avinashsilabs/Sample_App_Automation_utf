@@ -36,6 +36,53 @@ time_lapse = 30
 timeout = 60
 
 
+def otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, utf_constants):
+    upgrade_fw = utf_constants.get("upgrade_fw")
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True, "server is inactive"
+    logger().info(f'http server state is {server_stat}')
+
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info("fetching the DUT version...")
+    wifi_dut.interfaces.wifi.version()
+
+    logger().info("joining ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+    time.sleep(10)
+
+    logger().info("Performing fw upgrade on DUT....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, upgrade_fw)
+    time.sleep(120)
+
+    logger().info("fetching otaf upgrade status....")
+    wifi_dut.interfaces.wifi.get_http_otaf_status()
+    time.sleep(10)
+
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+    time.sleep(5)
+
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.inited = False
+    wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+
+    logger().info("fetching DUT version after init....")
+    wifi_dut.interfaces.wifi.version()
+
+    wifi_dut.interfaces.wifi.associated = False
+
+
 pytestmark = [
     pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
                                                           feature_name='smoke_tests',
@@ -100,7 +147,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_over_night_C19793')
 
         logger().info("fetching the DUT version...")
-        wifi_dut.interfaces.wifi.version()
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
 
         logger().info("joining ap....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -149,8 +196,15 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
 
         wifi_dut.interfaces.wifi.associated = False
 
+        otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, utf_constants)
+
         logger().info("fetching DUT version after init....")
-        wifi_dut.interfaces.wifi.version()
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        time.sleep(2)
+        if fw_before_upgrade == fw_after_upgrade:
+            logger().info(f"before and after upgradations matched")
+        else:
+            assert "firmwares versions are not matched"
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -221,7 +275,7 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_with_corrupted_rps_over_night_C19794')
 
         logger().info("dut fw version before upgrade...")
-        wifi_dut.interfaces.wifi.version()
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
 
         logger().info("joining ap....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -248,7 +302,12 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
         wifi_dut.interfaces.wifi.associated = False
 
         logger().info("fetching the fw version after init....")
-        wifi_dut.interfaces.wifi.version()
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        time.sleep(2)
+        if fw_before_upgrade == fw_after_upgrade:
+            logger().info(f"before and after upgradations matched")
+        else:
+            assert "firmwares versions are not matched"
 
         logger().info("Stop Sniffer capture...")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -319,7 +378,7 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_http_fw_upgrade_non_rps_over_night_C19795')
 
         logger().info("dut fw version before upgrade...")
-        wifi_dut.interfaces.wifi.version()
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
 
         logger().info("Joining ap....")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -350,7 +409,12 @@ def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_a
         wifi_dut.interfaces.wifi.associated = False
 
         logger().info("Fetching the DUT version...")
-        wifi_dut.interfaces.wifi.version()
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        time.sleep(2)
+        if fw_before_upgrade == fw_after_upgrade:
+            logger().info(f"before and after upgradations matched")
+        else:
+            assert "firmwares versions are not matched"
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()

@@ -1452,8 +1452,6 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["disassociated"])
 def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer, wifi_access_point, utf_constants,
                                                   wifi_client, wifi_dut, switch):
     try:
@@ -1496,9 +1494,6 @@ def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer,
         logger().info("wifi_client ip: " + host_ip)
         status = ping(host_ip, ping_count)
         assert status == 1, "failed to ping to client"
-        time.sleep(2)
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(5)
         logger().info("******* Turn off access point and waiting for Rejoin error*******")
         switch.interfaces.pdu_switch.turn_off(delay=150)
@@ -1506,7 +1501,7 @@ def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer,
         logger().info("Checking for rejoin fail event from dut, this may take some time....")
         sw = Stopwatch()
         rejoin_msg = 0
-        end_time = 200
+        end_time = 500
         while sw.elapsed_sec <= end_time:
             events = wifi_dut.interfaces.wifi.get_async_events()
             if len(events):
@@ -1518,6 +1513,8 @@ def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer,
             if rejoin_msg:
                 break
         assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off for 350 seconds"
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     finally:
         switch.interfaces.pdu_switch.turn_on(delay=60)

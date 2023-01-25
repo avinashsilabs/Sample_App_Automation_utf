@@ -41,6 +41,54 @@ def logger():
 # Otaf timeout for deinit
 timeout = 60
 
+
+def otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, utf_constants):
+    upgrade_fw = utf_constants.get("upgrade_fw")
+    logger().info("checking weather server is running....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True, "server is inactive"
+    logger().info(f'http server state is {server_stat}')
+
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "unable to ping to server"
+
+    logger().info("fetching the DUT version...")
+    wifi_dut.interfaces.wifi.version()
+
+    logger().info("joining ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+    time.sleep(10)
+
+    logger().info("Performing fw upgrade on DUT....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, upgrade_fw)
+    time.sleep(120)
+
+    logger().info("fetching otaf upgrade status....")
+    wifi_dut.interfaces.wifi.get_http_otaf_status()
+    time.sleep(10)
+
+    logger().info("resetting DUT....")
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+    time.sleep(5)
+
+    logger().info("Initialising DUT after the reset....")
+    wifi_dut.interfaces.wifi.inited = False
+    wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+
+    logger().info("fetching DUT version after init....")
+    wifi_dut.interfaces.wifi.version()
+
+    wifi_dut.interfaces.wifi.associated = False
+
+
 pytestmark = [
     pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
                                                           feature_name='smoke_tests',
@@ -1957,3 +2005,115 @@ def test_http_fw_upgrade_in_rejoin_and_measure_time_C19788(http_server, wifi_dut
             switch.interfaces.pdu_switch.turn_on()
             logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
             time.sleep(30)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default
+                          | RS9116TCPIPFeatureBitMap.SSL
+                          | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF |
+                              RS9116ExtTCPIPFeatureBitMap.Default |
+                              RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD
+
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_http_fw_upgrade_on_off_ethernet_and_measure_time_C19787(http_server, wifi_dut, wifi_access_point,
+                                                                 wifi_sniffer, wifi_client, utf_constants):
+    interface = 'eth1'
+    """ ******* SERVER CHECKS ******* """
+    logger().info("checking server stats....")
+    server_stat = http_server.interfaces.http.started
+    assert server_stat == True,"server is inactive"
+    logger().info(f'http server state is {server_stat}')
+
+    logger().info("fetching server ip....")
+    host_ip = get_host_ip()
+    logger().info(f"server ip is {host_ip}")
+
+    logger().info("pinging to server ip....")
+    status = ping(host_ip, 10)
+    assert status == 1, "failed to ping to server"
+
+    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file='test_http_fw_upgrade_on_off_ethernet_and_measure_time_C19787')
+
+    logger().info("dut fw version before upgrade...")
+    fw_before_upgrade = wifi_dut.interfaces.wifi.version()
+
+    logger().info("Joining the ap....")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("Starting dhcp....")
+    wifi_dut.interfaces.wifi.start_ip()
+
+    start_time = time.perf_counter_ns()
+    async_timestamp = 0
+    time.sleep(2)
+
+    logger().info("performing firmware upgrade....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80)
+    logger().info(f"=======>>>>>Disabling the ethernet adaptor at remote side....")
+    wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} down")
+    time.sleep(10)
+    logger().info(f"=======>>>>>Enabling the ethernet adaptor at remote side....")
+    wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
+    time.sleep(120)
+
+    logger().info("fetching otaf status....")
+    wifi_dut.interfaces.wifi.get_http_otaf_status()
+    time.sleep(5)
+
+    logger().info("fetching otaf async events after upgrade....")
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    if len(events):
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
+                async_timestamp = event.timestamp
+
+    if not async_timestamp:
+        logger().info(f"asynchronous message is not received after otaf over http")
+    else:
+        time_duration = (async_timestamp - start_time) / 1000000000
+
+    if time_duration > 40:
+        logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
+    else:
+        logger().info(f"time taken to upgrade firmware using http otaf {time_duration} seconds")
+
+    logger().info("performing dut reset....")
+    wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+    time.sleep(10)
+
+    logger().info("initialising DUT after reset....")
+    wifi_dut.interfaces.wifi.dut_init()
+
+    logger().info("fetching fw version after init....")
+    wifi_dut.interfaces.wifi.version()
+
+    time.sleep(2)
+    wifi_dut.interfaces.wifi.associated = False
+
+    otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, utf_constants)
+
+    fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+    time.sleep(2)
+    if fw_before_upgrade == fw_after_upgrade:
+        logger().info(f"before and after up-gradations matched")
+    else:
+        assert "firmwares versions are not matched"
+
+    logger().info("stop sniffer capture...")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(10)

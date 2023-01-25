@@ -275,7 +275,7 @@ pytestmark = [
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -305,18 +305,11 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
     channel_bitmap_5 = 0
     scan_feature_extend = 0
     for channel in channel_list:
-
         logger().info(f"configuring the Sniffer with the channel : {channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
-
-        # initiates the access point with channel given in list
-        logger().info("Setting access point with custom channel...")
-        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-
-        time.sleep(5)
-
-        for i in range(0, 3):
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_sel_ch_{channel}")
+        time.sleep(3)
+        for i in range(3):
             # enables the scan in DUT with the given channel bitmap value
             logger().info("Initiating selective channel scan in DUT...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
@@ -336,18 +329,35 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
-
-        logger().info("Checking broadcast probe request in other than selected channels")
-        for ch in channel_list:
-            if ch != channel:
-                logger().info(f"\n\nChecking broadcast probe request in channel:'{ch}'")
-                packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {ch})"
-                status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-                if status:
-                    assert False, "Found broadcast probe request in other than selected channel"
-                logger().info("DUT did not send broadcast probe request to other than selected channel")
         logger().info(f"*************** DUT scans successfully in selected for channel:'{channel}' ***************\n\n")
+
+    status_dict = {}
+    for channel in range(1, 12):
+        if channel not in channel_list:
+            logger().info(
+                f"\n\nChecking broadcast probe request in channel '{channel}', which is not in selected channel list {channel_list}")
+            # Configure sniffer in not in channel list
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_non_sel_ch_{channel}")
+            # Issue scan command
+            logger().info("Initiating selective channel scan in DUT...")
+            wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                            scan_bitmap_2_4=channel_bitmap_2_4,
+                                                            scan_bitmap_5=channel_bitmap_5,
+                                                            scan_feature=scan_feature_extend)
+            # Validate Broadcast probe request not there in other than selected channel
+            logger().info(f"Checking broadcast probe request in channel:'{channel}'")
+            packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {channel})"
+            logger().info("Stop sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+            status_dict[f'channel_{channel}'] = result
+    logger().info(f"broadcast probe request status list in other than selected channels: {status_dict}")
+    for channel, status in status_dict.items():
+        assert status is False, f"Found broadcast probe request in '{channel}', which is not in selected channel list {channel_list}"
     logger().info("DUT scan successfully in selected channels")
+
 
 
 pytestmark = [
@@ -382,7 +392,7 @@ pytestmark = [
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -414,19 +424,11 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
     channel_bitmap_5 = 0
     scan_feature_extend = 0
     for channel in channel_list:
-
         logger().info(f"configuring the Sniffer with the channel : {channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
-
-        # initiates the access point with channel given in list
-        logger().info("Starting access point with custom channel...")
-        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_sel_ch_{channel}")
         time.sleep(5)
-
-        for i in range(0, 2):
-
+        for i in range(3):
             # enables the scan in DUT with the given channel bitmap value
             logger().info("Initiating the selective channel scan in dut...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
@@ -434,30 +436,46 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
                                                                            scan_bitmap_5=channel_bitmap_5,
                                                                            scan_feature=scan_feature_extend)
             time.sleep(5)
-
             logger().info(scan_results)
             assert len(scan_results) >= 1, "Scan results not found"
             for count in scan_results:
                 assert (count.rf_channel in channel_list), "Scan should happen only in selected channels"
 
+        logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info(f"Validate Probe req(Broadcast)")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
-
-        logger().info("Checking broadcast probe request in other than selected channels")
-        for ch in channel_list:
-            if ch != channel:
-                logger().info(f"\n\nChecking broadcast probe request in channel:'{ch}'")
-                packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {ch})"
-                status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-                if status:
-                    assert False, "Found broadcast probe request in other than selected channel"
-                logger().info("DUT did not send broadcast probe request to other than selected channel")
         logger().info(f"*************** DUT scans successfully in selected for channel:'{channel}' ***************\n\n")
-    logger().info("DUT scan successfully in all channels")
+
+    status_dict = {}
+    for channel in range(1, 12):
+        if channel not in channel_list:
+            logger().info(
+                f"\n\nChecking broadcast probe request in channel '{channel}', which is not in selected channel list {channel_list}")
+            # Configure sniffer in not in channel list
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_non_sel_ch_{channel}")
+            # Issue scan command
+            logger().info("Initiating selective channel scan in DUT...")
+            wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                            scan_bitmap_2_4=channel_bitmap_2_4,
+                                                            scan_bitmap_5=channel_bitmap_5,
+                                                            scan_feature=scan_feature_extend)
+            # Validate Broadcast probe request in other than selected channel
+            logger().info(f"\n\nChecking broadcast probe request in channel:'{channel}'")
+            packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {channel})"
+            logger().info("Stop sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+            status_dict[f'channel_{channel}'] = result
+    logger().info(f"broadcast probe request status list in other than selected channels: {status_dict}")
+    for channel, status in status_dict.items():
+        assert status is False, f"Found broadcast probe request in '{channel}', which is not in selected channel list {channel_list}"
+    logger().info("DUT scan successfully in selected channels")
 
 
 pytestmark = [
@@ -492,7 +510,7 @@ pytestmark = [
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -526,14 +544,9 @@ def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point
     for channel in channel_list:
         logger().info(f"configuring the Sniffer with the channel : {channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_ch_{channel}")
-
-        # initiates the access point with channel given in list
-        logger().info("Starting access point with custom channel...")
-        wifi_access_point.interfaces.wifi.start_ap(channel=channel)
-        time.sleep(5)
-
-        for i in range(0, 2):
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_sel_ch_{channel}")
+        time.sleep(3)
+        for i in range(3):
             # enables the scan in DUT with the given channel bitmap value
             logger().info("Initiating selective channel scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
@@ -554,18 +567,32 @@ def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
-
-        logger().info("Checking broadcast probe request in other than selected channels")
-        for ch in channel_list:
-            if ch != channel:
-                logger().info(f"\n\nChecking broadcast probe request in channel:'{ch}'")
-                packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {ch})"
-                status = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-                if status:
-                    assert False, "Found broadcast probe request in other than selected channel"
-                logger().info("DUT did not send broadcast probe request to other than selected channel")
         logger().info(f"*************** DUT scans successfully in selected for channel:'{channel}' ***************\n\n")
-    logger().info("DUT scans successfully in selected channels")
+
+    status_dict = {}
+    for channel in range(1, 12):
+        if channel not in channel_list:
+            logger().info(f"\n\nChecking broadcast probe request in channel '{channel}', which is not in selected channel list {channel_list}")
+            # Configure sniffer in not in channel list
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_non_ch_{channel}")
+            # Issue scan command
+            logger().info("Initiating selective channel scan in DUT...")
+            wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                            scan_bitmap_2_4=channel_bitmap_2_4,
+                                                            scan_bitmap_5=channel_bitmap_5,
+                                                            scan_feature=scan_feature_extend)
+            # Validate Broadcast probe request not there in other than selected channel
+            logger().info(f"Checking broadcast probe request in channel:'{channel}'")
+            packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {channel})"
+            logger().info("Stop sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+            status_dict[f'channel_{channel}'] = result
+    for channel, status in status_dict.items():
+        assert status is False, f"Found broadcast probe request in '{channel}', which is not in selected channel list {channel_list}"
+    logger().info("DUT scan successfully in selected channels")
 
 
 pytestmark = [
@@ -1120,6 +1147,3 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_c
         logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
         logger().info("DUT scan successfully in all channels")
     logger().info("dut is able to scan successfully in Japan region")
-
-
-

@@ -19,7 +19,7 @@
     "SQA_TEST_AGENT": "",
     "SSH_TARGET": "10.207.18.120",
     "HARNESS_NAME": "sqa_jenkins_tb3_harness_sapi.yaml",
-    "UTF_PYTEST_COMMAND": "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Bt_classic_deployed_05.dec.22.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+    "UTF_PYTEST_COMMAND": "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Bt_classic_deployed_18.jan.23.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
     "device_group_name": "utf_sqa_hyd_3_device_group",
     "device_group_label": ""
   },

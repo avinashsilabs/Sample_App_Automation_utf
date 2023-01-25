@@ -59,19 +59,21 @@ def reset_USB_Device():
     finally:
         if device_file:
             os.close(device_file)
-        
-
 def ble_vulnerability(ble_dut, ble_vulnerability_sniffer, test_duration, script_name, only_ADV=False):
-    log_file=f"reports/"+script_name+".log_"+str(int(time.time()))
+    sniffer_log = f"reports/"+script_name+".log_"+str(int(time.time()))
     state_change = False
+    try:
+        reset_USB_Device()
+    except Exception as e:
+        logger.info("Got Exception during usb reset {}".format(str(e)))
     try:
         ble_dut_address = ble_dut.interfaces.wifi.ble_start()
         assert ble_dut_address is not None
         time.sleep(2)
         ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
                 dut_address=ble_dut_address,
-                log_file=log_file
-            )
+                log_file=sniffer_log
+        )
         if ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising: 
             logger().info(f"\n\n ***** DUT {ble_dut_address} is in Advertising State *****\n\n")
         else:
@@ -87,42 +89,59 @@ def ble_vulnerability(ble_dut, ble_vulnerability_sniffer, test_duration, script_
                 ble_dut.interfaces.wifi.ble_start_advertising()
                 prev_state=BLEDeviceState.Advertising
             elif current_state==BLEDeviceState.Connected:
+                state_change=True
                 time.sleep(2)
                 if prev_state==BLEDeviceState.Advertising:
                     logger().info("\n\n ***** DUT is Connected ***** current state : {} prev state : {}\n\n".format(current_state, prev_state))
                     prev_state=current_state
                     time.sleep(2)
                     count=0
-                while(ble_dut.interfaces.wifi.ble_get_device_state()>=BLEDeviceState.Connected and sw.elapsed_sec < test_duration):
-                    state_change=True
-                    while(count<=60):
+                while(ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Connected and sw.elapsed_sec < test_duration):
+                    if count==120:
+                        count=0
                         logger().info("\n\n ***** Looks like 3rd party script stoped execution form last 120 sec, So Re-executing 3rd party script *****\n\n")
                         logger().info("\n\n ***** Before restart of 3rd party script state OF DUT is {}: 'Connected state' *****\n\n".format(current_state))
                         ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.stop_capture()
-                        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(dut_address=ble_dut_address,log_file=f"reports/"+script_name+".log_rerun")
-                        time.sleep(1)
-                        count+=1
+                        ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
+                                dut_address=ble_dut_address,
+                        log_file=f"reports/"+script_name+".log_"+str(int(time.time()))
+                        )
+                    time.sleep(1)
+                    count+=1
             elif current_state==BLEDeviceState.Advertising:
                 time.sleep(2)
                 count=0
-                while(ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising and sw.elapsed_sec < test_duration and not only_ADV):
-                        while(count<=30):
+                if not only_ADV:
+                    while(ble_dut.interfaces.wifi.ble_get_device_state()==BLEDeviceState.Advertising and sw.elapsed_sec < test_duration):
+                        if count==30:
+                            count=0
                             logger().info("\n\n ***** Looks like 3rd party script stoped execution form last 30 sec, So Re-executing 3rd party script *****\n\n")
                             logger().info("\n\n ***** Before restart of 3rd party script state OF DUT is {}: Advertising *****\n\n".format(current_state))
                             ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.stop_capture()
-                            ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(dut_address=ble_dut_address,log_file=f"reports/"+script_name+".log_rerun")
+                            ble_vulnerability_sniffer.interfaces.ble_vul_sniffer.start_capture(
+                                   dut_address=ble_dut_address,
+                            log_file=f"reports/"+script_name+".log_"+str(int(time.time()))
+                            )
                         time.sleep(1)
                         count+=1
     except Exception as e:
         if "could not open port" in str(e):
-            assert False, "\n\n ******Setup issue... NRF Dongle went into bad state...Please reconnect NRF Dongle ******\n\n"
+            assert False, "\n\n ******Setup issue... NRF Dongle went into bad state...Please reconnect NRF Dongle OR check of ble_sweyntooth ip_address in harness file******\n\n"
+        else:
+            logger().info("found Exception as {}".format(str(e)))
     finally:
-        with open(log_file, 'r') as file:
+       #need to add line of code to check the log file is genrated or not 
+        with open(sniffer_log, 'r') as file:
             sniffer_logs = file.read()
             logger().info("\n\n ************* Printing Sniffer capture logs *************** \n\n")
             logger().info(sniffer_logs)
-            assert "BTLE_CONNECT_REQ" in sniffer_logs or state_change, "Failed... Attack from 3rd party script is not found...!"
-            logger().info("\n\n *****Found 'BTLE_CONNECT_REQ' string in sniffer capture Or found DUT state is changed to connected state and DUT is stable throughout the test case So making the test case PASS**\n\n")
+            pattern_found =False
+            if "BTLE_CONNECT_REQ" in str(sniffer_logs): pattern_found=True
+            assert pattern_found or state_change, "Failed... Attack from 3rd party script is not found...!"
+            if pattern_found: 
+                logger().info("\n\n *****Found 'BTLE_CONNECT_REQ' string in sniffer capture and DUT is stable throughout the test case So making the test case PASS**\n\n")
+            elif state_change: 
+                logger().info("\n\n *****DUT state is changed to connected state from Advertising state and DUT is stable throughout the test case So making the test case PASS**\n\n")
 
 @pytest.mark.config(
     "wifi_dut",

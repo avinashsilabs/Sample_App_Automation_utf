@@ -261,8 +261,8 @@ pipeline {
             post {
                 always {
                     script {
-                        archiveArtifacts 'example_test_package/**'
-                        archiveArtifacts 'manifest/**'
+                        //archiveArtifacts 'example_test_package/**'
+                        //archiveArtifacts 'manifest/**'
                         archiveArtifacts 'reports/**'
                         archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                         junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'

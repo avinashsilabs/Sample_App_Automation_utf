@@ -55,7 +55,8 @@ pytestmark = [
         wifi={
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation
+            | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
             "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1027,8 +1028,28 @@ def test_remote_name_request_functionality_of_dut_on_sd_when_bt_is_on_c19978(bt_
         logger().info(f"Enabling the BT powersave")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
         time.sleep(3)
+        received_name = False
         logger().info("initiating remote name request")
-        bt_dut.interfaces.bluetooth.bt_remote_name_request_async(bt_client_address, timeout=10)
+        for i in range(3):
+            event_data = ""
+            bt_dut.interfaces.bluetooth.bt_remote_name_request_async(bt_client_address, timeout=10)
+            events = bt_dut.interfaces.wifi.get_async_events()
+            if len(events):
+                for event in events:
+                    event_data = event_data + str(event.event_data.decode())
+                    if "0x4E04" in event_data:
+                        continue
+                    elif "RSI_APP_EVENT_REMOTE_NAME_RESP" in event_data and "resp_status: 0x0" in  event_data:
+                        logger().info(f"event.event_data: {event_data}")
+                        received_name = True
+                        break
+            if received_name:
+                logger().info("Found remote device name")
+                break
+            else:
+                logger().info("Wait for 5 sec")
+                time.sleep(5)
+        assert received_name, "Failed to get remote device name"
     finally:
         clean_up_method(bt_dut)
 

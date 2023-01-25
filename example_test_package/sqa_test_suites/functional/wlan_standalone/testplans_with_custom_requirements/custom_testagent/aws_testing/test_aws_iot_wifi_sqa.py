@@ -131,7 +131,6 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
 
 def connect_disconnect_aws(wifi_dut, messages, topic):
     try:
-
         logger().info("Initiating aws connect from DUT")
         assert connect_aws_server_from_dut(wifi_dut), "Failed to connect aws server from DUT"
         logger().info("Connecting to AWS server is successful")
@@ -143,6 +142,7 @@ def connect_disconnect_aws(wifi_dut, messages, topic):
                 logger().info(f"DUT is Subscribing on topic '{topic}' and QOS:'{RS9116AwsQos.QOS1}'")
                 wifi_dut.interfaces.wifi.aws_iot_subscribe(topic, qos=RS9116AwsQos.QOS1, timeout=10)
                 subscribe_fail = 0
+                time.sleep(3)
                 break
             except Exception as err:
                 logger().info(f"Subscribing on topic '{topic}' failed. retry count->{count}")
@@ -211,7 +211,7 @@ def dut_clean_up(wifi_dut, topic=None):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
+        # wifi_dut.interfaces.wifi.inited = False
     except:
         logger().info("******* Recovering the DUT using EFR reset instead of device reset  **********")
         wifi_dut.interfaces.wifi.reset_soft()
@@ -338,10 +338,12 @@ pytestmark = [
             "client_key": ["private-key.key"],
         }
     ),
+    pytest.mark.start_state("wifi_access_point", wifi="ap_enabled"),
     pytest.mark.firmware_app("test_aws")
 ]
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.end_state("wifi_dut",
@@ -443,6 +445,7 @@ def test_aws_connect_sub_publish_c19548(firmware_loader, wifi_sniffer, wifi_acce
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -536,6 +539,7 @@ def test_aws_connect_after_wifi_reconnection_c4053(firmware_loader, wifi_sniffer
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -636,6 +640,7 @@ def test_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wifi_access
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -643,7 +648,7 @@ def test_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wifi_access
 def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                 test_run_time):
     topic_1 = "sdk/test/Python"
-    exception_count = 5
+    expected_error_count = 5
     try:
         messages = []
         for i in range(5):
@@ -686,8 +691,8 @@ def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, w
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find PS Polls with Power Management Bit set to 1'
 
-        logger.info(f"Number of times : aws_connect failure in span of 30 minutes:'{error_count}'")
-        assert error_count <= exception_count, f"aws connect_publish_disconnect_sequence failed more than '{exception_count}' times in 30 minutes of test run"
+        logger.info(f"Number of times aws_connect_disconnect failure in span of 30 minutes:'{error_count}'")
+        assert error_count <= expected_error_count, f"aws connect_publish_disconnect_sequence failed more than '{expected_error_count}' times in 30 minutes of test run"
     except Exception as error:
         dut_recovery(wifi_dut, error)
         raise error
@@ -700,6 +705,7 @@ def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, w
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-773 [clean_session: bool - support is needed in aws_iot_connect method/TestAgent]
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-786 [Aws_iot: Unable to publish message with size 512 bytes]
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-857 [ Test agent support required for keep alive periods for aws-mqtt]
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -788,6 +794,7 @@ def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sni
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -897,25 +904,21 @@ def test_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(fi
 # https://jira.silabs.com/browse/WIFI_BT_UTFHELP-773
 # Need test agent change after adding cleanSession flag
 # Need test agent change for client_id null
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                      logger):
     try:
         capture_filename = "test_aws_connection_when_client_id_is_null_C19558"
         dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
 
-        # logger.info("Initiating aws connect with client_id 'null' and clean_session flag '1'")
-        # with pytest.raises(WlanError) as exc_info:
-        #     wifi_dut.interfaces.wifi.aws_iot_connect(client_id='NULL', clean_session=1, load_cert=False)
-        # logger.info(f"DUT sent error code '{exc_info.value.error_code}'")
-        # assert exc_info.value.error_code == 0xfffffffe, "Expected error_code '-2' not received"
-
         logger.info("Initiating aws connect with client_id 'null' and clean_session flag '1'")
-        with pytest.raises(Exception) as exc_info:
-            wifi_dut.interfaces.wifi.aws_iot_connect(client_id='', clean_session=1, load_cert=False)
-        err = 'Incorrect number of arguments'
-        assert err in str(exc_info.value), "Expected error_code '-2' not received"
+        with pytest.raises(WlanError) as exc_info:
+            # wifi_dut.interfaces.wifi.aws_iot_connect(client_id='NULL', clean_session=1, load_cert=False)
+            wifi_dut.interfaces.wifi.aws_iot_shadow_init(client_id='NULL')
+        assert exc_info.value.error_code == 0xfffffffe, "Expected error_code '-2' not received"
         logger.error("Received error_code '-2'")
         logger.info(f"aws_iot_connect failed with error_code '-2', which is expected as per the test step")
 
@@ -947,6 +950,7 @@ def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_snif
 
 
 # ########### PR2 ###########################
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1044,6 +1048,7 @@ def test_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_access_poin
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1140,6 +1145,7 @@ def test_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(fi
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("test_run_time", [1800])
 @pytest.mark.end_state("wifi_dut",
@@ -1238,6 +1244,7 @@ def test_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(firmware
 
 
 # ################################# PR3 #####################################
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.end_state("wifi_dut",
@@ -1358,6 +1365,7 @@ def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuousl
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("total_bytes", [20])
 @pytest.mark.end_state("wifi_dut",
@@ -1497,7 +1505,7 @@ def test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(firmware_
         dut_clean_up(wifi_dut)
 
 
-# @pytest.mark.skip()
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.parametrize("publish_len, total_bytes", [(490, 1024000)])  # 493 is max limit
@@ -1639,7 +1647,7 @@ def test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_c19562(f
         dut_clean_up(wifi_dut, topic_1)
 
 
-# @pytest.mark.skip()
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
 @pytest.mark.parametrize("publish_len, total_bytes", [(90, 102400)])  # 100 is max limit 1024000-filesize
@@ -1780,13 +1788,14 @@ def test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_c19564(fir
         dut_clean_up(wifi_dut, topic_1)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [2])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, switch, wifi_sniffer, wifi_access_point,
                                                               wifi_dut, logger, iterations):
-# def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
+    # def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
     topic_1 = "sdk/test/Python"
     try:
         messages = []
@@ -1883,7 +1892,7 @@ def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, s
                             f"\nMessage{send_count + 1} with length:'{len(msg)} bytes'\nMessage{send_count + 1} is:'{msg}'")
                 publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS1, timeout=10)
                 send_count += 1
-                time.sleep(3)
+                time.sleep(5)
                 if send_count == int(len(messages)):
                     break
 
@@ -1940,9 +1949,6 @@ def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, s
             assert rejoin_msg == 1, f"Rejoin Error not found from DUT even after AP is switched off for 300 seconds for iteration:'{iteration + 1}'"
             logger.info("Rejoin Error Received from DUT")
 
-            # wifi_dut.interfaces.wifi.reset_soft()
-            # wifi_dut.interfaces.wifi.init()
-
             logger.info("\n\nAgain turning on the AP")
             switch.interfaces.pdu_switch.turn_on(delay=60)
             logger.info("Successfully powered on AP")
@@ -1984,16 +1990,17 @@ def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, s
         dut_recovery(wifi_dut, error)
         raise error
     finally:
-        dut_clean_up(wifi_dut, topic_1)
+        dut_clean_up(wifi_dut)
         logger.info("Finally turning on the AP")
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_tx_after_rejoin_qos0_C19555(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut, logger):
-# def test_aws_tx_after_rejoin_qos0_c19555(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+    # def test_aws_tx_after_rejoin_qos0_c19555(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
     try:
         messages = []
@@ -2108,11 +2115,12 @@ def test_aws_tx_after_rejoin_qos0_C19555(firmware_loader, switch, wifi_sniffer, 
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut, logger):
-# def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
+    # def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
     try:
         messages = []
@@ -2225,11 +2233,13 @@ def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, switch, wifi_sniffer, 
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):
-# def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):
+def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, switch, wifi_sniffer, wifi_access_point,
+                                                               wifi_dut, aws_iot_client, logger):
+    # def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):
     topic_1 = "sdk/test/Python"
     try:
         messages = []
