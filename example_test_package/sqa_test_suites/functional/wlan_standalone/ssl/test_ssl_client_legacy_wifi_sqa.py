@@ -1116,26 +1116,25 @@ def test_ssl_client_rx_while_rejoining_C19135(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
+        "ca_cert": ["ca-chain.cert.pem"],
         "set_send_feature_frame": True,
         "rejoin_max_retry": 0,
         "scan_interval": 4,
         "beacon_missed_count": 40,
         "bt_features": 0,
         "ble_features": 0,
+        "ble_custom_ext_features": 0,
     }
 )
-
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_server_1_0version_client_1_2_testcase_TC19120(
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, logger):
 
     capture_filename = "test_ssl_server_1_0version_client_1_2_testcase_TC19120"
@@ -1268,26 +1267,25 @@ def test_ssl_server_1_0version_client_1_2_testcase_TC19120(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
+        "ca_cert": ["ca-chain.cert.pem"],
         "set_send_feature_frame": True,
         "rejoin_max_retry": 0,
         "scan_interval": 4,
         "beacon_missed_count": 40,
         "bt_features": 0,
         "ble_features": 0,
+        "ble_custom_ext_features": 0,
     }
 )
-
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_server_1_0version_client_1_0_testcase_TC19117(
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+def test_ssl_client_1_0version_server_1_0_testcase_TC19117(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, logger):
 
     capture_filename = "test_ssl_server_1_0version_client_1_0_testcase_TC19117"

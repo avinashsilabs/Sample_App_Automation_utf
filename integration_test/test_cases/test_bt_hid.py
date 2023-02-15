@@ -57,7 +57,7 @@ def test_bt_hid_dut_as_slave(wifi_dut, bt_client, logger, enable_ssp):
         assert device_found
 
         with wifi_dut.interfaces.wifi.run_bt_task():
-            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            connected = bt_client.interfaces.bluetooth.connect(bt_dut_address)
             assert connected
             time.sleep(1)
 

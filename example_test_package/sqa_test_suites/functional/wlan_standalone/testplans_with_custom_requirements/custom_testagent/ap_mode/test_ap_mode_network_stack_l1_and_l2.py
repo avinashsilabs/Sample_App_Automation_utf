@@ -232,6 +232,18 @@ def run_iperf_dut_as_client(wifi_dut, net_perf_client, host_ip, dut_ip, protocol
             net_perf_client.interfaces.net_perf.close_files()
             net_perf_client.interfaces.net_perf.iperf_process.stop(5)
 
+def ping_from_wifi_client(wifi_client, dut_ip, ping_count=10):
+    logger().info(f"Initiating wlan ping from client '{wifi_client.name}' to DUT")
+    client_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"********* Client IP **********: {client_ip}")
+    for count in range(3):
+        try:
+            rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(f"sudo ping -c {ping_count} {dut_ip}")
+            assert rc == 0
+            logger().info(f"\n{stdout}\n")
+            return rc == 0
+        except:
+            time.sleep(10)
 
 def run_iperf_dut_as_server(wifi_dut, net_perf_client, host_ip, dut_ip, protocol, iperf_time=60):
     ping_count = 5
@@ -1289,3 +1301,225 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
     finally:
         cleanup_obj = Cleanup(wifi_dut)
         cleanup_obj.dut_clean_up()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "SILABS_AP_C19467", "passphrase": "12345678", "beacon": 100,
+        "dtim": 4,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_C19467",
+            "passphrase": "12345678",
+            "interface": "wlan0",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_C19467",
+            "passphrase": "12345678",
+            "interface": "wlan0",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_dut_ap_mode_birectional_tcp_C19467(wifi_sniffer, wifi_dut, wifi_clients, channel,
+                                              utf_constants, net_perf_client, protocol, rs_helper):
+    dut_ip = wifi_dut.interfaces.wifi.ip
+    logger().info(f"********* Dut IP **********: {dut_ip}")
+    if not dut_ip:
+        logger().info("********* configuring static ip to DUT *********")
+        wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
+                                                         static_gateway=static_gateway)
+    ping_count = utf_constants.get("ping_count")
+    logger().info("********* Configuring the sniffer with access point channel *********")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    logger().info("******* Start capturing with Sniffer by giving the test case name as filename ******* ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_c19467')
+    time.sleep(3)
+
+    logger().info("********** Starting DUT as an AP ********* ")
+    wifi_dut.interfaces.wifi.start_ap(channel=channel)
+    time.sleep(10)
+
+    logger().info(f"********** Number of wifi_clients are:{len(wifi_clients)} **********")
+    for i in range(0, len(wifi_clients)):
+        connected = False
+        logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is joining to DUT-AP")
+        wifi_clients[i].interfaces.wifi.join(ssid="SILABS_AP_C19467")
+        time.sleep(5)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        for count in range(3):
+            try:
+                logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is successfully connected to DUT-AP")
+                status = ping_from_wifi_client(wifi_clients[i], dut_ip)
+                assert status, f"RASPI-STA{i + 1} failed to ping DUT"
+                connected = True
+                break
+            except:
+                logger().info(f"RASPI-STA{i + 1} failed to ping DUT...retry count -> {count + 1}")
+                time.sleep(10)
+        assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
+
+    logger().info("Waiting 30 seconds to check connection stability")
+    time.sleep(30)
+    logger().info("Checking the connection stability after 30 seconds")
+    for i in range(0, len(wifi_clients)):
+        logger().info(f"Initiating wlan ping from RASPI_STA{i + 1} for ping_count:{ping_count}")
+        status = ping_from_wifi_client(wifi_clients[i], dut_ip, ping_count)
+        assert status, f"Failed to ping DUT...RASPI-STA{i + 1} is disconnected from DUT-AP"
+        logger().info(f"RASPI_STA{i + 1} is still connected to DUT-AP")
+    timeout = 60
+    for i in range(0, len(wifi_clients)):
+        host_ip = wifi_clients[i].interfaces.wifi.get_ip_address()
+        logger().info("***** Initiating TCP TX traffic from DUT *****")
+        for retry_count in range(5):
+            try:
+                rs_helper.run_traffic(wifi_dut, net_perf_client, protocol, dut_ip, host_ip, timeout,
+                                      traffic_type="TX")
+                break
+            except Exception as e:
+                try:
+                    net_perf_client.interfaces.net_perf.close_files()
+                    net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+                except:
+                    pass
+                logger().info(f"Iperf process Failed...retry_count{retry_count + 1}")
+                if retry_count == 4:
+                    raise e
+                time.sleep(10)
+    logger().info("Stop sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    for i in range(0, len(wifi_clients)):
+        logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+        wifi_clients[i].interfaces.wifi.leave()
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": RS9116OperatingMode.AccessPoint,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "band": RS9116Band.TwoPointFourGHz,
+        "security": "WPA2", "ssid": "SILABS_AP_C19468", "passphrase": "12345678", "beacon": 100,
+        "dtim": 4,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_C19468",
+            "passphrase": "12345678",
+            "interface": "wlan0",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_C19468",
+            "passphrase": "12345678",
+            "interface": "wlan0",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_dut_ap_mode_birectional_udp_C19468(wifi_sniffer, wifi_dut, wifi_clients, channel,
+                                              utf_constants, net_perf_client, protocol, rs_helper):
+    dut_ip = wifi_dut.interfaces.wifi.ip
+    logger().info(f"********* Dut IP **********: {dut_ip}")
+    if not dut_ip:
+        logger().info("********* configuring static ip to DUT *********")
+        wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
+                                                         static_gateway=static_gateway)
+    ping_count = utf_constants.get("ping_count")
+    logger().info("********* Configuring the sniffer with access point channel *********")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    logger().info("******* Start capturing with Sniffer by giving the test case name as filename ******* ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19468')
+    time.sleep(3)
+
+    logger().info("********** Starting DUT as an AP ********* ")
+    wifi_dut.interfaces.wifi.start_ap(channel=channel)
+    time.sleep(10)
+
+    logger().info(f"********** Number of wifi_clients are:{len(wifi_clients)} **********")
+    for i in range(0, len(wifi_clients)):
+        connected = False
+        logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is joining to DUT-AP")
+        wifi_clients[i].interfaces.wifi.join(ssid="SILABS_AP_C19468")
+        time.sleep(5)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        for count in range(3):
+            try:
+                logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is successfully connected to DUT-AP")
+                status = ping_from_wifi_client(wifi_clients[i], dut_ip)
+                assert status, f"RASPI-STA{i + 1} failed to ping DUT"
+                connected = True
+                break
+            except:
+                logger().info(f"RASPI-STA{i + 1} failed to ping DUT...retry count -> {count + 1}")
+                time.sleep(10)
+        assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
+
+    logger().info("Waiting 30 seconds to check connection stability")
+    time.sleep(30)
+    logger().info("Checking the connection stability after 30 seconds")
+    for i in range(0, len(wifi_clients)):
+        logger().info(f"Initiating wlan ping from RASPI_STA{i + 1} for ping_count:{ping_count}")
+        status = ping_from_wifi_client(wifi_clients[i], dut_ip, ping_count)
+        assert status, f"Failed to ping DUT...RASPI-STA{i + 1} is disconnected from DUT-AP"
+        logger().info(f"RASPI_STA{i + 1} is still connected to DUT-AP")
+    timeout = 60
+    for i in range(0, len(wifi_clients)):
+        host_ip = wifi_clients[i].interfaces.wifi.get_ip_address()
+        logger().info("***** Initiating UDP TX traffic from DUT *****")
+        for retry_count in range(5):
+            try:
+                rs_helper.run_traffic(wifi_dut, net_perf_client, protocol, dut_ip, host_ip, timeout,
+                                      traffic_type="TX")
+                break
+            except Exception as e:
+                try:
+                    net_perf_client.interfaces.net_perf.close_files()
+                    net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+                except:
+                    pass
+                logger().info(f"Iperf process Failed...retry_count{retry_count + 1}")
+                if retry_count == 4:
+                    raise e
+                time.sleep(10)
+    logger().info("Stop sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    for i in range(0, len(wifi_clients)):
+        logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+        wifi_clients[i].interfaces.wifi.leave()
+

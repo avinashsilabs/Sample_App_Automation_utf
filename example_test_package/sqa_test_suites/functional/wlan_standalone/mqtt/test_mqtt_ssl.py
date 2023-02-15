@@ -16,7 +16,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116PowerSaveProcedureTypes,
     RS9116CustomFeatureBitMap,
     RS9116ExtCustomFeatureBitMap
-    )
+)
 from utf.utils.stopwatch import Stopwatch
 import string
 import filecmp
@@ -54,14 +54,14 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     logger.info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
 
     mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
 
     logger.info(f"DUT MAC_Address: {mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
     for count in range(1, 3):
         try:
             join_fail = 1
@@ -108,14 +108,13 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     return mac_address
 
 
-def ApWirelessOff(wifi_access_point, wait_time, logger):
+def ApWirelessOff(switch, wait_time, logger):
     time.sleep(1)
-    logger.info(f"Disabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.stop_ap()
+    logger.info(f"Disabling the PDU ")
+    switch.interfaces.pdu_switch.turn_off()
     time.sleep(wait_time)
-    logger.info(f"Enabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.start_ap()
-
+    logger.info(f"Enabling the PDU")
+    switch.interfaces.pdu_switch.turn_on()
 
 
 pytestmark = [
@@ -136,6 +135,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_authentication_ssl_TC19258',
                                                        test_case_id='TC19258',
@@ -157,15 +158,15 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
 def test_mqtt_authentication_ssl_TC19258(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
-        ):
+):
     topic1 = "mytesttopic/1"
     topic2 = "mytesttopic/2"
     # The api returns 100 bytes of random data
@@ -181,7 +182,7 @@ def test_mqtt_authentication_ssl_TC19258(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
     if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
@@ -259,6 +260,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_rx_after_rejoin_ssl_TC19271',
                                                        test_case_id='TC19271',
@@ -280,15 +283,16 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_rx_after_rejoin_ssl_TC19271(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
+        pkt_delay, switch
+):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -308,13 +312,13 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(1)
 
     try:
         if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
-            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
+            wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic_wild, qos=RS9116MqttQos.QOS1)
             logger.info(f"'{wifi_dut.name}' is connected to MQTT server")
     except:
         time.sleep(1)
@@ -335,8 +339,8 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
                     time.sleep(pkt_delay)
                 if ap_power_off:
                     ap_power_off = 0
-                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger), )
-                    thread.start()
+                    pdu_thread = Thread(target=ApWirelessOff, args=(switch, 10, logger), )
+                    pdu_thread.start()
                 try:
                     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
                 except:
@@ -395,6 +399,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_publish_while_rejoin_ssl_TC19274',
                                                        test_case_id='TC19274',
@@ -416,15 +422,16 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_while_rejoin_ssl_TC19274(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
+        pkt_delay, switch
+):
     count_rejoin = set()
     current_time = time.time()
     topic_wild = "mytesttopic/#"
@@ -445,7 +452,7 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
 
@@ -472,8 +479,8 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
                     time.sleep(pkt_delay)
                 if ap_power_off:
                     ap_power_off = 0
-                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger), )
-                    thread.start()
+                    pdu_thread = Thread(target=ApWirelessOff, args=(switch, 10, logger), )
+                    pdu_thread.start()
                 try:
                     wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
                     events = wifi_dut.interfaces.wifi.get_async_events()
@@ -485,7 +492,7 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
                     logger.info("Exception Occured")
                     assert False
                 finally:
-                    if(len(count_rejoin)):
+                    if (len(count_rejoin)):
                         logger.info("***** Rejoin Error Occured, publishing data again ****")
                         time.sleep(60)
                         wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
@@ -544,6 +551,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_rx_ssl_TC19285',
                                                        test_case_id='TC19285',
@@ -565,15 +574,15 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_rx_ssl_TC19285(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -593,7 +602,7 @@ def test_mqtt_rx_ssl_TC19285(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
 
@@ -668,6 +677,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_publish_1mb_file_ssl_TC19286',
                                                        test_case_id='TC19286',
@@ -689,15 +700,15 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1200, 1024000, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_1mb_file_ssl_TC19286(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -717,7 +728,7 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
 
@@ -795,6 +806,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_publish_max_len_ssl_TC19287',
                                                        test_case_id='TC19287',
@@ -816,15 +829,15 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca-chain.cert.pem"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1370, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_max_len_ssl_TC19287(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -844,7 +857,7 @@ def test_mqtt_publish_max_len_ssl_TC19287(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
 
@@ -921,6 +934,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_publish_max_len_ssl_ecdsa_TC19290',
                                                        test_case_id='TC19290',
@@ -942,15 +957,15 @@ pytestmark = [
         "beacon_missed_count": 40,
         "first_time_retry": 0,
         "ca_cert": "ca_ecdsa.crt"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1370, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -969,7 +984,7 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
 
@@ -1144,6 +1159,8 @@ pytestmark = [
                                                           test_parametric_data='p1'
                                                           ))
 ]
+
+
 @pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
                                                        test_case_name='test_mqtt_rx_ssl_ecdsa_TC19291',
                                                        test_case_id='TC19291',
@@ -1164,15 +1181,15 @@ pytestmark = [
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "ca_cert": "ca_ecdsa.crt"
-        }
-    )
+    }
+)
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_rx_ssl_ecdsa_TC19291(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
-        ):
+):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
@@ -1191,7 +1208,7 @@ def test_mqtt_rx_ssl_ecdsa_TC19291(
     for device in client_devices:
         device.interfaces.mqtt.mqtt_client_connect_to_server(
             mqtt_server.interfaces.mqtt
-            )
+        )
 
     time.sleep(5)
 

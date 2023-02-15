@@ -2678,10 +2678,10 @@ def test_query_wireless_stats_after_rejoin_TC19177(wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_rtc_get_multiple_times_TC19178(
+def test_rtc_get_multiple_times_TC19179(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
-    capture_filename = "test_rtc_get_multiple_times_TC19178"
+    capture_filename = "test_rtc_get_multiple_times_TC19179"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -5024,3 +5024,444 @@ def test_1openssl_2AWS_C19151(
 
     pwr = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)
     assert pwr, "packets are not captured in the sniffer"
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost | RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            3),
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
+def test_rtc_get_multiple_times_TC19178(
+        wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
+        ):
+    capture_filename = "test_rtc_get_multiple_times_TC19178"
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    ping_count = 10
+    set_seconds = 30
+    set_minutes = 6
+    set_hour = 10
+    set_month_day = 10
+    set_month = 10
+    set_year = 2021
+    set_week_day = 3
+    wait_time_after_scan = 50
+    listen_interval = 700
+    set_time_sec = ((set_minutes * 60) + set_seconds)
+    firmware_version = wifi_dut.interfaces.wifi.version()
+    logger.info(f"Firmware version-> {firmware_version}")
+
+    logger.info(f"Time in seconds just before initiating set rtc ->  {set_time_sec}")
+    # This API starts RTC timer in DUT
+    wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hour=set_hour,
+                                     month_day=set_month_day,
+                                     month=set_month, year=set_year, week_day=set_week_day)
+
+    with TimeMeasurer() as t:
+        for count in range(1, 3):
+            try:
+                wifi_dut.interfaces.wifi.scan(ssid=None)
+                break
+            except:
+                logger.info(f"Scanning to the Wifi Access point is failed. retry count -> {count}")
+                time.sleep(1)
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger.info(f"DUT MAC_Address: {mac_address}")
+    scan_time = t.duration
+    with TimeMeasurer() as t:
+        logger.info(f"Time taken for scan -> {scan_time} seconds")
+        logger.info(f"wait for {wait_time_after_scan} seconds")
+    scan_logger_time1 = t.duration
+    time.sleep(wait_time_after_scan)
+
+    # get_rtc API returns time parameters output at the instance
+    get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
+    get_time_sec = ((get_minutes * 60) + get_seconds)
+    assert (set_hour == get_hours) and (set_month_day == get_day_month) and (set_month == get_month) and (
+            set_year == get_year) and (set_week_day == get_week_day)
+
+    idle_time = wait_time_after_scan + scan_time + scan_logger_time1
+    time_dif = get_time_sec - set_time_sec - idle_time
+
+    with TimeMeasurer() as t:
+        logger.info(f"idle time after initiating set rtc after scan -> {idle_time}")
+        assert (time_dif >= tolerance_threshold[0]) and (time_dif <= tolerance_threshold[1]), f"get time updated is " \
+                                                                                              f"not in tolerance " \
+                                                                                              f"level. Time " \
+                                                                                              f"difference observed is {time_dif} after scan "
+
+        logger.info(
+            f"Time difference observed between set time and get time is {time_dif} seconds,which is in tolerance level ")
+
+        logger.info("get_rtc is working fine after scan")
+
+    validation = True
+    packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["start_field.pem"],
+        "client_cert": ["client-certificate.crt"],
+        "client_key": ["private-key.key"],
+        "rejoin_max_retry": 0,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0
+    }
+)
+@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated", "clear_certs"])
+def test_Stored_AP_Powered_Off_After_Initial_Connection_C19146(wifi_sniffer, wifi_dut, wifi_access_point, domain_name, switch, logger):
+    port = 8883
+    capture_filename = "test_Stored_AP_Powered_Off_After_Initial_Connection_C19146"
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+        )
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    exception_count = 0
+    for iter in range(10):
+        logger.info(f"Iteration of testcase for {iter}th time")
+        try:
+            power_save = 1
+            for count in range(3):
+                try:
+                    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8,
+                                                        RS9116PowerSaveProcedureTypes.MaxPowerSave)
+                    power_save = 0
+                    break
+                except:
+                    time.sleep(5)
+                    logger.info(f"Retry_count:{count}")
+            assert power_save == 0
+
+            time.sleep(5)
+
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+
+            rejoin_params = [0, 6, 40, 0]
+
+            wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_params[0],
+                                            scan_interval=rejoin_params[1],
+                                            beacon_missedcount=rejoin_params[2],
+                                            first_time_retry=rejoin_params[3])
+
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+            ip_fetch = False
+            for i in range(3):
+                try:
+                    ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=30)
+                    ip_fetch = True
+                    break
+                except:
+                    time.sleep(5)
+                    logger.info(f"Except block{i}")
+
+            assert ip_fetch == True, "IP FETCH FAILED"
+
+            mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger.info(f"DUT MAC_Address: {mac_address}")
+
+            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+            #
+            wifi_dut.interfaces.wifi.config_save()
+            wifi_dut.interfaces.wifi.config_enable(config=1)
+
+            for i in range(0, 2):
+                logger.info(f"RETRYING FOR {i} times")
+                wifi_dut.interfaces.wifi.wireless_deinit()
+                time.sleep(3)
+                try:
+                    wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                except WlanError as e:
+                    if e.error_code == 0x5a5a:
+                        assert e.error_code == 0x5a5a
+                        break
+
+            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            assert sock == 0, "Socket id received is wrong. expected is 0"
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       SocketOptions.CERT_INDEX0)
+
+            local_port = randint(40001, 50000)
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+
+            result = wifi_dut.interfaces.wifi.dns_get(4, domain_name, "NULL",
+                                                      "NULL")
+            logger.info(f"dns response is {result}")
+            server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+            logger.info(f"server_ip {server_ip}")
+
+            check = 0
+            for i in range(2):
+                try:
+                    wifi_dut.interfaces.wifi.connect(sock, server_ip, port)
+                    check = 1
+                    break
+                except:
+                    logger.info(f"Connection failed")
+            assert check == 1, "Connect failed"
+            sleep_time = 3060
+            thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
+            thread.start()
+            sw = Stopwatch()
+            while sw.elapsed_sec < 4200:
+                if (sw.elapsed_sec >= 2100) and (sw.elapsed_sec <= 2110):
+                    wifi_dut.interfaces.wifi.wireless_deinit()
+
+                    with pytest.raises(WlanError) as e:
+                        wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                    assert e.value.error_code == 0x0003, "Observed wrong error code"
+
+                if sw.elapsed_sec >= 3140:
+                    wifi_dut.interfaces.wifi.wireless_deinit()
+                    time.sleep(3)
+                    try:
+                        wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                    except WlanError as e:
+                        if e.error_code == 0x5a5a:
+                            assert e.error_code == 0x5a5a
+                            break
+
+        except Exception as e:
+            if ('0xfffffffd' in str(e)) or ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
+                logger.info("Initiating reset for device cleanup")
+                wifi_dut.interfaces.wifi.reset_soft()
+                time.sleep(10)
+                wifi_dut.interfaces.wifi.associated = True
+                logger.info("Initializing the DUT")
+                wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=1)
+                time.sleep(5)
+                exception_count += 1
+        finally:
+            wifi_dut.interfaces.wifi.leave()
+            wifi_dut.interfaces.wifi.config_enable(config=0)
+            get_state = switch.interfaces.pdu_switch.get_state()
+            if get_state == False:
+                switch.interfaces.pdu_switch.turn_on(delay=60)
+
+    assert exception_count <= 3, "Failed"
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+
+    validation = True
+    packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["start_field.pem"],
+        "client_cert": ["client-certificate.crt"],
+        "client_key": ["private-key.key"],
+        "rejoin_max_retry": 0,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0
+    }
+)
+@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated", "clear_certs"])
+def test_Stored_AP_Powered_OFF_during_boot_C19145(wifi_sniffer, wifi_dut, wifi_access_point, domain_name, switch, logger):
+    port = 8883
+    capture_filename = "test_C19145"
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+    )
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    exception_count = 0
+    listen_interval = 700
+    for iter in range(1):
+        logger.info(f"Iteration of testcase for {iter}th time")
+        try:
+            power_save = 1
+            for count in range(3):
+                try:
+                    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8,
+                                                        RS9116PowerSaveProcedureTypes.MaxPowerSave)
+                    power_save = 0
+                    break
+                except:
+                    time.sleep(5)
+                    logger.info(f"Retry_count:{count}")
+            assert power_save == 0
+
+            time.sleep(5)
+
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+
+            rejoin_params = [0, 6, 40, 0]
+
+            wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_params[0],
+                                            scan_interval=rejoin_params[1],
+                                            beacon_missedcount=rejoin_params[2],
+                                            first_time_retry=rejoin_params[3])
+
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            time.sleep(2)
+
+            ip_fetch = False
+            for i in range(3):
+                try:
+                    ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=30)
+                    ip_fetch = True
+                    break
+                except:
+                    time.sleep(5)
+                    logger.info(f"Except block{i}")
+
+            assert ip_fetch == True, "IP FETCH FAILED"
+
+            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+            #
+            wifi_dut.interfaces.wifi.config_save()
+            wifi_dut.interfaces.wifi.config_enable(config=1)
+
+            for i in range(0, 2):
+                logger.info(f"RETRYING FOR {i} times")
+                wifi_dut.interfaces.wifi.wireless_deinit()
+                time.sleep(3)
+                try:
+                    wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                except WlanError as e:
+                    if e.error_code == 0x5a5a:
+                        assert e.error_code == 0x5a5a
+                        break
+
+            wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                RS9116PowerSaveProcedureTypes.FastPowerSave,
+                                                                listen_interval=listen_interval)
+
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            assert sock == 0, "Socket id received is wrong. expected is 0"
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       SocketOptions.CERT_INDEX0)
+
+            local_port = randint(40001, 50000)
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+
+            result = wifi_dut.interfaces.wifi.dns_get(4, domain_name, "NULL",
+                                                      "NULL")
+            logger.info(f"dns response is {result}")
+            server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+            logger.info(f"server_ip {server_ip}")
+
+            check = 0
+            for i in range(2):
+                try:
+                    wifi_dut.interfaces.wifi.connect(sock, server_ip, port)
+                    check = 1
+                    break
+                except:
+                    logger.info(f"Connection failed")
+
+            assert check == 1, "Connect failed"
+
+
+            sleep_time = 3060
+            thread = Thread(target=pdu_switch, args=(switch, sleep_time, logger), )
+            thread.start()
+            sw = Stopwatch()
+            while sw.elapsed_sec < 4200:
+                if (sw.elapsed_sec >= 2100) and (sw.elapsed_sec <= 2110):
+                    wifi_dut.interfaces.wifi.wireless_deinit()
+
+                    with pytest.raises(WlanError) as e:
+                        wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                    assert e.value.error_code == 0x0003, "Observed wrong error code"
+
+            logger.info("ENDED THE TESTCASE")
+
+        except Exception as e:
+            if ('0xfffffffd' in str(e)) or ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or (
+                    "0xFFFFFFD5" in str(e)):
+                logger.info("Initiating reset for device cleanup")
+                wifi_dut.interfaces.wifi.reset_soft()
+                time.sleep(10)
+                wifi_dut.interfaces.wifi.associated = True
+                logger.info("Initializing the DUT")
+                wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=1)
+                time.sleep(5)
+                exception_count += 1
+        finally:
+            wifi_dut.interfaces.wifi.leave()
+            wifi_dut.interfaces.wifi.config_enable(config=0)
+            get_state = switch.interfaces.pdu_switch.get_state()
+            if get_state == False:
+                switch.interfaces.pdu_switch.turn_on(delay=60)
+
+    assert exception_count <= 3, "Failed"
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+
+    validation = True
+    packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")

@@ -66,7 +66,6 @@ pytestmark = [
     )
 ]
 
-
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(100, 100, 5, 3)])
 def test_bt_physical_level_conn_master_mode_c20070(bt_dut, bt_client, sniff_max_interval, sniff_min_interval,
@@ -87,6 +86,8 @@ def test_bt_physical_level_conn_master_mode_c20070(bt_dut, bt_client, sniff_max_
     with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(5)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=30)
             assert addr == bt_dut_address, f"failed to connect to bt dut"
@@ -122,17 +123,15 @@ def test_bt_physical_level_conn_master_mode_c20070(bt_dut, bt_client, sniff_max_
 
     bt_client_socket.close()
 
-
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(100, 100, 5, 3)])
-def test_bt_master_ssp_display_only_c20071(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt,
-                                           sniff_time_out):
+def test_bt_master_ssp_display_only_c20071(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
+
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_master_ssp_display(pair_mode="1", capability="0")
     assert bt_dut_address, f"bt initialization failed on dut"
     logger().info(f"BT Dut address is {bt_dut_address}")
 
-    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code,
-                                                                       capability="DisplayOnly")
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code, capability="DisplayOnly")
     assert bt_client_address, f"bt initialization failed on remote device"
     logger().info(f"BT client address is {bt_client_address}")
 
@@ -144,6 +143,8 @@ def test_bt_master_ssp_display_only_c20071(bt_dut, bt_client, sniff_max_interval
     with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(5)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=10)
             assert addr == bt_dut_address, f"failed to connect to bt dut"
@@ -166,13 +167,11 @@ def test_bt_master_ssp_display_only_c20071(bt_dut, bt_client, sniff_max_interval
                     logger().info(f"Received Mode Change Event {sniff_data}")
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
-            enable_wifi_powersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                      RS9116PowerSaveProcedureTypes.FastPowerSave)
+            enable_wifi_powersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_wifi_powersave, f"Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
-            enable_bt_powersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+            enable_bt_powersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_bt_powersave, f"Failed to enable BT in Powersave"
 
             logger().info(f"Sending data from bt_client to dut for 60 sec")
@@ -202,19 +201,19 @@ def test_bt_master_spp_connection_data_transfer_display_yes_no_c43168(bt_dut, bt
     assert bt_dut_address, f"failed to initialise bt in dut"
     logger().info(f"BT DUT address is {bt_dut_address}")
 
-    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code,
-                                                                       capability="DisplayYesNo")
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code, capability="DisplayYesNo")
     assert bt_client_address, f"failed to initialise bt on remote device"
     logger().info(f"BT Client address is {bt_client_address}")
 
     found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
                                                          inquiry_duration_ms=20000, timeout=22, retry_counts=3)
     if not found:
-        assert found, f"BT DUT is unable to inquiry, So Could not find bt client address {bt_client_address}" \
-                      f" during inquiry"
+        assert found, f"BT DUT is unable to inquiry, So Could not find bt client address {bt_client_address} during inquiry"
     with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(5)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=10)
             assert addr == bt_dut_address, f"failed to connect to bt dut"
@@ -240,13 +239,11 @@ def test_bt_master_spp_connection_data_transfer_display_yes_no_c43168(bt_dut, bt
                     logger().info(f"Received Mode Change Event {sniff_data}")
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
-            enable_wifi_powersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                      RS9116PowerSaveProcedureTypes.FastPowerSave)
+            enable_wifi_powersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_wifi_powersave, f"Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
-            enable_bt_powersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+            enable_bt_powersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_bt_powersave, f"Failed to enable BT in Powersave"
 
             # Data will transfer 60 Seconds
@@ -273,22 +270,20 @@ def test_bt_master_spp_connection_datatransfer_keyboard_only_c43169(bt_dut, bt_c
     assert bt_dut_address, "failed to initialise bt in dut"
     logger().info(f"BT DUT address is{bt_dut_address}")
 
-    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code,
-                                                                       capability="KeyboardOnly")
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code, capability="KeyboardOnly")
     assert bt_client_address, "failed to initialise bt on remote device"
     logger().info(f"BT Client address is {bt_client_address}")
 
     found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
                                                          inquiry_duration_ms=20000, timeout=22, retry_counts=3)
-
-    logger().info(f"BT found device is {found}, found bt client address {bt_client_address}")
     if not found:
-        assert found, f"BT DUT is unable to inquiry, So Could not find bt client address {bt_client_address}" \
-                      f" during inquiry"
+        assert found, f"BT DUT is unable to inquiry, So Could not find bt client address {bt_client_address} during inquiry"
 
     with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(5)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=10)
             assert addr == bt_dut_address, f"failed to connect to bt dut"
@@ -313,13 +308,11 @@ def test_bt_master_spp_connection_datatransfer_keyboard_only_c43169(bt_dut, bt_c
                     logger().info(f"Received Mode Change Event {sniff_data}")
 
             logger().info("==========Enables Power Save in Wifi Mode===========")
-            enable_wifi_powersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                      RS9116PowerSaveProcedureTypes.FastPowerSave)
+            enable_wifi_powersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_wifi_powersave, f"Failed to enable wifi in powersave"
 
             logger().info("==========Enables Power Save in BT Mode===========")
-            enable_bt_powersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+            enable_bt_powersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
             assert enable_bt_powersave, f"Failed to enable BT in Powersave"
 
             # Data will transfer 60 Seconds
@@ -355,6 +348,8 @@ def test_bt_master_with_wrong_pin_c20074(bt_dut, bt_client):
         logger().info("**** SPP Connection ****")
         with bt_dut.interfaces.wifi.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(5)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             result = ThreadBase.call_functions_simultaneously(
                 [(bt_dut.interfaces.bluetooth.bt_connect, bt_client_address), (bt_client_socket.accept, 60)])
             assert result[1] is None
@@ -404,6 +399,8 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
         with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
             with bt_dut.interfaces.bluetooth.run_bt_task():
                 bt_client_socket.create_client()
+                time.sleep(5)
+                bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
                 bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
 
         received_authentication_failure = False
@@ -427,6 +424,8 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
     with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(5)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=10)
             assert addr == bt_dut_address, f"failed to connect to bt dut"

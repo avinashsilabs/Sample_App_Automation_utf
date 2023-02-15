@@ -230,6 +230,7 @@ pytestmark = [
         "band": 2,
     },
 )
+@pytest.mark.wifi_dualband
 def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -737,6 +738,7 @@ pytestmark = [
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -858,6 +860,7 @@ pytestmark = [
         "band": 2,
     },
 )
+@pytest.mark.wifi_dualband
 def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -977,6 +980,7 @@ pytestmark = [
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -1097,6 +1101,7 @@ pytestmark = [
         "band": 1
     },
 )
+@pytest.mark.wifi_5g
 def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -1214,6 +1219,7 @@ pytestmark = [
         "band": 2,
     },
 )
+@pytest.mark.wifi_dualband
 def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000

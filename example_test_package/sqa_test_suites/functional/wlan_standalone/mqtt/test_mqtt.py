@@ -14,7 +14,9 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116MqttQos,
     RS9116CustomFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
-    RS9116PowerSaveProcedureTypes
+    RS9116PowerSaveProcedureTypes,
+    RS9116BLEFeatureBitMap,
+    RS9116BLECustomFeatureBitMap
     )
 from utf.utils.stopwatch import Stopwatch
 import string
@@ -154,19 +156,21 @@ pytestmark = [
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.HTTPServer | RS9116TCPIPFeatureBitMap.HTTPClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "ble_features": RS9116BLEFeatureBitMap.TXPowerIndex | RS9116BLEFeatureBitMap.GattSyncBit | RS9116BLEFeatureBitMap.BLECustomFeatureBitmapValid,
+            "ble_custom_ext_features": RS9116BLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
             "rejoin_max_retry": 10,
             "scan_interval": 6,
             "beacon_missed_count": 40,
             "first_time_retry": 0,
             "set_send_feature_frame": True,
-            }
-        )
+        }
+    )
     ]
 
 
@@ -903,13 +907,13 @@ def test_mqtt_common_clientid_null_TC19269(
     wifi_dut.interfaces.wifi.leave()
 
 
-def ApWirelessOff(wifi_access_point, wait_time, logger):
+def ApWirelessOff(switch, wait_time, logger):
     time.sleep(1)
-    logger.info(f"Disabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.stop_ap()
+    logger.info(f"Disable the PDU")
+    switch.interfaces.pdu_switch.turn_off()
     time.sleep(wait_time)
-    logger.info(f"Enabling Wireless in AP")
-    wifi_access_point.interfaces.wifi.start_ap()
+    logger.info(f"Enable the PDU")
+    switch.interfaces.pdu_switch.turn_on()
 
 
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
@@ -917,7 +921,7 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_tx_after_rejoin_testcaseC19273(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay, switch
         ):
     count_rejoin = set()
     current_time = time.time()
@@ -965,8 +969,8 @@ def test_mqtt_tx_after_rejoin_testcaseC19273(
                     time.sleep(pkt_delay)
                 if ap_power_off:
                     ap_power_off = 0
-                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger), )
-                    thread.start()
+                    pdu_thread = Thread(target=ApWirelessOff, args=(switch, 10, logger), )
+                    pdu_thread.start()
                 try:
                     wifi_dut.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
                     events = wifi_dut.interfaces.wifi.get_async_events()
@@ -1024,7 +1028,7 @@ def test_mqtt_tx_after_rejoin_testcaseC19273(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 def test_mqtt_init_after_rejoin_fail_TC19265(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay, switch
         ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
@@ -1045,10 +1049,12 @@ def test_mqtt_init_after_rejoin_fail_TC19265(
 
     time.sleep(1)
 
-    wifi_access_point.interfaces.wifi.stop_ap()
+    logger.info("** Disable the PDU **")
+    switch.interfaces.pdu_switch.turn_off()
     time.sleep(120)
     logger.info("Rejoining to the AP has failed as AP is in down state")
-    wifi_access_point.interfaces.wifi.start_ap()
+    logger.info("** Enable the PDU **")
+    switch.interfaces.pdu_switch.turn_on()
     wifi_dut.interfaces.wifi.initialized = False
     wifi_dut.interfaces.wifi.associated = False
     time.sleep(2)
@@ -1198,8 +1204,8 @@ def test_mqtt_rx_after_rejoin_TC19270(
                     time.sleep(pkt_delay)
                 if ap_power_off:
                     ap_power_off = 0
-                    thread = Thread(target=ApWirelessOff, args=(wifi_access_point, 10, logger), )
-                    thread.start()
+                    pdu_thread = Thread(target=ApWirelessOff, args=(switch, 10, logger), )
+                    pdu_thread.start()
                 try:
                     mqtt_client.interfaces.mqtt.mqtt_client_publish(topic1, buffer.encode(), qos=RS9116MqttQos.QOS1)
                 except:

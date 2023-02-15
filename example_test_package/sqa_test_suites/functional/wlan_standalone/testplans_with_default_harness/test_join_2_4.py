@@ -38,11 +38,14 @@ class FilterPacket:
         line = filter_file.readlines()
         for x in line:
             count = count + 1
-            if packet_filter1 in x:
-                result = re.search('2022(.*)IST', x)
-                time_stamp = result.group(1).strip()
-                logger().info(f'time_stamp={time_stamp}')
-                time_diff_list.append(time_stamp)
+            for x in line:
+                count = count + 1
+                if packet_filter1 in x:
+                    result = re.search(r'\d+:\d+:\d+.\d+', x)
+                    logger().info(f" RESULT {result}")
+                    time_stamp = result.group()
+                    logger().info(f'time_stamp={time_stamp}')
+                    time_diff_list.append(time_stamp)
 
         filter_file.close()
         return time_diff_list

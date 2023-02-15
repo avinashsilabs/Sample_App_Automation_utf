@@ -175,6 +175,8 @@ def sniff_mode_in_master_role(bt_dut, bt_client, sniff_max_interval, sniff_min_i
         logger().info("========Spp Connection=======")
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(3)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_client_socket.accept(timeout=10)
             assert addr == bt_dut_address

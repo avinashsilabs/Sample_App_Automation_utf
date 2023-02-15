@@ -334,6 +334,20 @@ devices:
                 # radius server configuration
                 radius_ip: "192.168.1.231"
                 radius_port: "1812"
+    # This represents another access point configuration.
+    asus_rt_ax53u_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.asus_rt_ax53u'
+                ip_address: '192.168.50.1'
+                admin_password: 'admin@123456'
+                ssh_port: 22
+                ssid: "ASUS_53UAX"
+                protected_management_frame: 'Disable'
+                skip_assertion_failure: True
+                # radius server configuration
+                radius_ip: "192.168.50.231"
+                radius_port: "1812"
 
     switched_ap:
         interfaces:
@@ -1377,6 +1391,8 @@ constants:
     iter_count:
         value: 5
     upgrade_fw:
-        value: "/RS9116W.2.7.0.39.rps"
+        value: "/RS9116W.2.8.0.8.rps"
+    board_version:
+        value: "1.4Q7"
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']

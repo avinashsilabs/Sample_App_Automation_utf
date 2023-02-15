@@ -263,26 +263,25 @@ def test_verify_dut_with_sequential_att_deadlock_script_C20008(ble_dut, ble_clie
     ble_client.interfaces.bluetooth.close()
     reset_USB_Device()
 
-"""Tese case is blocked with https://jira.silabs.com/browse/UTF-2150"""
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#     },
-# )
-# @pytest.mark.config(
-#     "ble_vulnerability_sniffer",
-#     ble_vul_sniffer={
-#         "script": "Telink_zero_ltk_installation.py"
-#     },
-# )
-# def test_verify_dut_with_Telink_zero_ltk_installation_script_C20009(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
-#     #Test case to verify DUT behaviour after executing Telink_zero_ltk_installation.py script
-#     test_duration = utf_constants.get("test_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="Telink_zero_ltk_installation")
-#     ble_client.interfaces.bluetooth.close()
-#     reset_USB_Device()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+@pytest.mark.config(
+    "ble_vulnerability_sniffer",
+    ble_vul_sniffer={
+        "script": "Telink_zero_ltk_installation.py"
+    },
+)
+def test_verify_dut_with_Telink_zero_ltk_installation_script_C20009(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
+    #Test case to verify DUT behaviour after executing Telink_zero_ltk_installation.py script
+    test_duration = utf_constants.get("test_duration")
+    ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="Telink_zero_ltk_installation")
+    ble_client.interfaces.bluetooth.close()
+    reset_USB_Device()
 
 @pytest.mark.config(
     "wifi_dut",
@@ -324,68 +323,65 @@ def test_verify_dut_with_DA14680_exploit_silent_overflow_script_C20011(ble_dut, 
     ble_client.interfaces.bluetooth.close()
     reset_USB_Device()
 
-"""Test Case is blocked with https://jira.silabs.com/browse/UTF-2154"""
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#     },
-# )
-# @pytest.mark.config(
-#     "ble_vulnerability_sniffer",
-#     ble_vul_sniffer={
-#         "script": "CC_connection_req_crash.py"
-#     },
-# )
-# def test_verify_dut_with_CC_connection_req_crash_script_C20012(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
-#     #Test case to verify DUT behaviour after executing CC_connection_req_crash.py script
-#     test_duration = utf_constants.get("test_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="CC_connection_req_crash.py",only_ADV=True)
-#     ble_client.interfaces.bluetooth.close()
-#     reset_USB_Device()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+@pytest.mark.config(
+    "ble_vulnerability_sniffer",
+    ble_vul_sniffer={
+        "script": "CC_connection_req_crash.py"
+    },
+)
+def test_verify_dut_with_CC_connection_req_crash_script_C20012(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
+    #Test case to verify DUT behaviour after executing CC_connection_req_crash.py script
+    test_duration = utf_constants.get("test_duration")
+    ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="CC_connection_req_crash.py",only_ADV=True)
+    ble_client.interfaces.bluetooth.close()
+    reset_USB_Device()
 
-"""Test case is blocked with https://jira.silabs.com/browse/UTF-2004"""
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#     },
-# )
-# @pytest.mark.config(
-#     "ble_vulnerability_sniffer",
-#     ble_vul_sniffer={
-#         "script": "extras/non_compliance_dhcheck_skip.py"
-#     },
-# )
-# def test_verify_dut_with_non_compliance_dhcheck_skip_script_C20013(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
-#     #Test case to verify DUT behaviour after executing non_compliance_dhcheck_skip.py script
-#     test_duration = utf_constants.get("test_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="non_compliance_dhcheck_skip.py")
-#     ble_client.interfaces.bluetooth.close()
-#     reset_USB_Device()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+@pytest.mark.config(
+    "ble_vulnerability_sniffer",
+    ble_vul_sniffer={
+        "script": "extras/non_compliance_dhcheck_skip.py"
+    },
+)
+def test_verify_dut_with_non_compliance_dhcheck_skip_script_C20013(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
+    #Test case to verify DUT behaviour after executing non_compliance_dhcheck_skip.py script
+    test_duration = utf_constants.get("test_duration")
+    ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="non_compliance_dhcheck_skip.py")
+    ble_client.interfaces.bluetooth.close()
+    reset_USB_Device()
 
-"""Test case is blocked with https://jira.silabs.com/browse/UTF-2151"""
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "oper_mode": 0,
-#         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-#     },
-# )
-# @pytest.mark.config(
-#     "ble_vulnerability_sniffer",
-#     ble_vul_sniffer={
-#         "script": "esp32_hci_desync.py"
-#     },
-# )
-# def test_verify_dut_with_esp32_hci_desync_script_C20014(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
-#     #Test case to verify DUT behaviour after executing esp32_hci_desync.py script
-#     test_duration = utf_constants.get("test_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="esp32_hci_desync")
-#     ble_client.interfaces.bluetooth.close()
-#     reset_USB_Device()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+@pytest.mark.config(
+    "ble_vulnerability_sniffer",
+    ble_vul_sniffer={
+        "script": "esp32_hci_desync.py"
+    },
+)
+def test_verify_dut_with_esp32_hci_desync_script_C20014(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
+    #Test case to verify DUT behaviour after executing esp32_hci_desync.py script
+    test_duration = utf_constants.get("test_duration")
+    ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="esp32_hci_desync")
+    ble_client.interfaces.bluetooth.close()
+    reset_USB_Device()
 
 @pytest.mark.config(
     "wifi_dut",

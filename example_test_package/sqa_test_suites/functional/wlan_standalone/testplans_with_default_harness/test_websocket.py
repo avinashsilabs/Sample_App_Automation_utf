@@ -16,7 +16,7 @@ from utf_wiseconnect.devices.rs911x import (
     DeviceConstants,
     RS9116JoinFeatureBitMap,
     RS9116PowerSaveProcedureTypes,
-    )
+)
 import time
 import random
 import string
@@ -42,11 +42,14 @@ def logger():
     Reported by : CG-Team,Anusha
 """
 
+
 def text_generator(size=50):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
+
+
 def packet_check_pingpong(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
-                    capture_filename,
-                    mode=0) -> Dict[str, int]:
+                          capture_filename,
+                          mode=0) -> Dict[str, int]:
     cipher_suite = []
     count = 0
     current_time = time.time()
@@ -67,21 +70,22 @@ def packet_check_pingpong(wifi_sniffer, logger, decryption_key: str, mac_address
             encryption_type="WPA-PWD",
             decryption_key=decryption_key,
             capture_file_filter=local_capture_file
-            ):
+    ):
         for layer in packet.layers:
             layer_name = layer.layer_name.lower()
             if layer_name == "websocket":
                 http_layer = str(layer)
-                if (re.search(".*Opcode: Ping",http_layer)):
+                if (re.search(".*Opcode: Ping", http_layer)):
                     logger().info(f"PING PACKET {http_layer}")
-                elif (re.search(".*Opcode: Pong",http_layer)):
+                elif (re.search(".*Opcode: Pong", http_layer)):
                     logger().info(f"PONG PACKET {http_layer}")
 
     return cipher_suite
 
+
 def packet_check(wifi_sniffer, logger, decryption_key: str, mac_address, print_layers: list,
-                    capture_filename,
-                    mode=0) -> Dict[str, int]:
+                 capture_filename,
+                 mode=0) -> Dict[str, int]:
     cipher_suite = []
     count = 0
     current_time = time.time()
@@ -102,14 +106,15 @@ def packet_check(wifi_sniffer, logger, decryption_key: str, mac_address, print_l
             encryption_type="WPA-PWD",
             decryption_key=decryption_key,
             capture_file_filter=local_capture_file
-            ):
+    ):
         for layer in packet.layers:
             layer_name = layer.layer_name.lower()
-            #logger().info(f"LAYER NAME TO BE CHECKED {layer_name}")
+            # logger().info(f"LAYER NAME TO BE CHECKED {layer_name}")
             if layer_name == "http":
                 http_layer = str(layer)
                 logger().info(f"http layer {http_layer}")
     return cipher_suite
+
 
 class WebsocketEventHandler:
     def __init__(self):
@@ -118,11 +123,11 @@ class WebsocketEventHandler:
         self.message_received = ""
 
     def on_ws_client_connected(self, client: dict):
-        #logger().info(f"what is the message getting received 1 ")
+        # logger().info(f"what is the message getting received 1 ")
         self.client_connected = True
 
     def on_ws_client_disconnected(self, client: dict):
-        #logger().info(f"what is the message getting received 2")
+        # logger().info(f"what is the message getting received 2")
         self.client_disconnected = True
 
     def on_ws_message_received(self, client: dict, message: Union[str, bytes]):
@@ -138,24 +143,23 @@ ping_count = 20
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -221,7 +225,8 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
     http_server.interfaces.http.set_fn_on_websocket_message_received(
         ws_handler.on_ws_message_received
     )
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(0, http_server.interfaces.http, server_port=80, local_port=5001)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(0, http_server.interfaces.http, server_port=80,
+                                                         local_port=5001)
 
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
@@ -264,29 +269,30 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
     websocket_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ["http"], capture_filename,
-                                   mode=0)
+                                 mode=0)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
-def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcode_9_C19345(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
+def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcode_9_C19345(wifi_dut, wifi_access_point,
+                                                                                           wifi_sniffer, http_server):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -347,7 +353,8 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     http_server.interfaces.http.set_fn_on_websocket_message_received(
         ws_handler.on_ws_message_received
     )
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80,
+                                                         local_port=5001)
     time.sleep(0.1)
     assert ws_handler.client_connected
     iter_count = 10
@@ -371,7 +378,6 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger().info(f"PS-POLL packets are captured in the sniffer")
 
-
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
                      f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
@@ -384,31 +390,32 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
 
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-    websocket_pktcheckpingpong = packet_check_pingpong(wifi_sniffer, logger, decryption_key, dut_mac_address, ["websocket"], capture_filename,
-                                 mode=0)
+    websocket_pktcheckpingpong = packet_check_pingpong(wifi_sniffer, logger, decryption_key, dut_mac_address,
+                                                       ["websocket"], capture_filename,
+                                                       mode=0)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
-def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
+def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                        http_server):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -475,7 +482,8 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
     http_server.interfaces.http.set_fn_on_websocket_message_received(
         ws_handler.on_ws_message_received
     )
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80,
+                                                         local_port=5001)
 
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
@@ -529,24 +537,24 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-        }
-    )
-@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "ssid": 'TEST', "passphrase": '12345678'})
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": '11n', "security": 'WPA2', "ssid": 'TEST', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -613,7 +621,8 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
     http_server.interfaces.http.set_fn_on_websocket_message_received(
         ws_handler.on_ws_message_received
     )
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80,
+                                                         local_port=5001)
 
     logger().info("connect_to_websocket_server")
 
@@ -662,27 +671,27 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
                                                        ["websocket"], capture_filename,
                                                        mode=0)
 
+
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -749,7 +758,8 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
     http_server.interfaces.http.set_fn_on_websocket_message_received(
         ws_handler.on_ws_message_received
     )
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80,
+                                                         local_port=5001)
 
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
@@ -770,7 +780,6 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
     wifi_dut.interfaces.wifi.websocket_close(sock)
     time.sleep(2)
     assert ws_handler.client_disconnected
-
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -793,32 +802,31 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
 
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-
     websocket_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ["http"], capture_filename,
-                                   mode=0)
+                                 mode=0)
+
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid| RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "ca_cert": ["ca-chain.cert.pem"],
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": ["ca-chain.cert.pem"],
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
+def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper, utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -827,7 +835,6 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
     timeout = 10
     channel = wifi_access_point.interfaces.wifi.channel
     capture_filename = 'test_max_websocket_over_ssl_C19346'
-    #sock = 0
 
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -841,29 +848,11 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
                                     timeout=timeout)
 
     logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
     logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, ping_count)
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -878,7 +867,8 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
 
     port = 5001
     for sockets in range(2):
-        wifi_dut.interfaces.wifi.connect_to_websocket_server(2, http_server.interfaces.http, server_port=443, local_port=port)
+        wifi_dut.interfaces.wifi.connect_to_websocket_server(2, http_server.interfaces.http, server_port=443,
+                                                             local_port=port)
         logger().info(f"connect_to_websocket_server{sockets}")
         time.sleep(0.1)
         assert ws_handler.client_connected
@@ -893,7 +883,7 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
             time.sleep(3)
             assert ws_handler.message_received == data_final
         port = port + 1
-
+        time.sleep(10)
 
     for sockets in range(2):
         wifi_dut.interfaces.wifi.websocket_close(sockets)
@@ -929,24 +919,23 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -1013,7 +1002,8 @@ def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, w
     http_server.interfaces.http.set_fn_on_websocket_message_received(
         ws_handler.on_ws_message_received
     )
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80, local_port=5001)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(sock, http_server.interfaces.http, server_port=80,
+                                                         local_port=5001)
 
     logger().info("connect_to_websocket_server")
     time.sleep(0.1)
@@ -1032,7 +1022,6 @@ def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, w
     wifi_dut.interfaces.wifi.websocket_close(sock)
     time.sleep(2)
     assert ws_handler.client_disconnected
-
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -1055,33 +1044,32 @@ def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, w
 
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
 
-
     websocket_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ["http"], capture_filename,
-                                   mode=0)
+                                 mode=0)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid| RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "ca_cert": ["ca-chain.cert.pem"],
-        }
-    )
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ca_cert": ["ca-chain.cert.pem"],
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_tx_over_web_socket_over_SSL_with_maximum_data_length_C19343(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
-
+def test_tx_over_web_socket_over_SSL_with_maximum_data_length_C19343(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                     http_server):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -1139,7 +1127,8 @@ def test_tx_over_web_socket_over_SSL_with_maximum_data_length_C19343(wifi_dut, w
     )
 
     port = 5001
-    wifi_dut.interfaces.wifi.connect_to_websocket_server(2, http_server.interfaces.http, server_port=443, local_port=port)
+    wifi_dut.interfaces.wifi.connect_to_websocket_server(2, http_server.interfaces.http, server_port=443,
+                                                         local_port=port)
     time.sleep(0.1)
     assert ws_handler.client_connected
     iter_count = 5

@@ -493,6 +493,7 @@ def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
     ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
                            mode=0)
 
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -500,25 +501,25 @@ def test_ssl_server_connect_non_ssl_client_testcase_TC19112(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
+        "server_cert": "server-cert.pem",
+        "server_key": "server-key.pem",
         "set_send_feature_frame": True,
         "rejoin_max_retry": 0,
         "scan_interval": 4,
         "beacon_missed_count": 40,
         "bt_features": 0,
         "ble_features": 0,
+        "ble_custom_ext_features": 0,
     }
 )
-
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
 def test_ssl_server_1_2version_client_1_0_testcase_TC19116(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, logger):
 
@@ -649,9 +650,6 @@ def test_ssl_server_1_2version_client_1_0_testcase_TC19116(
     else:
         logger.info(f"SSL packets are not found")
 
-
-
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -659,352 +657,25 @@ def test_ssl_server_1_2version_client_1_0_testcase_TC19116(
     {
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
+        "server_cert": "server-cert.pem",
+        "server_key": "server-key.pem",
         "set_send_feature_frame": True,
         "rejoin_max_retry": 0,
         "scan_interval": 4,
         "beacon_missed_count": 40,
         "bt_features": 0,
         "ble_features": 0,
+        "ble_custom_ext_features": 0,
     }
 )
-
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_server_1_0version_client_1_0_testcase_TC19113(
-        wifi_sniffer, wifi_dut, wifi_access_point, openssl, logger):
-
-    capture_filename = "test_ssl_server_1_0version_client_1_0_testcase_TC19113"
-    ping_count = 10
-    result = wifi_dut.interfaces.wifi.version()
-    logger.info(f"DUT firmware version: {result}")
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    for count in range(1, 3):
-        try:
-            scan_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger.info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
-            scan_fail = 0
-            break
-        except:
-            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
-            time.sleep(1)
-    if scan_fail:
-        logger.info(f"Scanning to the AP has failed")
-        assert scan_fail == 0, "Scanning to the AP is failed"
-
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"DUT MAC_Address: {dut_mac_address}")
-
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap"
-    )
-
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
-                                    scan_interval=4,
-                                    beacon_missedcount=40,
-                                    first_time_retry=0)
-    for count in range(1, 3):
-        try:
-            join_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger.info("Joining to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-            join_fail = 0
-            break
-        except:
-            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
-            time.sleep(1)
-    if join_fail:
-        logger.info(f"Joining to the AP has failed")
-        assert join_fail == 0, "Joining to the AP is failed"
-
-    ip = False
-    for i in range(3):
-        try:
-            wifi_dut.interfaces.wifi.start_ip(timeout=60)
-            ip = True
-            break
-        except:
-            logger.info(f"Retrying for {i}times")
-
-    assert ip == True, "Fetching IP failed"
-
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-    # openssl.interfaces.client.start(tls_version="-tls1")
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_V_1_0_ENABLE)
-    assert sock == 0, "Socket id received is wrong. expected is 0"
-    logger.info(f"Successfully opened tcp  socket and socket id received is {sock} which is expected")
-    logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-    # Enable ssl option for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-    logger.info(f"Selecting SSL version {SocketOptions.SO_SSL_V_1_0_ENABLE} for the socket-id->{sock} using "
-                f"rsi_setsockopt API")
-    # # Enable cert index 0 for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_V_1_0_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-
-    logger.info(f"TLS VERSION USED BY DUT SERVER--->{SocketOptions.SO_SSL_V_1_0_ENABLE}")
-
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-
-    th_start = Thread(target=dut_server_accept, args=(wifi_dut,sock,logger))
-    th_start.start()
-
-    logger.info(f"Stating the open ssl client with tls version 1")
-    openssl.interfaces.client.start(host=device_ip, port=5001, tls_version="-tls1")
-    th_start.join(timeout=10)
-    time.sleep(5)
-
-    wifi_dut.interfaces.wifi.wlan_get_status()
-
-
-    buffer_length = 200
-
-    data = "".join(
-        random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
-    )
-    buff_len = len(data)
-    logger.info(f"DATA sent from remote PC to dut {data}")
-    openssl.interfaces.client.send_message(data)
-    time.sleep(5)
-    buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(1,data_len=buff_len)
-    logger.info(f"Data received on dut {buffer}")
-    assert data == buffer.decode(), "Date received on dut does not match the data sent from host"
-
-    openssl.interfaces.client.stop()
-    wifi_dut.interfaces.wifi.close_socket(sock)
-    wifi_dut.interfaces.wifi.leave()
-
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger.info("Stop Sniffer finally")
-    validation = True
-    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-    logger.info(f"PS-POLL packets are captured in the sniffer")
-    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    logger.info(f"DECRYPTION KEY-->{decryption_key}")
-
-    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
-                           mode=0)
-
-    if len(ssl_pkt) > 0:
-        for i in ssl_pkt:
-            if re.search(".*Client Hello", i):
-                version = re.search("Version:.*", i).group(0)
-                logger.info(f"TLS VERSION USED BY CLIENT is--->{version}")
-                assert "TLS 1.0" in version, "TLS version mismatch, expected TLS VERSION 1.2 to be sent by DUT"
-                assert "Client Hello" in i, "Client Hello packet missed"
-    else:
-        logger.info(f"SSL packets are not found")@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
-        "set_send_feature_frame": True,
-        "rejoin_max_retry": 0,
-        "scan_interval": 4,
-        "beacon_missed_count": 40,
-        "bt_features": 0,
-        "ble_features": 0,
-    }
-)
-
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_server_1_2version_client_1_0_testcase_TC19116(
-        wifi_sniffer, wifi_dut, wifi_access_point, openssl, logger):
-
-    capture_filename = "test_ssl_server_1_2version_client_1_0_testcase_TC19116"
-    ping_count = 10
-    result = wifi_dut.interfaces.wifi.version()
-    logger.info(f"DUT firmware version: {result}")
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    # configure interface for the channel of the access point
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    for count in range(1, 3):
-        try:
-            scan_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger.info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None)
-            scan_fail = 0
-            break
-        except:
-            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
-            time.sleep(1)
-    if scan_fail:
-        logger.info(f"Scanning to the AP has failed")
-        assert scan_fail == 0, "Scanning to the AP is failed"
-
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger.info(f"DUT MAC_Address: {dut_mac_address}")
-
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap"
-    )
-
-    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
-                                    scan_interval=4,
-                                    beacon_missedcount=40,
-                                    first_time_retry=0)
-    for count in range(1, 3):
-        try:
-            join_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger.info("Joining to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-            join_fail = 0
-            break
-        except:
-            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
-            time.sleep(1)
-    if join_fail:
-        logger.info(f"Joining to the AP has failed")
-        assert join_fail == 0, "Joining to the AP is failed"
-
-    ip = False
-    for i in range(3):
-        try:
-            wifi_dut.interfaces.wifi.start_ip(timeout=60)
-            ip = True
-            break
-        except:
-            logger.info(f"Retrying for {i}times")
-
-    assert ip == True, "Fetching IP failed"
-
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-    # DUT to power save in Wifi+bluetooth mode
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-    # openssl.interfaces.client.start(tls_version="-tls1")
-    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_V_1_2_ENABLE)
-    assert sock == 0, "Socket id received is wrong. expected is 0"
-    logger.info(f"Successfully opened tcp  socket and socket id received is {sock} which is expected")
-    logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-    # Enable ssl option for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-    logger.info(f"Selecting SSL version {SocketOptions.SO_SSL_V_1_2_ENABLE} for the socket-id->{sock} using "
-                f"rsi_setsockopt API")
-
-    logger.info(f"TLS VERSION USED BY DUT SERVER--->{SocketOptions.SO_SSL_V_1_2_ENABLE}")
-    # # Enable cert index 0 for socket opened
-    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_V_1_2_ENABLE,
-                                               SocketOptions.SSL_ENABLE)
-
-    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
-    wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-
-    th_start = Thread(target=dut_server_accept, args=(wifi_dut,sock,logger))
-    th_start.start()
-
-    logger.info(f"Stating the open ssl client with tls version 1")
-    openssl.interfaces.client.start(host=device_ip, port=5001, tls_version="-tls1")
-    th_start.join(timeout=10)
-    time.sleep(5)
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.wlan_get_status()
-    assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
-
-    openssl.interfaces.client.stop()
-    wifi_dut.interfaces.wifi.close_socket(sock)
-    wifi_dut.interfaces.wifi.leave()
-
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger.info("Stop Sniffer finally")
-    validation = True
-    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-    logger.info(f"PS-POLL packets are captured in the sniffer")
-    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    logger.info(f"DECRYPTION KEY-->{decryption_key}")
-
-    ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"], capture_filename,
-                           mode=0)
-
-    if len(ssl_pkt) > 0:
-        for i in ssl_pkt:
-            if re.search(".*Client Hello", i):
-                version = re.search("Version:.*", i).group(0)
-                logger.info(f"TLS VERSION USED BY CLIENT is--->{version}")
-                assert "TLS 1.0" in version, "TLS version mismatch, expected TLS VERSION 1.2 to be sent by DUT"
-                assert "Client Hello" in i, "Client Hello packet missed"
-    else:
-        logger.info(f"SSL packets are not found")
-
-
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "server_cert": "mosquitto-utf.silabs.com.cert.pem",
-        "server_key": "mosquitto-utf.silabs.com.key.pem",
-        "set_send_feature_frame": True,
-        "rejoin_max_retry": 0,
-        "scan_interval": 4,
-        "beacon_missed_count": 40,
-        "bt_features": 0,
-        "ble_features": 0,
-    }
-)
-
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
 def test_ssl_server_1_0version_client_1_0_testcase_TC19113(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, logger):
 

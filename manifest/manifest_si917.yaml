@@ -1,9 +1,10 @@
 firmware:
   efx32:
+    load_binary:
+      file_name: SiWG917-A.1.0.0.0.13.bin
     write_firmware:
       file_name: sqa_test_agent-brd4325a-gcc_arm+wifi.rps
-    load_binary:
-      file_name: SiWG917-A.1.0.0.0.6.bin
+
 
 
 # List of devices to be reset when needed

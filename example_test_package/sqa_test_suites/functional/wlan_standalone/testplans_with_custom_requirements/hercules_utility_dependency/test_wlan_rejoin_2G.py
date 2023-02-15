@@ -2905,3 +2905,408 @@ def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_du
     finally:
         clean_up_method(wifi_dut, switch)
         wifi_sniffer.interfaces.capture.stop_capture()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tx_wait_time": 16000,
+        }
+)
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+            'ssid': 'rejoin_roaming_c19728',
+            'security': 'WPA2',
+            'passphrase': '12345678',
+            'channel': 11
+        },
+        1: {
+            'ssid': 'rejoin_roaming_c19728',
+            'security': 'WPA2',
+            'passphrase': '12345678',
+            'channel': 11
+        }
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_sniffer):
+    validation = True
+    rejoin_value = 0
+    ping_count = 120
+
+    try:
+        '''Verify Module functionality if de-auth receives after roaming to new AP'''
+        logger().info('******* Turn off AP0 outlet  **********')
+        switches[0].interfaces.pdu_switch.turn_off()
+        state = switches[0].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP0: " + str(state))
+        assert state == 'false', 'Please check PDU outlet manually'
+        logger().info('******* Turn on AP1 outlet  **********')
+        state = switches[1].interfaces.pdu_switch.get_state()
+        if state == 'false':
+            switches[1].interfaces.pdu_switch.turn_on()
+            state = switches[1].interfaces.pdu_switch.get_state()
+            logger().info("pdu switch state for AP1: " + str(state))
+            assert state == 'true', 'Please check PDU outlet manually'
+        elif state == 'true':
+            logger().info('******* AP1 outlet is already turn on **********')
+
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[1].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_AP1')
+        wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=25, roaming_hysterisis=4)
+        logger().info("enable rejoin")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+        logger().info("Joining into wifi_access_point")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
+
+        result = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = result.ip.decode()
+        logger().info(f"DUT ip address : {dut_ip}")
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        ap_bssid_1 = wifi_access_point[1].interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid_1}')
+
+        wifi_status = wifi_dut.interfaces.wifi.get_wireless_info()
+        logger().info(f"here=======>>>>>>>>>the wifi_status is as follows:{wifi_status}")
+
+        rssi_value = wifi_dut.interfaces.wifi.wlan_get_rssi()
+        logger().info(f'\n\n RSSI Value = {rssi_value}\n')
+
+        logger().info(f"*****Enable Max PSP in DUT******")
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
+
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
+
+        logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+        ping(dut_ip, ping_count)
+
+        packet_filter1 = f'(((wlan.fc.type_subtype == 0x0000) || (wlan.fc.type_subtype == 0x0001)) || ((wlan.sa == ' \
+                         f'{dut_mac_address}) && (wlan.sa == {ap_bssid_1})))'
+
+        packet_filter2 = f'((wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) ' \
+                         f'&& (wlan.da == {ap_bssid_1}))'
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Association req & Association response packet'
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PWMT bit enable'
+
+        '''Enable first AP0 which is near to DUT, DUT should automatically connect with AP1'''
+        switches[0].interfaces.pdu_switch.turn_on()
+        state = switches[0].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP0: " + str(state))
+        assert state == 'true', 'Please check PDU outlet manually'
+
+
+        switches[1].interfaces.pdu_switch.turn_off()
+        state = switches[1].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP1: " + str(state))
+        assert state == 'false', 'Please check PDU outlet manually'
+
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_AP0')
+
+        '''Expecting AP0 will automatically connect with DUT'''
+        sw = Stopwatch()
+        end_time = 120
+        connection_flag = False
+        while sw.elapsed_sec <= end_time:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
+            if len(connect_events):
+                logger().info(f'DUT is successfully connected to AP0')
+                connection_flag = True
+                break
+        assert connection_flag == True, 'DUT unable to make connection with AP0 with in 120 seconds'
+
+        ap_bssid_0 = wifi_access_point[0].interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid_0}')
+
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
+
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
+
+        wifi_access_points[0].interfaces.wifi.stop_ap()
+        time.sleep(10)
+        packet_filter3 = f'((wlan.fc.type_subtype == 12) && (wlan.sa == {ap_bssid_0}))'
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find Deauth packet'
+
+        '''Turn on AP1 to validate again, DUT should reconnect with AP1'''
+        switches[1].interfaces.pdu_switch.turn_on()
+        state = switches[1].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP1: " + str(state))
+
+        assert state == 'true', 'Please check PDU outlet manually'
+
+        '''Expecting AP1 will automatically connect with DUT'''
+        connection_flag = False
+        while sw.elapsed_sec <= end_time:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
+            if len(connect_events):
+                logger().info(f'DUT is successfully connected to AP0')
+                connection_flag = True
+                break
+            assert connection_flag == True, 'DUT unable to make connection with AP1 with in 120 seconds'
+
+        wifi_status = wifi_dut.interfaces.wifi.get_wireless_info()
+        logger().info(f"here=======>>>>>>>>>the wifi_status is as follows:{wifi_status}")
+        rssi_value = wifi_dut.interfaces.wifi.wlan_get_rssi()
+        logger().info(f'\n\n RSSI Value = {rssi_value}\n')
+
+    except Exception as e:
+        recovery_error_codes = ['0xffffffe2', '0xffffffd5', '0x0025']
+        for error_code in recovery_error_codes:
+            if error_code in str(e):
+                logger().info('******* Initiating DUT Recovery using Reset **********')
+                wifi_dut.interfaces.wifi.reset()
+        raise e
+    finally:
+        '''Finally turn on the AP0 for next test cases'''
+        logger().info(f'\n\n ***** Going to turn on AP0 ***** n\n')
+        switches[0].interfaces.pdu_switch.turn_on()
+        state = switches[0].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP0: " + str(state))
+        assert state == 'true', 'Please check PDU outlet manually'
+
+        logger().info(f'\n\n ***** Going to turn off AP1 ***** n\n')
+        switches[1].interfaces.pdu_switch.turn_off()
+        state = switches[1].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP1: " + str(state))
+
+        assert state == 'false', 'Please check PDU outlet manually'
+        wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.skip
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "tx_wait_time": 16000,
+        }
+)
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+            'ssid': 'rejoin_roaming_c1976',
+            'security': 'WPA2',
+            'passphrase': '12345678',
+            'channel': 11
+        },
+        1: {
+            'ssid': 'rejoin_roaming_c19726',
+            'security': 'WPA2',
+            'passphrase': '12345678',
+            'channel': 1
+        }
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, wifi_sniffer):
+    validation = True
+    rejoin_value = 0
+    ping_count = 120
+
+    try:
+        '''Verify whether module is connecting to better RSSI AP when module found 2 Aps With same SSID and same 
+           settings in rejoin process'''
+        logger().info('******* Turn off AP0 outlet  **********')
+        switches[0].interfaces.pdu_switch.turn_off()
+        state = switches[0].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP0: " + str(state))
+        assert state == 'false', 'Please check PDU outlet manually'
+
+        logger().info('******* Turn on AP1 outlet  **********')
+        state = switches[1].interfaces.pdu_switch.get_state()
+        if state == 'false':
+            switches[1].interfaces.pdu_switch.turn_on()
+            state = switches[1].interfaces.pdu_switch.get_state()
+            logger().info("pdu switch state for AP1: " + str(state))
+            assert state == 'true', 'Please check PDU outlet manually'
+        elif state == 'true':
+            logger().info('******* AP1 outlet is already turn on **********')
+
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[1].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_AP1')
+        wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=25, roaming_hysterisis=4)
+        logger().info("enable rejoin")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+
+        logger().info("Joining into wifi_access_point")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
+
+        result = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = result.ip.decode()
+        logger().info(f"DUT ip address : {dut_ip}")
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        ap_bssid_1 = wifi_access_point[1].interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid_1}')
+
+        wifi_status = wifi_dut.interfaces.wifi.get_wireless_info()
+        logger().info(f"here=======>>>>>>>>>the wifi_status is as follows:{wifi_status}")
+
+        rssi_value = wifi_dut.interfaces.wifi.wlan_get_rssi()
+        logger().info(f'\n\n RSSI Value = {rssi_value}\n')
+
+        logger().info(f"*****Enable Max PSP in DUT******")
+        logger().info("Initiating wlan power save on DUT")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "Failed to enable wifi power save"
+
+        logger().info("Initiating bt power save on DUT")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "Failed to enable bt power save"
+
+        logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+        ping(dut_ip, ping_count)
+
+        packet_filter1 = f'(((wlan.fc.type_subtype == 0x0000) || (wlan.fc.type_subtype == 0x0001)) || ((wlan.sa == ' \
+                         f'{dut_mac_address}) && (wlan.sa == {ap_bssid_1})))'
+
+        packet_filter2 = f'((wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) ' \
+                         f'&& (wlan.da == {ap_bssid_1}))'
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Unable to find Association req & Association response packet'
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find PWMT bit enable'
+
+        '''Enable first AP0 which is near to DUT, DUT should automatically connect with AP1'''
+        switches[0].interfaces.pdu_switch.turn_on()
+        state = switches[0].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP0: " + str(state))
+        assert state == 'true', 'Please check PDU outlet manually'
+
+        switches[1].interfaces.pdu_switch.turn_off()
+        state = switches[1].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP1: " + str(state))
+        assert state == 'false', 'Please check PDU outlet manually'
+
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_AP0')
+
+        '''Expecting AP0 will automatically connect with DUT'''
+        sw = Stopwatch()
+        end_time = 120
+        connection_flag = False
+        while sw.elapsed_sec <= end_time:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
+            if len(connect_events):
+                logger().info(f'DUT is successfully connected to AP0')
+                connection_flag = True
+                break
+        assert connection_flag == True, 'DUT unable to make connection with AP0 with in 120 seconds'
+
+        ap_bssid_0 = wifi_access_point[0].interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid_0}')
+
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
+
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
+
+        wifi_access_points[0].interfaces.wifi.stop_ap()
+        time.sleep(10)
+        packet_filter3 = f'((wlan.fc.type_subtype == 12) && (wlan.sa == {ap_bssid_0}))'
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find Deauth packet'
+
+        '''Turn on AP1 to validate again, DUT should reconnect with AP1'''
+        switches[1].interfaces.pdu_switch.turn_on()
+        state = switches[1].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP1: " + str(state))
+        assert state == 'true', 'Please check PDU outlet manually'
+
+        '''Expecting AP1 will automatically connect with DUT'''
+        connection_flag = False
+        while sw.elapsed_sec <= end_time:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            connect_events = [event for event in events if event.event_type == RS9116AsyncEventType.Connect]
+            if len(connect_events):
+                logger().info(f'DUT is successfully connected to AP0')
+                connection_flag = True
+                break
+            assert connection_flag == True, 'DUT unable to make connection with AP1 with in 120 seconds'
+
+        wifi_status = wifi_dut.interfaces.wifi.get_wireless_info()
+        logger().info(f"here=======>>>>>>>>>the wifi_status is as follows:{wifi_status}")
+        rssi_value = wifi_dut.interfaces.wifi.wlan_get_rssi()
+        logger().info(f'\n\n RSSI Value = {rssi_value}\n')
+
+    except Exception as e:
+        recovery_error_codes = ['0xffffffe2', '0xffffffd5', '0x0025']
+        for error_code in recovery_error_codes:
+            if error_code in str(e):
+                logger().info('******* Initiating DUT Recovery using Reset **********')
+                wifi_dut.interfaces.wifi.reset()
+        raise e
+    finally:
+        '''Finally turn on the AP0 for next test cases'''
+        switches[0].interfaces.pdu_switch.turn_on()
+        state = switches[0].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP0: " + str(state))
+        assert state == 'true', 'Please check PDU outlet manually'
+
+        switches[1].interfaces.pdu_switch.turn_off()
+        state = switches[1].interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state for AP1: " + str(state))
+        assert state == 'false', 'Please check PDU outlet manually'
+        wifi_dut.interfaces.wifi.leave()

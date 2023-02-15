@@ -493,8 +493,7 @@ def test_connectivity_in_WPA2_EAP_PEAPV0_v_1_0_C113777(rs_helper, utf_constants,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
-        RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
         | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
@@ -505,12 +504,11 @@ def test_connectivity_in_WPA2_EAP_PEAPV0_v_1_0_C113777(rs_helper, utf_constants,
         "band": 0,
     }
 )
-@pytest.mark.skip("Need to get the proper error code")
- #EAP Connection in TLS mode
+#EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C113779(wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
+def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C113779(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point, radius_server):
     testcase = "test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C113779"
     validation = True
     logger().info("configuring the Sniffer with the channel")
@@ -526,25 +524,38 @@ def test_connectivity_in_WPA2_EAP_TLS_when_no_cert_C113779(wifi_sniffer, wifi_du
     logger().info("enable rejoin")
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
 
-    logger().info("scanning for AP")
-    # test_scan
-    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-    logger().info(scan_results)
+    for count in range(0, utf_constants.get('iter_count')):
 
-    logger().info("Getting the DUT mac")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(scan_results)
 
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP bssid {ap_bssid}")
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-    logger().info("Initiating join")
-    logger().info("Initiate connection")
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="TLS", timeout=40)
-        assert exc_info.value.error_code == 0x8, "Connection should fail when no certs loaded"
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
 
-    logger().info("Connection failed when no certs loaded")
+        logger().info("Initiate connection")
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiating join")
+            wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="TLS", timeout=40)
+            assert exc_info.value.error_code == 0x8, "Connection should failed with no certs"
+
+        logger().info("Connection failed when expired certs loaded")
+
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiate ip command")
+            ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=20)
+            assert exc_info.value.error_code == 0x21, "ip command should failed 0x21 error"
+
+        logger().info("Initiating disconnect from DUT")
+        # Wlan Disconnect
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -685,10 +696,9 @@ def test_connectivity_in_WPA2_EAP_PEAP_when_no_cert_C113781(utf_constants, rs_he
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
-                          | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost
-        | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
         | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -699,11 +709,10 @@ def test_connectivity_in_WPA2_EAP_PEAP_when_no_cert_C113781(utf_constants, rs_he
         "eap_cert": "wifi-user.pem"
     }
 )
-@pytest.mark.skip("Need to get the proper error code")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_with_WPA2_EAP_with_expired_Date_TLS_C113771(wifi_sniffer, wifi_dut, wifi_access_point,
+def test_connectivity_with_WPA2_EAP_with_expired_Date_TLS_C113771(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                                  radius_server):
     testcase = "test_connectivity_with_WPA2_EAP_with_expired_Date_TLS_C113771"
     validation = True
@@ -713,38 +722,41 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_TLS_C113771(wifi_sniffer, 
     logger().info("start capturing with Sniffer by giving the test case name as filename")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
-    wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hour=23,
-                                     month_day=1,
-                                     month=1, year=1930, week_day=4)
+    for count in range(0, utf_constants.get('iter_count')):
+        wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hour=23,
+                                         month_day=1,
+                                         month=1, year=1930, week_day=4)
 
-    logger().info("scanning for AP")
-    # test_scan
-    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-    logger().info(scan_results)
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(scan_results)
 
-    logger().info("Getting the DUT mac")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP bssid {ap_bssid}")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
 
+        logger().info("Initiate connection")
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiating join")
+            wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="TLS", timeout=40)
+            assert exc_info.value.error_code == 0x8, "Connection should failed with expired certs"
 
-    logger().info("Initiate connection")
-    with pytest.raises(WlanError) as exc_info:
-        logger().info("Initiating join")
-        wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="TLS", timeout=40)
-        assert exc_info.value.error_code == 0x8, "Connection should failed with expired certs"
-    events = wifi_dut.interfaces.wifi.get_async_events()
-    for event in events:
-        logger().info(f"event {event.event_type}")
+        logger().info("Connection failed when expired certs loaded")
 
-    logger().info("Initiating disconnect from DUT")
-    # Wlan Disconnect
-    wifi_dut.interfaces.wifi.leave()
-    time.sleep(10)
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiate ip command")
+            ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=20)
+            assert exc_info.value.error_code == 0x21, "ip command should failed 0x21 error"
 
-    logger().info("Connection should failed with expired certs")
+        logger().info("Initiating disconnect from DUT")
+        # Wlan Disconnect
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -763,8 +775,7 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_TLS_C113771(wifi_sniffer, 
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
-        | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost
         | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -777,11 +788,10 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_TLS_C113771(wifi_sniffer, 
         "eap_cert": "wifi-user.pem"
     }
 )
-@pytest.mark.skip("Need to get the proper error code")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_with_WPA2_EAP_with_expired_Date_TTLS_C113772(wifi_sniffer, wifi_dut, wifi_access_point,
+def test_connectivity_with_WPA2_EAP_with_expired_Date_TTLS_C113772(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                                  radius_server):
     testcase = "test_connectivity_with_WPA2_EAP_with_expired_Date_TTLS_C113772"
     validation = True
@@ -791,35 +801,41 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_TTLS_C113772(wifi_sniffer,
     logger().info("start capturing with Sniffer by giving the test case name as filename")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
-    wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hour=23,
-                                     month_day=1,
-                                     month=1, year=1930, week_day=4)
+    for count in range(0, utf_constants.get('iter_count')):
+        wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hour=23,
+                                         month_day=1,
+                                         month=1, year=1930, week_day=4)
 
-    logger().info("scanning for AP")
-    # test_scan
-    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-    logger().info(scan_results)
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(scan_results)
 
-    logger().info("Getting the DUT mac")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-    ap_bssid = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP bssid {ap_bssid}")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
 
+        logger().info("Initiate connection")
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiating join")
+            wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="TTLS", timeout=40)
+            assert exc_info.value.error_code == 0x8, "Connection should failed with expired certs"
 
-    logger().info("Initiate connection")
-    with pytest.raises(WlanError) as exc_info:
-        logger().info("Initiating join")
-        wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="TTLS", timeout=40)
-        assert exc_info.value.error_code == 0x8, "Connection should failed with expired certs"
+        logger().info("Connection failed when expired certs loaded")
 
-    logger().info("Initiating disconnect from DUT")
-    # Wlan Disconnect
-    wifi_dut.interfaces.wifi.leave()
-    time.sleep(10)
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiate ip command")
+            ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=20)
+            assert exc_info.value.error_code == 0x21, "ip command should failed 0x21 error"
 
-    logger().info("Connection should failed with expired certs")
+        logger().info("Initiating disconnect from DUT")
+        # Wlan Disconnect
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -839,8 +855,7 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_TTLS_C113772(wifi_sniffer,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
         | RS9116FeatureBitMap.Aggregation,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
-        | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.RealTimeClockFromHost
         | RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
@@ -853,11 +868,10 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_TTLS_C113772(wifi_sniffer,
         "eap_cert": "wifi-user.pem"
     }
 )
-@pytest.mark.skip("Need to get the proper error code")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_connectivity_with_WPA2_EAP_with_expired_Date_PEAP_C113773(wifi_sniffer, wifi_dut, wifi_access_point,
+def test_connectivity_with_WPA2_EAP_with_expired_Date_PEAP_C113773(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                                  radius_server):
     testcase = "test_connectivity_with_WPA2_EAP_with_expired_Date_PEAP_C113773"
     validation = True
@@ -867,40 +881,109 @@ def test_connectivity_with_WPA2_EAP_with_expired_Date_PEAP_C113773(wifi_sniffer,
     logger().info("start capturing with Sniffer by giving the test case name as filename")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
-    wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hour=23,
-                                     month_day=1,
-                                     month=1, year=1930, week_day=4)
+    for count in range(0, utf_constants.get('iter_count')):
 
-    logger().info("scanning for AP")
-    # test_scan
-    scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-    logger().info(scan_results)
+        wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hour=23,
+                                         month_day=1,
+                                         month=1, year=1930, week_day=4)
 
-    logger().info("Getting the DUT mac")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        logger().info("scanning for AP")
+        # test_scan
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(scan_results)
+
+        logger().info("Getting the DUT mac")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+
+        logger().info("Initiate connection")
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiating join")
+            wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="PEAP", timeout=40)
+            assert exc_info.value.error_code == 0x8, "Connection should failed with expired certs"
+
+        logger().info("Connection failed when expired certs loaded")
+
+        with pytest.raises(WlanError) as exc_info:
+            logger().info("Initiate ip command")
+            ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=20)
+            assert exc_info.value.error_code == 0x21, "ip command should failed 0x21 error"
+
+        logger().info("Initiating disconnect from DUT")
+        # Wlan Disconnect
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(10)
+
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid,
+                                                conn_status=False)
+    verify_sniffer.verify_sniffer_validation()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+        | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
+        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+def test_WLAN_Get_Stats_in_WPA2_EAP_C113800(rs_helper, utf_constants, radius_server, net_perf_client,
+                                            wifi_sniffer, wifi_dut, wifi_client, wifi_access_point):
+    testcase = "test_WLAN_Get_Stats_in_WPA2_EAP_C113800"
+    validation = True
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
 
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"AP bssid {ap_bssid}")
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
 
+    logger().info("enable eap method")
+    device_ip, dut_mac_address = rs_helper.check_eap_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                  eap_type="TLS")
+    logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
 
-    logger().info("Initiate connection")
-    with pytest.raises(WlanError) as exc_info:
-        logger().info("Initiating join")
-        wifi_dut.interfaces.wifi.eap_join_ap(wifi_access_point, eap_method="PEAP", timeout=40)
-        assert exc_info.value.error_code == 0x8, "Connection should failed with expired certs"
+    logger().info(f"there is an RSC-12527 for this failure")
+    wifi_dut.interfaces.wifi.wlan_get_stats()
 
     logger().info("Initiating disconnect from DUT")
     # Wlan Disconnect
     wifi_dut.interfaces.wifi.leave()
     time.sleep(10)
 
-    logger().info("Connection should failed with expired certs")
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-    verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid,
-                                                conn_status=False)
+    verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
     verify_sniffer.verify_sniffer_validation()
 
 
@@ -1018,4 +1101,3 @@ def test_HTTP_Otaf_in_WPA2_Enterprise_C113803(rs_helper, utf_constants, http_ser
 
     verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
     verify_sniffer.verify_sniffer_validation()
-

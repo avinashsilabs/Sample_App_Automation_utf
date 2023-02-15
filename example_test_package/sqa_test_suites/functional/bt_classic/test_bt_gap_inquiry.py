@@ -282,7 +282,7 @@ def test_bt_inq_complete_no_dev_C19985(wifi_dut, bt_client):
 
             # Get Asynchronous messages
             events = wifi_dut.interfaces.wifi.get_async_events()
-            assert len(events) > 0
+            assert len(events) > 0, f"Failed to get RSI_APP_EVENT_INQ_COMPLT event after {duration / 1000} sec"
 
             # Search for Inquiry Complete Event
             event_data = ''

@@ -238,6 +238,7 @@ test_cases:
     test_module: test_cases/test_bt_a2dp.py
     test_markers:
       - pytest.mark.framework_integration_test()
+      - pytest.mark.firmware_app('test_bt_a2dp',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
@@ -261,6 +262,7 @@ test_cases:
     test_module: test_cases/test_bt_a2dp.py
     test_markers:
       - pytest.mark.framework_integration_test()
+      - pytest.mark.firmware_app('test_bt_a2dp',)
       - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':

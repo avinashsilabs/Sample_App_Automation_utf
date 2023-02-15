@@ -85,6 +85,8 @@ def test_bt_spp_tx_rx_data_transfer_master_mode_c20041(bt_dut, bt_client):
     with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_server_socket:
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_server_socket.create_client()
+            time.sleep(3)
+            bt_dut.interfaces.bluetooth.bt_link_policy_settings(bt_client_address, 4)
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
             addr = bt_server_socket.accept(timeout=10)
             assert addr == bt_dut_address

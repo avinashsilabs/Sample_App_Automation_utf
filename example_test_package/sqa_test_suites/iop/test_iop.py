@@ -4,12 +4,14 @@ import time
 from _queue import Empty
 from asyncio import QueueEmpty
 from datetime import datetime, timedelta
-
+from typing import Dict, List, Tuple
+from pyshark.packet.layer import Layer
 from utf.interfaces.cli import CLITransportException
 import pytest as pytest
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, \
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes
 from utf_wiseconnect.devices.rs911x import (
     RS9116TCPIPFeatureBitMap,
@@ -73,6 +75,22 @@ class IopTcpIpSockets:
                 break
             logger().info(f"Socket connected with server in: {retry + 1} time")
         return connect_status
+
+
+@retry(Exception, delay=20, tries=20)
+def connect_aws_server_from_dut(aws_iot_dut):
+    status = False
+    try:
+        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
+        status = True
+    except Exception as err:
+        logger().error(str(err))
+        if "0x2" in str(err):
+            logger().warning("AWS server is not reachable from DUT, Please check your internet connection")
+            aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
+        time.sleep(10)
+    assert status, "Connecting to AWS server from DUT is failed"
+    return status
 
 
 @pytest.mark.skip()
@@ -483,6 +501,8 @@ pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
     pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.firmware_app("test_aws"),
+    pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator'),
     pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -499,79 +519,113 @@ pytestmark = [
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
                 EnahanceMaxPsp,
             "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+            "ca_cert": ["start_field.pem"],
+            "client_cert": ["client-certificate.crt"],
+            "client_key": ["private-key.key"],
         },
     ),
 ]
 
 
-@pytest.mark.firmware_app("test_wlan_aws_enable")
-@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_device_shadow_enhanced_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer,
-                                            aws_iot_dut, rf_attenuator, utf_constants):
+def test_aws_device_shadow_enhanced_max_psp_c34033(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, aws_iot_dut,
+                                            rf_attenuator, utf_constants, request):
     rejected_event_counter = 0
     timeout_event_counter = 0
+    test_name = request.node.name
+    disconnect_packet_list = []
+
     """ Start time for long duration and send messages """
     test_execution_time = utf_constants.get("time_duration")
     logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
 
     end_time = datetime.now() + timedelta(hours=test_execution_time)
     start_time = datetime.now()
-    wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
-    aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
-    time.sleep(2)
-    """Applying enhanced max psp power save """
-    logger().info(f"*****Enable Enhanced Max Power save in DUT******")
-    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
-    wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave
-                                                                  )
+    try:
+        with wifi_sniffer.interfaces.live_capture as live_capture:
+            live_capture.configure_interface(
+                channel=wifi_access_point.interfaces.wifi.channel
+            )
+            live_capture.start_live_capture(timeout=end_time, capture_file=test_name, filter_layer_name='wlan',
+                                            filter_field='wlan.fc.type_subtype', filter_val='12')
 
-    shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-        RS9116AsyncEventType.AWSIoTShadowUpdateAccepted
-    ]
-    shadow_update_rejected_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-        RS9116AsyncEventType.AWSIoTShadowUpdateRejected
-    ]
-    shadow_update_timeout_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-        RS9116AsyncEventType.AWSIoTShadowUpdateTimeout
-    ]
-    while datetime.now() < end_time:
-        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1, 100))
-        try:
-            shadow_update_accepted_event_queue.get(timeout=60)
-        except(QueueEmpty, Empty):
-            # did not receive update accepted event
-            pass
-        try:
-            shadow_update_rejected_event_queue.get(timeout=60)
-            rejected_event_counter = rejected_event_counter + 1
-        except(QueueEmpty, Empty):
-            # did not receive rejected event
-            pass
-        try:
-            shadow_update_timeout_event_queue.get(timeout=60)
-            timeout_event_counter = timeout_event_counter + 1
-        except(QueueEmpty, Empty):
-            # did not receive timeout event
-            pass
-    time.sleep(55)
-    aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
-    logger().info("AWS server disconnection from DUT")
-    end_time = datetime.now()
-    exact_execution_time = end_time - start_time
-    logger().info(f"Total execution time of test case = {exact_execution_time}")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    logger().info(f"Total number of Rejected Event Counter = {rejected_event_counter}")
-    logger().info(f"Total number of Timeout Event Counter = {timeout_event_counter}")
+            mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {mac_address}")
+
+            wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator)
+            logger().info("Initiating aws connect from DUT")
+            assert connect_aws_server_from_dut(aws_iot_dut), "Failed to connect aws server from DUT"
+            logger.info("Connecting to AWS server from DUT is successful")
+            time.sleep(2)
+            """Applying enhanced max psp power save """
+            logger().info(f"*****Enable Enhanced Max Power save in DUT******")
+            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+            wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.FastPowerSave
+                                                   )
+
+            shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+                RS9116AsyncEventType.AWSIoTShadowUpdateAccepted
+            ]
+            shadow_update_rejected_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+                RS9116AsyncEventType.AWSIoTShadowUpdateRejected
+            ]
+            shadow_update_timeout_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+                RS9116AsyncEventType.AWSIoTShadowUpdateTimeout
+            ]
+            is_packet_found = False
+            while datetime.now() < end_time:
+                aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1, 100))
+                try:
+                    shadow_update_accepted_event_queue.get(timeout=60)
+                except(QueueEmpty, Empty):
+                    # did not receive update accepted event
+                    pass
+                try:
+                    shadow_update_rejected_event_queue.get(timeout=60)
+                    rejected_event_counter = rejected_event_counter + 1
+                except(QueueEmpty, Empty):
+                    # did not receive rejected event
+                    pass
+                try:
+                    shadow_update_timeout_event_queue.get(timeout=60)
+                    timeout_event_counter = timeout_event_counter + 1
+                except(QueueEmpty, Empty):
+                    # did not receive timeout event
+                    pass
+                packet = live_capture.get_packet()
+                if packet is not None:
+                    is_packet_found = True
+                    disconnect_packet_list.append(packet)
+                    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            live_capture.stop_live_capture()
+            logger().info("\n\n **** Stop Sniffer finally **** \n\n")
+            if is_packet_found:
+                logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+                logger().info("\n\n **** Disconnected packet list ****\n\n")
+                logger().info(disconnect_packet_list)
+    except Exception as e:
+        logger().info("\n got exception: {}".format(str(e)))
+        assert False, "Failed"
+    finally:
+        time.sleep(55)
+        wifi_dut.interfaces.wifi.leave()
+        aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
+        logger().info("AWS server disconnection from DUT")
+        end_time = datetime.now()
+        exact_execution_time = end_time - start_time
+        logger().info(f"\n\n Total execution time of test case = {exact_execution_time}\n\n")
+        logger().info(f"\n\n Total number of Rejected Event Counter = {rejected_event_counter}\n\n")
+        logger().info(f"\n\n Total number of Timeout Event Counter = {timeout_event_counter}\n\n")
 
 
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
     pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.firmware_app("test_aws"),
+    pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator'),
     pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -587,69 +641,102 @@ pytestmark = [
             "features": RS9116FeatureBitMap.Default | RS9116FeatureBitMap.ULPGPIOHandshake,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+            "ca_cert": ["start_field.pem"],
+            "client_cert": ["client-certificate.crt"],
+            "client_key": ["private-key.key"],
         },
     ),
 ]
 
 
-@pytest.mark.firmware_app("test_wlan_aws_enable")
-@pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_aws_device_shadow_max_psp(firmware_loader, wifi_sniffer, wifi_networked_dut_with_sniffer,
-                                   aws_iot_dut, rf_attenuator, utf_constants):
+def test_aws_device_shadow_max_psp_c34082(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, aws_iot_dut,
+                                            rf_attenuator, utf_constants, request):
     rejected_event_counter = 0
     timeout_event_counter = 0
+    test_name = request.node.name
+    disconnect_packet_list = []
+
     """ Start time for long duration and send messages """
     test_execution_time = utf_constants.get("time_duration")
     logger().info(f'\n\n ***** Time duration = {test_execution_time}\n\n')
 
     end_time = datetime.now() + timedelta(hours=test_execution_time)
     start_time = datetime.now()
-    wifi_networked_dut_with_sniffer.interfaces.wifi.set_attenuator(rf_attenuator)
-    aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
-    time.sleep(2)
-    """Applying Max power save """
-    logger().info(f"*****Enable Max Power save in DUT******")
-    wifi_networked_dut_with_sniffer.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, 0)
-    wifi_networked_dut_with_sniffer.interfaces.wifi.bt_power_save(
-        power_save_mode=RS9116PowerSaveModes.PowerSaveMode2
-    )
+    try:
+        with wifi_sniffer.interfaces.live_capture as live_capture:
+            live_capture.configure_interface(
+                channel=wifi_access_point.interfaces.wifi.channel
+            )
+            live_capture.start_live_capture(timeout=end_time, capture_file=test_name, filter_layer_name='wlan',
+                                            filter_field='wlan.fc.type_subtype', filter_val='12')
 
-    shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-        RS9116AsyncEventType.AWSIoTShadowUpdateAccepted
-    ]
-    shadow_update_rejected_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-        RS9116AsyncEventType.AWSIoTShadowUpdateRejected
-    ]
-    shadow_update_timeout_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
-        RS9116AsyncEventType.AWSIoTShadowUpdateTimeout
-    ]
-    while datetime.now() < end_time:
-        aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1, 100))
-        try:
-            shadow_update_accepted_event_queue.get(timeout=10)
-        except(QueueEmpty, Empty):
-            # did not receive update accepted event
-            pass
-        try:
-            shadow_update_rejected_event_queue.get(timeout=10)
-            rejected_event_counter = rejected_event_counter + 1
-        except(QueueEmpty, Empty):
-            # did not receive rejected event
-            pass
-        try:
-            shadow_update_timeout_event_queue.get(timeout=10)
-            timeout_event_counter = timeout_event_counter + 1
-        except(QueueEmpty, Empty):
-            # did not receive timeout event
-            pass
-    time.sleep(55)
-    aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
-    logger().info("AWS server disconnection from DUT")
-    end_time = datetime.now()
-    exact_execution_time = end_time - start_time
-    logger().info(f"Total execution time of test case = {exact_execution_time}")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop Sniffer finally")
-    logger().info(f"Total number of Rejected Event Counter = {rejected_event_counter}")
-    logger().info(f"Total number of Timeout Event Counter = {timeout_event_counter}")
+            mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+            logger().info(f"DUT MAC_Address: {mac_address}")
+
+            wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator)
+            logger().info("Initiating aws connect from DUT")
+            assert connect_aws_server_from_dut(aws_iot_dut), "Failed to connect aws server from DUT"
+            logger.info("Connecting to AWS server from DUT is successful")
+            time.sleep(2)
+
+            """Applying max psp power save """
+            logger().info(f"*****Enable Max Power save in DUT******")
+            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                RS9116PowerSaveProcedureTypes.MaxPowerSave)
+            wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                   RS9116PowerSaveProcedureTypes.MaxPowerSave
+                                                   )
+            shadow_update_accepted_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+                RS9116AsyncEventType.AWSIoTShadowUpdateAccepted
+            ]
+            shadow_update_rejected_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+                RS9116AsyncEventType.AWSIoTShadowUpdateRejected
+            ]
+            shadow_update_timeout_event_queue = aws_iot_dut.interfaces.aws_iot.event_queues[
+                RS9116AsyncEventType.AWSIoTShadowUpdateTimeout
+            ]
+            is_packet_found = False
+            while datetime.now() < end_time:
+                aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_update(random.randint(1, 100))
+                try:
+                    shadow_update_accepted_event_queue.get(timeout=60)
+                except(QueueEmpty, Empty):
+                    # did not receive update accepted event
+                    pass
+                try:
+                    shadow_update_rejected_event_queue.get(timeout=60)
+                    rejected_event_counter = rejected_event_counter + 1
+                except(QueueEmpty, Empty):
+                    # did not receive rejected event
+                    pass
+                try:
+                    shadow_update_timeout_event_queue.get(timeout=60)
+                    timeout_event_counter = timeout_event_counter + 1
+                except(QueueEmpty, Empty):
+                    # did not receive timeout event
+                    pass
+                packet = live_capture.get_packet()
+                if packet is not None:
+                    is_packet_found = True
+                    disconnect_packet_list.append(packet)
+                    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            live_capture.stop_live_capture()
+            logger().info("\n\n **** Stop Sniffer finally **** \n\n")
+            if is_packet_found:
+                logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+                logger().info("\n\n **** Disconnected packet list ****\n\n")
+                logger().info(disconnect_packet_list)
+    except Exception as e:
+        logger().info("\n got exception: {}".format(str(e)))
+        assert False, "Failed"
+    finally:
+        time.sleep(55)
+        wifi_dut.interfaces.wifi.leave()
+        aws_iot_dut.interfaces.aws_iot.aws_iot_disconnect()
+        logger().info("AWS server disconnection from DUT")
+        end_time = datetime.now()
+        exact_execution_time = end_time - start_time
+        logger().info(f"\n\n Total execution time of test case = {exact_execution_time}\n\n")
+        logger().info(f"\n\n Total number of Rejected Event Counter = {rejected_event_counter}\n\n")
+        logger().info(f"\n\n Total number of Timeout Event Counter = {timeout_event_counter}\n\n")

@@ -8,6 +8,7 @@ import os
 
 pytestmark = [
     pytest.mark.framework_integration_test,
+    pytest.mark.firmware_app('test_bt_a2dp'),
     pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",
@@ -23,7 +24,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
-def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client, logger):
+def test_bt_a2dp_dut_as_src(firmware_loader, wifi_dut, wifi_access_point, bt_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -83,7 +84,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client, logger):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
-def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client, logger):
+def test_bt_avrcp_dut_as_src(firmware_loader, wifi_dut, wifi_access_point, bt_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"

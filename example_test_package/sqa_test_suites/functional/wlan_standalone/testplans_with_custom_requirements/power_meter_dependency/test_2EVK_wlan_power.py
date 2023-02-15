@@ -1,6 +1,6 @@
 import time
 import pytest
-from utf_wiseconnect.devices.rs911x import RS9116FeatureBitMap,RS9116ConfigFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116Band
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import print_dict
 
@@ -155,3 +155,64 @@ def test_wlan_active_rx_LP_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter):
     time.sleep(10)
     power_obj = power_number_output(power_meter=power_meter)
     power_obj.get_power_value()
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 8,
+            "features": RS9116FeatureBitMap.OpenMode,
+            "set_send_feature_frame": True,
+            "rf_type": 0,
+            "band": RS9116Band.FiveGHz,
+            "features_enable": 0,
+        }
+)
+@pytest.mark.power_msrmt("per_wiseconnect")
+@pytest.mark.parametrize("rate", [139, 775])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wlan_active_rx_5Ghz_C20626(utf_constants, wifi_dut, power_msrmt, power_meter, rate):
+    board_ver = utf_constants.get("board_version")
+    logger().info(f"board version is : {board_ver}")
+    if board_ver == "1.4Q7" or "1.5Q7":
+        pytest.skip(reason="board version doesn't support 5Ghz")
+
+    else:
+        rsi_antenna = 1
+        antenna_gain_2g = 0
+        antenna_gain_5g = 0
+        antenna = 1
+        gain_2g = 0
+        gain_5g = 0
+        length = 1000
+        mode = 0
+        channel = 36
+        power = 8
+        rf_type = 0
+        band = 1
+
+        logger().info("======= set antenna on 1st dut")
+        wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
+
+        logger().info(f"======= configure dut with diff power:{power}")
+        wifi_dut.interfaces.wifi.get_receive_stats_start(channel)
+
+        logger().info("======= invoke 2nd dut")
+        power_msrmt.interfaces.power_meter.init_device(band=band, rf_type=rf_type)
+        time.sleep(5)
+
+        logger().info("======= set antenna on 2nd dut")
+        power_msrmt.interfaces.power_meter.wireless_antenna(rsi_antenna=rsi_antenna, antenna_gain_2g=antenna_gain_2g,
+                                                            antenna_gain_5g=antenna_gain_5g)
+        time.sleep(5)
+
+        logger().info("======= start transmit from 2nd DUT")
+        power_msrmt.interfaces.power_meter.start_transmit(power=power, rate=rate, length=length, mode=mode,
+                                                          channel=channel)
+
+        time.sleep(5)
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+
+

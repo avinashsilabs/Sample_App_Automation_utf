@@ -1,0 +1,8 @@
+pytest
+pytest-mock>=3.6.1
+pytest-cov
+pytest-html
+pydantic
+black
+flake8
+colored_traceback

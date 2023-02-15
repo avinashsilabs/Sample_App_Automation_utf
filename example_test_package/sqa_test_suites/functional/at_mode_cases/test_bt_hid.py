@@ -97,7 +97,7 @@ def test_hid_conn_in_device_role_C20017(bt_dut, bt_client):
 
         with bt_dut.interfaces.bluetooth.run_bt_task():
             logger().info("connecting to remote bt device....")
-            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            connected = bt_client.interfaces.bluetooth.connect(bt_dut_address)
             assert connected, "unable to connect bt device"
             logger().info(f'device connection state is {connected}')
             time.sleep(60)
@@ -152,7 +152,7 @@ def test_interrupt_data_after_hid_conn_C20021(bt_dut, bt_client):
         assert device_found, "unable to scan device"
 
         with bt_dut.interfaces.bluetooth.run_bt_task():
-            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            connected = bt_client.interfaces.bluetooth.connect(bt_dut_address)
             assert connected, "unable to connect bt device"
             logger().info(f'device connection state is {connected}')
 

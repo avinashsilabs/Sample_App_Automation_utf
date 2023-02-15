@@ -36,6 +36,21 @@ import uuid
 def logger():
     return get_logger(__name__)
 
+def clean_up_method(wifi_dut, switch):
+    logger().info("\n\n ----------------------------Cleaning UP the DUT ----------------------------")
+    try:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+        logger().info("Closing all opened sockets")
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger().info("Disconnect from AP")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
+        wifi_dut.interfaces.wifi.inited = False
+    except:
+        logger().info("******* Recovering the DUT  **********")
+        wifi_dut.interfaces.wifi.reset()
+    logger().info("\n ----------------------------Cleaning UP of DUT is Completed ----------------------------")
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.dut("rs9116_sapi")
@@ -1513,11 +1528,7 @@ def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer,
             if rejoin_msg:
                 break
         assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off for 350 seconds"
+    finally:
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-
-    finally:
-        switch.interfaces.pdu_switch.turn_on(delay=60)
-
-
-
+        clean_up_method(wifi_dut, switch)

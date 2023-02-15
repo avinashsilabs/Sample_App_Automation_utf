@@ -986,16 +986,22 @@ def test_connectivity_of_dut_scanned_remote_bt_with_correct_pin_c19961(wifi_dut,
                 logger().info("******* SPP Connection *******")
                 with wifi_dut.interfaces.wifi.run_bt_task():
                     bt_client_socket.create_client()
+                    time.sleep(3)
+                    wifi_dut.interfaces.wifi.bt_link_policy_settings(bt_client_address, 4)
                     wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                     addr = bt_client_socket.accept(timeout=12)
                     assert addr == wifi_dut_address, "SPP Connection Failed"
                 logger().info(f'SPP Connection Completed')
 
-            logger().info(f"Enabling the Wi-Fi powersave")
-            wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            logger().info(f"Enabling the BT powersave")
-            wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            bt_client_socket.close()
+                ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=wifi_dut_address)
+                logger().info(f"l2ping response {ping_response}")
+                assert ping_response, "dut is in inactive state..."
+
+                logger().info(f"Enabling the Wi-Fi powersave")
+                wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+                logger().info(f"Enabling the BT powersave")
+                wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        bt_client_socket.close()
         logger().info(f"Scan in {t.duration} seconds")
     finally:
         clean_up_method(wifi_dut, "wifi_dut")
@@ -1053,7 +1059,6 @@ def test_remote_name_request_functionality_of_dut_on_sd_when_bt_is_on_c19978(bt_
     finally:
         clean_up_method(bt_dut)
 
-
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
 def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
     try:
@@ -1083,6 +1088,8 @@ def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
             logger().info("******* SPP Connection *******")
             with bt_dut.interfaces.wifi.run_bt_task():
                 bt_client_socket.create_client()
+                time.sleep(3)
+                bt_dut.interfaces.wifi.bt_link_policy_settings(bt_client_address, 4)
                 bt_dut.interfaces.wifi.bt_connect(bt_client_address)
                 addr = bt_client_socket.accept(timeout=12)
                 assert addr == bt_dut_address, "SPP Connection Failed"
@@ -1116,76 +1123,72 @@ def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
         clean_up_method(bt_dut)
 
 
-def test_bt_search_service_async_on_DUT_C19988(bt_dut, bt_client):
-    bt_local_name = "rs911x_bt_spp"
-    bt_pin_code = "4321"
-    pin_code = bt_pin_code
+def test_bt_search_service_async_on_dut_c19988(bt_dut, bt_client):
+    try:
+        logger().info(f"Configuring DUT as SPP Master")
+        bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
-    logger().info("starting bt module in dut.....")
-    bt_dut.interfaces.bluetooth.bt_start()
+        logger().info(f' initialize bt inquiry ')
+        found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                             inquiry_type=1,
+                                                             inquiry_duration_ms=10000,
+                                                             timeout=22,
+                                                             retry_counts=3)
+        if not found:
+            assert found, "Dut unable to find the bt client device."
+        logger().info(f' bt inquiry successful')
 
-    logger().info("fetching dut bd address....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+        logger().info(f'Create SPP Connection')
+        with bt_client.interfaces.bluetooth.bt_socket(
+                mode=BTSocketRole.Client
+        ) as bt_client_socket:
+            # SPP Connection
+            logger().info("******* SPP Connection *******")
+            with bt_dut.interfaces.wifi.run_bt_task():
+                bt_client_socket.create_client()
+                time.sleep(3)
+                bt_dut.interfaces.wifi.bt_link_policy_settings(bt_client_address, 4)
+                bt_dut.interfaces.wifi.bt_connect(bt_client_address)
+                addr = bt_client_socket.accept(timeout=12)
+                assert addr == bt_dut_address, "SPP Connection Failed"
+            logger().info(f'SPP Connection Completed')
 
-    logger().info("configuring bt name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+            ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+            logger().info(f"l2ping response {ping_response}")
+            assert ping_response, "dut is in inactive state..."
 
-    logger().info("configuring eir data....")
-    bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}_eir")
+            logger().info(f"Enabling the Wi-Fi powersave")
+            bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+            logger().info(f"Enabling the BT powersave")
+            bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
-    logger().info("configuring dut in slave role...")
-    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+            result = bt_dut.interfaces.bluetooth.bt_get_services(bt_client_address)
+            logger().info(f"The results are {result}")
+            for i in range(len(result)):
+                search_service_status = bt_dut.interfaces.bluetooth.bt_search_service_async(
+                    device_Addr=bt_client_address, service_uuid=int(result[i], 16))
+                logger().info(f"The status is {search_service_status}")
+                assert search_service_status == 0, f"Service UUID {int(result[i], 16)} " \
+                                                   f"is not supported on remote device"
 
-    logger().info("setting ssp mode...")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+            time.sleep(60)
+            logger().info("pinging dut...")
+            ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+            logger().info(f"l2ping response {ping_response}")
+            assert ping_response, "dut is in inactive state..."
 
-    logger().info("configuring pin code..")
-    bt_dut.interfaces.wifi.bt_set_pin_code(bt_pin_code)
+            logger().info("disconnecting bt host....")
+            bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address, timeout=100)
 
-    logger().info("configuring dut in connectable mode...")
-    bt_dut.interfaces.bluetooth.bt_set_connectable()
-
-    logger().info("initialising dut in spp....")
-    bt_dut.interfaces.bluetooth.bt_spp_init()
-
-    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
-    assert bt_client_address, "failed to fetch client bt address"
-
-    # Added set class to 400100 to avoid [Errno 112] Host is down issue
-    bt_client.interfaces.bluetooth.bt_adapter.set_class("400100")
-    time.sleep(2)
-
-    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-    logger().info(f"l2ping response {ping_response}")
-    assert ping_response, "dut is in inactive state..."
-
-    time.sleep(10)
-    with bt_client.interfaces.bluetooth.bt_socket(
-            mode=BTSocketRole.Server
-    ) as bt_server_socket:
-        with bt_dut.interfaces.bluetooth.run_bt_task():
-            bt_server_socket.create_server()
-            connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-            assert connected, "failed to connect to bt dut"
-
-        logger().info("enabling power save after bt connection...")
-        bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-
-        search_service_status = bt_dut.interfaces.bluetooth.bt_search_service_async(bt_client_address)
-        assert search_service_status is not "success", "bt_search_service_async has failed"
-
-        time.sleep(60)
-        logger().info("pinging dut...")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-            dest_addr=bt_dut_address
-        )
-
-        logger().info("disconnecting bt host....")
-        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
-
-        logger().info("closing bt socket...")
-        bt_server_socket.close()
+            logger().info("closing bt socket...")
+            bt_client_socket.close()
+    finally:
+        clean_up_method(bt_dut)
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1234,6 +1237,8 @@ def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
         logger().info(f'Create SPP Connection')
         with wifi_dut.interfaces.wifi.run_bt_task():
             bt_client_socket.create_client()
+            time.sleep(3)
+            wifi_dut.interfaces.wifi.bt_link_policy_settings(bt_client_address, 4)
             result = ThreadBase.call_functions_simultaneously(
                 [(wifi_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 60)])
             assert result[1] is None, "Unable to find BT client socket connection"

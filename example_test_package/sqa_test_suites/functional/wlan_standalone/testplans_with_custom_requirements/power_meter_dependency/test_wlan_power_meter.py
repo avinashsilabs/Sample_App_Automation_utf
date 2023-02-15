@@ -176,35 +176,43 @@ def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_dtim_5g(wifi_access_point, wifi_dut, power_meter, dtim):
+def test_wlan_standby_dtim_5g(utf_constants, wifi_access_point, wifi_dut, power_meter, dtim):
+    board_ver = utf_constants.get("board_version")
+    logger().info(f"board version is : {board_ver}")
+    if board_ver == "1.4Q7" or "1.5Q7":
+        pytest.skip(reason="board version doesn't support 5Ghz")
 
-    bcast_in_tim_next_cmd = 1
-    beacon_drop = 5000
-    bcast_in_tim = 1
+    else:
+        bcast_in_tim_next_cmd = 1
+        beacon_drop = 5000
+        bcast_in_tim = 1
 
-    logger().info(f"configuring access point with dtim:{dtim}")
-    wifi_access_point.interfaces.wifi.start_ap(dtim=dtim)
+        logger().info(f"configuring access point with dtim:{dtim}")
+        wifi_access_point.interfaces.wifi.start_ap(dtim=dtim)
 
-    logger().info("scan and connecting to access point.....")
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+        logger().info("scan and connecting to access point.....")
+        # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
 
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    logger().info(f'DUT ip {device_ip}')
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
 
-    logger().info("sending filter broadcast command")
-    wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
-    logger().info("enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    time.sleep(20)
-    power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-    power_obj.get_power_value()
+        logger().info("sending filter broadcast command")
+        wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
+        logger().info("enabling wifi power save mode in DUT......")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        time.sleep(20)
+        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+        power_obj.get_power_value()
+
+
+
 
 @pytest.mark.parametrize("power", [10, 20])
 @pytest.mark.config(
@@ -260,24 +268,34 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_active_tx_10dBm_20dBm_5Ghz(wifi_dut, power_meter, power):
-    antenna = 1
-    gain_2g = 0
-    gain_5g = 0
-    rate=139
-    length=1000
-    mode=0
-    channel=36
+def test_wlan_active_tx_10dBm_20dBm_5Ghz(utf_constants,wifi_dut, power_meter, power):
+    board_ver = utf_constants.get("board_version")
+    logger().info(f"board version is : {board_ver}")
+    if board_ver != "1.4Q7" or "1.5Q7":
+        pytest.skip(reason="board version doesn't support 5Ghz")
 
-    logger().info("setting the wireless antenna ")
-    wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
+    else:
+        antenna = 1
+        gain_2g = 0
+        gain_5g = 0
+        rate = 139
+        length = 1000
+        mode = 0
+        channel = 36
 
-    logger().info(f"configuring dut with diff power:{power}")
-    wifi_dut.interfaces.wifi.set_wlan_transmit_start(power=power, rate=rate, length=length, mode=mode, channel=channel)
-    time.sleep(20)
-    power_obj = power_number_output(power_meter=power_meter)
+        logger().info("setting the wireless antenna ")
+        wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
 
-    power_obj.get_power_value()
+        logger().info(f"configuring dut with diff power:{power}")
+        wifi_dut.interfaces.wifi.set_wlan_transmit_start(power=power, rate=rate, length=length, mode=mode,
+                                                         channel=channel)
+        time.sleep(20)
+        power_obj = power_number_output(power_meter=power_meter)
+
+        power_obj.get_power_value()
+
+
+
 
 #######BGSCAN test case########
 
@@ -429,11 +447,11 @@ def test_standby_assoc_novus_li10_c20554(wifi_access_point, wifi_dut, remote_soc
 
         }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_power_save_withou_ram_ret_C20555(wifi_dut, power_meter):
+def test_wlan_power_save_without_ram_ret_C20555(wifi_dut, power_meter):
 
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -513,44 +531,51 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_met
 
         }
 )
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim":200,
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim" : 200,
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_sleep_5Ghz_C20633(wifi_access_point, wifi_dut, power_meter):
+def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_dut, power_meter):
+    board_ver = utf_constants.get("board_version")
+    logger().info(f"board version is : {board_ver}")
+    if board_ver != "1.4Q7" or "1.5Q7":
+        pytest.skip(reason="this board version doesn't support 5Ghz")
+    else:
+        bcast_in_tim_next_cmd = 1
+        beacon_drop = 5000
+        bcast_in_tim = 1
 
-    bcast_in_tim_next_cmd = 1
-    beacon_drop = 5000
-    bcast_in_tim = 1
+        logger().info("scan and connecting to access point.....")
+        # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
 
-    logger().info("scan and connecting to access point.....")
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
 
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    logger().info(f'DUT ip {device_ip}')
+        logger().info("sending filter broadcast command")
+        wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
 
-    logger().info("sending filter broadcast command")
-    wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
+        logger().info("enabling wifi power save mode in DUT......")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        time.sleep(25)
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+        time.sleep(2)
+        logger().info("doing EFR reset instead of device reset till reset issue is fixed")
+        wifi_dut.interfaces.wifi.reset_soft()
 
-    logger().info("enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    time.sleep(25)
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
-    time.sleep(2)
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
 
-##############
-#######BGSCAN test case########
+
+
+######BGSCAN test case########
 
 @pytest.mark.parametrize("bg_scan_periodicity", [2, 10, 30])
 @pytest.mark.config(
@@ -571,57 +596,64 @@ def test_wlan_standby_sleep_5Ghz_C20633(wifi_access_point, wifi_dut, power_meter
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim":10})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_bgscan_with_periodicity_5g_2_10_30_C20635(wifi_dut, wifi_access_point, power_meter, bg_scan_periodicity):
-    bcast_in_tim_next_cmd = 1
-    beacon_drop = 5000
-    bcast_in_tim = 1
-    bg_scan_enable = 1
-    instant_bg = 1
-    bg_scan_threshold = 10
-    rssi_tolerance_threshold = 4
-    active_scan_duration = 50
-    passive_scan_duration = 50
-    multiprobe = 1
+def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi_access_point, power_meter, bg_scan_periodicity):
+    board_ver = utf_constants.get("board_version")
+    logger().info(f"board version is : {board_ver}")
+    if board_ver == "1.4Q7" or "1.5Q7":
+        pytest.skip(reason="board version doesn't support 5Ghz")
+    else:
+        bcast_in_tim_next_cmd = 1
+        beacon_drop = 5000
+        bcast_in_tim = 1
+        bg_scan_enable = 1
+        instant_bg = 1
+        bg_scan_threshold = 10
+        rssi_tolerance_threshold = 4
+        active_scan_duration = 50
+        passive_scan_duration = 50
+        multiprobe = 1
 
-    logger().info(f"setting bgscan command with diff bgscan periodicity:{bg_scan_periodicity}")
-    wifi_dut.interfaces.wifi.set_bgscan(bg_scan_enable=bg_scan_enable, instant_bg=instant_bg,
-    bg_scan_threshold=bg_scan_threshold, rssi_tolerance_threshold=rssi_tolerance_threshold, bg_scan_periodicity=bg_scan_periodicity,
-    active_scan_duration=active_scan_duration,passive_scan_duration=passive_scan_duration, multiprobe=multiprobe)
+        logger().info(f"setting bgscan command with diff bgscan periodicity:{bg_scan_periodicity}")
+        wifi_dut.interfaces.wifi.set_bgscan(bg_scan_enable=bg_scan_enable, instant_bg=instant_bg,
+                                            bg_scan_threshold=bg_scan_threshold,
+                                            rssi_tolerance_threshold=rssi_tolerance_threshold,
+                                            bg_scan_periodicity=bg_scan_periodicity,
+                                            active_scan_duration=active_scan_duration,
+                                            passive_scan_duration=passive_scan_duration, multiprobe=multiprobe)
 
-    logger().info("scan and connecting to access point.....")
-    # DUT connects to AP after join_ap API is executed
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+        logger().info("scan and connecting to access point.....")
+        # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
 
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
 
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    logger().info(f'DUT ip {device_ip}')
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
 
-    logger().info("sending filter broadcast command")
-    wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
+        logger().info("sending filter broadcast command")
+        wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
 
-    logger().info("enabling wifi power save mode in DUT......")
-    wifi_dut.interfaces.wifi.power_save(2, 0)
-    time.sleep(10)
+        logger().info("enabling wifi power save mode in DUT......")
+        wifi_dut.interfaces.wifi.power_save(2, 0)
+        time.sleep(10)
 
-    power_obj = power_number_output(power_meter=power_meter)
+        power_obj = power_number_output(power_meter=power_meter)
 
-    power_obj.get_power_value()
+        power_obj.get_power_value()
 
-    bg_scan_enable=0
+        bg_scan_enable = 0
 
-    wifi_dut.interfaces.wifi.set_bgscan(bg_scan_enable, instant_bg, bg_scan_threshold, rssi_tolerance_threshold,
-                                        bg_scan_periodicity,
-                                        active_scan_duration,
-                                        passive_scan_duration,
-                                        multiprobe)
-    logger().info("bg scan disabled")
-    time.sleep(2)
-
+        wifi_dut.interfaces.wifi.set_bgscan(bg_scan_enable, instant_bg, bg_scan_threshold, rssi_tolerance_threshold,
+                                            bg_scan_periodicity,
+                                            active_scan_duration,
+                                            passive_scan_duration,
+                                            multiprobe)
+        logger().info("bg scan disabled")
+        time.sleep(2)
 
 
 
