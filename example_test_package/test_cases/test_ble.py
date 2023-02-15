@@ -10,7 +10,7 @@ from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import Batt
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.bluetooth import BLEConnectError
-from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes
+from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes, RS9116AsyncEventType
 from utf.utils import ibeacon_scan_utility
 import bluetooth._bluetooth as bluez
 
@@ -67,6 +67,69 @@ def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+    },
+)
+def test_ble_whitelist_adv_data(wifi_dut, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    # Start DUT
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+
+    # Start ble client
+    # for more information on hci_adv_params download Specification Details from
+    # https://www.bluetooth.com/specifications/specs/core-specification-5-2/
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(
+        bt_dut_address=bt_dut_address,
+        hci_whitelist_adv_data="1F "  # Number of bytes that follow in the advertisement(payload length)
+                               "00 00 00 00 00 "  # prepend 00s at start, based on whitelist data index(5 here)
+                               "48 55 53 41 49 4E "  # whitelist data
+                               "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+        # append 00s at end, based on length of payload
+        hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min
+                       "0x20 0x00 "  # Advertising_Interval_Max
+                       "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                       "0x00 "  # Own_Address_Type
+                       "0x00 "  # Peer_Address_Type
+                       "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                       "0x07 "  # Advertising_Channel_Map
+                       "0x00"  # Advertising_Filter_Policy
+    )
+    assert bt_client_address is not None
+
+    time.sleep(1)
+
+    logger().info(f"****** ADDING WHITELIST BEFORE SCANNING")
+    wifi_dut.interfaces.wifi.ble_add_white_list(bt_client_address)
+
+    # Start scanning for ble client
+    dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, ble_scan_filter_type=1, ble_scan_interval=256,
+                                                ble_scan_window=80, timeout=2)
+    logger().info(f"dut_scan_results: {dut_scan_results}")
+
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.Adv_Report:
+            whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+            assert whitelist_data == "HUSAIN", "whitelist data not found"
+            break
+
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+    enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_ps, "failed to enable WLAN power save"
 
 
 @pytest.mark.config(
