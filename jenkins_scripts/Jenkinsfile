@@ -184,7 +184,7 @@ pipeline {
                                                         passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                         usernameVariable: 'SSH_KEY_USERNAME')]) {
                                 sh '''
-                                    ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID} > reports/test_agent_build.log 2>&1
+                                    ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
                                 '''
                             }
                         }
