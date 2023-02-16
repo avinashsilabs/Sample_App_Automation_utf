@@ -179,6 +179,7 @@ pipeline {
                 script{
                     if(FLASH_EFR32.toBoolean()){
                         if(SQA_TEST_AGENT != "Internal"){
+                            echo "Building test agent. This may take some time..."
                             withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
                                                         keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                         passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
