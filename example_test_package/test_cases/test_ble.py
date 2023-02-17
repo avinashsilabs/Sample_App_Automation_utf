@@ -817,7 +817,7 @@ def test_ble_gatt_client_master(
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
-        bt_dut_address=bt_dut_address, service_classes=[BatteryService]
+        bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
     )
     assert bt_client_address is not None
 

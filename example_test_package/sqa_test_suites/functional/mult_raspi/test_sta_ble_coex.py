@@ -2634,7 +2634,7 @@ def test_get_all_profiles_functionality_of_dut_ble_c20317(firmware_loader, net_p
                     logger().info("Start ble client")
                     ble_client.interfaces.bluetooth.close()
                     time.sleep(5)
-                    service_classes = [BatteryService, HeartRateService, HealthThermometerService]
+                    service_classes = ["BatteryService", "HeartRateService", "HealthThermometerService"]
                     ble_client_addr = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_addr,
                                                                                     service_classes=service_classes)
                     assert ble_client_addr, "Unable to get ble_client_addr"
@@ -2755,7 +2755,7 @@ def test_get_particular_profiles_functionality_of_dut_ble_c20318(firmware_loader
                     logger().info("Start ble client")
                     ble_client.interfaces.bluetooth.close()
                     time.sleep(5)
-                    service_classes = [BatteryService, HeartRateService, HealthThermometerService]
+                    service_classes = ["BatteryService", "HeartRateService", "HealthThermometerService"]
                     ble_client_addr = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_addr,
                                                                                     service_classes=service_classes)
                     assert ble_client_addr, "Unable to get ble_client_addr"

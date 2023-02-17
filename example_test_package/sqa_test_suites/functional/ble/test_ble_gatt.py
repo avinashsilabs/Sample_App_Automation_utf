@@ -53,7 +53,7 @@ def test_fetch_profiles_from_RD1_C19860(ble_dut, ble_client):
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=[BatteryService])
+                                                                      service_classes=["BatteryService"])
     assert bt_client_address is not None, "Failed to configure remote device in Advertise Mode"
     logger().info(" ******* Scanning and Connecting to BLE Client ******* ")
 
@@ -113,7 +113,7 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(ble_dut, ble_client):
     logger().info(" ******* Fetching BLE CLIENT address ******* ")
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=[BatteryService])
+                                                                      service_classes=["BatteryService"])
     logger().info(f"bt_server_ip is {bt_client_address}")
     assert bt_client_address is not None, "Could not get the client address"
     logger().info(" ******* Scanning and Connecting to BLE CLIENT ******* ")
@@ -182,7 +182,7 @@ def test_fetch_characteristis_from_RD1_C19863(ble_dut, ble_client):
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=[BatteryService])
+                                                                      service_classes=["BatteryService"])
     assert bt_client_address is not None
     logger().info(" ******* Scanning and connecting to BLE CLIENT ******* ")
     # Start scanning and connect to ble client
@@ -262,7 +262,7 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=[BatteryService])
+                                                                      service_classes=["BatteryService"])
     assert bt_client_address is not None
     logger().info(" *******Scanning and connecting to ble client ******* ")
     # Start scanning and connect to ble client

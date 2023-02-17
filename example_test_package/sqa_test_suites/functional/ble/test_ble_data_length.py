@@ -690,7 +690,7 @@ def test_ble_master_rx_230_bytes_C19921(firmware_loader,ble_dut,ble_client):
 
         logger().info("======= initializing ble in remote device")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=[HeartRateService])
+                                                                      service_classes=["HeartRateService"])
         assert bt_client_address, "failed to initialize ble in remote device"
 
         logger().info("======= start scanning in dut")
@@ -769,7 +769,7 @@ def test_ble_master_rx_100_bytes_C19924(firmware_loader,ble_dut,ble_client):
 
         logger().info("======= initializing ble in remote device")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                          service_classes=[HeartRateService])
+                                                                          service_classes=["HeartRateService"])
         assert bt_client_address, "failed to initialize ble in remote device"
 
         logger().info("======= start scanning in dut")
@@ -850,7 +850,7 @@ def test_ble_master_tx_rx_230_bytes_C19925(firmware_loader,ble_dut,ble_client):
 
         logger().info("======= initializing ble in remote device")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                          service_classes=[HeartRateService])
+                                                                          service_classes=["HeartRateService"])
         assert bt_client_address, "failed to initialize ble in remote device"
 
         logger().info("======= start scanning in dut")
@@ -930,7 +930,7 @@ def test_ble_master_rx_230_bytes_C19927(firmware_loader,ble_dut,ble_client):
 
         logger().info("======= initializing ble in remote device")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                          service_classes=[HeartRateService])
+                                                                          service_classes=["HeartRateService"])
         assert bt_client_address, "failed to initialize ble in remote device"
 
         logger().info("======= start scanning in dut")
@@ -1010,7 +1010,7 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(firmware_loader, ble_dut, ble
 
         logger().info("======= initializing ble in remote device")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                          service_classes=[HeartRateService])
+                                                                          service_classes=["HeartRateService"])
         assert bt_client_address, "failed to initialize ble in remote device"
 
         logger().info("======= start scanning in dut")

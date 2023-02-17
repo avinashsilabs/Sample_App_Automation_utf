@@ -925,7 +925,7 @@ def test_read_char_value_of_remote_ble_when_wlan_is_in_connected_state_c20188(fi
                 if not scan_success:
                     ble_client.interfaces.bluetooth.close()
                     time.sleep(2)
-                    service_class = [HeartRateService]
+                    service_class = ["HeartRateService"]
                     logger().info("Configuring heart rate profile with advertising on remote device")
                     ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address,
                                                                                        service_classes=service_class)

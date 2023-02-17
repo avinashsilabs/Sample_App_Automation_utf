@@ -919,7 +919,7 @@ def test_get_attribute_descriptors_value_C20190(firmware_loader, wifi_dut, wifi_
         time.sleep(3)
         logger().info(f"Begin Scanning for BLE devices")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address,
-                                                                            service_classes=[HeartRateService])
+                                                                            service_classes=["HeartRateService"])
         assert ble_client_address, f"Unable to get ble_client_address"
         time.sleep(5)
         ble_client.interfaces.bluetooth.stop_scanning()
