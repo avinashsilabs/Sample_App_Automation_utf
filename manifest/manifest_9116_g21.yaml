@@ -1,5 +1,5 @@
 firmware:
-  rs911x: 'RS9116W.2.8.0.8.rps'
+  rs911x: 'RS9116W.2.7.1.0.5.rps'
   efx32: '9116_brd4180b/generic_test_agent_without_aws.hex'
 
 # List of devices to be reset when needed
@@ -12,7 +12,7 @@ firmware_applications:
     # List of devices and their firmware images for this marker
     - device_type: 'rs911x'
       device_subtype: 'rs9116'
-      filename: 'RS9116W.2.8.0.8.rps'
+      filename: 'RS9116W.2.7.1.0.5.rps'
     - device_type: 'efx32'
       device_subtype: 'efr32'
       filename: '9116_brd4180b/generic_test_agent_without_aws.hex'
