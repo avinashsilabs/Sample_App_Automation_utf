@@ -88,7 +88,6 @@ def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_acces
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -128,7 +127,6 @@ def test_https_put_functionality_c19231(http_server, wifi_sniffer, wifi_dut, htt
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -175,7 +173,6 @@ def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -221,7 +218,6 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
