@@ -128,7 +128,7 @@ class Wlan_data_transfer_tx(ThreadBase):
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     }
 )
-def test_join_ap_on_off_C21276(switch, rs_helper, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
+def test_join_ap_on_off_C21278(switch, rs_helper, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
 
     try:
         ping_count = utf_constants.get("ping_count")
