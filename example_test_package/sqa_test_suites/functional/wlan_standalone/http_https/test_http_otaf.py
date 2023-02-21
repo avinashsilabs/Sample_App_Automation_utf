@@ -1114,6 +1114,7 @@ pytestmark = [
         "band": 2
     },
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_in_A7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer):

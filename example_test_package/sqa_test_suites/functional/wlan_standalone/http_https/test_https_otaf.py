@@ -1134,6 +1134,7 @@ def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
