@@ -83,6 +83,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -177,6 +178,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config('wifi_access_point', wifi={"region": 'Europe',"channel": 36})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -273,6 +275,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -374,6 +377,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_response_in_5Ghz_C19406(wifi_dut, wifi_access_point,wifi_sniffer):
@@ -449,6 +453,7 @@ pytestmark = [
         "band": 1
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_all_chan_scan_in_5Ghz_by_chan_0_C19407(wifi_dut, wifi_access_point,wifi_sniffer):
@@ -544,6 +549,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_scan_all_chan_by_chan_in_bitmap_C19409(wifi_dut, wifi_access_point,wifi_sniffer):
@@ -654,6 +660,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -747,6 +754,7 @@ pytestmark = [
         "band": 2
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -857,6 +865,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -968,6 +977,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1069,6 +1079,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1178,6 +1189,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1295,6 +1307,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1423,6 +1436,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1530,6 +1544,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1646,6 +1661,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config('wifi_access_point',wifi ={"region": 'Europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
@@ -1761,6 +1777,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -1879,6 +1896,7 @@ pytestmark = [
         "module_type": 1,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
