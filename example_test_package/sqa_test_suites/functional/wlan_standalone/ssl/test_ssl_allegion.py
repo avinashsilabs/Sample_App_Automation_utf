@@ -3973,6 +3973,7 @@ def test_ssl_AWS_testcaseTC19202(
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.store_config
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 def test_autojoin_functionality_with_Two_APs_TC19181(wifi_sniffer, wifi_access_points, wifi_dut, logger):
@@ -4200,6 +4201,7 @@ def test_DNS_Functionality_with_Multiple_APs_TC19183(wifi_sniffer, wifi_access_p
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.store_config
 @pytest.mark.end_state("wifi_access_points", wifi="ap_disabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disable_store_config", "disassociated"])
@@ -4328,6 +4330,7 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
         "band": 0,
     }
 )
+@pytest.mark.store_config
 @pytest.mark.end_state("wifi_access_points", wifi="ap_disabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
@@ -4597,6 +4600,7 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(
         "client_key": ["private-key.key"],
     }
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut",
@@ -4703,6 +4707,7 @@ def test_TC19138_feature_test(wifi_sniffer, wifi_dut, wifi_access_point, ssl_ser
         "client_key": ["private-key.key"],
     }
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut",
@@ -5140,6 +5145,7 @@ def test_rtc_get_multiple_times_TC19178(
         "first_time_retry": 0
     }
 )
+@pytest.mark.store_config
 @pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated",
@@ -5320,6 +5326,7 @@ def test_Stored_AP_Powered_Off_After_Initial_Connection_C19146(wifi_sniffer, wif
         "first_time_retry": 0
     }
 )
+@pytest.mark.store_config
 @pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated",

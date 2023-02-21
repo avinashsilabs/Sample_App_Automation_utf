@@ -2077,6 +2077,7 @@ def test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450(firmware_loader, wifi_sniffer, 
         "channel": 11,
     },
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants):
@@ -2217,6 +2218,7 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
         "channel": 11,
     },
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_DUT_AP_Mode_store_config_wpa2_C19452(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel,

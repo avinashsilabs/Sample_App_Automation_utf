@@ -2222,6 +2222,7 @@ def test_static_ip_assignment_in_at_mode_with_and_Without_ip_Conflict_to_DUT_C10
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

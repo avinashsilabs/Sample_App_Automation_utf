@@ -2000,6 +2000,7 @@ def test_WPA2_EAP_conn_with_fast_psp_C113864(utf_constants, rs_helper, wifi_snif
         "eap_cert": "wifi-user.pem"
     }
 )
+@pytest.mark.store_config
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disable_store_config", "disassociated", "clear_certs"])
