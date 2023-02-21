@@ -1178,6 +1178,7 @@ def test_threading_selective_channels_2_4_C20208(
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -1237,6 +1238,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20209(
         | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.wifi_5g
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -2045,6 +2047,7 @@ def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C20249(
         "region_code": RS9116RegionCode.US,
     },
 )
+@pytest.mark.wifi_5g
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -2118,6 +2121,7 @@ def test_scantime_all_channels_5g_ble_advertise_bypass_C20250(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.wifi_5g
 def test_scantime_selective_channels_5g_ble_advertise_bypass_C20251(
     wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
