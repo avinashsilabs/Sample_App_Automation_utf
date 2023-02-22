@@ -1365,6 +1365,154 @@ class BleThread(ThreadBase):
         self.ble_client5.close()
         self.wifi_dut.interfaces.wifi.leave()
 
+    def multi_2masters_1slave_ble_conn_disconn_recon(self):
+        no_of_reconnects = 1
+        for i in range(no_of_reconnects+1):
+            self.dut_ble.start()
+            self.ble_client1.interfaces.bluetooth.close()
+
+            logger().info(f"\n\n*****************start advertising on ble client1 ******************\n\n")
+            ble1_client_address = self.ble_client1.interfaces.bluetooth.start_smp_adv(self.dut_ble.bt_dut_address)
+            assert ble1_client_address, "Unable to get ble_client_address"
+            logger().info(f" ble client_1 address : {ble1_client_address}")
+            time.sleep(5)
+
+            logger().info(f"\n\n***Start scanning and connect to ble client****\n\n")
+            self.dut_ble.scan(bt_client_address=ble1_client_address, timeout=120)
+            self.dut_ble.scan_stop()
+
+            logger().info(f"\n\n*****Initiating dut BLE connection with ble_client1*****\n\n")
+            self.dut_ble.connect(bt_client_address=ble1_client_address, timeout=120)
+            time.sleep(30)
+            logger().info(f"\n\n************ble master connection success**************\n\n")
+
+
+            self.ble_client2.interfaces.bluetooth.close()
+            logger().info(f"\n\n*****************start advertising on ble client2 ******************\n\n")
+            ble2_client_address = self.ble_client2.interfaces.bluetooth.start_smp_adv(self.dut_ble.bt_dut_address)
+            assert ble2_client_address, "Unable to get ble_client_address"
+            logger().info(f" ble client_3 address : {ble2_client_address}")
+            time.sleep(5)
+            logger().info(f"\n\n***********Start scanning and connect to ble client*********\n\n")
+            self.dut_ble.scan(bt_client_address=ble2_client_address, timeout=120)
+            self.dut_ble.scan_stop()
+            time.sleep(5)
+
+            logger().info(f"\n\n*********Initiating Dut BLE connection with ble_client2*************\n\n")
+            self.dut_ble.connect(bt_client_address=ble2_client_address, timeout=120)
+            time.sleep(30)
+            logger().info(f"\n\n************ble master connection success**************\n\n")
+
+
+            logger().info(f"\n\n************start advertising on dut*******************\n\n")
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            self.ble_client3.interfaces.bluetooth.close()
+            logger().info(f"\n\n************start Scanning from ble client3 ***************\n\n")
+            ble3_client_address = self.ble_client3.interfaces.bluetooth.start_smp_scan(
+                bt_dut_address=self.dut_ble.bt_dut_address)
+            assert ble3_client_address, f"failed to initiate ble in remote device"
+            time.sleep(5)
+            self.ble_client3.interfaces.bluetooth.stop_scanning()
+
+            found_devices = self.ble_client3.interfaces.bluetooth.get_devices()
+            logger().info(f"ble_scan_list:\n{found_devices}")
+            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "Unable to find our DUT"
+            assert (found_devices[
+                        self.wifi_dut.interfaces.wifi.ble_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
+            logger().info(f"\n\n*****See that we found our device:'{self.dut_ble.bt_dut_address}'**********\n\n")
+
+            conn_params = {"min_conn_interval": 40,
+                           "max_conn_interval": 40,
+                           "conn_latency": 0,
+                           "supervision_timeout": 200}
+            logger().info("Initiating BLE connection from ble_client2")
+            self.ble_client3.interfaces.bluetooth.connect(dev_addr=self.dut_ble.bt_dut_address,
+                                                          min_conn_interval=conn_params["min_conn_interval"],
+                                                          max_conn_interval=conn_params["max_conn_interval"],
+                                                          conn_latency=conn_params["conn_latency"],
+                                                          supervision_timeout=conn_params["supervision_timeout"])
+            time.sleep(30)
+            logger().info(f"\n\n************ble slave connection success**************\n\n")
+
+            logger().info(f"\n\n******Disconnect raspi ble_client from dut*******\n\n")
+            self.dut_ble.disconnect(ble1_client_address, timeout=30)
+            time.sleep(5)
+
+            logger().info(f"\n\n**********Disconnect raspi ble_client from dut********\n\n")
+            self.dut_ble.disconnect(ble2_client_address, timeout=30)
+            time.sleep(5)
+
+            logger().info(f"\n\n********Disconnect dut from raspberry*******\n\n")
+            self.ble_client3.interfaces.bluetooth.disconnect(self.dut_ble.bt_dut_address)
+            time.sleep(5)
+
+            logger().info(f"\n\n********closing ble client1 socket********\n\n")
+            self.ble_client1.interfaces.bluetooth.close()
+            time.sleep(5)
+
+            logger().info(f"\n\n******closing ble client2 socket*******\n\n")
+            self.ble_client2.interfaces.bluetooth.close()
+            time.sleep(5)
+
+            logger().info(f"\n\n******closing ble client3 socket********\n\n")
+            self.ble_client3.interfaces.bluetooth.close()
+            time.sleep(5)
+            logger().info(f"\n\n*************iteration : {i}*****************\n\n")
+    def multi_2masters_ble_conn_disconn_recon(self):
+        no_of_reconnects = 1
+        for i in range(no_of_reconnects+1):
+            self.dut_ble.start()
+
+            logger().info(f"\n\n*****************start advertising on ble client1****************\n\n")
+            ble1_client_address = self.ble_client1.interfaces.bluetooth.start_smp_adv(self.dut_ble.bt_dut_address)
+            assert ble1_client_address, "Unable to get ble_client_address"
+            logger().info(f"ble client_1 address : {ble1_client_address}")
+            time.sleep(1)
+
+            logger().info(f"\n\n***********Start scanning and connect to ble client1**********\n\n")
+            self.dut_ble.scan(bt_client_address=ble1_client_address, timeout=120)
+            self.dut_ble.scan_stop()
+            time.sleep(1)
+
+            logger().info(f"\n\n****************Initiating BLE connection with ble_client1************\n\n")
+            self.dut_ble.connect(bt_client_address=ble1_client_address, timeout=120)
+            logger().info("BLE Connection success")
+            time.sleep(1)
+
+            logger().info(f"\n\n*****************start advertising on ble client2****************\n\n")
+            ble2_client_address = self.ble_client2.interfaces.bluetooth.start_smp_adv(self.dut_ble.bt_dut_address)
+            assert ble2_client_address, "Unable to get ble_client_address"
+            logger().info(f" ble client_2 address : {ble2_client_address}")
+            time.sleep(1)
+
+            logger().info(f"\n\n*********Start scanning and connect to ble client2**********\n\n")
+            self.dut_ble.scan(bt_client_address=ble2_client_address, timeout=120)
+            self.dut_ble.scan_stop()
+            time.sleep(1)
+
+            logger().info(f"\n\nInitiating BLE connection with ble_client2\n\n")
+            self.dut_ble.connect(bt_client_address=ble2_client_address, timeout=120)
+            logger().info("******BLE master Connection success********")
+            time.sleep(20)
+
+            logger().info(f"\n\n*****Disconnect raspi ble_client from dut******\n\n")
+            self.dut_ble.disconnect(ble1_client_address, timeout=30)
+            time.sleep(5)
+
+            logger().info(f"\n\n****Disconnect raspi ble_client from dut******\n\n")
+            self.dut_ble.disconnect(ble2_client_address, timeout=30)
+            time.sleep(5)
+
+            logger().info(f"\n\n******closing ble client1 socket********\n\n")
+            self.ble_client1.interfaces.bluetooth.close()
+            time.sleep(5)
+
+            logger().info(f"\n\n*******closing ble client2 socket********\n\n")
+            self.ble_client2.interfaces.bluetooth.close()
+            time.sleep(5)
+
+            logger().info(f"\n\n**********iteration: {i}**********\n\n")
+
     def check_connection_stability(self, ble_dut):
         time.sleep(2)
         dis_sta_list = []
@@ -1890,6 +2038,12 @@ class BleThread(ThreadBase):
             self.ble_client1.interfaces.bluetooth.stop_advertising()
             self.ble_client2.interfaces.bluetooth.stop_advertising()
             self.ble_client3.interfaces.bluetooth.stop_advertising()
+
+        if self.test_case_no == 18929:
+            self.multi_2masters_1slave_ble_conn_disconn_recon()
+
+        if self.test_case_no == 18935:
+            self.multi_2masters_ble_conn_disconn_recon()
 
 
 @pytest.mark.config(
@@ -3426,7 +3580,6 @@ def test_wlan_advertisement_intervals_ble_5_connection_c18951(wifi_dut, wifi_acc
         ble_client.interfaces.bluetooth.close()
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_obj.dut_ble.bt_dut_address)
         wifi_dut.interfaces.wifi.leave()
-
 
 @pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
