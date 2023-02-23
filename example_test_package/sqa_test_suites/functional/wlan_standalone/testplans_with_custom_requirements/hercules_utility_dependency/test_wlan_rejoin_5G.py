@@ -151,6 +151,7 @@ pytestmark = [
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -272,6 +273,7 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, 
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                    change_security_mode_startup_time,
                                                                    change_security_mode, switch):
@@ -409,6 +411,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
         "band": 2,
     },
 )
+@pytest.mark.wifi_dualband
 def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -527,6 +530,7 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, chan
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -658,6 +662,7 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                 set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
@@ -780,6 +785,7 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
@@ -918,6 +924,7 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
         "band": 2,
     },
 )
+@pytest.mark.wifi_dualband
 def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                           set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
@@ -1044,6 +1051,7 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
         "band": 2,
     },
 )
+@pytest.mark.wifi_dualband
 def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                          set_region_dut, switch):
     tcp_socket_obj = IopTcpIpSockets()
@@ -1180,6 +1188,7 @@ def test_rejoin_different_region_dual_band_dfs_ch_c19399(wifi_sniffer, wifi_acce
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
 
@@ -1294,6 +1303,7 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
         "band": 1,
     },
 )
+@pytest.mark.wifi_5g
 def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
     channel = 36
