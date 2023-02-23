@@ -427,7 +427,7 @@ def test_wifi_http_server_timeout_TC19239(remote_socket_factory, wifi_sniffer, w
     server_port = 80
     client_socket = remote_socket_factory.interfaces.socket.create_socket()
     logger.info(f"Connecting from remote device to DUT socket {(device_ip, server_port)}")
-    client_socket.connect_client_tcp(device_ip, server_port)
+    client_socket.connect_client_tcp(device_ip, server_port, client_port=5001)
     time.sleep(timeout + 10)
 
     logger.info("Stop the sniffer")
@@ -499,7 +499,7 @@ def test_wifi_http_server_handle_multiple_clients_TC19240(remote_socket_factory,
     count = 0
     client_socket = remote_socket_factory.interfaces.socket.create_socket()
     logger.info(f"Connecting from remote device to DUT socket {(device_ip, server_port)}")
-    client_socket.connect_client_tcp(device_ip, server_port)
+    client_socket.connect_client_tcp(device_ip, server_port, client_port=5001)
 
     try:
         logger.info(f"Sending http get request from third party client to DUT {count + 1} time")
