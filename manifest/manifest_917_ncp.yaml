@@ -52,7 +52,7 @@ firmware_applications:
       device_subtype: 'efr32'
       filename: '917_ncp/ap_htcaps_enable.hex'
 
-    test_wlan_aws_enable:
+    test_aws:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: '917_ncp/aws_test_agent.hex'
