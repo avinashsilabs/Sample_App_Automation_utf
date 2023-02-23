@@ -301,6 +301,7 @@ def connect_disconnect_bt(wifi_dut, bt_client, bt_address, bt_dut_address, iter_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     }
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_with_bt_ble_as_slave_C19993(wifi_dut, bt_client, ble_client):
@@ -343,6 +344,7 @@ def test_bt_ble_connection_with_bt_ble_as_slave_C19993(wifi_dut, bt_client, ble_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_with_bt_ble_as_master_C19994(wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -380,6 +382,7 @@ def test_bt_ble_connection_with_bt_ble_as_master_C19994(wifi_dut, bt_client, ble
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -424,6 +427,7 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(wifi_dut, bt_client, ble
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_stability_C19996(wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -466,6 +470,7 @@ def test_bt_ble_connection_stability_C19996(wifi_dut, bt_client, ble_clients):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_BT_SPP_Tx_Rx_BLE_connectivity_C19997(wifi_dut, bt_client, ble_client):
@@ -519,6 +524,7 @@ def test_BT_SPP_Tx_Rx_BLE_connectivity_C19997(wifi_dut, bt_client, ble_client):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_with_dual_mode_functionality_C19998(wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -558,6 +564,7 @@ def test_bt_ble_connection_with_dual_mode_functionality_C19998(wifi_dut, bt_clie
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -602,6 +609,7 @@ def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(wifi_dut, bt_clie
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_with_ble_connect_disconnect_C20000(wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -645,6 +653,7 @@ def test_bt_ble_connection_with_ble_connect_disconnect_C20000(wifi_dut, bt_clien
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_bt_ble_connection_with_powersave_mode2_C20001(wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -683,6 +692,7 @@ def test_bt_ble_connection_with_powersave_mode2_C20001(wifi_dut, bt_client, ble_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
 def test_dual_role_functionality_of_BLE_BT_in_connection_C20002(wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):

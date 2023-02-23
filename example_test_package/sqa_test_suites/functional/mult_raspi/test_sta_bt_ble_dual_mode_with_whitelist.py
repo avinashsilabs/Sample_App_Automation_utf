@@ -587,6 +587,7 @@ pytestmark = [pytest.mark.bt_client("raspi_bt_client"), pytest.mark.ble_client("
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -670,6 +671,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(firmware_loader, wifi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -737,6 +739,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(firmware_loader, rec
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -818,6 +821,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(firmware_loader, rec
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -901,6 +905,7 @@ def test_sta_bt_ble_connection_stability_C20078(firmware_loader, wifi_sniffer, r
         "ca_cert": "ca-chain.cert.pem"
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
@@ -990,6 +995,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(firmware_loader, wifi_s
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -1072,6 +1078,7 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(firmware_load
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -1162,6 +1169,7 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(firmware_loade
         "ca_cert": "ca-chain.cert.pem"
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut",
@@ -1251,6 +1259,7 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(firmware_loader
         "ca_cert": "ca-chain.cert.pem"
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut",
@@ -1342,6 +1351,7 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(firmware_loade
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -1425,6 +1435,7 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(firmware_loader, reco
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -1516,6 +1527,7 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(firmware_loader, recovery, wi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
@@ -1606,6 +1618,7 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(firmware_loader, recove
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
