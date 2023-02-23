@@ -69,6 +69,7 @@ pytestmark = [
         "skip_radio_init": True
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
@@ -190,6 +191,7 @@ pytestmark = [
         "skip_radio_init": True
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])

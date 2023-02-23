@@ -306,6 +306,7 @@ pytestmark = [
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_in_STA_BT_mode_and_measure_time_C19781(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
@@ -533,6 +534,7 @@ pytestmark = [
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigHttpOTAF | RS9116ExtTCPIPFeatureBitMap.Default
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server, wifi_dut, wifi_access_point,wifi_sniffer):
@@ -1386,6 +1388,7 @@ pytestmark = [
         "skip_radio_init": True
     }
 )
+@pytest.mark.bt_classic
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_when_enabled_only_bt_C19796(http_server, wifi_dut):
@@ -1685,6 +1688,7 @@ pytestmark = [
         "skip_radio_init": True
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, wifi_dut):

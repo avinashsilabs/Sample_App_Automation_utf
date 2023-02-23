@@ -247,6 +247,7 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
@@ -430,6 +431,7 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
