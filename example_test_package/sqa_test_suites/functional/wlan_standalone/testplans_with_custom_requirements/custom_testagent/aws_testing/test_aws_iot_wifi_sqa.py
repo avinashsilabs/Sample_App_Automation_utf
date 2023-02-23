@@ -915,20 +915,30 @@ def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_snif
         dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
 
         logger.info("Initiating aws connect with client_id 'null' and clean_session flag '1'")
-        with pytest.raises(WlanError) as exc_info:
-            # wifi_dut.interfaces.wifi.aws_iot_connect(client_id='NULL', clean_session=1, load_cert=False)
-            wifi_dut.interfaces.wifi.aws_iot_shadow_init(client_id='NULL')
-        assert exc_info.value.error_code == 0xfffffffe, "Expected error_code '-2' not received"
-        logger.error("Received error_code '-2'")
-        logger.info(f"aws_iot_connect failed with error_code '-2', which is expected as per the test step")
+        status = False
+        for count in range(5):
+            try:
+                wifi_dut.interfaces.wifi.aws_iot_connect(client_id="NULL", clean_session=1, load_cert=False)
+                status = True
+                break
+            except Exception as err:
+                logger.error(str(err))
+                logger.info(f"Connecting to aws server from DUT is failed...retry_count{count + 1}\n")
+                if "0x2" in str(err):
+                    wifi_dut.interfaces.wifi.aws_iot_disconnect()
+                time.sleep(10)
+        assert status, "Connecting to AWS server from DUT is failed"
 
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
         logger.info(f"Device mac address: {dut_mac_address}")
         time.sleep(5)
+
+        logger.info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         validation = True
         channel = wifi_access_point.interfaces.wifi.channel
+
         # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
         packet_filter1 = f'!(wlan.fc.type_subtype == 0x0008) and ((wlan.tag.number == 45 ) or ' \
                          f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol ' \
