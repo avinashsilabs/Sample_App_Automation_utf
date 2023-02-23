@@ -380,7 +380,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
 
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
