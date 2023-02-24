@@ -9,6 +9,7 @@ import time
 from typing import Dict
 from utf.utils.iperf.iperf_utils import ping
 from datetime import datetime
+from random import randint
 import uuid
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -427,7 +428,8 @@ def test_wifi_http_server_timeout_TC19239(remote_socket_factory, wifi_sniffer, w
     server_port = 80
     client_socket = remote_socket_factory.interfaces.socket.create_socket()
     logger.info(f"Connecting from remote device to DUT socket {(device_ip, server_port)}")
-    client_socket.connect_client_tcp(device_ip, server_port, client_port=5001)
+    local_port = randint(5001, 65535)
+    client_socket.connect_client_tcp(device_ip, server_port, client_port=local_port)
     time.sleep(timeout + 10)
 
     logger.info("Stop the sniffer")
@@ -499,7 +501,8 @@ def test_wifi_http_server_handle_multiple_clients_TC19240(remote_socket_factory,
     count = 0
     client_socket = remote_socket_factory.interfaces.socket.create_socket()
     logger.info(f"Connecting from remote device to DUT socket {(device_ip, server_port)}")
-    client_socket.connect_client_tcp(device_ip, server_port, client_port=5001)
+    local_port = randint(5001, 65535)
+    client_socket.connect_client_tcp(device_ip, server_port, client_port=local_port)
 
     try:
         logger.info(f"Sending http get request from third party client to DUT {count + 1} time")
