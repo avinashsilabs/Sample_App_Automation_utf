@@ -24,8 +24,7 @@ from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
-from utf_wiseconnect.devices.rs911x import RS9116, RS9117
-
+from utf_wiseconnect.devices.rs911x import RS911X
 
 last_loaded_custom_app_name = None
 last_test_mode = None
@@ -195,9 +194,7 @@ def reset_on_test_mode_change(request, wiseconnect_duts, harness):
         current_test_mode = default_test_mode
     global last_test_mode
     dut = harness.create_device(current_test_mode)
-    if isinstance(wiseconnect_duts[0], RS9116) or isinstance(
-        wiseconnect_duts[0], RS9117
-    ):
+    if isinstance(wiseconnect_duts[0], RS911X):
         wiseconnect_duts[0] = dut
     else:
         wiseconnect_duts[1] = dut
