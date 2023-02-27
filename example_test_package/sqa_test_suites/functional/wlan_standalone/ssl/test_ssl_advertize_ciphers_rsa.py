@@ -20,6 +20,7 @@ from utf_wiseconnect.devices.rs911x import (
     DefaultCipher,
     DeviceConstants,
     )
+from utf import UtfDatabaseProperties
 from utf.utils.stopwatch import Stopwatch
 import string
 import random
@@ -589,6 +590,7 @@ pytestmark = [
             }
         )
     ]
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
