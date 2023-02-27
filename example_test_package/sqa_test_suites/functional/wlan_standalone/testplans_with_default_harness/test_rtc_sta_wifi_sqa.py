@@ -10,28 +10,6 @@ from utf.interfaces.wifi import WlanError
 from utf.utils.iperf.iperf_utils import ping
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_get_rtc_deep_sleep_TC19052',
-                                                       test_case_id='TC19052',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -48,8 +26,9 @@ pytestmark = [
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 def test_get_rtc_deep_sleep_TC19052(
-        wifi_sniffer, wifi_access_point, wifi_dut, logger
+        wifi_sniffer, wifi_access_point, wifi_dut, logger, tolerance_threshold
         ):
     capture_filename = "test_get_rtc_deep_sleep_TC19052"
     # configure interface for the channel of the access point
@@ -70,7 +49,7 @@ def test_get_rtc_deep_sleep_TC19052(
     logger.info(f"Firmware version-> {firmware_version}")
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8)
     wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8)
-    logger.info(f"Time in seconds just before initiating set rtc ->  {set_time_sec}")
+    logger.info(f"Time in seconds just before initiating set rtc on iteration 1->  {set_time_sec}")
     # This API starts RTC timer in DUT
     wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hour=set_hour,
                                      month_day=set_month_day,
@@ -96,27 +75,23 @@ def test_get_rtc_deep_sleep_TC19052(
     # get_rtc API returns time parameters output at the instance
     get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
     get_time_sec = ((get_minutes * 60) + get_seconds)
+
+    logger.info(f"RTC get timer get time in seconds -> {get_time_sec} seconds")
     assert (set_hour == get_hours) and (set_month_day == get_day_month) and (set_month == get_month) and (
             set_year == get_year) and (set_week_day == get_week_day)
 
     idle_time = wait_time_after_scan + scan_time + scan_logger_time1
-    time_dif = get_time_sec - set_time_sec - idle_time
-    logger.info(f"Time Difference after the idle time is {time_dif}")
-    with TimeMeasurer() as t:
-        logger.info(f"idle time after initiating set rtc after scan -> {idle_time}")
-        difference = get_time_sec - set_time_sec
-        if get_time_sec > set_time_sec:
-            if difference >= 2:
-                assert logger.info(f"Difference between Set RTC and Get RTC Timer is greater than or equal to 2")
-            else:
-                logger.info(f"Get RTC and Set RTC Timer is not matching but the difference is less than 2")
-                logger.info(f"Difference between Get and Set RTC Timer is {difference}")
-        if get_time_sec == set_time_sec:
-                logger.info(f"Get RTC and Set RTC Timer are matching ")
-                logger.info(f"Difference between Get and Set RTC Timer is {difference}")
+    time_dif = get_time_sec - (set_time_sec + idle_time)
+    logger.info(f"calculated time_dif between gettime-(settime+scantime)-> {time_dif}")
+    logger.info(f"idle time after initiating set rtc after scan-> {idle_time}")
 
+    with TimeMeasurer() as t:
+        assert (time_dif >= tolerance_threshold[0]) and (time_dif <= tolerance_threshold[1]),\
+            f"Time difference observed between set time and get time is {time_dif} seconds,which is not in tolerance "\
+            f"level"
         logger.info(
-            f"Time difference observed between set time and get time is {difference} seconds, which is expected before scan")
+            f"Time difference observed between set time and get time is {time_dif} seconds,which is in tolerance "
+            f"level")
 
 
 @pytest.mark.config(
@@ -253,28 +228,6 @@ def test_set_get_rtc_twice_TC19049(
         logger.info("get_rtc is working fine in iteration 2")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_get_rtc_multiple_times_TC19053',
-                                                       test_case_id='TC19053',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -457,28 +410,6 @@ def test_get_rtc_multiple_times_TC19053(
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_get_rtc_after_rejoin_TC19055',
-                                                       test_case_id='TC19055',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -702,28 +633,6 @@ def test_get_rtc_after_rejoin_TC19055(
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_set_rtc_incorrect_state_TC19048',
-                                                       test_case_id='TC19048',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -764,28 +673,6 @@ def test_set_rtc_incorrect_state_TC19048(wifi_dut, logger):
                 f"expected")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_get_rtc_without_enabling_feature_TC19054',
-                                                       test_case_id='TC19054',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi=
