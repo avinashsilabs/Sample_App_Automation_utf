@@ -4,7 +4,7 @@ pipeline {
         label 'cbs-iot-wifi-linux-autoscale'
     }
     environment {
-        PIP_OPTIONS = "--trusted-host nexus.silabs.net --index-url https://nexus.silabs.net/repository/pypi-group/simple"
+        PIP_OPTIONS = "--trusted-host artifactory.silabs.net --index-url https://artifactory.silabs.net/artifactory/api/pypi/infrasw-python-remote/simple"
         PROJECT = "utf_wifi"
     }
     stages {
@@ -21,6 +21,7 @@ pipeline {
                         git submodule sync 
                         git config --file=.gitmodules submodule.utf_core.url ssh://git@stash.silabs.com/utf/utf_core.git
                         git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect.git
+                        git config --file=.gitmodules submodule.tcmgr.url ssh://git@stash.silabs.com/toolchain_internal/tcmgr.git
                         git submodule update --init --recursive
 
                         ln -s utf_core/src/utf utf
@@ -39,7 +40,7 @@ pipeline {
                     python3 -m pip install --upgrade pip
                     pip3 install setuptools==57.5.0
                     pip3 install wheel $PIP_OPTIONS
-                    pip3 install -r integration_test-requirements.txt $PIP_OPTIONS
+                    pip3 install -r requirements.txt $PIP_OPTIONS
                 """
                 dir('utf_core') {
                     sh """
@@ -57,7 +58,6 @@ pipeline {
                 TEST_RESULTS_DIR = 'integration_test/test_results'
                 GIT_HASH = GIT_COMMIT.take(10)
                 SONAR = tool name: 'sonarscanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-                BRANCH = 'release/milestone36'
                 SONAR_TOKEN = credentials('sonar_token')
             }
             steps {
@@ -86,13 +86,11 @@ pipeline {
                     withSonarQubeEnv(installationName: 'SILABS_SONARQUBE_SERVER') {
                         script {
                             sh '''
-                                ${SONAR}/bin/sonar-scanner -Dsonar.projectVersion=${GIT_HASH}
+                                ${SONAR}/bin/sonar-scanner -Dsonar.projectVersion=${GIT_HASH} -Dsonar.branch.name=${UTF_WIFI_BRANCH}
                             '''
                             }
                         }
-                    timeout(time: 1, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: false
-                        }
+                        sleep time: 30, unit: 'SECONDS'
                     }
                 }
             }
@@ -117,7 +115,7 @@ pipeline {
                     println env.bugs                       
 
                     emailext (mimeType: "text/html",
-                    to: "languyen@silabs.com, DL.DevOps.BuildAndRelease.Hyd@silabs.com",
+                    to: "languyen@silabs.com, DL.DevOps.BuildAndRelease.Hyd@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com",
                     subject: "SonarQube Analysis Results for repository ${env.PROJECT}, branch ${env.UTF_WIFI_BRANCH}",
                     body: """
                     <p>Dear recipients,</p>
@@ -167,10 +165,6 @@ pipeline {
                             <tr>
                                 <td class="tg-de2y"><strong>Coverage</strong></td>
                                 <td class="tg-de2y" style="text-align: right;">${env.coverage}</td>
-                            </tr>
-                            <tr>
-                                <td class="tg-de2y"><strong>New coverage</strong></td>
-                                <td class="tg-de2y" style="text-align: right;">${env.new_coverage}</td>
                             </tr>
                             <tr>
                                 <td class="tg-de2y"><strong>Duplicated lines</strong></td>
