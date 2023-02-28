@@ -172,10 +172,17 @@ def test_mdns_neg_port_already_in_use_C19007(
     server_ip = "192.168.10.100"
     server_port = 5001
     wifi_dut.interfaces.wifi.send_to(sock, data_length, server_ip, server_port)
-    wifi_dut.interfaces.wifi.mdns_init()
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.mdns_register_service()
-    assert exc_info.value.error_code == 0xBB23, "Observed wrong error code, expected is  0xBB23"
+    if wifi_dut.interfaces.wifi.board_type == "rs9117":
+        logger.info(f"For 9117 mdns init should fail")
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.mdns_init()
+        assert exc_info.value.error_code == 0xBB23, "Observed wrong error code, expected is  0xBB23"
+    else:
+        wifi_dut.interfaces.wifi.mdns_init()
+        with pytest.raises(WlanError) as exc_info:
+            logger.info(f"For 9116 mdns register should fail")
+            wifi_dut.interfaces.wifi.mdns_register_service()
+        assert exc_info.value.error_code == 0xBB23, "Observed wrong error code, expected is  0xBB23"
 
 
 @pytest.mark.config(
@@ -205,7 +212,14 @@ def test_mdns_neg_multicast_socket_in_open_state_C19008(
     join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     logger.info(f"DUT joining to the multicast group {multicast_ip}")
     wifi_dut.interfaces.wifi.join_multicast_group(ip_version, multicast_ip)
-    wifi_dut.interfaces.wifi.mdns_init()
-    with pytest.raises(WlanError) as exc_info:
-        wifi_dut.interfaces.wifi.mdns_register_service()
-    assert exc_info.value.error_code == 0xBB17, "Observed wrong error code, expected is  0xBB17"
+    if wifi_dut.interfaces.wifi.board_type == "rs9117":
+        logger.info(f"For 9117 mdns init should fail")
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.mdns_init()
+        assert exc_info.value.error_code == 0xBB17, "Observed wrong error code, expected is  0xBB17"
+    else:
+        wifi_dut.interfaces.wifi.mdns_init()
+        with pytest.raises(WlanError) as exc_info:
+            logger.info(f"For 9116 mdns register should fail")
+            wifi_dut.interfaces.wifi.mdns_register_service()
+        assert exc_info.value.error_code == 0xBB17, "Observed wrong error code, expected is  0xBB17"
