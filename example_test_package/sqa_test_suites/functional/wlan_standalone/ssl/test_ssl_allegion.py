@@ -4185,7 +4185,7 @@ def test_DNS_Functionality_with_Multiple_APs_TC19183(wifi_sniffer, wifi_access_p
         1: {
             'ssid': 'TESTAPONE',
             'security': 'WPA2',
-            'passphrase': '123123321',
+            'passphrase': '987654321',
             'channel': 6,
         }
     }
@@ -4205,12 +4205,10 @@ def test_DNS_Functionality_with_Multiple_APs_TC19183(wifi_sniffer, wifi_access_p
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.store_config
-@pytest.mark.end_state("wifi_access_points", wifi="ap_disabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disable_store_config", "disassociated"])
 def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sniffer, wifi_access_points, wifi_dut,
-                                                                        logger):
+                                                                         logger):
     try:
         logger.info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
@@ -4220,43 +4218,56 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
             capture_file='test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194')
         listen_interval = 700
         logger.info(" Enabling rejoin...")
-
-        wifi_dut.interfaces.wifi.rejoin()
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=20)
         wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=6)
         ap_bssid_one = wifi_access_points[0].interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid_one}')
-
         join = 1
-        for i in range(3):
+        for count in range(3):
             try:
-                wifi_dut.interfaces.wifi.join_ap(wifi_access_points[0])
+                wifi_dut.interfaces.wifi.join_ap(wifi_access_points[0], timeout=20)
                 time.sleep(3)
                 join = 0
                 break
-            except:
-                logger.info(f"Connection failure{i}")
+            except Exception as e:
+                if ('0x8') in str(e):
+                    wifi_access_points[1].interfaces.wifi.stop_ap()
+                    time.sleep(5)
+            logger.info(f"Connection failure{count}")
         assert join == 0, "Connection failure"
-        time.sleep(3)
-        status = wifi_dut.interfaces.wifi.start_ip()
-        assert status, "DUT not responding for ping request......"
+        ip = 1
+        for count in range(0, 2):
+            try:
+                logger.info("DUT gets ipaddress through DHCP ")
+                wifi_dut.interfaces.wifi.start_ip()
+                ip = 0
+                break
+            except:
+                logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+                time.sleep(1)
+        assert ip == 0, "ip setting in DUT has failed"
 
         wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
                                                             RS9116PowerSaveProcedureTypes.FastPowerSave,
                                                             listen_interval=listen_interval)
-
+        time.sleep(2)
         wifi_dut.interfaces.wifi.config_save()
         wifi_dut.interfaces.wifi.config_enable(config=1)
-        for i in range(0, 2):
+        error_code = 0
+        for i in range(3):
             logger.info(f"RETRYING FOR {i} times")
             wifi_dut.interfaces.wifi.wireless_deinit()
             time.sleep(3)
             try:
-                wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(timeout=20, retries=0)
             except WlanError as e:
                 if e.error_code == 0x5a5a:
-                    assert e.error_code == 0x5a5a
+                    assert e.error_code == 0x5a5a, "Expected error code is 0x5a5a, received wrong error code"
+                    error_code = 1
                     break
 
+        time.sleep(3)
+        assert error_code == 1, "Expected error code is 0x5a5a, received wrong error code"
         logger.info("Stop Sniffer finally")
         time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -4272,30 +4283,22 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
         wifi_access_points[0].interfaces.wifi.stop_ap()
 
         wifi_dut.interfaces.wifi.wireless_deinit()
-
+        time.sleep(3)
         with pytest.raises(WlanError) as e:
-            wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+            wifi_dut.interfaces.wifi.dut_init(timeout=50, retries=0)
+        # Deauthentication received from AP
         assert e.value.error_code == 0x0008, "Observed wrong error code.expected is 0x0008"
         logger.info("joining failed to 2nd AP which has different PSK")
-
         logger.info("Stop Sniffer finally")
         time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
-
-        wifi_dut.interfaces.wifi.config_enable(config=0)
-        wifi_access_points[1].interfaces.wifi.stop_ap()
-
-
     except Exception as e:
-        logger.info("Disable store configuration")
-        wifi_dut.interfaces.wifi.config_enable(config=0)
-        if ('0xffffffe2' or '0xffffffd5') in str(e):
-            logger.info('******* Initiating DUT Recovery using Reset **********')
-            wifi_dut.interfaces.wifi.reset()
-            time.sleep(10)
         wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         raise e
+    finally:
+        logger.info("Disable store configuration")
+        wifi_dut.interfaces.wifi.config_enable(config=0)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -4304,17 +4307,17 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
     wifi={
         # Here, indexing (starts with 0) applies as per order defined in harness.
         0: {
-            'ssid': 'TESTAPONE',
+            'ssid': 'TESTAPONE95',
             'security': 'WPA2',
-            'passphrase': '123123123',
-            'channel': 6,
+            'passphrase': '123456789',
+            'channel': 7,
 
         },
         1: {
-            'ssid': 'TESTAPTWO',
+            'ssid': 'TESTAPTWO95',
             'security': 'WPA2',
-            'passphrase': '123123123',
-            'channel': 6,
+            'passphrase': '123456789',
+            'channel': 7,
         }
     }
 )
@@ -4334,12 +4337,10 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
         "band": 0,
     }
 )
-@pytest.mark.store_config
-@pytest.mark.end_state("wifi_access_points", wifi="ap_disabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sniffer, wifi_dut, wifi_access_points,
-                                                                         wifi_client, logger):
+                                                                          wifi_client, logger):
     try:
         logger.info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
@@ -4350,7 +4351,7 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         listen_interval = 700
         logger.info(" Enabling rejoin...")
         wifi_dut.interfaces.wifi.rejoin()
-        wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=6)
+        wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=7)
         ap_bssid_one = wifi_access_points[0].interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid_one}')
         join = 1
@@ -4386,14 +4387,12 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
             wifi_dut.interfaces.wifi.wireless_deinit()
             time.sleep(3)
             try:
-                wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(timeout=20, retries=0)
             except WlanError as e:
                 if e.error_code == 0x5a5a:
-                    assert e.error_code == 0x5a5a
+                    assert e.error_code == 0x5a5a,"Expected error code is 0x5a5a, received wrong error code"
                     break
-
         time.sleep(3)
-
         wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
                                                             RS9116PowerSaveProcedureTypes.FastPowerSave,
                                                             listen_interval=listen_interval)
@@ -4409,18 +4408,20 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file='test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195')
         wifi_access_points[1].interfaces.wifi.start_ap()
+        time.sleep(5)
         wifi_access_points[0].interfaces.wifi.stop_ap()
 
         wifi_dut.interfaces.wifi.wireless_deinit()
-
+        time.sleep(3)
         with pytest.raises(WlanError) as e:
-            wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+            wifi_dut.interfaces.wifi.dut_init(timeout=20, retries=0)
+        # access point not found/rejoin failure
         assert e.value.error_code == 0x0003 or e.value.error_code == 0x0019, "Observed wrong error code"
         logger.info("joining failed to 2nd AP which has different SSID")
         wifi_dut.interfaces.wifi.inited = True
         wifi_dut.interfaces.wifi.associated = False
 
-        ap_mac_two = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[1].interfaces.wifi.ssid, channel=6)
+        ap_mac_two = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[1].interfaces.wifi.ssid, channel=7)
         ap_bssid = str(ap_mac_two[0]).split(' ')[11].strip(')')
         logger.info(f'AP2 BSSID = {ap_bssid}')
 
@@ -4455,30 +4456,26 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
             wifi_dut.interfaces.wifi.wireless_deinit()
             time.sleep(3)
             try:
-                wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
+                wifi_dut.interfaces.wifi.dut_init(timeout=20, retries=0)
             except WlanError as e:
                 if e.error_code == 0x5a5a:
-                    assert e.error_code == 0x5a5a
+                    assert e.error_code == 0x5a5a,"Expected error code is 0x5a5a, received wrong error code"
                     break
 
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
-
+        time.sleep(2)
         logger.info("Stop Sniffer finally")
-        time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
-
-        wifi_dut.interfaces.wifi.config_enable(config=0)
     except Exception as e:
-        logger.info("Disable store configuration")
-        wifi_dut.interfaces.wifi.config_enable(config=0)
-        if ('0xffffffe2' or '0xffffffd5') in str(e):
-            logger.info('******* Initiating DUT Recovery using Reset **********')
-            wifi_dut.interfaces.wifi.reset()
         wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         raise e
-
+    finally:
+        logger.info("Disable store configuration")
+        wifi_dut.interfaces.wifi.config_enable(config=0)
+        wifi_access_points[1].interfaces.wifi.stop_ap()
+        time.sleep(2)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -4499,7 +4496,7 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
+@pytest.mark.parametrize("domain_name", ["a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
 def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, domain_name, logger):
@@ -4516,7 +4513,7 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(
     set_hour = 10
     set_month_day = 10
     set_month = 10
-    set_year = 1900
+    set_year = 2000
     set_week_day = 3
     wait_time = 100
     listen_interval = 700
@@ -4526,21 +4523,29 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(
                                      month_day=set_month_day,
                                      month=set_month, year=set_year, week_day=set_week_day)
 
-    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
-                                  listen_interval_feature=True,
-                                  listen_interval=listen_interval)
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
 
-    fetch_ip = 1
-    for count in range(3):
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    ip = 1
+    for count in range(0, 2):
         try:
-            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-            logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-            status = ping(device_ip, 10)
-            fetch_ip = 0
+            logger.info("DUT gets ipaddress through DHCP ")
+            ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=60)
+            ip = 0
             break
         except:
-            logger.info(f"RETYRING {count}")
-    assert fetch_ip == 0, "DUT not responding for ping request......"
+            logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
+            time.sleep(1)
+    assert ip == 0, "ip setting in DUT has failed"
+
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+    wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
+                                                        RS9116PowerSaveProcedureTypes.FastPowerSave,
+                                                        listen_interval=listen_interval)
 
     get_seconds, get_minutes, get_hours, get_day_month, get_month, get_year, get_week_day = wifi_dut.interfaces.wifi.get_rtc()
     get_time_sec = ((get_minutes * 60) + get_seconds)
