@@ -410,22 +410,22 @@ def test_ssl_connect_discon_c20531(wifi_sniffer, rs_helper, wifi_dut, wifi_acces
         time.sleep(3)
         device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
                                                                        power_save=True)
-
-        ssl_server.interfaces.ssl.start_server()
-        logger().info(f"###Open ssl client socket in the DUT###")
-        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-        assert sock == 0, "Socket id received is wrong. expected is 0"
-        logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-        logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-        logger().info(f"# Enable ssl option for socket opened")
-        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                                   SocketOptions.SSL_ENABLE)
-        local_port = randint(5001, 60000)
-        logger().info(f"*******Socket binds at device_ip with port 5001 in DUT*****")
-        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-        time.sleep(2)
         iterations = 5
         for count in range(1, iterations):
+            ssl_server.interfaces.ssl.start_server()
+            logger().info(f"###Open ssl client socket in the DUT###")
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            assert sock == 0, "Socket id received is wrong. expected is 0"
+            logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+            logger().info(f"# Enable ssl option for socket opened")
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+            local_port = randint(5001, 60000)
+            logger().info(f"*******Socket binds at device_ip with port 5001 in DUT*****")
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+            time.sleep(2)
+
             logger().info(f"****ssl socket opened in DUT connects to the server****")
             wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
             time.sleep(2)
