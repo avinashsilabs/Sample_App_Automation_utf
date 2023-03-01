@@ -1207,6 +1207,7 @@ defaults:
         ssid: 'TESTTESTTEST'
         security: WPA2
         channel: 1
+        band: 0 #0 for 2.4Ghz & 1 for 5Ghz
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
         static_ip: '192.168.50.199'
