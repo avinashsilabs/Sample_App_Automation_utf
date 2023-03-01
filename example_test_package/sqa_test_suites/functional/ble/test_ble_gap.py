@@ -1753,8 +1753,8 @@ def test_c19830_powersave3_dut_adv_mode(firmware_loader, wifi_dut, ble_dut, ble_
         ble_client.interfaces.bluetooth.stop_scanning()
         assert device_found
 
-        logger().info(f"\n\n Stopping ble-client advertising \n\n")
-        ble_client.interfaces.bluetooth.stop_advertising()
+        logger().info(f"\n\n Stopping dut advertising \n\n")
+        wifi_dut.interfaces.bluetooth.ble_stop_advertising()
         time.sleep(2)
 
         ble_client.interfaces.bluetooth.close()
@@ -1788,6 +1788,7 @@ def test_verify_ble_scan_in_advertising_state_C19839(ble_dut, ble_clients):
     logger().info(" **** START ADVERTISING FROM REMOTE DEVICE 1 **** ")
     ble_client_address1 = ble_client1.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
     assert ble_client_address1, "UNABLE TO GET BLE CLIENT ADDRESS"
+    logger().info(f"ble_client_address1: {ble_client_address1}")
     time.sleep(5)
 
     logger().info(" **** START ADVERTISING FROM DUT **** ")
@@ -1796,6 +1797,8 @@ def test_verify_ble_scan_in_advertising_state_C19839(ble_dut, ble_clients):
     logger().info(" **** START SCANNING DUT FROM REMOTE DEVICE 2 **** ")
     bt_client_address2 = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert bt_client_address2, "FAILED TO INITIATE BLE IN REMOTE DEVICE 2"
+    logger().info(f"bt_client_address2: {bt_client_address2}")
+
     time.sleep(5)
     ble_client2.interfaces.bluetooth.stop_scanning()
 
@@ -1855,6 +1858,7 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(bl
     assert device_name == returned_name, "THE SET DEVICE NAME DIDN'T MATCH THE RETURNED NAME"
     ble_dut.interfaces.bluetooth.ble_set_scan_response_data()
     ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
+    logger().info(f"ble_white_list_address: {ble_white_list_address}")
 
     #add remote device 1 to whitelist and start advertising from DUT
     logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
@@ -1890,8 +1894,8 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(bl
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
-        logger().info(".... DISCONNECTING THE BT HOST ....")
-        ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_white_list_address)
+        logger().info("DISCONNECTING THE DUT FROM REMOTE DEVICE....")
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
         assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
     ble_client1.interfaces.bluetooth.close()
     time.sleep(10)
@@ -1903,6 +1907,8 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(bl
     logger().info(" CONNECTION INITIATED WITH NON WHITELISTED ADDRESS ")
     ble_non_white_list_address = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert ble_non_white_list_address, "FAILED TO INITIATE BLE IN REMOTE DEVICE 2"
+    logger().info(f"ble_non_white_list_address: {ble_non_white_list_address}")
+
     time.sleep(5)
     ble_client2.interfaces.bluetooth.stop_scanning()
 
@@ -1947,6 +1953,7 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(bl
     assert device_name == returned_name, "THE SET DEVICE NAME DIDN'T MATCH THE RETURNED NAME"
     ble_dut.interfaces.bluetooth.ble_set_scan_response_data()
     ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
+    logger().info(f"ble_white_list_address: {ble_white_list_address}")
 
     #add remote device 1 to whitelist and start advertising from DUT
     logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
@@ -1980,8 +1987,8 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(bl
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
     if (state_int > 0):
-        logger().info("DISCONNECTING THE BT HOST....")
-        ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_white_list_address)
+        logger().info("DISCONNECTING THE DUT FROM REMOTE DEVICE....")
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
         assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
     ble_client1.interfaces.bluetooth.close()
     time.sleep(10)
@@ -1994,6 +2001,8 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(bl
     logger().info(" SCANNING AND CONNECTING TO REMOTE DEVICE 2 ")
     ble_non_white_list_address = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
     assert ble_non_white_list_address, "FAILED TO INITIATE BLE IN DUT"
+    logger().info(f"ble_non_white_list_address: {ble_non_white_list_address}")
+
     time.sleep(5)
     ble_client2.interfaces.bluetooth.stop_scanning()
 
@@ -2034,6 +2043,8 @@ def test_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_clients, ble_d
     #fetch the ble addresses of remote devices and add remote device 1 to whitelist
     logger().info("FETCHING THE BLE ADDRESS OF REMOTE DEVICE 1")
     ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
+    logger().info(f"ble_white_list_address: {ble_white_list_address}")
+
     try:
         logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
         ble_dut.interfaces.bluetooth.ble_add_white_list(ble_white_list_address)
@@ -2045,6 +2056,7 @@ def test_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_clients, ble_d
         logger().info(" **** START ADVERTISING FROM REMOTE DEVICE 2 **** ")
         ble_non_white_list_address = ble_client2.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
         assert ble_non_white_list_address, "UNABLE TO GET BLE CLIENT 2 ADDRESS"
+        logger().info(f"ble_non_white_list_address: {ble_non_white_list_address}")
         time.sleep(3)
 
         #start scanning from dut and enable powersave in dut
@@ -2442,8 +2454,7 @@ def test_ble_dut_slave_128_bit_uuid_c19847(ble_dut, ble_client):
             == ble_dut.interfaces.bluetooth.ble_advertising_data
     )
     logger().info("connect to dut from remote le device....")
-    connect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.connect(bt_dut_address))
-    logger().info(f"connect_time  {connect_time}")
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
     assert bt_dut_address, "unable to connect to the given address"
     time.sleep(30)
 
@@ -2462,9 +2473,7 @@ def test_ble_dut_slave_128_bit_uuid_c19847(ble_dut, ble_client):
     logger().info(f"state_int==============>>,  {state_int}")
     if state_int > 0:
         logger().info("disconnecting the dut..")
-        disconnect_time = datetime.datetime.now(ble_client.interfaces.bluetooth.disconnect(bt_dut_address))
-        logger().info(f"disconnect_time  {disconnect_time}")
-        assert "unable to disconnect since the connection never existed"
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
     ble_client.interfaces.bluetooth.close()
     time.sleep(5)

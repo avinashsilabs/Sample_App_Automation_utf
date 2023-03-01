@@ -3251,3 +3251,95 @@ def test_sta_ble_connection_with_ble_connect_disconnect_c20246(wifi_dut, ble_cli
         raise error
     finally:
         dut_clean_up(wifi_dut)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+    },
+)
+@pytest.mark.ble_clients(["raspi_ble_client", "secondary_raspi_ble_client", "tertiary_raspi_ble_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "bt_disconnect", "ble_disconnect"])
+def test_ble_3_slave_connection_with_wlan_tx_c20327(wifi_dut, ble_clients, wifi_sniffer, wifi_access_point):
+    assert len(ble_clients) >= 3, f"Minimum 3 raspi devices needed for this test"
+
+    with BleLogs(start_collecting_logs=True,
+                 bt_log_path=f"reports/test_c20327.log_{int(time.time())}"):
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_start(set_smp=0)
+        assert ble_dut_address is not None, f"Unable to get ble_dut_address"
+
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            logger().info(f"Start {ble_client.name} Advertising")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+            assert ble_client_address is not None, f"Unable to get ble_client_address"
+            time.sleep(5)
+            logger().info(f"Scan and connect to {ble_client.name}")
+            wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=100)
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
+
+            logger().info(f"Connecting to {ble_client.name}")
+            wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=60)
+            logger().info(f"Connect success")
+
+            time.sleep(2)
+            logger().info("Checking connection status of BLE")
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
+            logger().info("DUT is not disconnected from BLE")
+
+        ssid = wifi_access_point.interfaces.wifi.ssid
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_case_C20280.txt')
+
+        with TimeMeasurer() as t:
+            scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid, channel=channel)
+            logger().info(scan_results)
+            assert len(scan_results) > 0, "scan list is empty"
+        logger().info(f"Scan in {t.duration} seconds")
+
+        logger().info("Joining into Wi-Fi on DUT")
+        wifi_join(wifi_dut, wifi_access_point)
+
+        bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {bssid}')
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+
+        # QOS data Packets should be observed with More data Bit set to 1
+        packet_filter1 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
+                         f'and (wlan.ta == {bssid}))'
+
+        # PS Polls with Power Management Bit set to 1 should be sent from the device
+        packet_filter2 = f' (wlan.fc.pwrmgt == 1) and ((wlan.fc.type_subtype == 0x001a) and (wlan.ta == {dut_mac_address}) ' \
+                         f'and (wlan.ra == {bssid}))'
+
+        time.sleep(2)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        logger().info("Validating QOS data Packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter1)[
+            'packet_count'], 'Unable to find QOS data Packets'
+
+        logger().info("Validating PS Polls with Power Management Bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter2)[
+            'packet_count'], 'Unable to find PS Polls with Power Management Bit'
+
+        logger().info("Initiating BLE disconnection on DUT")
+        ble_disconnect(wifi_dut, ble_client_address)
+
+        logger().info("Initiating Wi-Fi disconnection on DUT")
+        wifi_leave(wifi_dut)

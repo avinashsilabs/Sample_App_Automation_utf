@@ -948,7 +948,7 @@ def test_ble_connect_as_slave_C34770(wifi_dut, ble_client):
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_disconnect"])
 def test_ble_connect_as_master_C34771(wifi_dut, ble_client):
     # Start DUT
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start(set_smp=0)
     assert bt_dut_address is not None, "DUT BT Address not found"
     logger().info(f"BT Address of DUT is {bt_dut_address}")
     # Start ble client

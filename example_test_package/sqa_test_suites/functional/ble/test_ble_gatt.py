@@ -253,7 +253,9 @@ def test_fetch_characteristis_from_RD1_C19863(ble_dut, ble_client):
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C19866_C19867(ble_dut, ble_client):
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C19866_C19867(firmware_loader,
+                                                                                          ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
