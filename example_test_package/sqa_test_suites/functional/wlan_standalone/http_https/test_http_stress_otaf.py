@@ -83,28 +83,6 @@ def otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, utf_constants):
     wifi_dut.interfaces.wifi.associated = False
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_http_fw_upgrade_over_night_C19793',
-                                                       test_case_id='C19793',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -210,29 +188,6 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_http_fw_upgrade_with_corrupted_rps_over_night_C19794',
-                                                       test_case_id='C19794',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -314,28 +269,6 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
         time.sleep(10)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_http_fw_upgrade_non_rps_over_night_C19795',
-                                                       test_case_id='C19795',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
