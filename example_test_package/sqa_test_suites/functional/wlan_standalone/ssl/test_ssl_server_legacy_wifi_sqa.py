@@ -281,10 +281,10 @@ def test_ssl_server_testcase_TC19110(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_server_diff_cipher_suite_testcase_TC19132(
+def test_SSLserver_functionality_by_configuring_cipher_suite_in_combination_C113934(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger, cipher_list
         ):
-    capture_filename = "test_ssl_server_diff_cipher_suite_testcase_TC19132"
+    capture_filename = "test_SSLserver_functionality_by_configuring_cipher_suite_in_combination_C113934"
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger.info(f'AP BSSID = {ap_bssid}')
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
