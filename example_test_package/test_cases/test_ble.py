@@ -149,8 +149,9 @@ def test_ble_whitelist_adv_data(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 # https://github.com/bowdentheo/BLE-Beacon-Scanner/blob/master/BeaconScanner.py
-def test_ble_ibeacon_scanning(wifi_dut, ble_client):
+def test_ble_ibeacon_scanning_c19947(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -186,7 +187,8 @@ def test_ble_ibeacon_scanning(wifi_dut, ble_client):
         assert ble_ibeacon_info["tx_power"] == 51
 
     ble_client.interfaces.bluetooth.stop_ibeacon_scanning()
-
+    wifi_dut.interfaces.wifi.ble_stop_advertising()
+    time.sleep(2)
 
 @pytest.mark.config(
     "wifi_dut",
