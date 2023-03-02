@@ -65,7 +65,8 @@ class BleScan(ThreadBase):
             if event.event_type == RS9116AsyncEventType.Adv_Report:
                 whitelist_data = self.wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
                 assert whitelist_data == "AUTOMATION", "whitelist data not found"
-                logger().info(f"found advertising data: {whitelist_data}")
+                logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
+                logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
                 break
         enable_wifips = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -238,6 +239,7 @@ def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
             if event.event_type == RS9116AsyncEventType.Adv_Report:
                 whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
                 assert whitelist_data == "GANGA", "whitelist data not found"
+                logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
                 logger().info(f"found advertising data: {whitelist_data}")
                 break
         enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
