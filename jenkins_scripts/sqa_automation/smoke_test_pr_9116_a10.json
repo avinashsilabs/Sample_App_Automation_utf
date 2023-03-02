@@ -1,0 +1,16 @@
+[
+    {
+      "UTF_WIFI_BRANCH": "release/22q4",
+      "SILICON_REV": "1.4",
+      "SQA_TEST_AGENT": "",
+      "SSH_TARGET": "10.207.18.24",
+      "HARNESS_NAME": "Dev_smoketest_harness_example.yaml",
+      "BUILD_LOCATION":"build_artifacts",
+      "FLASH_RS9116": true,
+      "FLASH_EFR32": true,
+      "PUBLISH_TEST_RESULTS": true,
+      "UTF_PYTEST_COMMAND": "pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+      "device_group_name": "utf_sqa_hyd_1_smoke_test_9116_device_group",
+      "device_group_label": ""
+    }
+]

@@ -19,7 +19,7 @@ def fix_filename(version):
 
 def normalize_firmware(build_location, rs9116_firmware):
     current_directory = os.getcwd()
-    if build_location == "release_packages":
+    if build_location == "release_packages" or build_location == "build_artifacts":
         with zipfile.ZipFile(rs9116_firmware + ".zip", "r") as zf:
             zf.extractall()
             os.chdir(rs9116_firmware)

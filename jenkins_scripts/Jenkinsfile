@@ -135,24 +135,21 @@ pipeline {
                     if(FLASH_RS9116.toBoolean()){
                         if(BUILD_LOCATION != "source_code"){
                             if(RS9116_FIRMWARE != "Internal"){
-                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                        keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                        passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                        usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                withCredentials([usernamePassword(credentialsId: 'wifi-ci-agent-stash-jira', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
 
                                     if(BUILD_LOCATION == "build_artifacts"){
                                         sh '''
                                             rm -rf rs9116_binary
-                                            export GIT_SSH=ssh
-                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                            git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
+                                            mkdir rs9116_binary
+                                            cd rs9116_binary
+                                            curl -u ${USERNAME}:${PASSWORD} -O https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip
                                         '''
                                     } else {
                                         sh '''
                                             rm -rf rs9116_binary
-                                            export GIT_SSH=ssh
-                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
+                                            mkdir rs9116_binary
+                                            cd rs9116_binary
+                                            curl -u ${USERNAME}:${PASSWORD} -O https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip
                                         '''
                                     }
                                 }
@@ -240,6 +237,7 @@ pipeline {
                                 --pytest_command "${UTF_PYTEST_COMMAND}" \
                                 --harness ${HARNESS_NAME} \
                                 --publish_test_results ${PUBLISH_TEST_RESULTS} \
+                                --test_results_source_api TEST_RAIL_API \
                                 --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
                                     -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
                                     -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
