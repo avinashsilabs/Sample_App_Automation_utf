@@ -525,6 +525,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
+                interface: 'eth1' #test line interface 192.168.x.x
 
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
