@@ -4873,7 +4873,7 @@ def test_TC19140_auto_connection_reconnection_after_reset(wifi_sniffer, wifi_dut
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("domain_name", [
-    ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com", "a1ctxhjnkhtvqq.iot.us-east-2.amazonaws.com"], ])
+    ["a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com", "a1ctxhjnkhtvqq.iot.us-east-2.amazonaws.com"], ])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 def test_TC19186_awscloud_with_different_certificate(
