@@ -1320,11 +1320,14 @@ def test_wlan_and_ble_radio_on_off_C20202(wifi_dut, ble_client, wifi_access_poin
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+        "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 @pytest.mark.ble_client("raspi_ble_client")
@@ -1348,7 +1351,7 @@ def test_verify_ble_advertise_and_scan_functionality_dut_in_connected_state_c201
     time.sleep(3)
 
     with TimeMeasurer() as t:
-        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         assert len(scan_results) > 0, "scan_list not found"
         logger().info(scan_results)
     logger().info(f"Scan in {t.duration} seconds")
@@ -1385,13 +1388,25 @@ def test_verify_ble_advertise_and_scan_functionality_dut_in_connected_state_c201
         ble_client2_address = ble_client2.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
         assert ble_client2_address, f"failed to initiate ble in remote device, Unable to fetch ble_client_address"
         time.sleep(5)
-        logger().info(f"Start scanning {ble_client2.name}")
-        wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client2_address, timeout=80)
+        logger().info(f"Initiating scan from {wifi_dut.name} \n ble_client2_address:{ble_client2_address}")
+        dut_scan_result = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client2_address, timeout=80)
+        logger().info(f" scan result '{dut_scan_result}")
 
-        logger().info(f"Initiating scan from {ble_client1.name}")
+        logger().info(f"Initiating scan from {ble_client1.name}\nble_dut_address:{ble_dut_address}")
         # Begin Scanning for BLE devices
-        bt_client_address = ble_client1.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-        assert bt_client_address is not None, "Unable to fetch MAC address from Remote device"
+        bt_client1_address = ble_client1.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert bt_client1_address is not None, "Unable to fetch MAC address from Remote device"
+
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            if ble_dut_address in ble_client1.interfaces.bluetooth.get_devices():
+                device_found = True
+                break
+        logger().info("stop scanning.....")
+        ble_client1.interfaces.bluetooth.stop_scanning()
+        assert device_found, "Unable to scan device"
+        logger().info(f"ble_dut_address- {ble_dut_address} found in {ble_client1.name} scan list")
 
     except Exception as e:
         logger().info("*************** Exception block for stop advertising and stop scanning ***************")
@@ -1452,11 +1467,14 @@ def test_verify_ble_advertise_and_scan_functionality_dut_in_connected_state_c201
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+        "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
 @pytest.mark.ble_client("raspi_ble_client")
@@ -1521,10 +1539,8 @@ def test_validate_ble_services_when_dut_in_connected_state_c20200(firmware_loade
     assert char_path, "characters are empty"
     assert len(char_props) > 0, "length of characters is 0"
     ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-    channel = wifi_access_point.interfaces.wifi.channel
     with TimeMeasurer() as t:
-        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         assert len(scan_results) > 0, "scan_list not found"
         logger().info(scan_results)
     logger().info(f"Scan in {t.duration} seconds")
