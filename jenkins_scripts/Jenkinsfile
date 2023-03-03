@@ -135,8 +135,7 @@ pipeline {
                     if(FLASH_RS9116.toBoolean()){
                         if(BUILD_LOCATION != "source_code"){
                             if(RS9116_FIRMWARE != "Internal"){
-                                withCredentials([usernamePassword(credentialsId: 'wifi-ci-agent-stash-jira', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-
+                                withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                                     if(BUILD_LOCATION == "build_artifacts"){
                                         sh '''
                                             rm -rf rs9116_binary
