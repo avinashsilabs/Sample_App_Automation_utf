@@ -4220,8 +4220,7 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
         logger.info(" Enabling rejoin...")
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=20)
         wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=6)
-        ap_bssid_one = wifi_access_points[0].interfaces.wifi.bssid
-        logger.info(f'AP BSSID = {ap_bssid_one}')
+
         join = 1
         for count in range(3):
             try:
@@ -4352,8 +4351,6 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         logger.info(" Enabling rejoin...")
         wifi_dut.interfaces.wifi.rejoin()
         wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=7)
-        ap_bssid_one = wifi_access_points[0].interfaces.wifi.bssid
-        logger.info(f'AP BSSID = {ap_bssid_one}')
         join = 1
         for i in range(3):
             try:
@@ -4422,8 +4419,6 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         wifi_dut.interfaces.wifi.associated = False
 
         ap_mac_two = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[1].interfaces.wifi.ssid, channel=7)
-        ap_bssid = str(ap_mac_two[0]).split(' ')[11].strip(')')
-        logger.info(f'AP2 BSSID = {ap_bssid}')
 
         join = 1
         for i in range(3):
