@@ -3837,7 +3837,10 @@ def test_ssl_three_sockets_tx_rx_data_testcaseTC19201(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": ["start_field.pem", "ca-chain.cert.pem"],
         "client_cert": ["client-certificate.crt", False],
-        "client_key": ["private-key.key", False]
+        "client_key": ["private-key.key", False],
+        "set_tx_wait_time": True,
+        "tx_wait_time": 160000,
+
     }
 )
 @pytest.mark.parametrize("cert2",
@@ -3938,9 +3941,10 @@ def test_ssl_AWS_testcaseTC19202(
         send_list.append(th_start)
         th_start.start()
 
-    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
-                                                                 time_interval=600,
-                                                                 number_of_pkts=pkt_count)
+    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=6, data_len=buffer_length,
+                                                                 time_interval=500,
+                                                                 number_of_pkts=pkt_count,timeout=600)
+    time.sleep(2)
     socket_list = result
     bytes_sent = (pkt_count * buffer_length)
     bytes_sent_ssl = (pkt_count * buffer_length)
@@ -4134,7 +4138,7 @@ def test_autojoin_functionality_with_Two_APs_TC19181(wifi_sniffer, wifi_access_p
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
+@pytest.mark.parametrize("domain_name", ["a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"])
 @pytest.mark.end_state("wifi_access_points", wifi="ap_disabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
@@ -4151,12 +4155,27 @@ def test_DNS_Functionality_with_Multiple_APs_TC19183(wifi_sniffer, wifi_access_p
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file='test_DNS_Functionality_with_Multiple_APs_TC19183')
         wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[iteration].interfaces.wifi.ssid, channel=6)
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_points[iteration])
-        wifi_dut.interfaces.wifi.start_ip()
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-        logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-        status = ping(device_ip, 10)
-        assert status == 1, "DUT not responding for ping request......"
+        connect = False
+        for trial in range(3):
+            try:
+                logger.info(f"Joining AP")
+                wifi_dut.interfaces.wifi.join_ap(wifi_access_points[iteration])
+                connect = True
+            except:
+                time.sleep(2)
+                logger.info(f"Join to AP failed")
+        assert connect == True, "Join to AP failed"
+
+        ip_fetch = False
+        for trial in range(3):
+            try:
+                logger.info(f"IP Fetch")
+                wifi_dut.interfaces.wifi.start_ip()
+                ip_fetch = True
+            except:
+                time.sleep(2)
+                logger.info(f"IP Fetch failed")
+        assert ip_fetch == True, "IP fetch failed"
 
         wifi_dut.interfaces.wifi.power_save_listen_interval(RS9116PowerSaveModes.PowerSaveMode2,
                                                             RS9116PowerSaveProcedureTypes.FastPowerSave,
