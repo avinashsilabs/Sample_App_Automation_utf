@@ -1088,6 +1088,7 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(rs_helper, utf_constants, radius_se
     verify_sniffer.verify_sniffer_validation()
 
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1111,6 +1112,8 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(rs_helper, utf_constants, radius_se
     }
 )
 # EAP Connection in TLS mode
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1127,27 +1130,23 @@ def test_GTK_Renewal_WPA2_EAP_Multicast_C70608(multicast_client, wifi_sniffer, w
 
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
 
         device_ip, dut_mac_address = rs_helper.check_eap_connectivity(utf_constants, wifi_dut, wifi_access_point,
                                                                       eap_type="TLS")
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
 
-        ap_bssid = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP bssid {ap_bssid}")
-
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
-        timeout = 100
+        timeout = 60
 
-        ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = \
-            multicast_client.interfaces.multicast.multicast_params()
-        logger().info(f"DUT joining to the multicast group {multicast_ip}")
-        wifi_dut.interfaces.wifi.join_multicast_group(ip_version, multicast_ip)
-        run_multicast_rx_traffic(wifi_dut, net_perf_client, protocol, host_ip, timeout, multicast_ip)
+        multicast_RX = rs_helper.run_multicast_traffic(wifi_dut, net_perf_client, protocol, device_ip, host_ip, timeout,
+                                                    multicast_client, traffic_type="RX")
+        logger().info(f"Multicast receive data :{multicast_RX}")
 
         logger().info("stopping capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-
         verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
         verify_sniffer.verify_sniffer_validation()
     except Exception as error:
