@@ -104,6 +104,26 @@ class DnsQuering(ThreadBase):
         time.sleep(10)
         assert status == 1, "ping failed ......"
 
+
+class Shut_Down_Method(ThreadBase):
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def run(self):
+        logger().info("\n\n ----------------------------Cleaning UP the DUT ----------------------------")
+        try:
+            logger().info('******* Closing the all sockets **********')
+            self.wifi_dut.interfaces.wifi.close_sockets()
+            logger().info("Disconnect from AP")
+            self.wifi_dutwifi_dut.interfaces.wifi.leave()
+            self.wifi_dut.interfaces.wifi.associated = False
+            self.wifi_dut.interfaces.wifi.inited = False
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+            assert False, "Failed"
+
+
 @pytest.mark.config(
         "wifi_dut",
         wifi=
@@ -413,6 +433,8 @@ def test_ssl_connect_discon_c20531(wifi_sniffer, rs_helper, wifi_dut, wifi_acces
         iterations = 5
         for count in range(1, iterations):
             ssl_server.interfaces.ssl.start_server()
+            wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
+                                                            socket_flag=SocketType.ASYNCHRONOUS)
             logger().info(f"###Open ssl client socket in the DUT###")
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
             assert sock == 0, "Socket id received is wrong. expected is 0"
@@ -726,5 +748,152 @@ def test_ssl_data_transfer_rx_c20525(
         logger().info(f"Exception: {str(Ex)}")
         raise Ex
     finally:
+        logger().info(f"DUT going to leave")
+        wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE | RS9116CoexMode.ANT,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            4),
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "band": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_TCP_TX_data_transfer_C20532(switch, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
+                                     wifi_client, rs_helper, utf_constants):
+    try:
+        capture_filename = "test_TCP_TX_data_transfer_C20532"
+        bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {bssid}')
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        wifi_dut.interfaces.wifi.set_tx_wait_time(tx_wait_time=120000)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=False)
+        logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
+
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_ENABLE,
+                                                        socket_flag=SocketType.ASYNCHRONOUS)
+        timeout = 60
+        protocol = IperfConstants.TCP
+        wlan_traffic_tx = Wlan_data_transfer_tx(host_ip, wifi_dut, device_ip, wifi_client, rs_helper, timeout,
+                                                net_perf_client, protocol)
+        wlan_traffic_tx.start()
+        wlan_traffic_tx.wait_for_exit()
+        # Disconnect the AP
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    finally:
+        shut_obj = Shut_Down_Method(wifi_dut)
+        shut_obj.start()
+        shut_obj.wait_for_exit()
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE | RS9116CoexMode.ANT,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client| RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(4),
+            "set_send_feature_frame": True,
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sync_conn_disc_c20548(wifi_access_point, wifi_dut, utf_constants):
+    logger().info(f"DUT will connect and disconnect to AP in sync mode for iterations")
+    iter_count = utf_constants.get('iter_count')
+    for count in range(iter_count):
+        logger().info("Initiating test for iteration: {count + 1}")
+        logger().info("scan and connecting to access point.....")
+    # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
+
+        logger().info(f"DUT will be in connected for 10 sec")
+        time.sleep(10)
+        logger().info(f"Verifying connected state by for 10seconds")
+        logger().info(f"DUT going to leave")
+        wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE | RS9116CoexMode.ANT,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client| RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(4),
+            "set_send_feature_frame": True,
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sync_conn_disc_withpowersave_c127835(wifi_access_point, wifi_dut, utf_constants):
+    logger().info(f"DUT will connect and disconnect to AP in sync mode for iterations")
+    iter_count = utf_constants.get('iter_count')
+    for count in range(iter_count):
+        logger().info("Initiating test for iteration: {count + 1}")
+        logger().info("scan and connecting to access point.....")
+    # DUT connects to AP after join_ap API is executed
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+
+        logger().info("enabling dhcp in DUT.......")
+        result = wifi_dut.interfaces.wifi.start_ip()
+        assert isinstance(
+            result, wifi_dut.interfaces.wifi.IPConfig
+        ), f"Failed to get IP address. Result = {result}"
+
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f'DUT ip {device_ip}')
+
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
+        logger().info(f"DUT will be in connected for 10 sec")
+        time.sleep(10)
+        logger().info(f"Verifying connected by for 10seconds")
         logger().info(f"DUT going to leave")
         wifi_dut.interfaces.wifi.leave()
