@@ -834,7 +834,7 @@ def test_ble_gatt_client_master(
     wifi_dut.interfaces.wifi.ble_connect(
         ble_remote_dev_address=bt_client_address,
         timeout=timeout,
-        expected="RSI_BLE_SECURITY_KEYS_EVENT",
+        expected="RSI_BLE_ENHC_CONN_EVENT",
     )
 
     # Get the state of the dut
