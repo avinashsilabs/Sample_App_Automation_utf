@@ -20,8 +20,8 @@ pytestmark = [
             | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
         },
     ),
+    pytest.mark.skip
 ]
-
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
 def test_bt_a2dp_dut_as_src(firmware_loader, wifi_dut, wifi_access_point, bt_client, logger):

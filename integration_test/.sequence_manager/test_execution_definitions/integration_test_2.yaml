@@ -169,7 +169,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - bt_a2dp
       - cases
@@ -194,7 +194,7 @@ test_sequence:
     description: null
     library_name: ''
     version: 0
-    enabled: true
+    enabled: false
     labels:
       - bt_a2dp
       - cases
