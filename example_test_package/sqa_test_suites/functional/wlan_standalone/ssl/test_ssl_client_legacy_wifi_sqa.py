@@ -129,9 +129,9 @@ def packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_
     updated_capture_file = 'filter_' + capture_filename + '_' + str(
         datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
     file_name = f'./reports/{updated_capture_file}.pcap'
+    logger.info(f"FILE NAME {file_name}")
     local_capture_file = file_name
     result = []
-    logger.info(f"DUT_MAC_ADDRESS: {dut_mac_address},AP_BSSID: {ap_bssid}")
     wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
     packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
     wifi_sniffer.interfaces.capture.shell(
@@ -140,43 +140,35 @@ def packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_
         f"{wlan_filter_file}")
     with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
         sftp.get(wlan_filter_file, local_capture_file)
-
+    true_value = False
     for packet in wifi_sniffer.interfaces.capture.iter_packets(
             decrypt_packets=True,
             encryption_type="WPA-PWD",
             decryption_key=decryption_key,
             capture_file_filter=local_capture_file
             ):
+
         for layer in packet.layers:
             layer_name = layer.layer_name.lower()
+            if layer_name == "wlan":
+                mac_layer = str(layer)
             if layer_name == "tls":
                 tls_layer = str(layer)
-                filtered_packet = str(packet)
-                filtered_packet = filtered_packet.split("Layer ")
-                tls_layer_pkt = ""
-                ra_address = ""
-                ta_address = ""
-                for layerp in filtered_packet:
-                    if (((re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:", layerp))) or (re.search(".*TLS:", layerp))):
-                        if (re.search(".*TLS:", layerp)):
-                            tls_layer_pkt = layerp
-                        if (re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:", layerp)):
-                            Received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
-                            receiver_address = re.search(Received,layerp).group()
-                            ra_address = (re.search(Received,layerp).group(1)).lower()
-                            Transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
-                            Transmitter_address= re.search(Transmit, layerp).group()
-                            ta_address= (re.search(Transmit, layerp).group(1)).lower()
-                            dut_mac_address_mod = dut_mac_address.lower()
-                            ap_bssid_mod = ap_bssid.lower()
+                if not ((re.search(".*Application Data Protocol:", tls_layer)) or (re.search(".*Ignored Unknown Record", tls_layer))):
+                    if (re.search(".*Receiver address:", mac_layer) and re.search(".*Transmitter address:", mac_layer)):
+                        Received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
+                        receiver_address = re.search(Received, mac_layer).group()
+                        Transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
+                        Transmitter_address = re.search(Transmit, mac_layer).group()
+                        logger.info(f">>>>>>{receiver_address}>>>>>>{Transmitter_address}")
+                    result.append(tls_layer)
+                    logger.info(f"******************{tls_layer}")
+                else:
+                    true_value = True
+                    break
 
-                        if ((ra_address == dut_mac_address_mod or ra_address == ap_bssid_mod) and (ta_address == dut_mac_address_mod or ta_address == ap_bssid_mod)) and tls_layer_pkt:
-                            if re.search(".*Application Data Protocol:", tls_layer_pkt):
-                                continue
-                            else:
-                                logger.info(f">>>>>>{receiver_address}>>>>>>{Transmitter_address}")
-                                logger.info(f"TLS HANDSHAKE PACKET{tls_layer_pkt}")
-                                result.append(tls_layer_pkt)
+        if true_value:
+            break
 
     return result
 
