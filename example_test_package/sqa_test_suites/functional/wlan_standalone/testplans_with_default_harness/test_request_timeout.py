@@ -198,8 +198,10 @@ def test_request_timeout_keep_alive_10sec_c19746(wifi_sniffer, wifi_dut, wifi_ac
     logger().info(f"Sniffer validation for ARP packets")
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     logger().info(f"Decryption key is {decryption_key}")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+                'packet_count'], 'Unable to find ARP frames in sniffer'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find ARP frames in sniffer'
 
     """=============================Validation of time delta between keep-alive packets=========================="""
     arp_packets_time_delta_list = arp_time_delta_obj.delta_between_arp_packet()
@@ -301,7 +303,8 @@ def test_request_timeout_keep_alive_30sec_C19750(wifi_sniffer, wifi_dut, wifi_ac
     logger().info(f"DUT is going to leave")
     wifi_dut.interfaces.wifi.leave()
     logger().info(f"Sniffer validation for ARP packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+                'packet_count'], 'Unable to find ARP frames in sniffer'
 
     """=============================Validation of time delta between keep-alive packets=========================="""
     arp_packets_time_delta_list = arp_time_delta_obj.delta_between_arp_packet()
@@ -388,7 +391,8 @@ def test_request_timeout_scan_100misc_C19748(wifi_sniffer, wifi_dut, wifi_access
     logger().info(f"DUT is going to leave")
     wifi_dut.interfaces.wifi.leave()
     logger().info(f"Sniffer validation for probe request")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find probe request frames in sniffer'
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -458,7 +462,8 @@ def test_request_timeout_scan_500misc_C19751(wifi_sniffer, wifi_dut, wifi_access
     logger().info(f"DUT is going to leave")
     wifi_dut.interfaces.wifi.leave()
     logger().info(f"Sniffer validation for probe request")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+                'packet_count'], 'Unable to find probe request frames in sniffer'
 
 
 
@@ -535,17 +540,21 @@ def test_sta_keep_alive_10sec_with_traffic_C19637(wifi_sniffer, wifi_dut, wifi_a
     wifi_dut.interfaces.wifi.leave()
 
     logger().info(f"Sniffer validation for Broadcast probe request packets")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+                'packet_count'], 'Unable to find probe request frames in sniffer'
 
     logger().info(f"Sniffer validation for ARP packets")
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     logger().info(f"Decryption key is {decryption_key}")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
+                'packet_count'], 'Unable to find arp frames in sniffer'
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+                'packet_count'], 'Unable to find association frames in sniffer'
 
 
     """=============================Validation of time delta between keep-alive packets=========================="""
     arp_packets_time_delta_list = arp_time_delta_obj.delta_between_arp_packet()
+    logger().info(f'APR packet time delta list before removing 0 = {arp_packets_time_delta_list}')
     arp_packets_time_delta_list.pop(0)
     arp_packets_time_delta_list.pop(0)
     logger().info(f'APR packet time delta list after removing 0 = {arp_packets_time_delta_list}')

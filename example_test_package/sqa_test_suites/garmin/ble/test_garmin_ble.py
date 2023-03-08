@@ -235,35 +235,38 @@ def ble_static_activity(ble_dut, ble_remote_m1, ble_remote_m2, rs_helper_ble, ad
     adv_on_dut()
     rs_helper_ble.ble_scanning_on_remote(scan_device=ble_remote_m1, bt_dut_address=ble_dut_address)
     rs_helper_ble.ble_scanning_on_remote(scan_device=ble_remote_m2, bt_dut_address=ble_dut_address)
-    hci_log_m1 = f"reports/master1_hci.log_"+str(int(time.time()))
-    hci_log_m2 = f"reports/master2_hci.log_"+str(int(time.time()))
+    hci_log_m1 = f"reprots/hci.log_"+str(int(time.time()))
+    hci_log_m2 = f"reports/hci.log_"+str(int(time.time()))
     with ble_remote_m1.interfaces.bluetooth.ble_logs(start_collecting_logs=True, bt_log_path=hci_log_m1):
         rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_m1, ble_dut_address=ble_dut_address, smp_flag=False, min_conn_interval=36, max_conn_interval=36)
+        time.sleep(5)
     adv_on_dut()    
     with ble_remote_m2.interfaces.bluetooth.ble_logs(start_collecting_logs=True, bt_log_path=hci_log_m2):
         rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_m2, ble_dut_address=ble_dut_address, smp_flag=False, min_conn_interval=36, max_conn_interval=36)
-    if hci_log_m1:
+    import os
+    if os.path.isfile(hci_log_m1):       
+        logger().info("\n\n {}".format("\n\n\n *** Verifying connection interval from HCI dump logs...! \n\n"))
         with open(hci_log_m1, 'r') as file:
             log = file.read()
             time.sleep(10)
             pattern_found = False
             if "Connection interval: 45.00 msec (0x0024)" in str(log): pattern_found=True
             assert pattern_found, "Failed...connection is not established with interval 45 ms!"
+            logger().info("\n\n **** Found Connection interval: 45.00 msec (0x0024) string in HCI_Dump logs, which confirms connection is established with interval 45 ms")
     else: assert "HCI Logs are not captured"
     return ble_dut_address
 
-def test_static_activity_C91315(ble_dut, ble_clients, rs_helper_ble):
+def test_static_activity_C91315(ble_dut, ble_client, ble_clients, rs_helper_ble):
     #test case to verify 2 central connections with connection interval 45 ms
     try:
-        ble_dut_address = ble_static_activity(ble_dut=ble_dut, ble_remote_m1=ble_clients[0], ble_remote_m2=ble_clients[1], rs_helper_ble=rs_helper_ble)
+        ble_dut_address = ble_static_activity(ble_dut=ble_dut, ble_remote_m1=ble_client, ble_remote_m2=ble_clients[0], rs_helper_ble=rs_helper_ble)
     except Exception as e:
         assert False, "Test case failed with Excepton {}".format(str(e))
     else:
-        logger().info("\n\n **** Found Connection interval: 45.00 msec (0x0024) string in HCI_Dump logs, which confirms connection is established with interval 45 ms")
         logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     finally:
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
-        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_clients[0]:BleDeviceState.connected, ble_clients[1]:BleDeviceState.connected})
+        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.connected, ble_clients[0]:BleDeviceState.connected})
 
 def test_static_activity_C91316(ble_dut, ble_clients, rs_helper_ble):
     #test case to verify 2 central connections with connection interval 45 ms and advertising interval is 0x152

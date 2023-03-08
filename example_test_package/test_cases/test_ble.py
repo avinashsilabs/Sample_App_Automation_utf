@@ -149,8 +149,9 @@ def test_ble_whitelist_adv_data(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 # https://github.com/bowdentheo/BLE-Beacon-Scanner/blob/master/BeaconScanner.py
-def test_ble_ibeacon_scanning(wifi_dut, ble_client):
+def test_ble_ibeacon_scanning_c19947(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -186,7 +187,8 @@ def test_ble_ibeacon_scanning(wifi_dut, ble_client):
         assert ble_ibeacon_info["tx_power"] == 51
 
     ble_client.interfaces.bluetooth.stop_ibeacon_scanning()
-
+    wifi_dut.interfaces.wifi.ble_stop_advertising()
+    time.sleep(2)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -817,7 +819,7 @@ def test_ble_gatt_client_master(
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
-        bt_dut_address=bt_dut_address, service_classes=[BatteryService]
+        bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
     )
     assert bt_client_address is not None
 
@@ -832,7 +834,7 @@ def test_ble_gatt_client_master(
     wifi_dut.interfaces.wifi.ble_connect(
         ble_remote_dev_address=bt_client_address,
         timeout=timeout,
-        expected="RSI_BLE_SECURITY_KEYS_EVENT",
+        expected="RSI_BLE_ENHC_CONN_EVENT",
     )
 
     # Get the state of the dut

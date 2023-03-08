@@ -57,6 +57,7 @@ ping_count = 10
         "band": 1
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -147,6 +148,7 @@ def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point, wifi_sniffer):
 
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -236,6 +238,7 @@ def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point, wifi_sniffer)
         "module_type": 1
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])

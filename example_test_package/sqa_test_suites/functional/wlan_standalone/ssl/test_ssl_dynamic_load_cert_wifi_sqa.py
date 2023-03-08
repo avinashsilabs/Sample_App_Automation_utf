@@ -1561,6 +1561,7 @@ def test_dynamic_load_powersave_enabled_testcase14(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_store_config"])
+@pytest.mark.store_config
 def test_dynamic_load_auto_join_TC19645(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3, domain_name
         ):

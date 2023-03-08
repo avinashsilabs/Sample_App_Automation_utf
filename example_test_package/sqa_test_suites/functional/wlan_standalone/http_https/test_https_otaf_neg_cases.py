@@ -35,28 +35,6 @@ def logger():
 # Otaf timeout for deinit
 timeout = 60
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_failure_when_enabled_only_bt_C19774',
-                                                       test_case_id='bt_C19774',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -69,6 +47,7 @@ pytestmark = [
         "skip_radio_init": True
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
@@ -95,28 +74,6 @@ def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_failure_when_enabled_only_ble_C19774',
-                                                       test_case_id='ble_C19774',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -156,28 +113,6 @@ def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774',
-                                                       test_case_id='dual_bt_C19774',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -190,6 +125,7 @@ pytestmark = [
         "skip_radio_init": True
     },
 )
+@pytest.mark.bt_classic
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
@@ -216,29 +152,6 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_https_fw_upgrade_failure_with_non_rps_C19776',
-                                                       test_case_id='C19776',
-                                                       notes='test notes'))
 @pytest.mark.config(
     "wifi_dut",
     wifi={

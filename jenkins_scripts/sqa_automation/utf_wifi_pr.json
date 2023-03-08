@@ -1,0 +1,17 @@
+[
+    {
+      "UTF_WIFI_BRANCH": "release/22q4",
+      "SILICON_REV": "1.4",
+      "SQA_TEST_AGENT": "",
+      "RS9116_FIRMWARE": "RS9116W.2.7.0.39",
+      "SSH_TARGET": "10.207.18.192",
+      "HARNESS_NAME": "sqa_codecommit_testbed.yaml",
+      "BUILD_LOCATION":"build_artifacts",
+      "FLASH_RS9116": true,
+      "FLASH_EFR32": true,
+      "PUBLISH_TEST_RESULTS": true,
+      "UTF_PYTEST_COMMAND": "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Wifi_sqa_sanity.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+      "device_group_name": "utf_sqa_hyd_8_device_group",
+      "device_group_label": ""
+    }
+]

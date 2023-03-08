@@ -542,6 +542,7 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
         # changed to channel 149 because raspi is not supporting channel 161
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config(
     'wifi_access_point',
     wifi={

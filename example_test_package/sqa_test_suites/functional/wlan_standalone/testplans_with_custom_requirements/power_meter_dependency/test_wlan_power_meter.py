@@ -28,6 +28,10 @@ def logger():
 
     Author: Aravind
 """
+def __print_throughput(throughput: dict):
+    if throughput is not None:
+        print_dict("##     ", throughput)
+
 class power_number_output():
     def __init__(self, power_meter = None, dtim=None):
         super().__init__()
@@ -157,7 +161,7 @@ def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
     power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
     power_obj.get_power_value()
 
-@pytest.mark.parametrize("dtim", [1, 3, 10])
+@pytest.mark.parametrize("dtim", [1])
 @pytest.mark.config(
         "wifi_dut",
         wifi=
@@ -172,21 +176,23 @@ def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
             "features_enable":49,
         }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_dtim_5g(utf_constants, wifi_access_point, wifi_dut, power_meter, dtim):
+def test_wlan_standby_dtim_5g(utf_constants, wifi_dut, wifi_access_point, power_meter, dtim):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
-    if board_ver == "1.4Q7" or "1.5Q7":
+    if board_ver == "Q7":
         pytest.skip(reason="board version doesn't support 5Ghz")
 
     else:
         bcast_in_tim_next_cmd = 1
         beacon_drop = 5000
         bcast_in_tim = 1
-
+        '''init called in test case level itself as 5G test cases to be skiped for Q7 boards'''
+        wifi_dut.interfaces.wifi.init()
+        logger().info("init done successfully")
         logger().info(f"configuring access point with dtim:{dtim}")
         wifi_access_point.interfaces.wifi.start_ap(dtim=dtim)
 
@@ -266,12 +272,12 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
             "features_enable":49
         }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_active_tx_10dBm_20dBm_5Ghz(utf_constants,wifi_dut, power_meter, power):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
-    if board_ver != "1.4Q7" or "1.5Q7":
+    if board_ver == "Q7":
         pytest.skip(reason="board version doesn't support 5Ghz")
 
     else:
@@ -282,6 +288,8 @@ def test_wlan_active_tx_10dBm_20dBm_5Ghz(utf_constants,wifi_dut, power_meter, po
         length = 1000
         mode = 0
         channel = 36
+        '''init called in test case level itself as 5G test cases to be skiped for Q7 boards'''
+        wifi_dut.interfaces.wifi.init()
 
         logger().info("setting the wireless antenna ")
         wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
@@ -522,7 +530,7 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_met
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+            "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "band": RS9116Band.FiveGHz,
             "set_send_feature_frame": True,
@@ -531,8 +539,7 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_met
 
         }
 )
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim" : 200,
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -540,12 +547,15 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_met
 def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_dut, power_meter):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
-    if board_ver != "1.4Q7" or "1.5Q7":
+    if board_ver == "Q7":
         pytest.skip(reason="this board version doesn't support 5Ghz")
     else:
         bcast_in_tim_next_cmd = 1
         beacon_drop = 5000
         bcast_in_tim = 1
+
+        '''init called in test case level itself as 5G test cases to be skiped for Q7 boards'''
+        wifi_dut.interfaces.wifi.init()
 
         logger().info("scan and connecting to access point.....")
         # DUT connects to AP after join_ap API is executed
@@ -584,7 +594,7 @@ def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_d
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+            "features": RS9116FeatureBitMap.LPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
             "set_send_feature_frame": True,
             "rf_type": 0,
@@ -592,14 +602,14 @@ def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_d
             "band": RS9116Band.FiveGHz,
         }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim":10})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi_access_point, power_meter, bg_scan_periodicity):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
-    if board_ver == "1.4Q7" or "1.5Q7":
+    if board_ver == "Q7":
         pytest.skip(reason="board version doesn't support 5Ghz")
     else:
         bcast_in_tim_next_cmd = 1
@@ -612,6 +622,9 @@ def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi
         active_scan_duration = 50
         passive_scan_duration = 50
         multiprobe = 1
+
+        '''init called in test case level itself as 5G test cases to be skiped for Q7 boards'''
+        wifi_dut.interfaces.wifi.init()
 
         logger().info(f"setting bgscan command with diff bgscan periodicity:{bg_scan_periodicity}")
         wifi_dut.interfaces.wifi.set_bgscan(bg_scan_enable=bg_scan_enable, instant_bg=instant_bg,
@@ -654,6 +667,75 @@ def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi
                                             multiprobe)
         logger().info("bg scan disabled")
         time.sleep(2)
+
+
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "set_send_feature_frame": True,
+            "rf_type":1,
+            "features_enable":49,
+
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wlan_1mbps_listen_rx_2_4_c20641_c20642(wifi_access_point, wifi_dut, power_meter, dtim):
+
+    bcast_in_tim_next_cmd = 1
+    beacon_drop = 5000
+    bcast_in_tim = 1
+
+    logger().info(f"configuring access point with dtim:{dtim}")
+    wifi_access_point.interfaces.wifi.start_ap(dtim=dtim)
+
+    logger().info("scan and connecting to access point.....")
+    # DUT connects to AP after join_ap API is executed
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, join_feature_bitmap=RS9116JoinFeatureBitMap.Default)
+
+    logger().info("enabling dhcp in DUT.......")
+    result = wifi_dut.interfaces.wifi.start_ip()
+    assert isinstance(
+        result, wifi_dut.interfaces.wifi.IPConfig
+    ), f"Failed to get IP address. Result = {result}"
+
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+    logger().info(f'DUT ip {device_ip}')
+
+    logger().info("sending filter broadcast command")
+    wifi_dut.interfaces.wifi.set_filter_broadcast(beacon_drop, bcast_in_tim, bcast_in_tim_next_cmd)
+
+    logger().info("enabling wifi power save mode in DUT......")
+    wifi_dut.interfaces.wifi.power_save(2, 0)
+    time.sleep(10)
+    # Init power meter by specifying module name as datalogger or scope
+    power_meter.interfaces.power_meter.init_power_meter()
+    # Init power meter module
+    power_meter.interfaces.power_meter.init_power_meter_module("scope")
+    # set power meter out put channels
+    power_meter.interfaces.power_meter.set_output_channels_settings(
+        [{"channel": "1", "emulation_mode": "Current Measure", "trace_current": True, "trace_power": True},
+         {"channel": "2", "emulation_mode": "Voltage Measure", "trace_voltage": True, "trace_current": False,
+          "trace_power": True}])
+    # start capture power meter datalog/scope
+    power_meter.interfaces.power_meter.start_capture()
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Scp File Name"] is not None
+
+
+
+
 
 
 

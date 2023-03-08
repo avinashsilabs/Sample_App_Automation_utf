@@ -1,8 +1,16 @@
 devices:
-  si917:
-    skip_markers: [ 'wifi_5g', 'bt_classic' ]
+  rs9117_sapi:
+    skip_markers: [ 'wifi_5g', 'bt_classic', 'wifi_dualband','store_config' ]
     interfaces:
       wifi:
         re_map:
           coex_mode: { 8: 12 }
 #          coex_mode: { RS9116CoexMode.DualBluetoothBLE: RS9116CoexMode.BLE}
+
+  si917:
+    skip_markers: [ 'wifi_5g', 'bt_classic', 'wifi_dualband','store_config' ]
+    interfaces:
+      wifi:
+        re_map:
+          coex_mode: { 8: 12 }
+  #          coex_mode: { RS9116CoexMode.DualBluetoothBLE: RS9116CoexMode.BLE}

@@ -1,5 +1,5 @@
-# Test author: Vinod.G
-# Test suite: MQTT_INTERNAL
+# Test author: Vinod.G & Achal Raghav
+# Test suite: MQTT_SAPI
 import pytest
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
@@ -16,6 +16,7 @@ from utf_wiseconnect.devices.rs911x import (
 from utf import UtfDatabaseProperties
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.iperf.iperf_utils import ping
 import time
 
@@ -31,7 +32,7 @@ import time
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
 
-Note: The test cases added in the file works only in AT mode
+Note: The test cases added in the file works only in AT/SAPI mode
 """
 
 pytestmark = [
@@ -56,35 +57,11 @@ pytestmark = [
         )
     ]
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_mqtt_feature_not_enabled_TC19244',
-                                                       test_case_id='TC19244',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
-# The test case checks DUT behavior when trying to connect to mqtt server without enabling mqtt feature in DUT
-def test_mqtt_feature_not_enabled_TC19244(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
+def test_mqtt_feature_not_enabled_TC19244_TC127800(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
                                           mqtt_dut, logger):
-    capture_filename = "test_mqtt_feature_not_enabled_TC19244"
+    capture_filename = "test_mqtt_feature_not_enabled_TC19244_TC127800"
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
@@ -93,7 +70,10 @@ def test_mqtt_feature_not_enabled_TC19244(wifi_sniffer, mqtt_server, wifi_access
         channel=wifi_access_point.interfaces.wifi.channel
         )
 
-    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    else:
+        mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
 
     logger.info(f"DUT MAC_Address: {mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(
@@ -140,8 +120,12 @@ def test_mqtt_feature_not_enabled_TC19244(wifi_sniffer, mqtt_server, wifi_access
     # The below api puts DUT to power save
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, ping_count)
+    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+        ping(device_ip, ping_count)
     with pytest.raises(WlanError) as exc_info:
         # DUT connect to MQTT server
         mqtt_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,

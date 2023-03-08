@@ -63,6 +63,7 @@ def logger():
         "beacon_missed_count": 40,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_dual_band_scan_with_US_regions_c19011(wifi_access_points, wifi_dut):
@@ -123,6 +124,7 @@ def test_dual_band_scan_with_US_regions_c19011(wifi_access_points, wifi_dut):
         "beacon_missed_count": 40,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_dual_band_scan_with_EU_regions_c19012(wifi_access_points, wifi_dut):
@@ -185,6 +187,7 @@ def test_dual_band_scan_with_EU_regions_c19012(wifi_access_points, wifi_dut):
         "beacon_missed_count": 40,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_dual_band_scan_with_JP_regions_c19013(wifi_access_points, wifi_dut):
@@ -246,6 +249,7 @@ def test_dual_band_scan_with_JP_regions_c19013(wifi_access_points, wifi_dut):
         "beacon_missed_count": 40,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_dual_band_scan_with_World_regions_c19014(wifi_access_points, wifi_dut):
@@ -294,6 +298,7 @@ ping_count = 10
         "beacon_missed_count": 40,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_dual_band_connection_with_country_IE_Mismatch_C19010(wifi_access_point, wifi_dut, remote_socket_factory):

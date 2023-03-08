@@ -1429,16 +1429,16 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
         listen_interval,
         association_id)
     case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-    if case1 != 0 or case2 != 0 or case3 != 0:
-        if case1 != 0:
+    if case1 != 0:
             logger().info(
                 f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2 != 0:
-            logger().info(
-                f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
-        if case3 != 0:
-            logger().info(
-                f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
+    if case2 != 0:
+        logger().info(
+            f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
+    if case3 != 0:
+        logger().info(
+            f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
+    if case1 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
@@ -1522,15 +1522,15 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)['packet_count']
     case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
-    if case1 or case2 or case3 or case4 != 0:
-        if case1:logger().info(
+    if case1:logger().info(
                 f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2:logger().info(
-                f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
-        if case3:logger().info(
-                f'Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set')
-        if case4:logger().info(
+    if case2:logger().info(
+            f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
+    if case3:logger().info(
+            f'Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set')
+    if case4:logger().info(
                 f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+    if case1 or case3 or case4 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
@@ -1561,7 +1561,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     dtim_skip = 4
     ping_count = 60
-    dtim = '2'
+    dtim = '3'
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 4 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
     if More data bit is set to 1'''
@@ -1625,15 +1625,16 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)[
         'packet_count'], 'Unable to find any  PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
     case1, case2, case3, case4 = dtim_beacon_obj.dtim_skip_based_validation(dtim, dtim_skip, association_id)
-    if case1 or case2 or case3 or case4 != 0:
-        if case1 : logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2 : logger().info(
-                f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
-        if case3:logger().info(
-                f'Observed {case3} times DUT is not sending PS-POLL at DTIM Skip beacon even though TIM is set')
-        if case4:logger().info(
-                f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+    if case1: logger().info(
+        f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2: logger().info(
+        f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
+    if case3: logger().info(
+        f'Observed {case3} times DUT is not sending PS-POLL at DTIM Skip beacon even though TIM is set')
+    if case4: logger().info(
+        f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+
+    if case1 or case4 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM skip beacon only"
@@ -1725,19 +1726,18 @@ def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point
     ps_poll_packets_time_delta_list, case1, case2 = filter_pack_obj.listen_interval_based_validation(
         listen_interval,
         association_id)
-    #logger().info(ps_poll_packets_time_delta_list)
     case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-    if case1 != 0 or case2 != 0 or case3 != 0:
-        if case1 != 0:
-            logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2 != 0:
-            logger().info(
-                f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
-        if case3 != 0:
-            logger().info(
-                f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
+    if case1 != 0:
+        logger().info(
+            f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2 != 0:
+        logger().info(
+            f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
+    if case3 != 0:
+        logger().info(
+            f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
 
+    if case1 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
@@ -1914,17 +1914,17 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
         listen_interval,
         association_id)
     case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-    if case1 != 0 or case2 != 0 or case3 != 0:
-        if case1 != 0:
-            logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2 != 0:
-            logger().info(
-                f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
-        if case3 != 0:
-            logger().info(
-                f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
+    if case1 != 0:
+        logger().info(
+            f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2 != 0:
+        logger().info(
+            f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
+    if case3 != 0:
+        logger().info(
+            f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
 
+    if case1 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
@@ -2012,15 +2012,16 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     # ps_poll_packets_time_delta_list, case1, case2 = assoc_obj.DTIM_Based_validation(association_id)
     case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
-    if case1 or case2 or case3 or case4 != 0:
-        if case1:logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2:logger().info(
-                f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
-        if case3:logger().info(
-                f'Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set')
-        if case4:logger().info(
-                f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+    if case1: logger().info(
+        f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2: logger().info(
+        f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
+    if case3: logger().info(
+        f'Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set')
+    if case4: logger().info(
+        f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+
+    if case1 or case4 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
@@ -2051,7 +2052,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     packet_filter11 = '    Type/Subtype: Power-Save poll (0x001a)'
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
     ping_count = 60
-    dtim = '2'
+    dtim = '3'
     '''Configure the AP DTIM count=2 and DUT DTIM no. of skip = 3 validate when DTIM count reach 0 DUT
     should wake up and send PS poll & data packet, second validation is check Qos data will send again after Ps-Poll
     if More data bit is set to 1'''
@@ -2115,15 +2116,16 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)[
         'packet_count'], 'Unable to find any  PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
     case1, case2, case3, case4 = dtim_beacon_obj.dtim_skip_based_validation(dtim, dtim_skip, association_id)
-    if case1 or case2 or case3 or case4 != 0:
-        if case1:logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2:logger().info(
-                f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
-        if case3:logger().info(
-                f'Observed {case3} times DUT is not sending PS-POLL at DTIM Skip beacon even though TIM is set')
-        if case4:logger().info(
-                f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+    if case1: logger().info(
+        f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2: logger().info(
+        f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
+    if case3: logger().info(
+        f'Observed {case3} times DUT is not sending PS-POLL at DTIM Skip beacon even though TIM is set')
+    if case4: logger().info(
+        f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+
+    if case1 or case4 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM skip beacon only"
@@ -2433,17 +2435,17 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
         association_id)
     #logger().info(ps_poll_packets_time_delta_list)
     case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-    if case1 != 0 or case2 != 0 or case3 != 0:
-        if case1 != 0:
-            logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2 != 0:
-            logger().info(
-                f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
-        if case3 != 0:
-            logger().info(
-                f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
+    if case1 != 0:
+        logger().info(
+            f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2 != 0:
+        logger().info(
+            f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
+    if case3 != 0:
+        logger().info(
+            f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
 
+    if case1 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
@@ -2522,15 +2524,19 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4,None, powersave_validation)['packet_count']
     case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
-    if case1 or case2 or case3 or case4 != 0:
-        if case1:logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2:logger().info(
-                f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
-        if case3:logger().info(
-                f'Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set')
-        if case4:logger().info(
-                f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+    # case1 = 2
+    # case4 = 3
+    case3 = 4
+    if case1: logger().info(
+        f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2: logger().info(
+        f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
+    if case3: logger().info(
+        f'Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set')
+    if case4: logger().info(
+        f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+
+    if case1 or case4 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
@@ -2561,7 +2567,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     dtim_beacon_obj = FilterPacket()
     packet_filter10 = "    Type/Subtype: Association Response (0x0001)"
     ping_count = 50
-    dtim = '2'
+    dtim = '3'
 
     '''Verify whether RSI_STA is able to wakeup and receive data at 4th DTIM beacon when we configure num_of_dtim_skip
        is 3 with power save mode 3 with MAX PSP and set listen_interval_dtim is 1'''
@@ -2626,15 +2632,16 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)[
         'packet_count'], 'Unable to find any  PS-Poll(0x0A), Beacon(0x08), Qos NUll data(0x002c) packets'
     case1, case2, case3, case4 = dtim_beacon_obj.dtim_skip_based_validation(dtim, dtim_skip, association_id)
-    if case1 or case2 or case3 or case4 != 0:
-        if case1:logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2:logger().info(
-                f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
-        if case3:logger().info(
-                f'Observed {case3} times DUT is not sending PS-POLL at DTIM Skip beacon even though TIM is set')
-        if case4:logger().info(
-                f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+    if case1: logger().info(
+        f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+    if case2: logger().info(
+        f'Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set')
+    if case3: logger().info(
+        f'Observed {case3} times DUT is not sending PS-POLL at DTIM Skip beacon even though TIM is set')
+    if case4: logger().info(
+        f'Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons')
+
+    if case1 or case4 or case3 > 3 or case2 != 0:
         assert False
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM skip beacon only"

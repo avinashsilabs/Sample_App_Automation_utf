@@ -132,7 +132,7 @@ class MultiSocketsConnectionTx():
             connect_status = False
             for retry in range(1, retry_limit):
                 logger().info(f"connecting to the server")
-                connect_response = self.wifi_dut.interfaces.wifi.connect_to_server(tcp_socket_id, self.host_ip, server_port=server_port)
+                connect_response = self.wifi_dut.interfaces.wifi.connect(tcp_socket_id, self.host_ip, server_port=server_port)
                 logger().info(f"Connect response : {connect_response}")
                 if connect_response.decode() == '':
                     logger().info(f"Unable to connect socket: {connect_response} in {retry} try")
@@ -149,17 +149,18 @@ class MultiSocketsConnectionTx():
         data_sent = []
         for _ in client_sockets:
             data_sent.append(get_random_data(20))
-
-        results = ThreadBase.call_functions_simultaneously(
-            [(self.wifi_dut.interfaces.wifi.send_data, dut_sockets[index], len(data), data) for index, data in
-             enumerate(data_sent)]
-        )
-        for index, client_socket in enumerate(client_sockets):
-            data = data_sent[index]
-            logger().info(f"Data sent to client {index} - {data}")
-            data_recv = client_socket.recv_data_tcp(len(data))
-            logger().info(f"Data received in client {index} - {data_recv}")
-            assert data_recv == data
+        sw = Stopwatch()
+        while sw.elapsed_sec < 300:
+              results = ThreadBase.call_functions_simultaneously(
+                 [(self.wifi_dut.interfaces.wifi.send_data, dut_sockets[index], len(data), data) for index, data in
+                   enumerate(data_sent)]
+               )
+              for index, client_socket in enumerate(client_sockets):
+                 data = data_sent[index]
+                 logger().info(f"Data sent to client {index} - {data}")
+                 data_recv = client_socket.recv_data_tcp(len(data))
+                 logger().info(f"Data received in client {index} - {data_recv}")
+                 assert data_recv == data
         if self.remote_close:
             logger().info(f"closing the sockets on remote side")
             self.remote_socket_factory.interfaces.socket.close_all()
@@ -1210,6 +1211,7 @@ def test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(wifi_a
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
 def test_DUTAP_open_10_client_sockets_send_tx_C19473(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
     iter_count = utf_constants.get('iter_count')
+
     try:
         for count in range(1, iter_count + 1):
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)

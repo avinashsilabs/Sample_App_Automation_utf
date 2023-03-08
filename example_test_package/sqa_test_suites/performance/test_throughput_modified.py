@@ -561,11 +561,11 @@ class FilterPacket:
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -578,7 +578,7 @@ def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_cli
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                   enable_async_socket=1, enable_socket_config=1)
@@ -597,11 +597,11 @@ def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_cli
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -614,7 +614,7 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
@@ -632,11 +632,11 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -649,7 +649,7 @@ def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_cli
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                   enable_async_socket=1, enable_socket_config=1)
@@ -668,11 +668,11 @@ def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_cli
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -685,7 +685,7 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
     ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip)
 
@@ -703,11 +703,11 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -746,7 +746,7 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
             assert connected
 
         ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-        iter_count = 3
+        iter_count = utf_constants.get("iter_count")
         for i in range(0, iter_count):
             filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                       suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1, enable_socket_config=0)
@@ -770,11 +770,11 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -807,7 +807,7 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
             assert connected
 
         ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-        iter_count = 3
+        iter_count = utf_constants.get("iter_count")
         for i in range(0, iter_count):
             filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                       suspend_bt_task=1, suspend_ble_task=1)
@@ -831,11 +831,11 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -868,7 +868,7 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
             assert connected
 
         ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-        iter_count = 3
+        iter_count = utf_constants.get("iter_count")
         for i in range(0, iter_count):
             filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                       suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1,
@@ -894,11 +894,11 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut,
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -931,7 +931,7 @@ def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_po
             assert connected
 
         ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-        iter_count = 3
+        iter_count = utf_constants.get("iter_count")
         for i in range(0, iter_count):
             filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                       suspend_bt_task=1, suspend_ble_task=1)
@@ -955,11 +955,11 @@ def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_po
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client,
+                                          wifi_dut, net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
         "min_conn_interval": 36,
@@ -1013,7 +1013,7 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
     time.sleep(2)
 
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                   suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1,
@@ -1043,11 +1043,11 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut,
+                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
         "min_conn_interval": 36,
@@ -1094,7 +1094,7 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
     time.sleep(2)
 
     ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                   suspend_bt_task=1, suspend_ble_task=1)
@@ -1121,11 +1121,11 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut,
+                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
         "min_conn_interval": 36,
@@ -1172,7 +1172,7 @@ def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi
     time.sleep(2)
 
     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                   suspend_bt_task=1, suspend_ble_task=1, enable_async_socket=1,
@@ -1201,11 +1201,11 @@ def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
-def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut, net_perf_client, protocol):
+def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut,
+                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
         "min_conn_interval": 36,
@@ -1252,7 +1252,7 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
     time.sleep(2)
 
     ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-    iter_count = 3
+    iter_count = utf_constants.get("iter_count")
     for i in range(0, iter_count):
         filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                   suspend_bt_task=1, suspend_ble_task=1)
@@ -1279,12 +1279,11 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
 def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
-                                         net_perf_client, protocol):
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     try:
         with BleLogs(start_collecting_logs=True,
@@ -1328,7 +1327,7 @@ def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wi
                     spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
                     spp_obj.start()
                 ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-                iter_count = 3
+                iter_count = utf_constants.get("iter_count")
                 for i in range(0, iter_count):
                     filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                               suspend_bt_task=0, suspend_ble_task=0, enable_async_socket=1,
@@ -1358,12 +1357,11 @@ def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
 def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wifi_access_point, wifi_client, wifi_dut,
-                                         net_perf_client, protocol):
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     try:
         with BleLogs(start_collecting_logs=True,
@@ -1400,7 +1398,7 @@ def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wi
                     spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
                     spp_obj.start()
                 ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-                iter_count = 3
+                iter_count = utf_constants.get("iter_count")
                 for i in range(0, iter_count):
                     filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                               suspend_bt_task=0, suspend_ble_task=0)
@@ -1429,12 +1427,11 @@ def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
 def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
-                                         net_perf_client, protocol):
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     try:
 
@@ -1477,7 +1474,7 @@ def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wi
                     spp_obj.start()
 
                     ''' Start Iperf traffic DUT as a server and Linux machine as a Client '''
-                iter_count = 3
+                iter_count = utf_constants.get("iter_count")
                 for i in range(0, iter_count):
                     filter_pack_obj.start_iperf_dut_as_server(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                               suspend_bt_task=0, suspend_ble_task=0, enable_async_socket=1,
@@ -1507,12 +1504,11 @@ def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "band": 2
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
 def test_wlan_bt_data_transfer_udp_tx_c20756(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
-                                         net_perf_client, protocol):
+                                         net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     try:
 
@@ -1550,7 +1546,7 @@ def test_wlan_bt_data_transfer_udp_tx_c20756(wifi_sniffer, bt_client, bt_dut, wi
                     spp_obj = spp_loopback(bt_server_socket, wifi_dut, recv_text, logger)
                     spp_obj.start()
                 ''' Start Iperf traffic DUT as a client and Linux machine as a server '''
-                iter_count = 3
+                iter_count = utf_constants.get("iter_count")
                 for i in range(0, iter_count):
                     filter_pack_obj.start_iperf_dut_as_client(wifi_dut, wifi_client, net_perf_client, protocol, device_ip,
                                                               suspend_bt_task=0, suspend_ble_task=0)
@@ -1583,13 +1579,12 @@ def test_wlan_bt_data_transfer_udp_tx_c20756(wifi_sniffer, bt_client, bt_dut, wi
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.NWP160MHz,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "band": 2,
         "set_send_feature_frame": 1,
         "ca_cert": "ca-chain.cert.pem",
     },
 )
 def test_ssl_standalone_testcase_tx_C20777(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server):
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, utf_constants):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_ssl_standalone_testcase_tx_C20777')
@@ -1606,8 +1601,8 @@ def test_ssl_standalone_testcase_tx_C20777(
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
 
-    iterations = 3
-    for count in range(1, iterations):
+    iter_count = utf_constants.get("iter_count")
+    for count in range(1, iter_count):
         logger().info(f"###############Iteration{count}###############################")
         ssl_server.interfaces.ssl.start_server()
         logger().info(f"###Open ssl client socket in the DUT###")
@@ -1673,13 +1668,12 @@ def test_ssl_standalone_testcase_tx_C20777(
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.NWP160MHz,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "band": 2,
         "set_send_feature_frame": 1,
         "ca_cert": "ca-chain.cert.pem",
     },
 )
 def test_ssl_standalone_testcase_rx_C20778(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server):
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, utf_constants):
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
@@ -1697,8 +1691,8 @@ def test_ssl_standalone_testcase_rx_C20778(
     port1 = ssl_server.interfaces.ssl.config['device_port1']
     bytes_sent = (pkt_count * buffer_length)
 
-    iterations = 4
-    for count in range(1, iterations):
+    iter_count = utf_constants.get("iter_count")
+    for count in range(1, iter_count):
         logger().info(f"###############Iteration{count}###############################")
         ssl_server.interfaces.ssl.start_server()
         wifi_dut.interfaces.wifi.socket_config(total_sockets=1, total_tcp_sockets=1, total_udp_sockets=0,
@@ -1759,7 +1753,6 @@ def test_ssl_standalone_testcase_rx_C20778(
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.NWP160MHz,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | RS9116ExtTCPIPFeatureBitMap.TCP_ACK_CORRECT,
-        "band": 0,
         "set_send_feature_frame": 1,
         "ca_cert": "ca-chain.cert.pem",
     },
@@ -1854,7 +1847,6 @@ def test_ssl_wlan_bt_data_transfer_tcp_tx_C20760(
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.NWP160MHz,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "band": 0,
         "set_send_feature_frame": 1,
         "ca_cert": "ca-chain.cert.pem",
     },

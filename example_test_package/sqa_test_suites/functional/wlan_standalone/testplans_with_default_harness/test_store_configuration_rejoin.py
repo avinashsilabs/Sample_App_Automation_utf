@@ -78,6 +78,7 @@ class FilterPacket:
         "band": 2
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -177,6 +178,7 @@ def test_store_config_by_turning_off_AP_C19082(wifi_sniffer, wifi_dut, wifi_acce
         "eap_cert": "wifi-user.pem",
     }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
@@ -304,6 +306,7 @@ def test_store_config_rejoin_specific_channel_C19100(wifi_sniffer,wifi_dut,wifi_
         "first_time_retry": 0,
     }
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -480,6 +483,7 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "STORE_CONFIG_TEST", "channel": 1, "passphrase": '12214040487', "security": 'WPA2'})

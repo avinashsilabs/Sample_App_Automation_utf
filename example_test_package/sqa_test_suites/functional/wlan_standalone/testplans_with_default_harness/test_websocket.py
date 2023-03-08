@@ -136,6 +136,31 @@ class WebsocketEventHandler:
         logger().info(f"received message {len(self.message_received)}")
 
 
+def join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants):
+    channel = wifi_access_point.interfaces.wifi.channel
+    scan_status = 0
+    for count in range(3):
+        try:
+            logger().info("scan for the ap's.....")
+            wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel, retries=1)
+            scan_status = 1
+            break
+        except Exception as e:
+            logger().info(f"Scanning to the Wifi Access point is failed. retry count -> {count+1}")
+            time.sleep(1)
+            if "Error code: 0x2" in str(e):
+                logger().info(f"Error found:{str(e)}\n -> Device already associated to AP, disconnecting before scan")
+                logger().info("Initiating wlan_disconnect from DUT")
+                wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+                time.sleep(5)
+                if count == 2:
+                    raise
+    assert scan_status, "Scanning to the AP is failed"
+    logger().info("connecting to access point.....")
+    device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    return device_ip, dut_mac_address
+
+
 # configure ping_count to ping dut
 ping_count = 20
 
@@ -157,9 +182,9 @@ ping_count = 20
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 @pytest.mark.http_server("raspi_lighttpd")
-def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
+def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper, utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -180,40 +205,9 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-    # Initiate ping from third party wifi-client to DUT
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -292,13 +286,15 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcode_9_C19345(wifi_dut, wifi_access_point,
-                                                                                           wifi_sniffer, http_server):
+                                                                                           wifi_sniffer, http_server,
+                                                                                           rs_helper, utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
     beacon_missedcount = 40
     first_time_retry = 0
     timeout = 10
+    http_server.interfaces.http.interface = "eth0"
     channel = wifi_access_point.interfaces.wifi.channel
     capture_filename = 'test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcode_9_C19345'
     sock = 0
@@ -309,39 +305,9 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file='capture_filename')
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -357,7 +323,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
                                                          local_port=5001)
     time.sleep(0.1)
     assert ws_handler.client_connected
-    iter_count = 10
+    iter_count = 30
     for i in range(iter_count):
         wifi_dut.interfaces.wifi.send_data_over_websocket(sock, opcode=137, message="!")
         logger().info("opcode 137 sent")
@@ -380,7 +346,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
 
     # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
     packet_filter2 = f'!(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or ' \
-                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == 11) or eapol or ' \
+                     f'(wlan.fc.type_subtype == 0x0000) or (wlan.ds.current_channel == {channel}) or eapol or ' \
                      f'(wlan.fc.type_subtype == 0x000b) and (wlan.addr == {ap_bssid}) || (wlan.addr == {dut_mac_address})'
 
     logger().info("Validating Probe req(Broadcast/Unicast), authentication ,association, eapol")
@@ -415,7 +381,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                                        http_server):
+                                                                        http_server, rs_helper, utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -437,40 +403,9 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-    # Initiate ping from third party wifi-client to DUT
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -554,7 +489,8 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
                     wifi={"standard": '11n', "security": 'WPA2', "ssid": 'TEST', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
-def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
+def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
+                                               utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -576,40 +512,9 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-    # Initiate ping from third party wifi-client to DUT
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -691,7 +596,8 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
-def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
+def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
+                                                 utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -713,40 +619,9 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-    # Initiate ping from third party wifi-client to DUT
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -826,7 +701,8 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper, utf_constants):
+def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
+                                       utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -847,12 +723,9 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-    logger().info("connecting to access point.....")
-    device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -935,7 +808,8 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
-def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, wifi_sniffer, http_server):
+def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
+                                                  utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -957,40 +831,9 @@ def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, w
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("enabling dhcp in DUT.......")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-
-    # Initiate ping from third party wifi-client to DUT
-    logger().info(f'DUT ip {device_ip}')
-    logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
-    logger().info("ping to DUT is successful....")
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(
@@ -1069,7 +912,7 @@ def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, w
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 def test_tx_over_web_socket_over_SSL_with_maximum_data_length_C19343(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                                     http_server):
+                                                                     http_server, rs_helper, utf_constants):
     validation = True
     rejoin_max = 10
     scan_interval = 6
@@ -1090,30 +933,9 @@ def test_tx_over_web_socket_over_SSL_with_maximum_data_length_C19343(wifi_dut, w
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
 
-    logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-    logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    wifi_dut.interfaces.wifi.start_ip()
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-    logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
-    ping(device_ip, ping_count)
-
-    logger().info(f"enabling wifi power save mode in DUT......")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, "failed to enable wifi power save"
-
-    logger().info(f"enabling bt power save mode in DUT......")
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "failed to enable bt power save"
-
-    logger().info("fetching dut mac address....")
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    device_ip, dut_mac_address = join_get_ip(wifi_dut, wifi_access_point, rs_helper, utf_constants)
 
     ws_handler = WebsocketEventHandler()
     http_server.interfaces.http.set_fn_on_websocket_client_connected(

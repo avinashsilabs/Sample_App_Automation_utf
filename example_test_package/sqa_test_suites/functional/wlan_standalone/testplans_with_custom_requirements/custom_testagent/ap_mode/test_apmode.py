@@ -501,6 +501,7 @@ def test_dut_ap_mode_tx_rules_USregion_C19454(firmware_loader, wifi_sniffer, wif
         "region_code_ap": "US",
     },
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config(
     "wifi_client",
     wifi={
@@ -801,6 +802,7 @@ def test_DUTAP_diff_beacon_intervals_C19443(firmware_loader, wifi_sniffer, wifi_
         "security": "WPA2", "ssid": "SILABS_AP_C19435", "passphrase": "12345678", "beacon": 100,
     }
 )
+@pytest.mark.wifi_5g
 @pytest.mark.config(
     "wifi_client",
     wifi={
@@ -1612,6 +1614,7 @@ def test_DUTAP_TCP_Tx_Rx_C19447(firmware_loader, wifi_sniffer, net_perf_client, 
         "interface": "wlan0",
     },
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 # @pytest.mark.firmware_app("test_ap_ht_caps")
 def test_DUT_APMode_11d_support_C19448(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, utf_constants):
@@ -1699,6 +1702,7 @@ def test_DUT_APMode_11d_support_C19448(firmware_loader, wifi_sniffer, wifi_dut, 
         "region_code_ap": "JP ", "channel": 149,
     },
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_DUTAP_JPregion_unsupported_channel_C19457(firmware_loader, wifi_dut):
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -1764,6 +1768,7 @@ def test_DUTAP_USregion_unsupported_channel_C19458(wifi_dut):
         "security": "WPA2", "ssid": "SILABS_AP_C19449", "passphrase": "test1234", "channel": 11,
     }
 )
+@pytest.mark.wifi_dualband
 @pytest.mark.config(
     "wifi_client",
     wifi={
@@ -2077,6 +2082,7 @@ def test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450(firmware_loader, wifi_sniffer, 
         "channel": 11,
     },
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants):
@@ -2217,6 +2223,7 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
         "channel": 11,
     },
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 def test_DUT_AP_Mode_store_config_wpa2_C19452(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel,

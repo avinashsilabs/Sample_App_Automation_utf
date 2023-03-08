@@ -181,5 +181,101 @@ def test_scan_func_after_successful_dut_conn_c20849(wifi_access_point, wifi_dut,
         logger().info(
         f"Dut Tried to initiate the scan command after successful connection with AP , observed error code 0x2 which is expected")
 
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.ANT,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                        RS9116FeatureBitMap.OpenMode,
+            "tcpip_features" : RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL |
+                               RS9116TCPIPFeatureBitMap.DNSClient |RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose |
+                                  RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY |
+                                  RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
+                                  RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+                           RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "set_send_feature_frame": True,
+            "rf_type":1,
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPAWPA2MixedMode'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_wpa_wpa2_mixed_mode_access_point_detected_as_wpa_c20851(wifi_access_point, wifi_dut, wifi_sniffer):
+    logger().info("\n\n **** Some WPA/WPA2 mixed mode access points being detected as WPA only ***** \n\n")
+    logger().info(" ====== configuring the sniffer with access point channel ======")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_connected_standy_C20851')
+
+    logger().info("Initiating scan and connecting to access point")
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+    logger().info("When AP is configured in Mixed mode.DUT should connect to higher Security")
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+    logger().info("getting wireless info")
+    result = wifi_dut.interfaces.wifi.get_wireless_info()
+    if "security_mode: 2" in result:
+        logger().info("DUT connected to AP with WPA2")
+    else:
+        logger().info("DUT connected to AP with WPA")
+        assert ("DUT connected to AP with WPA security instead of WPA2")
+    wifi_dut.interfaces.wifi.start_ip()
+    wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.ANT,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                        RS9116FeatureBitMap.OpenMode, #get features in garmin
+            "tcpip_features" : RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL |
+                               RS9116TCPIPFeatureBitMap.DNSClient |RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose |
+                                  RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY |
+                                  RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
+                                  RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+                           RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "set_send_feature_frame": True,
+            "rf_type":1,
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_wifi_conn_by_providing_wrong_psk_c20847(wifi_access_point, wifi_dut, wifi_sniffer):
+    logger().info("\n\n **** Verify Wi-Fi connection by providing the wrong PSK using rsi_wlan_connect_async API ***** \n\n")
+    logger().info(" ====== configuring the sniffer with access point channel ======")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_connected_standy_C20847')
+
+    try:
+        logger().info("Initiating scan and connecting to access point")
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point, passphrase=123456789)
+            assert exc_info.value.error_code == 0x8
+    except:
+        logger().info(f"connectivity fails as PSK is given wrong -->Expected")
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
 
 

@@ -132,40 +132,34 @@ pipeline {
         stage('Get rs9116 binary') {
             steps{
                 script{
-                    if(FLASH_RS9116.toBoolean()){
-                        if(BUILD_LOCATION != "source_code"){
-                            if(RS9116_FIRMWARE != "Internal"){
-                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                        keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                        passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                        usernameVariable: 'SSH_KEY_USERNAME')]) {
-
-                                    if(BUILD_LOCATION == "build_artifacts"){
-                                        sh '''
-                                            rm -rf rs9116_binary
-                                            export GIT_SSH=ssh
-                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                            git clone ssh://git@stash.silabs.com/redpine/build_artifacts.git -b ${RS9116_FIRMWARE}/build --single-branch rs9116_binary
-                                        '''
-                                    } else {
-                                        sh '''
-                                            rm -rf rs9116_binary
-                                            export GIT_SSH=ssh
-                                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-                                            git clone ssh://git@stash.silabs.com/redpine/release_packages.git -b ${RS9116_FIRMWARE} --single-branch rs9116_binary
-                                        '''
-                                    }
-                                }
-                                dir('rs9116_binary'){
+                    if(BUILD_LOCATION != "source_code"){
+                        if(RS9116_FIRMWARE != "Internal"){
+                                withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                                if(BUILD_LOCATION == "build_artifacts"){
                                     sh '''
-                                    if [ -d venv/bin ]; then
-                                    . venv/bin/activate
-                                    elif [ -d venv/Scripts ]; then
-                                    . venv/Scripts/activate
-                                    fi
-                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                        rm -rf rs9116_binary
+                                        mkdir rs9116_binary
+                                        cd rs9116_binary
+                                        curl -k -u ${USERNAME}:${PASSWORD} -O https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip --output ${RS9116_FIRMWARE}.zip
+                                    '''
+                                } else {
+                                    sh '''
+                                        rm -rf rs9116_binary
+                                        mkdir rs9116_binary
+                                        cd rs9116_binary
+                                        curl -k -u ${USERNAME}:${PASSWORD} -O https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip --output ${RS9116_FIRMWARE}.zip
                                     '''
                                 }
+                            }
+                            dir('rs9116_binary'){
+                                sh '''
+                                if [ -d venv/bin ]; then
+                                . venv/bin/activate
+                                elif [ -d venv/Scripts ]; then
+                                . venv/Scripts/activate
+                                fi
+                                python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                '''
                             }
                         }
                     } else {
@@ -177,19 +171,20 @@ pipeline {
         stage('Build sqa test agent binary') {
             steps{
                 script{
-                    if(FLASH_EFR32.toBoolean()){
-                        if(SQA_TEST_AGENT != "Internal"){
-                            withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
-                                                        keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
-                                                        passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
-                                                        usernameVariable: 'SSH_KEY_USERNAME')]) {
-                                sh '''
-                                    ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID}
-                                '''
-                            }
+                    if(SQA_TEST_AGENT != "Internal"){
+                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                    keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                    passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                    usernameVariable: 'SSH_KEY_USERNAME')]) {
+                            sh '''
+                                    mkdir -p reports
+                                    ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID} > reports/build-test-agent.log 2>&1
+                                    if [ $? -ne 0 ]; then
+                                    echo building test agent failed!
+                                    exit 1
+                                    fi
+                            '''
                         }
-                    } else {
-                        echo "Skipping release package checkout for SQA test agent."
                     }
                 }
             }
@@ -202,7 +197,7 @@ pipeline {
                     else
                         . venv/Scripts/activate
                     fi
-                    python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${FLASH_RS9116} ${FLASH_EFR32} ${SILICON_REV} ${BUILD_LOCATION}
+                    python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SILICON_REV} ${BUILD_LOCATION}
                 '''
             }
         }
@@ -240,6 +235,7 @@ pipeline {
                                 --pytest_command "${UTF_PYTEST_COMMAND}" \
                                 --harness ${HARNESS_NAME} \
                                 --publish_test_results ${PUBLISH_TEST_RESULTS} \
+                                --test_results_source_api TEST_RAIL_API \
                                 --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
                                     -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
                                     -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
@@ -250,6 +246,13 @@ pipeline {
                                     -e STACK_NAME=WIFI, \
                                     -e SSH_TARGET=${SSH_TARGET}, \
                                     -e GIT_BRANCH=${GIT_BRANCH}" \
+
+                            export exitcode=$?
+
+                            ssh -o StrictHostKeyChecking=no pi@${SSH_TARGET} "sudo reboot"
+                            ping -n 20 ${SSH_TARGET}
+
+                            exit $exitcode
                         '''
                     } catch(err) {
                         echo err.toString()
@@ -261,11 +264,18 @@ pipeline {
             post {
                 always {
                     script {
-                        //archiveArtifacts 'example_test_package/**'
-                        //archiveArtifacts 'manifest/**'
-                        archiveArtifacts 'reports/**'
-                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
-                        junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                        withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                            //archiveArtifacts 'example_test_package/**'
+                            //archiveArtifacts 'manifest/**'
+                            // archiveArtifacts 'reports/**'
+                            // archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
+                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                            sh '''
+                            zip -r reports.zip reports
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/reports/" -T reports.zip
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/config/harnesses/${env.HARNESS_NAME}" -T config/harnesses/${env.HARNESS_NAME}
+                            '''
+                        }
                     }
                 }
             }

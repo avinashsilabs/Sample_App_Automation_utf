@@ -228,7 +228,6 @@ class SslConnectThread(ThreadBase):
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"6kb.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
@@ -278,7 +277,6 @@ def test_download_data_from_https_server_C42042_1(wifi_sniffer, wifi_dut, utf_co
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
@@ -327,7 +325,6 @@ def test_download_data_from_https_server_C42042_2(wifi_sniffer, wifi_dut, utf_co
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"10MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
@@ -379,7 +376,6 @@ def test_download_data_from_https_server_C42042_3(wifi_sniffer, wifi_dut, utf_co
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
@@ -431,7 +427,6 @@ def test_download_data_from_https_server_C42042_4(wifi_dut, wifi_access_point, w
         "client_key": ["private-key.key"],
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_allegion_aws_fw_download_C42044(wifi_sniffer, wifi_access_point, wifi_dut, aws_s3, http_server, utf_constants):
@@ -476,7 +471,6 @@ def test_allegion_aws_fw_download_C42044(wifi_sniffer, wifi_access_point, wifi_d
         "client_key": ["private-key.key"],
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_aws_connection_fw_download_C42045(wifi_sniffer, wifi_access_point, wifi_dut, aws_s3, http_server, aws_iot_dut, utf_constants):
@@ -520,7 +514,6 @@ def test_aws_connection_fw_download_C42045(wifi_sniffer, wifi_access_point, wifi
         "client_key": ["private-key.key"],
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_aws_connection_unsecure_connection_fw_download_C42046(wifi_sniffer, wifi_access_point, wifi_dut, aws_s3, http_server, aws_iot_dut, utf_constants):

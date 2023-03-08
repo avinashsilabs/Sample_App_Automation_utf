@@ -104,7 +104,6 @@ def join_get_ip(wifi_dut, wifi_access_point, ping_count):
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html", "index_long_crlf.html", "6KB.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
@@ -146,7 +145,6 @@ def test_http_get_with_different_lengths_C19213(http_server, http_client, wifi_d
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
@@ -185,7 +183,6 @@ def test_http_get_with_invalid_IP_C19212(http_server, wifi_dut, wifi_access_poin
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
@@ -223,7 +220,6 @@ def test_http_get_with_100_mb_file_C19214(http_server, wifi_dut, wifi_access_poi
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
@@ -267,7 +263,6 @@ def test_http_get_functionality_comparison_C19215(http_server, wifi_dut, http_cl
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_C19219(http_server, wifi_dut, http_client, wifi_access_point, utf_constants,
@@ -305,7 +300,6 @@ def test_http_post_functionality_C19219(http_server, wifi_dut, http_client, wifi
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, http_client, wifi_access_point,
@@ -344,7 +338,6 @@ def test_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, htt
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html", "6KB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -383,7 +376,6 @@ def test_http_post_functionality_different_urls_C19224(http_server, wifi_dut, ht
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut, http_client, wifi_access_point,
                                                          utf_constants, wifi_sniffer):
@@ -425,7 +417,6 @@ def test_http_post_functionality_for_5_iterations_C19221(http_server, wifi_dut, 
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_client, wifi_access_point,
@@ -462,7 +453,6 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_c
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -542,7 +532,6 @@ def test_http_get_func_host_name_with_tcp_C19218(http_server, wifi_dut, http_cli
         "ca_cert": "ca_ecdsa.crt"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
@@ -593,7 +582,6 @@ def test_https_get_with_wrong_certificate_C19211(http_server, wifi_sniffer, http
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_post_functionality_for_5_iterations_C19225(http_server, wifi_dut, http_client, wifi_access_point,
@@ -636,7 +624,6 @@ def test_https_post_functionality_for_5_iterations_C19225(http_server, wifi_dut,
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
@@ -718,7 +705,6 @@ def test_http_get_func_host_name_with_udp_C19218(http_server, wifi_dut, http_cli
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=10)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -774,7 +760,6 @@ def test_https_post_functionality_port10_C19227_case1(wifi_sniffer, http_server,
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=200)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -830,7 +815,6 @@ def test_https_post_functionality_port200_C19227_case2(wifi_sniffer, http_server
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=2000)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -885,7 +869,6 @@ def test_https_post_functionality_port2000_C19227_case3(wifi_sniffer, http_serve
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=20000)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -941,7 +924,6 @@ def test_https_post_functionality_port20000_C19227_case4(wifi_sniffer, http_serv
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config("http_server", port=443)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -993,9 +975,6 @@ pytest.mark.config(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-
-
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1051,9 +1030,6 @@ pytest.mark.config(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-
-
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1119,7 +1095,6 @@ def test_http_post_func_with_http_abort_C19228(wifi_sniffer, http_server, wifi_d
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_server_closes_conn_before_C19230(http_server, wifi_dut, wifi_sniffer, http_client,
@@ -1178,7 +1153,6 @@ def test_http_server_closes_conn_before_C19230(http_server, wifi_dut, wifi_sniff
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py", "index_long_crlf.html", "index.html", "6KB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])

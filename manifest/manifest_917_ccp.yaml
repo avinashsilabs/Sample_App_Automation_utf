@@ -1,7 +1,7 @@
 firmware:
   efx32:
     load_binary:
-      file_name: 'SiWG917-A.1.0.0.0.13.bin'
+      file_name: 'SiWG917-A.1.0.0.0.23.bin'
     write_firmware:
       file_name: '917_ccp/generic_test_agent_without_aws.rps'
 
@@ -17,7 +17,7 @@ firmware_applications:
       device_subtype: 'rs9116'
       filename:
         load_binary:
-          file_name: 'SiWG917-A.1.0.0.0.13.bin'
+          file_name: 'SiWG917-A.1.0.0.0.23.bin'
         write_firmware:
           file_name: '917_ccp/generic_test_agent_without_aws.rps'
 

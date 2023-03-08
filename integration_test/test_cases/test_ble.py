@@ -247,7 +247,7 @@ def test_ble_gatt_client_slave(ble_client, logger):
     local_name = "ROG_Phone3"
 
     # Begin Scanning for BLE devices
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address="0", service_classes=[BatteryService])
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address="0", service_classes=["BatteryService"])
     assert bt_client_address is not None
 
     logged_devices = [] # to avoid logging the device again
@@ -289,7 +289,7 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
 
     # Start ble client
     bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=[BatteryService])
+                                                                      service_classes=["BatteryService"])
     assert bt_client_address is not None
 
     # Start scanning and connect to ble client

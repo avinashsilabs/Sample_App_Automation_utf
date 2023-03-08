@@ -525,6 +525,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
+                interface: 'eth1' #test line interface 192.168.x.x
 
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
@@ -1207,6 +1208,7 @@ defaults:
         ssid: 'TESTTESTTEST'
         security: WPA2
         channel: 1
+        band: 0 #0 for 2.4Ghz & 1 for 5Ghz
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
         static_ip: '192.168.50.199'

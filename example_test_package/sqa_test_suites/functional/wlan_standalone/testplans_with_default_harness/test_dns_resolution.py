@@ -36,28 +36,6 @@ def logger():
     Author: Benazeer K
 """
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_dns_resolution_c19300_301_311',
-                                                       test_case_id='c19300_c19301_c19311',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -163,29 +141,6 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
         logger().info("Found DNS packet")
         assert True
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_both_pri_sec_ips_are_statically_c19302',
-                                                       test_case_id='c19302',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -286,29 +241,6 @@ def test_when_both_pri_sec_ips_are_statically_c19302(
         logger().info("Found DNS packet")
         assert True
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_only_primary_ip_statically_c19303',
-                                                       test_case_id='c19303',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -407,29 +339,6 @@ def test_when_only_primary_ip_statically_c19303(
         logger().info("Found DNS packet")
         assert True
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_only_secondary_ip_statically_c19304',
-                                                       test_case_id='c19304',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -527,28 +436,6 @@ def test_when_only_secondary_ip_statically_c19304(
         assert True
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_both_pri_sec_set_to_0_statically_c19305',
-                                                       test_case_id='c19305',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -639,29 +526,6 @@ def test_when_both_pri_sec_set_to_0_statically_c19305(
     time.sleep(1)
     assert exc_info.value.error_code == 0xBBA1
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306',
-                                                       test_case_id='c19306',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -765,28 +629,6 @@ def test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(
         assert True
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307',
-                                                       test_case_id='c19307',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -891,28 +733,6 @@ def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(
         assert True
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_pri_sec_with_same_dns_server_ips_c19308',
-                                                       test_case_id='c19308',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -992,29 +812,6 @@ def test_when_pri_sec_with_same_dns_server_ips_c19308(
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_pri_sec_set_twice_with_same_dns_server_ips_c19309',
-                                                       test_case_id='c19309',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1107,28 +904,6 @@ def test_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(
     logger().info("Stop Sniffer finally")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_when_both_pri_sec_twice_diff_dns_server_ips_c19310',
-                                                       test_case_id='c19310',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

@@ -266,30 +266,7 @@ def clean_up_method(wifi_dut, switch):
     logger().info("\n ----------------------------Cleaning UP of DUT is Completed ----------------------------")
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
 
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_c19721',
-                                                       test_case_id='c19721',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -397,30 +374,6 @@ def test_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_co
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_max_retry_failure_c19722',
-                                                       test_case_id='c19722',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -561,31 +514,6 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
     finally:
         clean_up_method(wifi_dut, switch)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_scan_all_channels_c19723',
-                                                       test_case_id='c19723',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -695,31 +623,6 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
     finally:
         clean_up_method(wifi_dut, switch)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_selected_channel_c19725',
-                                                       test_case_id='c19725',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -841,30 +744,6 @@ def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_du
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_max_retry_failure_with_security_mode_change_c19729',
-                                                       test_case_id='c19729',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -979,30 +858,6 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_disable_c19733',
-                                                       test_case_id='c19733',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1112,30 +967,6 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_psk_change_c19734',
-                                                       test_case_id='c19734',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1213,30 +1044,6 @@ def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_with_disconnect_c19735',
-                                                       test_case_id='c19735',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1330,30 +1137,6 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_beacon_miss_counter_c19736',
-                                                       test_case_id='c19736',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1460,30 +1243,6 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_scan_interval_1sec_c19737',
-                                                       test_case_id='c19737',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1613,30 +1372,6 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_infinite_retry_c19738',
-                                                       test_case_id='c19738',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1762,30 +1497,6 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_with_bgscan_c19739',
-                                                       test_case_id='c19739',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1861,31 +1572,6 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
     finally:
         clean_up_method(wifi_dut, switch)
 
-
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_first_time_retry_c19740',
-                                                       test_case_id='c19740',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1947,30 +1633,6 @@ def test_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point, wifi_du
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_hidden_ssid_c19741',
-                                                       test_case_id='c19741',
-                                                       notes='test notes'))
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2049,30 +1711,6 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_in_us_region_c19742',
-                                                       test_case_id='c19742',
-                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -2146,30 +1784,6 @@ def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, s
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_in_eu_region_c19743',
-                                                       test_case_id='c19743',
-                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -2244,30 +1858,6 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_in_japan_region_C19744',
-                                                       test_case_id='C19744',
-                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -2341,30 +1931,6 @@ def test_rejoin_in_japan_region_C19744(wifi_sniffer, wifi_access_point, wifi_dut
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_in_worldwide_region_c19745',
-                                                       test_case_id='c19745',
-                                                       notes='test notes'))
 # NOT ANNOUNCED
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -2440,30 +2006,6 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
         clean_up_method(wifi_dut, switch)
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_eap_tls_c19730',
-                                                       test_case_id='c19730',
-                                                       notes='test notes'))
 # EAP Connection in TLS mode
 @pytest.mark.config(
     "wifi_dut",
@@ -2597,30 +2139,6 @@ def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut
         wifi_sniffer.interfaces.capture.stop_capture()
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_eap_ttls_c19731',
-                                                       test_case_id='c19731',
-                                                       notes='test notes'))
 # EAP Connection in TTLS mode
 @pytest.mark.config(
     "wifi_dut",
@@ -2756,30 +2274,6 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
         wifi_sniffer.interfaces.capture.stop_capture()
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SQA_Regression',
-                                                       test_case_name='test_rejoin_eap_peap_c19732',
-                                                       test_case_id='c19732',
-                                                       notes='test notes'))
 # EAP Connection in PEAP mode
 @pytest.mark.config(
     "wifi_dut",

@@ -931,7 +931,6 @@ def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C1019
         raise Ex
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -983,9 +982,7 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
         file_name = "test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C101971"
         wifi_access_point.interfaces.wifi.enable_dhcp_ap()
         wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point)
-        # result = wifi_dut.interfaces.wifi.version()
-        # logger().info(f" DUT_Version: {result}")
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        dut_mac_address = wifi_dut_mac_address(wifi_dut)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                         scan_interval=6,
                                         beacon_missedcount=40,
@@ -1001,7 +998,9 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
         logger().info(f"starting RSI_DUT as ACCESS Point in channel no {channel}")
         ap_mac = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'ap mac is {ap_mac}')
+        time.sleep(10)
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        time.sleep(10)
         logger().info("Bringing up DUT in AP mode")
         wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C101970", security="WPA2", passphrase="12345678", channel=8)
         time.sleep(10)
@@ -1009,10 +1008,11 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         logger().info("============ ip address sending ================")
         with pytest.raises(WlanError) as exc_info:
-            wifi_dut.interfaces.wifi.start_ip()
+            result = wifi_dut.interfaces.wifi.start_ip()
+            logger().info("decoding and printing the result", result.decode())
         assert exc_info.value.error_code == 0xFF9C, "The 0xFF9C Error is expected for this test"
         wifi_client.interfaces.wifi.leave()
-        time.sleep(10)
+        time.sleep(200)
         wifi_dut.interfaces.wifi.start_ip()
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         status = ping(device_ip, ping_count)
@@ -2222,6 +2222,7 @@ def test_static_ip_assignment_in_at_mode_with_and_Without_ip_Conflict_to_DUT_C10
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

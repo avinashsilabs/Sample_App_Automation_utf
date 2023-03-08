@@ -562,6 +562,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
         "band": 2,
     }
 )
+@pytest.mark.wifi_dualband
 def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -651,6 +652,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
         "band": 2,
     }
 )
+@pytest.mark.wifi_dualband
 def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -740,6 +742,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
         "band": 2,
     }
 )
+@pytest.mark.wifi_dualband
 def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -837,6 +840,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 
     }
 )
+@pytest.mark.wifi_dualband
 def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -929,6 +933,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     }
 )
+@pytest.mark.wifi_dualband
 def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
     validation = True
     iter_count = 2
@@ -996,6 +1001,7 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
 
     }
 )
+@pytest.mark.wifi_dualband
 def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
     rejoin_max = 10
     scan_interval = 6
@@ -1067,6 +1073,7 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
 
     }
 )
+@pytest.mark.wifi_dualband
 def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
     rejoin_max = 10
     scan_interval = 6
@@ -1253,4 +1260,3 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
             switch.interfaces.pdu_switch.turn_on()
             logger().info('\n\n Turning on the Access Point, Please wait for 30 seconds ......')
             time.sleep(30)
-

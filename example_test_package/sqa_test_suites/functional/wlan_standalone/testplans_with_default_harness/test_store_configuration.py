@@ -195,6 +195,7 @@ class wifi_eap_join:
         "beacon_missed_count": 40,
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
@@ -328,6 +329,7 @@ def test_store_config_open_C19081(wifi_sniffer, wifi_access_point, wifi_dut):
         "band": 1
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -439,6 +441,7 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
         "first_time_retry": 0,
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point1", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -631,6 +634,7 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
         "band": 2
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -787,6 +791,7 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
 
     }
 )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "STORE_CONFIG_TEST", "passphrase": '12214040487', "security": 'WPA2'})
@@ -927,6 +932,7 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut,wifi_access_point,wifi_sniff
         "first_time_retry": 0,
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -1061,6 +1067,7 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
         "first_time_retry": 0,
         }
     )
+@pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -1374,6 +1381,7 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point,wifi_client
         "band": 1
         }
     )
+@pytest.mark.wifi_5g
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -1529,6 +1537,7 @@ def test_wireless_config_5GHZ_C19097(wifi_sniffer, wifi_access_point,wifi_client
         "band": 2
         }
     )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -1686,6 +1695,7 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point,wifi_clie
         "band": 2
         }
     )
+@pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -1836,6 +1846,7 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point,wifi_clie
         "eap_cert": "wifi-user.pem"
     }
 )
+@pytest.mark.store_config
  #EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678',"broadcast_ssid": False})
@@ -1981,6 +1992,7 @@ def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wi
         #"eap_cert": "wifi-user.pem"
     }
 )
+@pytest.mark.store_config
  #EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
@@ -2119,6 +2131,7 @@ def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, w
         "band": 0,
     }
 )
+@pytest.mark.store_config
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2218,6 +2231,7 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
         }
     )
 @pytest.mark.dut("rs9116")
+@pytest.mark.store_config
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2340,6 +2354,7 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         }
     )
 @pytest.mark.dut("rs9116")
+@pytest.mark.store_config
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
