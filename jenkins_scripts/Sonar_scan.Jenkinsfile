@@ -115,7 +115,7 @@ pipeline {
                     println env.bugs                       
 
                     emailext (mimeType: "text/html",
-                    to: "languyen@silabs.com, DL.DevOps.BuildAndRelease.Hyd@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com",
+                    to: "languyen@silabs.com, DL.DevOps.BuildAndRelease.Hyd@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com,DL.Wifi.Build.Reports@silabs.com, Aji.Gerdiman@silabs.com,Nik Von Huben Nik.vonHuben@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com",
                     subject: "SonarQube Analysis Results for repository ${env.PROJECT}, branch ${env.UTF_WIFI_BRANCH}",
                     body: """
                     <p>Dear recipients,</p>
