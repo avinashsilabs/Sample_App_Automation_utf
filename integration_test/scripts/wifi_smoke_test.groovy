@@ -71,9 +71,9 @@ pipeline {
                                     ping -n 15 %UTF_DOCKER_TARGET%
                                     exit /b %exitcode%
                                 """)
-                                dir('integration_test') {
-                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
-                                }
+//                                dir('integration_test') {
+//                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
+//                                }
                                 archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
                                 junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
                             }
