@@ -6,7 +6,9 @@ import groovy.json.JsonOutput
 
 pipeline {
     agent {
-        label 'cbs-iot-wifi-linux-autoscale'
+//         label 'cbs-iot-wifi-linux-autoscale'
+// TODO : To be reverted before creating the milestone
+        label 'swarm && linux64'
     }
     environment {
         UTF_HWMUX_TOKEN = credentials('utf-sqa-hwmux-token')
