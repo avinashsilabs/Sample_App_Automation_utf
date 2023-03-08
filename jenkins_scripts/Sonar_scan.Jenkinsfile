@@ -4,7 +4,7 @@ pipeline {
         label 'cbs-iot-wifi-linux-autoscale'
     }
     environment {
-        PIP_OPTIONS = "--trusted-host nexus.silabs.net --index-url https://nexus.silabs.net/repository/pypi-group/simple"
+        PIP_OPTIONS = "--trusted-host artifactory.silabs.net --index-url https://artifactory.silabs.net/artifactory/api/pypi/infrasw-python-remote/simple"
         PROJECT = "utf_wifi"
     }
     stages {
