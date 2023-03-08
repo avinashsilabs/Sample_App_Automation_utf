@@ -159,7 +159,7 @@ def pytest_runtest_protocol(item, nextitem):
     if is_publish_test_results_enabled() and is_test_results_source_api_enabled():
         module_name = UtfConfig.instance().defaults.get("dut")
         settings = EnvironSettings()
-        case_id = extract_test_case_id(item.name)
+        case_id = extract_test_case_id(item.originalname)
         tool_chain = "GCC 10.3.1"
         if settings.TOOL_CHAIN:
             tool_chain = settings.TOOL_CHAIN
