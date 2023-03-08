@@ -264,11 +264,18 @@ pipeline {
             post {
                 always {
                     script {
-                        //archiveArtifacts 'example_test_package/**'
-                        //archiveArtifacts 'manifest/**'
-                        archiveArtifacts 'reports/**'
-                        archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
-                        junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                        withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                            //archiveArtifacts 'example_test_package/**'
+                            //archiveArtifacts 'manifest/**'
+                            // archiveArtifacts 'reports/**'
+                            // archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
+                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                            sh '''
+                            zip -r reports.zip reports
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/reports/" -T reports.zip
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/config/harnesses/${env.HARNESS_NAME}" -T config/harnesses/${env.HARNESS_NAME}
+                            '''
+                        }
                     }
                 }
             }
