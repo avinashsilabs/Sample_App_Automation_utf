@@ -94,4 +94,20 @@ def test_power_meter_keysight_benchvue_win_wcf_scope(power_meter):
     # Parse result as throughput object
     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
     __print_throughput(parsed_result)
-    assert parsed_result["Scp File Name"] is not None  
+    assert parsed_result["Scp File Name"] is not None
+    
+def test_power_meter_using_nrf_ppk_mp(power_meters):
+    # Initialize Instrument
+    power_meters[0].interfaces.power_meter.initialize_instrument()
+    
+    # Turn on DUT
+    power_meters[0].interfaces.power_meter.turn_on_DUT_power()
+    
+    # Start Capture 
+    power_meters[0].interfaces.power_meter.start_capture()
+    
+    file_size = os.path.getsize(power_meters[0].interfaces.power_meter.capture_file)
+    assert file_size > 0
+    parsed_result = power_meters[0].interfaces.power_meter.process_output()
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None 

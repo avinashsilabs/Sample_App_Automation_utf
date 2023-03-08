@@ -1108,7 +1108,7 @@ devices:
             linux_shell:
                 type: 'shell.shell'
             power_meter:
-                type: 'power_meter.nrf_power_profiler'
+                type: 'power_meter.nrf_ppk2.nrf_power_profiler_mp'
                 shell: 'linux_shell'
                 vid: 0x1915
                 pid: 0xC00A
