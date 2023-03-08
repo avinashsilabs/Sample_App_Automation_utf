@@ -8,7 +8,7 @@ pipeline {
     agent {
 //         label 'cbs-iot-wifi-linux-autoscale'
 // TODO : To be reverted before creating the milestone
-        label 'master'
+        label 'awsagent'
     }
     environment {
         UTF_HWMUX_TOKEN = credentials('utf-sqa-hwmux-token')
