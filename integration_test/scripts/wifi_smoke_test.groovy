@@ -61,7 +61,7 @@ pipeline {
                                     copy utf_core\\unit_tests\\.coveragerc integration_test\\.coveragerc
                                     pushd executor
 
-                                    set "PYTEST_COMMAND=pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest"
+                                    set "PYTEST_COMMAND=pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
 
                                     call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
                                     set exitcode=%ERRORLEVEL%
