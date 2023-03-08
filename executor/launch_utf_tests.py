@@ -1,4 +1,5 @@
 import subprocess
+import re
 import click
 import os
 from utf.executor.launch_utf_tests import UtfLauncher, UtfLaunchCommander, UtfLauncherCmdOption, UtfExecutorTypes
@@ -7,13 +8,12 @@ DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
-def get_git_branch(path=None):
-    if path is None:
-        path = os.path.curdir
-    command = 'git rev-parse --abbrev-ref HEAD'.split()
-    branch = subprocess.Popen(command, stdout=subprocess.PIPE, cwd=path).stdout.read()
-    return branch.strip().decode('utf-8')
 
+def get_milestone_branch_from_git_branch():
+    rc = subprocess.Popen('git log --grep="release/milestone"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdout, stderr = rc.communicate()
+    milestone = re.findall("release/milestone[0-9]+", stdout.decode())[0]
+    return milestone
 
 class AppUtfLauncher(UtfLauncher):
     def __init__(self, **kwargs):
@@ -26,7 +26,7 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.container_name: "wifitest_1",
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
-            UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_git_branch(),
+            UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + get_milestone_branch_from_git_branch(),
             UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu:2022_09_14",
             UtfLauncherCmdOption.username: "pi",
             UtfLauncherCmdOption.password: "raspberry",
