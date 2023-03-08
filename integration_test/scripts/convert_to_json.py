@@ -16,6 +16,7 @@ DEFAULT_TEST_BEDS = [
     TestBed("UTF_Integration_Test_NB0015129", "../../config/harnesses/integration_test_1", "10.4.1.107"),
     TestBed("UTF_Integration_Test_AustinLab", "../../config/harnesses/integration_test_2", "10.100.124.23"),
     TestBed("UTF_Integration_Test_dev_team_hyd_1", "../../config/harnesses/integration_test_3", "10.207.16.81"),
+    TestBed("utf-dev-team-hyd-smoke-test", "../../config/harnesses/utf_wifi_jenkins_harness_sapi", "10.207.18.11"),
     # TestBed("utf-dev-team-hyd-2", "../../config/harnesses/utf-dev-team-hyd", "10.207.16.82"),
     # TestBed("utf-dev-team-hyd-3", "../../config/harnesses/utf-dev-team-hyd", "10.207.16.83"),
     # TestBed("utf-dev-team-hyd-4", "../../config/harnesses/utf-dev-team-hyd", "10.207.16.84"),

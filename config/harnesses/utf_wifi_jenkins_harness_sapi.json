@@ -1,0 +1,795 @@
+{
+   "host_ip": "10.207.18.11",
+   "utf_group": "utf_dev",
+   "harness": {
+      "devices": {
+         "rs9116": {
+            "type": "rs911x",
+            "subtype": "rs9116",
+            "src_dir": "utf_wiseconnect",
+            "defaults": {
+               "cli_transport": "uart"
+            },
+            "interfaces": {
+               "uart": {
+                  "type": "serial",
+                  "port": "auto",
+                  "vid": 1027,
+                  "pid": 24577
+               },
+               "firmware_uart": {
+                  "type": "serial",
+                  "port": "auto",
+                  "vid": 1027,
+                  "pid": 24577
+               },
+               "gpio_uart": {
+                  "type": "serial",
+                  "port": "auto",
+                  "vid": 4966,
+                  "pid": 261
+               },
+               "wifi": {
+                  "type": "cli.rs_at_commands",
+                  "src_dir": "utf_wiseconnect"
+               }
+            }
+         },
+         "rs9116_sapi": {
+            "type": "rs911x",
+            "subtype": "rs9116",
+            "src_dir": "utf_wiseconnect",
+            "defaults": {
+               "cli_transport": "uart",
+               "gpio_transport": "uart"
+            },
+            "interfaces": {
+               "uart": {
+                  "type": "serial",
+                  "port": "auto",
+                  "vid": 4966,
+                  "pid": 261
+               },
+               "firmware_uart": {
+                  "type": "serial",
+                  "port": "auto",
+                  "vid": 1027,
+                  "pid": 24577
+               },
+               "wifi": {
+                  "type": "cli.rs_sapi_commands",
+                  "src_dir": "utf_wiseconnect"
+               }
+            }
+         },
+         "efr32_4180b": {
+            "type": "efx32",
+            "subtype": "efr32",
+            "interfaces": {
+               "vcom": {
+                  "type": "serial",
+                  "port": "auto",
+                  "vid": 4966,
+                  "pid": 261
+               }
+            }
+         },
+         "static_ap": {
+            "interfaces": {
+               "wifi": {
+                  "type": "wifi.access_points.static",
+                  "security": "WPA",
+                  "ssid": "Codecom123",
+                  "passphrase": "thisisatestnework"
+               }
+            }
+         },
+         "dlink_ap": {
+            "interfaces": {
+               "wifi": {
+                  "type": "wifi.access_points.dlink810",
+                  "ip_address": "192.168.13.1",
+                  "web_ui_port": 80,
+                  "admin_password": "12345678",
+                  "security": "WPA",
+                  "ssid": "utf_wifi_jenkins_ssid",
+                  "passphrase": "thisisatestnetwo11",
+                  "supports": "wifi_ap",
+                  "channel": 1
+               }
+            }
+         },
+         "asus_rt_ax3000_ap": {
+            "interfaces": {
+               "wifi": {
+                  "type": "wifi.access_points.asus_rt_ax3000",
+                  "ip_address": "10.4.1.189",
+                  "admin_password": "www.ni.com",
+                  "ssh_port": 1022,
+                  "ssid": "TESTTEST-ASUS",
+                  "protected_management_frame": "Disable"
+               }
+            }
+         },
+         "switched_ap": {
+            "interfaces": {
+               "wifi": {
+                  "type": "wifi.access_points.static",
+                  "ssid": "Savage-Test",
+                  "security": "WPA2",
+                  "channel": 11,
+                  "passphrase": "F6E49FCE",
+                  "switch_config": "pdu_switch"
+               },
+               "pdu_switch": {
+                  "type": "switch.dli_v222_pdu",
+                  "hostname": "192.168.1.4",
+                  "user": "admin",
+                  "password": "1234",
+                  "outlet": 1,
+                  "use_persistent_state": false
+               }
+            }
+         },
+         "raspi_wifi": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "mqtt": {
+                  "type": "mqtt.client.paho_client",
+                  "disable_certificate_verification": false
+               },
+               "wifi": {
+                  "type": "wifi.access_points.linux",
+                  "shell": "linux_shell",
+                  "ssid": "TESTTESTTEST",
+                  "passphrase": "thisisatestnetwork",
+                  "supports": [
+                     "wifi_ap",
+                     "wifi_client"
+                  ],
+                  "interface": "wlan0",
+                  "standard": "n",
+                  "ip_address": "192.168.0.1"
+               }
+            }
+         },
+         "raspi_wifi_ssh": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.ssh_shell",
+                  "remote": "192.168.0.152",
+                  "username": "pi",
+                  "password": "raspberry",
+                  "use_paramiko_expect": false
+               },
+               "wifi": {
+                  "type": "wifi.access_points.linux",
+                  "shell": "linux_shell",
+                  "ssid": "TESTTESTTEST",
+                  "passphrase": "thisisatestnetwork",
+                  "supports": [
+                     "wifi_ap",
+                     "wifi_client"
+                  ],
+                  "interface": "wlan0",
+                  "standard": "n",
+                  "ip_address": "192.168.0.152"
+               }
+            }
+         },
+         "raspi_ble_client": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "bluetooth": {
+                  "type": "bluetooth.bluez",
+                  "shell": "linux_shell"
+               }
+            }
+         },
+         "raspi_multicast": {
+            "interfaces": {
+               "multicast": {
+                  "type": "multicast.multicast_socket",
+                  "ip_version": 0,
+                  "multicast_ip": "239.255.255.250",
+                  "multicast_ip2": "239.255.255.250",
+                  "dut_local_socket": 5001,
+                  "destination_socket": 5002,
+                  "ttl": 32,
+                  "time": 30,
+                  "buffer_length": 1470,
+                  "no_of_pkts": 500,
+                  "multicast_ip_mac_map": "01:00:5e:7f:ff:fa",
+                  "multicast_ip2_mac_map1": "01:00:5e:7f:ff:fa",
+                  "interface": "eth0"
+               }
+            }
+         },
+         "raspi_ip_socket": {
+            "interfaces": {
+               "socket": {
+                  "type": "socket.ip_socket",
+                  "ip_version": 0,
+                  "dut_local_socket": 5001,
+                  "destination_socket": 5001,
+                  "server_ip": "192.168.100.50",
+                  "time": 30,
+                  "buffer_length": 1470,
+                  "no_of_pkts": 500,
+                  "socket_type": 0,
+                  "interface": "eth0"
+               }
+            }
+         },
+         "raspi_bt_client": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "bluetooth": {
+                  "type": "bluetooth.pybluez",
+                  "shell": "linux_shell"
+               }
+            }
+         },
+         "secondary_raspi_bt_client": {
+            "interfaces": {
+               "docker_host": {
+                  "type": "docker",
+                  "ip_address": "192.168.1.142",
+                  "image": "utfsilabs/rpi_ubuntu_secondary:2022_09_14",
+                  "username": "pi",
+                  "password": ",lpmkonji"
+               },
+               "shell": {
+                  "type": "rpc.rpc_client",
+                  "forward_to": "raspi_bt_client:linux_shell",
+                  "host": "docker_host"
+               },
+               "bluetooth": {
+                  "type": "rpc.rpc_client",
+                  "forward_to": "raspi_bt_client:bluetooth",
+                  "host": "docker_host"
+               },
+               "mqtt": {
+                  "type": "rpc.rpc_client",
+                  "forward_to": "raspi_bt_client:mqtt",
+                  "host": "docker_host"
+               },
+               "wifi": {
+                  "type": "rpc.rpc_client",
+                  "forward_to": "raspi_bt_client:wifi",
+                  "host": "docker_host"
+               }
+            },
+            "harness": {
+               "devices": {
+                  "raspi_bt_client": {
+                     "interfaces": {
+                        "linux_shell": {
+                           "type": "shell.shell"
+                        },
+                        "bluetooth": {
+                           "type": "bluetooth.pybluez",
+                           "shell": "linux_shell"
+                        },
+                        "mqtt": {
+                           "type": "mqtt.server.mosquitto_linux",
+                           "shell": "linux_shell",
+                           "server_listen_address": "0.0.0.0",
+                           "port": 1883,
+                           "interface": "wlan0",
+                           "tls_enabled": false
+                        },
+                        "wifi": {
+                           "type": "wifi.access_points.linux",
+                           "shell": "linux_shell",
+                           "interface": "wlan0"
+                        }
+                     }
+                  }
+               },
+               "defaults": {}
+            }
+         },
+         "secondary_raspi_ble_client": {
+            "interfaces": {
+               "docker_host": {
+                  "type": "docker",
+                  "ip_address": "192.168.1.154",
+                  "image": "utfsilabs/rpi_ubuntu_secondary:2022_09_14",
+                  "username": "pi",
+                  "password": "raspberry"
+               },
+               "shell": {
+                  "type": "rpc.rpc_client",
+                  "forward_to": "raspi_bt_client:linux_shell",
+                  "host": "docker_host"
+               },
+               "bluetooth": {
+                  "type": "rpc.rpc_client",
+                  "forward_to": "raspi_ble_client:bluetooth",
+                  "host": "docker_host"
+               }
+            },
+            "harness": {
+               "devices": {
+                  "raspi_ble_client": {
+                     "interfaces": {
+                        "linux_shell": {
+                           "type": "shell.shell"
+                        },
+                        "bluetooth": {
+                           "type": "bluetooth.bluez",
+                           "shell": "linux_shell"
+                        }
+                     }
+                  }
+               },
+               "defaults": {}
+            }
+         },
+         "raspi_mosquitto": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "mqtt": {
+                  "type": "mqtt.server.mosquitto_linux",
+                  "shell": "linux_shell",
+                  "server_listen_address": "0.0.0.0",
+                  "port": 1883,
+                  "interface": "wlan0",
+                  "tls_enabled": false
+               }
+            }
+         },
+         "raspi_mosquitto_auth": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "mqtt": {
+                  "type": "mqtt.server.mosquitto_linux",
+                  "shell": "linux_shell",
+                  "server_listen_address": "0.0.0.0",
+                  "port": 1883,
+                  "interface": "wlan0",
+                  "username": "testuser",
+                  "password": "testpassword",
+                  "tls_enabled": false
+               }
+            }
+         },
+         "raspi_mosquitto_tls": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "mqtt": {
+                  "type": "mqtt.server.mosquitto_linux",
+                  "shell": "linux_shell",
+                  "server_listen_address": "0.0.0.0",
+                  "port": 8883,
+                  "interface": "wlan0",
+                  "username": "testuser",
+                  "password": "testpassword",
+                  "tls_enabled": true,
+                  "tls_key": "mosquitto-utf.silabs.com.key.pem",
+                  "tls_certificate": "mosquitto-utf.silabs.com.cert.pem",
+                  "tls_ca_chain": "ca-chain.cert.pem"
+               }
+            }
+         },
+         "raspi_mosquitto_tls_ecdsa": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "mqtt": {
+                  "type": "mqtt.server.mosquitto_linux",
+                  "shell": "linux_shell",
+                  "server_listen_address": "0.0.0.0",
+                  "port": 8883,
+                  "interface": "eth0",
+                  "username": "testuser",
+                  "password": "testpassword",
+                  "tls_enabled": true,
+                  "tls_key": "server_ecdsa.key",
+                  "tls_certificate": "server_ecdsa.crt",
+                  "tls_ca_chain": "ca_ecdsa.crt"
+               }
+            }
+         },
+         "static_mqtt_broker": {
+            "interfaces": {
+               "mqtt": {
+                  "type": "mqtt.server.static",
+                  "hostname": "mosquitto.dev.silabs.net",
+                  "port": 8883,
+                  "username": "testuser",
+                  "password": "testpassword",
+                  "tls_enabled": true,
+                  "tls_ca_chain": "ca-chain.cert.pem"
+               }
+            }
+         },
+         "raspi_lighttpd": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "http": {
+                  "type": "http.server.http_linux",
+                  "shell": "linux_shell",
+                  "port": 80,
+                  "interface": "wlan0"
+               }
+            }
+         },
+         "raspi_lighttpd_tls": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "http": {
+                  "type": "http.server.http_linux",
+                  "shell": "linux_shell",
+                  "port": 443,
+                  "interface": "wlan0",
+                  "tls_enabled": true,
+                  "tls_key": "mosquitto-utf.silabs.com.key.pem",
+                  "tls_certificate": "mosquitto-utf.silabs.com.cert.pem",
+                  "tls_ca_chain": "ca-chain.cert.pem"
+               }
+            }
+         },
+         "raspi_http_client": {
+            "interfaces": {
+               "http": {
+                  "type": "http.client.requests_client"
+               }
+            }
+         },
+         "static_http": {
+            "interfaces": {
+               "http": {
+                  "type": "http.server.static",
+                  "hostname": "www.example.com",
+                  "port": 443,
+                  "tls_enabled": true,
+                  "tls_ca_chain": "ca-chain.cert.pem"
+               }
+            }
+         },
+         "airpcap": {
+            "interfaces": {
+               "local_shell": {
+                  "type": "shell.ssh_shell",
+                  "remote": "192.168.0.0",
+                  "username": "test",
+                  "password": "test123",
+                  "use_paramiko_expect": false
+               },
+               "capture": {
+                  "default": null,
+                  "type": "wifi.sniffer.tshark",
+                  "shell": "local_shell",
+                  "interface": "wlp0s20f3"
+               }
+            }
+         },
+         "saleae_logic_analyzer": {
+            "interfaces": {
+               "logic_analyzer": {
+                  "type": "logic_analyzer.saleae_logic_analyzer",
+                  "host": "10.207.18.2",
+                  "port": 10429,
+                  "timeout": 30,
+                  "quiet": false,
+                  "logic_path": "/home/test/saleae/install_folder/Logic 1.2.18 (64-bit)",
+                  "username": "test",
+                  "password": "test123"
+               }
+            }
+         },
+         "keysight_power_analyzer": {
+            "interfaces": {
+               "power_meter": {
+                  "type": "power_meter.keysight_N6705_power_analyzer",
+                  "instrument_lan_ip_address": "10.207.19.83"
+               }
+            }
+         },
+         "python_aws_iot_thing": {
+            "interfaces": {
+               "aws_iot": {
+                  "type": "aws_iot.python_thing",
+                  "client_id": "Python-Thing",
+                  "hostname": "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com",
+                  "port": 8883,
+                  "private_key": "python-thing-private.pem.key",
+                  "root_ca": "AWS-IoT-root-CA.crt",
+                  "client_cert": "python-thing-certificate.pem.crt"
+               }
+            }
+         },
+         "50pa500_attenuator": {
+            "interfaces": {
+               "attenuator": {
+                  "type": "attenuator.50pa500",
+                  "shell": "telnet_shell"
+               },
+               "telnet_shell": {
+                  "type": "shell.telnet_shell",
+                  "remote": "10.4.1.56",
+                  "port": 21,
+                  "username": null,
+                  "password": null
+               }
+            }
+         },
+         "raspi_ssl_server": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "ssl": {
+                  "type": "ssl.server.ssl_linux",
+                  "shell": "linux_shell",
+                  "port": 5001,
+                  "interface": "eth0",
+                  "tls_key": "mosquitto-utf.silabs.com.key.pem",
+                  "tls_certificate": "mosquitto-utf.silabs.com.cert.pem",
+                  "tls_ca_chain": "ca-chain.cert.pem",
+                  "client_limit": 1,
+                  "ip_version": 0,
+                  "buffer_length": 1300,
+                  "no_of_pkts": 1000,
+                  "time": 30,
+                  "device_port1": 5001,
+                  "device_port2": 5002,
+                  "device_port3": 5003
+               }
+            }
+         },
+         "raspi_ssl_server_static": {
+            "interfaces": {
+               "ssl": {
+                  "type": "ssl.server.static",
+                  "hostname": "192.168.1.6",
+                  "port": 5001,
+                  "ip_version": 0,
+                  "buffer_length": 1300,
+                  "no_of_pkts": 500,
+                  "time": 30
+               }
+            }
+         },
+         "raspi_ssl_client": {
+            "interfaces": {
+               "linux_shell": {
+                  "type": "shell.shell"
+               },
+               "ssl": {
+                  "type": "ssl.client.ssl_client",
+                  "shell": "linux_shell",
+                  "port": 5001,
+                  "interface": "eth0",
+                  "tls_key": "mosquitto-utf.silabs.com.key.pem",
+                  "tls_certificate": "mosquitto-utf.silabs.com.cert.pem",
+                  "tls_ca_chain": "ca-chain.cert.pem",
+                  "client_limit": 1,
+                  "ip_version": 0,
+                  "buffer_length": 1470,
+                  "no_of_pkts": 500,
+                  "time": 30,
+                  "server_port": 5001,
+                  "local_port": 5001
+               }
+            }
+         },
+         "wiseconnect_web": {
+            "interfaces": {
+               "wiseconnect_ui": {
+                  "type": "web.wiseconnect_web",
+                  "src_dir": "utf_wiseconnect",
+                  "mode": "Client",
+                  "band": "2.4",
+                  "is_security_enable": true,
+                  "ssid": "TESTTESTTEST",
+                  "passphrase": "thisisatestnetwork"
+               }
+            }
+         },
+         "raspi_iperf": {
+            "interfaces": {
+               "net_perf": {
+                  "type": "iperf",
+                  "zip_results": "Y"
+               }
+            }
+         },
+         "static_iperf": {
+            "interfaces": {
+               "net_perf": {
+                  "type": "iperf.static_iperf",
+                  "zip_results": "Y",
+                  "host_ip": "10.207.18.2",
+                  "host_username": "test",
+                  "host_password": "test123"
+               }
+            }
+         },
+         "raspi_ftp_server": {
+            "interfaces": {
+               "vsftpd_ftp_server": {
+                  "type": "ftp.server.vsftpd_ftp_server",
+                  "tls_enabled": false
+               }
+            }
+         },
+         "raspi_ftp_server_tls": {
+            "interfaces": {
+               "vsftpd_ftp_server": {
+                  "type": "ftp.server.vsftpd_ftp_server",
+                  "tls_enabled": true,
+                  "tls_key": "mosquitto-utf.silabs.com.key.pem",
+                  "tls_certificate": "mosquitto-utf.silabs.com.cert.pem"
+               }
+            }
+         },
+         "raspi_ftp_client": {
+            "interfaces": {
+               "ftplib_ftp_client": {
+                  "type": "ftp.client.ftplib_ftp_client",
+                  "tls_enabled": false,
+                  "username": "ftpuser",
+                  "password": "ftpuser"
+               }
+            }
+         },
+         "raspi_ftp_client_tls": {
+            "interfaces": {
+               "ftplib_ftp_client": {
+                  "type": "ftp.client.ftplib_ftp_client",
+                  "tls_enabled": true,
+                  "username": "ftpuser",
+                  "password": "ftpuser"
+               }
+            }
+         }
+      },
+      "defaults": {
+         "dut": "rs9116_sapi",
+         "efx32": "efr32_4180b",
+         "wiseconnect_duts": [
+            "rs9116_sapi",
+            "efr32_4180b"
+         ],
+         "wifi_access_point": "dlink_ap",
+         "wifi_access_points": [
+            "raspi_wifi",
+            "dlink_ap"
+         ],
+         "wifi_client": "raspi_wifi",
+         "wifi_clients": [
+            "raspi_wifi",
+            "raspi_wifi_ssh"
+         ],
+         "wifi_sniffer": "airpcap",
+         "logic_analyzer": "saleae_logic_analyzer",
+         "power_meter": "keysight_power_analyzer",
+         "ble_client": "raspi_ble_client",
+         "ble_clients": [
+            "secondary_raspi_ble_client",
+            "raspi_ble_client"
+         ],
+         "bt_client": "raspi_bt_client",
+         "mqtt_server": "raspi_mosquitto",
+         "mqtt_client": "raspi_wifi",
+         "http_server": "raspi_lighttpd",
+         "http_client": "raspi_http_client",
+         "rf_attenuator": "50pa500_attenuator",
+         "ssl_server": "raspi_ssl_server",
+         "ssl_client": "raspi_ssl_client",
+         "remote_socket": "raspi_ip_socket",
+         "multicast_client": "raspi_multicast",
+         "serial": {
+            "baud": 115200
+         },
+         "wifi": {
+            "ssid": "TESTTESTTEST",
+            "security": "WPA2",
+            "channel": 1,
+            "passphrase": "thisisatestnetwork",
+            "server_ip": "192.168.0.1",
+            "sniffer_validation": true,
+            "http_url": "/RS9116.2.5.0.4.rps"
+         },
+         "wiseconnect_web": "wiseconnect_web",
+         "net_perf_client": "raspi_iperf",
+         "wiseconnect_ui": {
+            "mode": "Client",
+            "band": "2.4",
+            "ssid": "TESTTESTTEST",
+            "passphrase": "thisisatestnetwork",
+            "channel": 1
+         },
+         "bluetooth": {
+            "ble_advertising_data": "HELLO",
+            "bt_local_name": "rs911x_bt_spp",
+            "bt_pin_code": "4321"
+         },
+         "iop_sockets": {
+            "server_ip": "192.168.10.212",
+            "server_port": "6001",
+            "att_channel": 1,
+            "db_value": 2,
+            "att_enable": true
+         },
+         "aws_iot": {
+            "hostname": "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com",
+            "port": 8883,
+            "client_id": "Python-Thing",
+            "thing_name": "Python-Thing",
+            "certfile": "python-thing-certificate.pem.crt",
+            "keyfile": "python-thing-private.pem.key",
+            "cafile": "AWS-IoT-root-CA.crt"
+         },
+         "ftp_server": "raspi_ftp_server",
+         "ftp_client": "raspi_ftp_client",
+         "net_perf": {
+            "server_options": {
+               "interval": 1,
+               "time": 30
+            },
+            "client_options": {
+               "bandwidth": "0.1M",
+               "interval": 1,
+               "time": 30
+            },
+            "host": {
+               "TCP": {
+                  "port": 5201
+               },
+               "UDP": {
+                  "port": 5202
+               }
+            },
+            "device": {
+               "TCP": {
+                  "port": 1234,
+                  "data_len": 1460
+               },
+               "UDP": {
+                  "port": 1235,
+                  "data_len": 1472
+               }
+            },
+            "tos_value": "0xC8"
+         }
+      },
+      "logger": {
+         "DLink810AccessPoint": "DEBUG"
+      },
+      "start_state": {
+         "wifi_access_point": {
+            "wifi": "ap_enabled"
+         },
+         "wifi_dut": {
+            "device": "reset",
+            "wifi": "init"
+         }
+      },
+      "end_state": {
+         "wifi_access_point": {
+            "wifi": "ap_disabled"
+         }
+      }
+   }
+}
