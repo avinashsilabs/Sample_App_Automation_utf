@@ -249,8 +249,8 @@ pipeline {
 
                             export exitcode=$?
 
-                            ssh -o StrictHostKeyChecking=no pi@${SSH_TARGET} "sudo reboot"
-                            ping -n 20 ${SSH_TARGET}
+                            # ssh -o StrictHostKeyChecking=no pi@${SSH_TARGET} "sudo reboot"
+                            # ping -n 20 ${SSH_TARGET} || true
 
                             exit $exitcode
                         '''
