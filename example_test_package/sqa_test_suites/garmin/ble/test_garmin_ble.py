@@ -56,11 +56,11 @@ class BleDeviceState():
         else:
             rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, ble_remote_address=ble_remote_address, smp_flag=False)
 
-    def dut_as_slave(self, ble_dut, ble_remote, ble_dut_address, smp_flag, rs_helper_ble):
+    def dut_as_slave(self, ble_dut, ble_remote, ble_dut_address, smp_flag, rs_helper_ble, skip_pairing=False):
         if smp_flag:
-            rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, smp_flag=True)
+            rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, smp_flag=True, skip_pairing=skip_pairing)
         else:
-            rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, smp_flag=False)
+            rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_remote, ble_dut_address=ble_dut_address, smp_flag=False, skip_pairing=skip_pairing)
 
 def test_C91302_ble_connection_stability_dut_as_master(ble_dut, ble_client, rs_helper_ble):
 #test case to verify connection stability for 15 min with smp where DUT is performing Central role
@@ -385,7 +385,7 @@ def test_C91279_dual_role_connection_stability_both_secure(ble_dut, ble_clients,
 
         for i in range(loop):
             logger().info("\n\n *** Iteration :  {} ***\n\n".format(i+1))
-            ble_obj.dut_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, smp_flag=True, rs_helper_ble=rs_helper_ble)
+            ble_obj.dut_as_slave(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, smp_flag=True, rs_helper_ble=rs_helper_ble, skip_pairing=True if i > 0 else False)
             time.sleep(connection_time)
             rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_remote_master, ble_dut_address=ble_dut_address, start_adv=True)
 
