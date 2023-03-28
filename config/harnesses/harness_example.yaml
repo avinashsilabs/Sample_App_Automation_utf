@@ -1006,6 +1006,8 @@ devices:
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
 
     static_radius_server:
         interfaces:
@@ -1022,6 +1024,8 @@ devices:
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
 
     openssl_socket:
         interfaces:
