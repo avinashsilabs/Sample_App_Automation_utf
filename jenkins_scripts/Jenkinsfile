@@ -273,7 +273,7 @@ pipeline {
                             sh '''
                             zip -r reports.zip reports
                             curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/reports/" -T reports.zip
-                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/config/harnesses/${env.HARNESS_NAME}" -T config/harnesses/${env.HARNESS_NAME}
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/config/harnesses/${HARNESS_NAME}" -T config/harnesses/${HARNESS_NAME}
                             '''
                         }
                     }

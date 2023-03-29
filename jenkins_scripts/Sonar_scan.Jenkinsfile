@@ -1,13 +1,35 @@
-
 pipeline {
     agent {
         label 'cbs-iot-wifi-linux-autoscale'
+    }
+    triggers {
+        cron('H 15 * * *')
     }
     environment {
         PIP_OPTIONS = "--trusted-host artifactory.silabs.net --index-url https://artifactory.silabs.net/artifactory/api/pypi/infrasw-python-remote/simple"
         PROJECT = "utf_wifi"
     }
     stages {
+        stage('Checkout latest milestone branch') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key',
+                                                        keyFileVariable: 'JENKINS_SSH_KEY_PATH',
+                                                        passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE',
+                                                        usernameVariable: 'SSH_KEY_USERNAME')]) {
+                        def repoBranches = sh(returnStdout: true, script: '''
+                            export GIT_SSH=ssh
+                            export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                            git ls-remote --heads --sort=-committerdate ssh://git@stash.silabs.com/iot_infra_sw/utf_wifi.git refs/heads/release/milestone*
+                        ''')
+                        def milestoneBranches = repoBranches.readLines().collect { it.split()[1].replaceAll('refs/heads/', '') }
+                        echo milestoneBranches.join('\n')
+                        env.latestMilestoneBranch = milestoneBranches.first()
+                        echo env.latestMilestoneBranch
+                    }
+                }
+            }
+        }
         stage("Checkout") {
            steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', 
@@ -86,7 +108,7 @@ pipeline {
                     withSonarQubeEnv(installationName: 'SILABS_SONARQUBE_SERVER') {
                         script {
                             sh '''
-                                ${SONAR}/bin/sonar-scanner -Dsonar.projectVersion=${GIT_HASH} -Dsonar.branch.name=${UTF_WIFI_BRANCH}
+                                ${SONAR}/bin/sonar-scanner -Dsonar.projectVersion=${GIT_HASH} -Dsonar.branch.name=${latestMilestoneBranch}
                             '''
                             }
                         }
@@ -101,7 +123,7 @@ pipeline {
                 withCredentials([string(credentialsId:'sonar_token',variable:'SONAR_TOKEN')]) {
                     println env.PROJECT
                     sh """               
-                        curl -o sonar.json -u ${SONAR_TOKEN}: 'https://sonarqube.silabs.net/api/measures/component?component=${env.PROJECT}&branch=${env.UTF_WIFI_BRANCH}&metricKeys=bugs,new_bugs,vulnerabilities,new_vulnerabilities,security_hotspots,new_security_hotspots,code_smells,new_code_smells,coverage,new_coverage,duplicated_lines,duplicated_lines_density'
+                        curl -o sonar.json -u ${SONAR_TOKEN}: 'https://sonarqube.silabs.net/api/measures/component?component=${env.PROJECT}&branch=${env.latestMilestoneBranch}&metricKeys=bugs,new_bugs,vulnerabilities,new_vulnerabilities,security_hotspots,new_security_hotspots,code_smells,new_code_smells,coverage,new_coverage,duplicated_lines,duplicated_lines_density'
                         """
                     def json = readJSON(file: 'sonar.json')
                     def metrics = json.component.measures
@@ -110,17 +132,17 @@ pipeline {
                         def metricValue = it.value ?: it.period.value
                         env."${metricName}" = metricValue
                     }
-                    def sonarProjectUrl = "https://sonarqube.silabs.net/dashboard?branch=${env.UTF_WIFI_BRANCH}&id=${env.PROJECT}"
+                    def sonarProjectUrl = "https://sonarqube.silabs.net/dashboard?branch=${env.latestMilestoneBranch}&id=${env.PROJECT}"
 
                     println env.bugs                       
 
                     emailext (mimeType: "text/html",
-                    to: "languyen@silabs.com, DL.DevOps.BuildAndRelease.Hyd@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com,DL.Wifi.Build.Reports@silabs.com, Aji.Gerdiman@silabs.com,Nik Von Huben Nik.vonHuben@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com",
-                    subject: "SonarQube Analysis Results for repository ${env.PROJECT}, branch ${env.UTF_WIFI_BRANCH}",
+                    to: "languyen@silabs.com, DL.DevOps.BuildAndRelease.Hyd@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com,DL.Wifi.Build.Reports@silabs.com, Aji.Gerdiman@silabs.com,Nik.vonHuben@silabs.com, DL.Hyd-Connectivity-Automation-Team@silabs.com",
+                    subject: "SonarQube Analysis Results for repository ${env.PROJECT}, branch ${env.latestMilestoneBranch}",
                     body: """
                     <p>Dear recipients,</p>
                     <p>Please find the result of utf_wifi sonar scanning below:</p>
-                    <p><strong>Branch: ${env.UTF_WIFI_BRANCH}</strong></p>
+                    <p><strong>Branch: ${env.latestMilestoneBranch}</strong></p>
                     <p>Sonar Project URL: <a href="${sonarProjectUrl}">${sonarProjectUrl}</a></p>
                     <table class="tg" style="border-style: hidden;">
                         <thead>

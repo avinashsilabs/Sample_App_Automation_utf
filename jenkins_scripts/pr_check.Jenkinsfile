@@ -9,7 +9,7 @@ pipeline
 {
     // Each stage defines its own agent.
     agent {
-        label 'nomadagent'
+        label 'nomadagent-utf-prs'
     }
     environment
     {
@@ -32,7 +32,7 @@ pipeline
 
         // If it passes pre-built checks, clones and checks out the repository to one of the Linux nodes.
         // From this point onwards, all steps are run on the same node.
-        stage('Pre-build Check')
+        /*stage('Pre-build Check')
         {
            
             steps
@@ -46,7 +46,7 @@ pipeline
                     }
                 }
             }
-        }
+        }*/
         stage('SCM Checkout')
         {            
             when {
@@ -108,7 +108,7 @@ pipeline
                 script {
 
                     try{
-                        prJob = build job: 'UTF_WiFi_SQA', parameters: [
+                        prJob = build job: 'UTF_WIFI_CODE_SANITY', parameters: [
                                                 string(name: 'UTF_WIFI_BRANCH', value: env.CHANGE_BRANCH),
                                                 string(name: 'SSH_TARGET', value: env.SSH_TARGET),
                                                 string(name: 'RS9116_FIRMWARE', value: env.RS9116_FIRMWARE),

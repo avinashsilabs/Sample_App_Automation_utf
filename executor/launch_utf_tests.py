@@ -10,10 +10,14 @@ WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 def get_milestone_branch_from_git_branch():
-    rc = subprocess.Popen('git log --grep="release/milestone"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    rc = subprocess.Popen('git log', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = rc.communicate()
-    milestone = re.findall("release/milestone[0-9]+", stdout.decode())[0]
-    return milestone
+    get_all_milestone = []
+    get_all_milestone = (re.findall("release/milestone([0-9]+)", stdout.decode()))
+    milestone = [int(i) for i in get_all_milestone]
+    milestone.sort()
+    current_milestone = "release/milestone" + str(milestone[-1])
+    return current_milestone
 
 class AppUtfLauncher(UtfLauncher):
     def __init__(self, **kwargs):
