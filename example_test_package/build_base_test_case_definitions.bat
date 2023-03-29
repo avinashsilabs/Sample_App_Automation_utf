@@ -10,7 +10,6 @@ goto EOF
 
 :ERROR
 echo Build Failed
-cmd /k
 exit /b 1
 
 :EOF
