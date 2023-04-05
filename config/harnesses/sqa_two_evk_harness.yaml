@@ -138,6 +138,30 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    remote_wiseconnect:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--serialno 000440233102' #configure secondary EVK serial number
+        defaults:
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440233102' # configure secondary evk serial number
+            sapi:
+                type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
+
     bt_wiseconnect:
         type: 'efx32'
         subtype: 'efx32'
@@ -310,13 +334,15 @@ devices:
     efr32_4180b:
         type: 'efx32'
         subtype: 'efr32'
-        commander_options: '--serialno 000440228768' # configure primary evk serial number
+        commander_options: '--serialno 000440192722' # configure primary evk serial number
         interfaces:
             vcom:
                 type: 'serial'
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+                serial_number: '000440192722' # configure primary evk serial number
+
 
     stm32_nucleo_f411re:
         type: 'stm32'
@@ -1046,6 +1072,8 @@ defaults:
 
     stm32: 'stm32_nucleo_f411re'
 
+    remote_wiseconnect: 'remote_wiseconnect'
+
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
         - 'rs9116_sapi'
@@ -1279,6 +1307,9 @@ start_state:
     wifi_dut:
         device: 'reset'
         wifi: 'init'
+    remote_wiseconnect:
+        device: 'reset'
+        sapi: 'init'
 
 end_state:
     wifi_access_point:
