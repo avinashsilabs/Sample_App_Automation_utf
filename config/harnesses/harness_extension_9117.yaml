@@ -1,0 +1,8 @@
+devices:
+  rs9116_sapi:
+    skip_markers: [ 'wifi_2g_test']
+    interfaces:
+      wifi:
+        re_map:
+          coex_mode: { 8: 12 }
+#          coex_mode: { RS9116CoexMode.DualBluetoothBLE: RS9116CoexMode.BLE}
