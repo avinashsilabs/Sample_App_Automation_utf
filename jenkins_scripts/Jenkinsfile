@@ -238,7 +238,7 @@ pipeline {
                                 --test_results_source_api TEST_RAIL_API \
                                 --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
                                     -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
-                                    -e JENKINS_TEST_RESULTS_URL=${RUN_TESTS_DISPLAY_URL}, \
+                                    -e JENKINS_TEST_RESULTS_URL=${JOB_URL}${BUILD_NUMBER}/testReport, \
                                     -e JENKINS_JOB_NAME=${JOB_NAME}, \
                                     -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
                                     -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
