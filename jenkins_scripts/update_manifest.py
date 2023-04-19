@@ -18,8 +18,13 @@ for filename in os.listdir(directory):
 
                 if build_location != "source_code":
                     if rs9116_package_name != "Internal.rps":
+                        # Since the Package name is ved from RS9116W.X.X.X.X to RS9116_WiSeConnect_SDK.X.X.X.X
+                        # And the rps file name is not updated so we are updating package name here.
+                        rs9116_package_name = rs9116_package_name.replace("_WiSeConnect_SDK", "W")
                         if chip_version == "1.4" or chip_version == "1.3":
                             rs9116_package_name = rs9116_package_name.replace("916", "9116")
+                        if chip_version == "1.5":
+                            rs9116_package_name = rs9116_package_name.replace("9116", "916")
                         y['firmware']['rs911x'] = rs9116_package_name
 
                 y_new = yaml.dump(y, default_flow_style=False, sort_keys=False)

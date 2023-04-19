@@ -2238,6 +2238,7 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode
     },
 )
+@pytest.mark.test_wlan_powersave_mode3_lp
 def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     ping_count = 60
@@ -2301,6 +2302,7 @@ def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wi
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
     },
 )
+@pytest.mark.test_wlan_powersave_mode3_ulp
 def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     ping_count = 60
@@ -2366,6 +2368,7 @@ def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wi
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
     },
 )
+@pytest.mark.test_wlan_powersave_mode3_ulp
 def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     listen_interval = 1100
     ps_poll_time_delta_obj = FilterPacket()
@@ -2469,6 +2472,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
     },
 
 )
+@pytest.mark.test_wlan_powersave_mode3_ulp
 def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -2559,6 +2563,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
     },
 
 )
+@pytest.mark.test_wlan_powersave_mode3_ulp
 def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -2663,6 +2668,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
     },
 )
+@pytest.mark.test_wlan_powersave_mode3_ulp
 def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'

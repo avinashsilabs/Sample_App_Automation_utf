@@ -66,3 +66,8 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: '917_ncp/generic_test_agent_wt_aws_wt_ram_ret.hex'
+
+    test_coex_custom:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'coex_custom_test_agent.hex'

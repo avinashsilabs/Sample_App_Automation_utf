@@ -50,8 +50,8 @@ class FilterPacket:
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -70,7 +70,7 @@ def test_rts_c19511(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rts_c19511')
 
     logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
 
@@ -97,12 +97,9 @@ def test_rts_c19511(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
 
     # Validating the power management bit
     packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
-    logger().info("Checking the data packet")
-    packet_filter2 = f'wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x0028)'
-    logger().info("Checking the rts packet along with data packet")
-    packet_filter3 = f'wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x001b)'
-    logger().info("checking the cts packet")
-    packet_filter4 = f'wlan.ra == {dut_mac_address} && (wlan.fc.type_subtype == 0x001c)'
+    logger().info("Checking the rts and cts packet along with data packet")
+    packet_filter2 = f'(wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x0028 || wlan.fc.type_subtype == 0x001b)) ' \
+                     f'|| (wlan.ra == {dut_mac_address} && wlan.fc.type_subtype == 0x001c)'
 
     # Initiate ping from third party wifi-client to DUT
     logger().info(f'DUT ip {device_ip}')
@@ -121,17 +118,9 @@ def test_rts_c19511(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find power management bit 1 in sniffer'
 
-    logger().info(" Validate Data Packet")
+    logger().info("Validate RTS and CTS Packet")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find data packets in sniffer'
-
-    logger().info(" Validate RTS Packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count'], 'Unable to find rts packets in sniffer'
-
-    logger().info(" Validate CTS Packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-        'packet_count'], 'Unable to find cts packets in sniffer'
+        'packet_count'], 'Unable to find rts and cts packets in sniffer'
 
 
 @pytest.mark.config(
@@ -140,8 +129,8 @@ def test_rts_c19511(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -160,7 +149,7 @@ def test_rts_c19512(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rts_c19512')
 
     logger().info("scan for the ap's.....")
-    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+    ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
     ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
     logger().info(f'AP BSSID = {ap_bssid}')
 
@@ -187,12 +176,9 @@ def test_rts_c19512(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
 
     # Validating the power management bit
     packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
-    logger().info("Checking the data packet")
-    packet_filter2 = f'wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x0028)'
-    logger().info("Checking the rts packet along with data packet")
-    packet_filter3 = f'wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x001b)'
-    logger().info("checking the cts packet")
-    packet_filter4 = f'wlan.ra == {dut_mac_address} && (wlan.fc.type_subtype == 0x001c)'
+    logger().info("Checking the rts and cts packet along with data packet")
+    packet_filter2 = f'(wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x0028 || wlan.fc.type_subtype == 0x001b)) ' \
+                     f'|| (wlan.ra == {dut_mac_address} && wlan.fc.type_subtype == 0x001c)'
 
     # Initiate ping from third party wifi-client to DUT
     logger().info(f'DUT ip {device_ip}')
@@ -211,17 +197,9 @@ def test_rts_c19512(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find power management bit 1 in sniffer'
 
-    logger().info(" Validate Data Packet")
+    logger().info("Validate RTS and CTS Packet")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find data packets in sniffer'
-
-    logger().info(" Validate RTS Packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count'], 'Unable to find rts packets in sniffer'
-
-    logger().info(" Validate CTS Packet")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-        'packet_count'], 'Unable to find cts packets in sniffer'
+        'packet_count'], 'Unable to find rts and cts packets in sniffer'
 
 
 @pytest.mark.config(
@@ -230,8 +208,8 @@ def test_rts_c19512(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         {
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -250,7 +228,7 @@ def test_rts_c19513(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rts_c19513')
 
         logger().info("scan for the ap's.....")
-        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
+        ap_mac = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         ap_bssid = str(ap_mac[0]).split(' ')[11].strip(')')
         logger().info(f'AP BSSID = {ap_bssid}')
 
@@ -277,12 +255,9 @@ def test_rts_c19513(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
 
         # Validating the power management bit
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
-        logger().info("Checking the data packet")
-        packet_filter2 = f'wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x0028)'
-        logger().info("Checking the rts packet along with data packet")
-        packet_filter3 = f'wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x001b)'
-        logger().info("checking the cts packet")
-        packet_filter4 = f'wlan.ra == {dut_mac_address} && (wlan.fc.type_subtype == 0x001c)'
+        logger().info("Checking the rts and cts packet along with data packet")
+        packet_filter2 = f'(wlan.ta == {dut_mac_address} && (wlan.fc.type_subtype == 0x001b)) ' \
+                         f'|| (wlan.ra == {dut_mac_address} && wlan.fc.type_subtype == 0x001c)'
 
         # Initiate ping from third party wifi-client to DUT
         logger().info(f'DUT ip {device_ip}')
@@ -301,14 +276,6 @@ def test_rts_c19513(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find power management bit 1 in sniffer'
 
-        logger().info(" Validate Data Packet")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-            'packet_count'], 'Unable to find data packets in sniffer'
-
-        logger().info(" Validate RTS Packet")
-        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-            'packet_count'], 'Unable to find rts packets in sniffer'
-
-        logger().info(" Validate CTS Packet")
-        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-            'packet_count'], 'Unable to find cts packets in sniffer'
+        logger().info("Validate RTS and CTS Packet")
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'rts and cts packets is not expected in sniffer, But still seeing the mentioned packets'

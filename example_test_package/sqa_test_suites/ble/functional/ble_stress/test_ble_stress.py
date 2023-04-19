@@ -19,26 +19,28 @@ def logger():
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_ble_start_stop_scan_1000_times_C19810(ble_dut,ble_client):
-    iter_count =3
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_start_stop_scan_1000_times_C19810(ble_dut, ble_client):
+    iter_count = 1000
 
     logger().info("start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "ble initialization failed in dut"
     for i in range(0, iter_count):
         ble_client.interfaces.bluetooth.close()
-        logger().info(f" ======= initialize ble adv in remote device for iteration {i}")
+        logger().info(f" ======= initialize ble adv in remote device for iteration {i+1}")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
         assert bt_client_address, f"ble initialization failed in remote device for iteration{i}"
         logger().info(f"ble client address of remote device for iteration {i} is {bt_client_address}")
-        time.sleep(5)
-        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
         time.sleep(2)
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+        time.sleep(5)
         ble_client.interfaces.bluetooth.stop_advertising()
-    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -50,7 +52,7 @@ def test_ble_start_stop_scan_1000_times_C19810(ble_dut,ble_client):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default| RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 def test_ble_scan_continuous_48_hrs_C19829(ble_dut, ble_client):
@@ -67,7 +69,7 @@ def test_ble_scan_continuous_48_hrs_C19829(ble_dut, ble_client):
         time.sleep(2)
 
         scan_results = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address,
-                                                                   timeout=120)
+                                                                       timeout=120)
         time.sleep(10)
 
         logger().info(f" ============== Enable PSP in DUT")

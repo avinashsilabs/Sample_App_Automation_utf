@@ -172,16 +172,20 @@ def test_C91326_ble_connect_disconnect_dut_as_dual_role(ble_dut, ble_client, rs_
 def test_C91320_verify_ble_quick_disconnect(ble_dut, ble_client, rs_helper_ble):
     #test case to verify BLE quick disconnect
     try:
-        ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
         for i in range(100):
-            rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
-            rs_helper_ble.ble_scanning_on_remote(scan_device=ble_client, bt_dut_address=ble_dut_address)
-            rs_helper_ble.ble_stop_scanning_on_remote(scan_device=ble_client, bt_dut_address=ble_dut_address)
-            rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, smp_flag=True)
+            logger().info(f"\n\n ** Iteration : {i+1}")
+            if i < 1: #first time connection
+                ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+                rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
+                rs_helper_ble.ble_scanning_on_remote(scan_device=ble_client, bt_dut_address=ble_dut_address)
+                rs_helper_ble.ble_stop_scanning_on_remote(scan_device=ble_client, bt_dut_address=ble_dut_address)
+                rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, smp_flag=True)
+            else:
+                rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, smp_flag=True, skip_pairing=True)
+            
             time.sleep(5)
-            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            i=i+1
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, start_adv=True)
+            i+=1
     except Exception as e:
         assert False, "Test case failed with Excepton {}".format(str(e))
     else:
@@ -366,8 +370,6 @@ def test_wrong_passkey_C18795(ble_dut, ble_client, rs_helper_ble):
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
-#blocked with https://jira.silabs.com/browse/UTF-2500
-@pytest.mark.skip
 def test_C91279_dual_role_connection_stability_both_secure(ble_dut, ble_clients, rs_helper_ble):
     #test case to verify Dual role connection stability with one secure connection and one unencrypted
     ble_obj = BleDeviceState()
@@ -395,5 +397,4 @@ def test_C91279_dual_role_connection_stability_both_secure(ble_dut, ble_clients,
     else:
         logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     finally:
-        pass
-        #rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_remote_slave:BleDeviceState.advertising, ble_remote_master:BleDeviceState.advertising})
+        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_remote_slave:BleDeviceState.standby, ble_remote_master:BleDeviceState.standby})

@@ -180,7 +180,6 @@ class EAP_Connectivity_with_ciphers:
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
 
         for count in range(0, self.utf_constants.get('iter_count')):
-            logger().info("enable eap method TLS with cipher DHE-RSA-AES256-SHA256")
             self.device_ip, self.dut_mac_address = self.rs_helper.check_eap_connectivity(self.utf_constants, self.wifi_dut,\
                                                                                self.wifi_access_point,
                                                                                eap_type=self.eap_type,
@@ -632,7 +631,7 @@ def test_WPA2_EAP_AES128_SHA_TLSv12_C113828(rs_helper, utf_constants, radius_ser
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_WPA2_EAP_AES256_SHA256_and_AES256_SHA_TLSv12_C113832(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
+def test_WPA2_EAP_RSA_AES256_SHA256_and_RSA_AES256_SHA_TLSv12_C113832(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                     wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
 
@@ -1327,8 +1326,7 @@ def test_WPA2_EAP_conn_with_wrong_eapmethod_C113853(utf_constants, wifi_sniffer,
         | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
         | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "band": 0,
     }
 )

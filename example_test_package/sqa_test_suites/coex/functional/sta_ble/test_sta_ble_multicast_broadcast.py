@@ -231,7 +231,7 @@ def dut_clean_up(wifi_dut):
 @pytest.mark.parametrize("number_of_pkts", [500])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets",
                                         "disassociated", "ble_stop_adv", "ble_stop_scan"])
-def test_TCP_packet_loss_C20222(wifi_sniffer, wifi_dut, wifi_access_point, ble_client, remote_socket,
+def test_TCP_packet_loss_C133468(wifi_sniffer, wifi_dut, wifi_access_point, ble_client, remote_socket,
                                 remote_socket_factory, number_of_pkts, rs_helper, utf_constants):
     try:
         validation = True
@@ -245,7 +245,7 @@ def test_TCP_packet_loss_C20222(wifi_sniffer, wifi_dut, wifi_access_point, ble_c
         logger().info(f" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_TCP_packet_loss_C20222')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_TCP_packet_loss_C133468')
         time.sleep(5)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
@@ -352,7 +352,7 @@ def test_TCP_packet_loss_C20222(wifi_sniffer, wifi_dut, wifi_access_point, ble_c
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "ble_stop_scan"])
-def test_Multicast_C20227(multicast_client, net_perf_client, protocol, wifi_sniffer, wifi_dut,
+def test_Multicast_C133473(multicast_client, net_perf_client, protocol, wifi_sniffer, wifi_dut,
                           wifi_access_point, wifi_client, ble_client, utf_constants, rs_helper):
     validation = True
     ble_mode = "ble_slave"
@@ -361,7 +361,7 @@ def test_Multicast_C20227(multicast_client, net_perf_client, protocol, wifi_snif
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Multicast_C20227')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Multicast_C133473')
     time.sleep(5)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
@@ -428,7 +428,7 @@ def test_Multicast_C20227(multicast_client, net_perf_client, protocol, wifi_snif
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "ble_stop_adv", "ble_stop_scan"])
-def test_Broadcast_C20228(net_perf_client, protocol, wifi_sniffer, wifi_dut, wifi_access_point,
+def test_Broadcast_C133474(net_perf_client, protocol, wifi_sniffer, wifi_dut, wifi_access_point,
                           wifi_client, ble_client, utf_constants, rs_helper):
     validation = True
     ble_mode = "ble_slave"
@@ -437,7 +437,7 @@ def test_Broadcast_C20228(net_perf_client, protocol, wifi_sniffer, wifi_dut, wif
     logger().info(f" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Broadcast_C20228')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Broadcast_C133474')
     time.sleep(5)
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
@@ -509,7 +509,7 @@ def test_Broadcast_C20228(net_perf_client, protocol, wifi_sniffer, wifi_dut, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
-def test_wifi_ssl_tx_and_stability_C20231(ssl_server, cert1, protocol, wifi_sniffer, wifi_dut, wifi_access_point,
+def test_wifi_ssl_tx_and_stability_C133477(ssl_server, cert1, protocol, wifi_sniffer, wifi_dut, wifi_access_point,
                                           ble_client, utf_constants, rs_helper):
     try:
         validation = True
@@ -520,7 +520,7 @@ def test_wifi_ssl_tx_and_stability_C20231(ssl_server, cert1, protocol, wifi_snif
         logger().info(f" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_ssl_tx_and_stability_C20231')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_ssl_tx_and_stability_C133477')
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
 

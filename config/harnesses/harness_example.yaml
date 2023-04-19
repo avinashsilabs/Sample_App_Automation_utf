@@ -318,6 +318,7 @@ devices:
                 # radius server configuration
                 radius_ip: "192.168.50.176"
                 radius_port: "1812"
+                ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
 
     # This represents another access point configuration.
     asus_rt_ac68u_ap:

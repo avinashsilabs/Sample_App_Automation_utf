@@ -853,9 +853,9 @@ def ble_continous_advertise(wifi_dut, ble_client):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize", "passphrase": "123456789zx",
                                                "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_threading_sta_ble_dut_tkip_psk_c20211(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
+def test_threading_sta_ble_dut_tkip_psk_c133457(wifi_dut, ble_client, wifi_access_point, wifi_sniffer):
     ble_mode = "ble_slave"
-    testcase = "sta with tkip psk + ble connection as a slave_C20211"
+    testcase = "sta with tkip psk + ble connection as a slave_C133457"
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
             wifi_dut, ble_client, ble_mode):
         time.sleep(15)
@@ -881,9 +881,9 @@ def test_threading_sta_ble_dut_tkip_psk_c20211(wifi_dut, ble_client, wifi_access
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize", "passphrase": "12123456789zx",
                                                "security": "WPA2", "cipher": 'AES', })
-def test_threading_sta_ble_aes_psk_c20212(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_aes_psk_c133458(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
-    testcase = "sta with AES pmk + ble connection as a slave_C20212"
+    testcase = "sta with AES pmk + ble connection as a slave_C133458"
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), BleThread_connection(
             wifi_dut, ble_client, ble_mode):
         time.sleep(15)
@@ -914,7 +914,7 @@ def test_threading_sta_ble_aes_psk_c20212(wifi_dut, wifi_access_point, wifi_snif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize", "passphrase": "12345676789zx",
                                                "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_join_time_in_wpa_tkip_using_pmk_c20213(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants):
+def test_join_time_in_wpa_tkip_using_pmk_c133459(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants):
      try:
           security_type = 7
           iter_count = utf_constants.get("iter_count")
@@ -947,9 +947,9 @@ def test_join_time_in_wpa_tkip_using_pmk_c20213(wifi_dut, ble_client, wifi_acces
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeytwobytesofsize", "passphrase": "1234556789zx",
                                                "security": "WPA2", "cipher": 'AES'})
-def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_c20214(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants):
+def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_c133460(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants):
     ble_mode = "ble_slave"
-    testcase = "Join time with AES PMK + ble connection as a slave_C20214"
+    testcase = "Join time with AES PMK + ble connection as a slave_C133460"
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase), \
         BleThread_Adver(wifi_dut, ble_client, ble_mode):
         time.sleep(15)
@@ -992,9 +992,9 @@ def test_wpa2_aes_using_pmk_wlan_ble_mode_loop_c20214(wifi_dut, ble_client, wifi
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA", "cipher": 'TKIP', "standard": '11g'})
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "ble_stop_scan", "disassociated"])
-def test_threading_sta_ble_modes_tkip_psk_c20252(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
+def test_threading_sta_ble_modes_tkip_psk_c133493(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
     ble_mode = "ble_slave"
-    testcase = "testcase for tkip with psk + ble_C20252"
+    testcase = "testcase for tkip with psk + ble_C133493"
 
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase, tcp_bypass=True), \
         BleThread_Adver(wifi_dut, ble_client, ble_mode):
@@ -1038,9 +1038,9 @@ def test_threading_sta_ble_modes_tkip_psk_c20252(wifi_dut, wifi_access_point, wi
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_modes_aes_psk_c20253(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
+def test_threading_sta_ble_modes_aes_psk_c133494(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
     ble_mode = "ble_slave"
-    testcase = "testcase for AES with psk + ble_C20253"
+    testcase = "testcase for AES with psk + ble_C133494"
 
     with WifiThread_PSKMODE(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase,tcp_bypass=True), \
         BleThread_Adver(wifi_dut, ble_client, ble_mode):
@@ -1084,7 +1084,7 @@ def test_threading_sta_ble_modes_aes_psk_c20253(wifi_dut, wifi_access_point, wif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_join_time_in_wpa_pmk_using_tkip_in_tcp_bypass_c20254(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
+def test_join_time_in_wpa_pmk_using_tkip_in_tcp_bypass_c133495(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
     try:
         security_type = 7
         iter_count = utf_constants.get("iter_count")
@@ -1116,9 +1116,9 @@ def test_join_time_in_wpa_pmk_using_tkip_in_tcp_bypass_c20254(wifi_dut, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA2", "cipher": 'AES'})
-def test_threading_sta_ble_modes_aes_pmk_c20255(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
+def test_threading_sta_ble_modes_aes_pmk_c133496(wifi_dut, wifi_access_point, wifi_sniffer, ble_client):
     ble_mode = "ble_slave"
-    testcase = "testcase for AES with pmk + ble_20255"
+    testcase = "testcase for AES with pmk + ble_133496"
 
     with WifiThread_PMKmode(wifi_dut, wifi_access_point, wifi_sniffer, testcase=testcase,
                             tcp_bypass=True), BleThread_connection(wifi_dut, ble_client, ble_mode):

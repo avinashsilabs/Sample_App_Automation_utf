@@ -460,9 +460,9 @@ class BleThread_Connection(ThreadBase):
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
-def test_sta_ble_TLS_BLE_adv_C20215(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
-    testcase = "test_sta_ble_TLS_BLE_adv_C20215"
-    logger().info("testcase : test_sta_ble_TLS_BLE_adv_C20215")
+def test_sta_ble_TLS_BLE_adv_C133461(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+    testcase = "test_sta_ble_TLS_BLE_adv_C133461"
+    logger().info("testcase : test_sta_ble_TLS_BLE_adv_C133461")
     validation = True
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -511,9 +511,9 @@ def test_sta_ble_TLS_BLE_adv_C20215(radius_server, wifi_sniffer, wifi_access_poi
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
-def test_sta_ble_TTLS_BLE_adv_C20216(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
-    testcase = "test_sta_ble_TTLS_BLE_adv_C20216"
-    logger().info("testcase : test_sta_ble_TTLS_BLE_adv_C20216")
+def test_sta_ble_TTLS_BLE_adv_C133462(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+    testcase = "test_sta_ble_TTLS_BLE_adv_C133462"
+    logger().info("testcase : test_sta_ble_TTLS_BLE_adv_C133462")
     validation = True
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -562,9 +562,9 @@ def test_sta_ble_TTLS_BLE_adv_C20216(radius_server, wifi_sniffer, wifi_access_po
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
-def test_sta_ble_PEAP_BLE_adv_C20217(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
-    testcase = "test_sta_ble_PEAP_BLE_adv_C20217"
-    logger().info("testcase : test_sta_ble_PEAP_BLE_adv_C20217")
+def test_sta_ble_PEAP_BLE_adv_C133463(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
+    testcase = "test_sta_ble_PEAP_BLE_adv_C133463"
+    logger().info("testcase : test_sta_ble_PEAP_BLE_adv_C133463")
     logger().info("configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info("start capturing with Sniffer by giving the test case name as filename")
@@ -614,9 +614,9 @@ def test_sta_ble_PEAP_BLE_adv_C20217(radius_server, wifi_sniffer, wifi_access_po
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
-def test_sta_ble_TCP_UDP_TLS_C20205(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client):
-    testcase = "test_sta_ble_TCP_UDP_TLS_C20205"
-    logger().info("testcase : test_sta_ble_TCP_UDP_TLS_C20205")
+def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client):
+    testcase = "test_sta_ble_TCP_UDP_TLS_C133451"
+    logger().info("testcase : test_sta_ble_TCP_UDP_TLS_C133451")
     validation = True
     protocols = [IperfConstants.TCP, IperfConstants.UDP]
     traffic_types = ["RX", "TX"]
@@ -672,10 +672,10 @@ def test_sta_ble_TCP_UDP_TLS_C20205(radius_server, wifi_sniffer, wifi_access_poi
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
-def test_sta_ble_TCP_UDP_TTLS_C20206(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
+def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
                                      net_perf_client):
-    testcase = "test_sta_ble_TCP_UDP_TTLS_C20206"
-    logger().info("testcase : test_sta_ble_TCP_UDP_TTLS_C20206")
+    testcase = "test_sta_ble_TCP_UDP_TTLS_C133452"
+    logger().info("testcase : test_sta_ble_TCP_UDP_TTLS_C133452")
     validation = True
     protocols = [IperfConstants.TCP, IperfConstants.UDP]
     traffic_types = ["RX", "TX"]

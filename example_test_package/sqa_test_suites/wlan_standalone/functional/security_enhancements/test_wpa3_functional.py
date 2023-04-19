@@ -44,9 +44,7 @@ def logger():
     return get_logger(__name__)
 
 
-pytestmark = [
-    pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
-]
+
 
 ping_count = 10
 
@@ -59,6 +57,8 @@ def ping_to_dut(dut_ip, ping_count=10):
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -176,6 +176,8 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -266,6 +268,8 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
@@ -356,6 +360,8 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -451,6 +457,8 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
@@ -543,12 +551,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count']
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
+
 @pytest.mark.config(
     "wifi_dut",
 
@@ -559,10 +562,17 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
+        "band": 1,
     }
 )
-@pytest.mark.wifi_dualband
+@pytest.mark.wifi_5g
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 36, "security": 'WPA3'})
 def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -634,11 +644,12 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 40, "security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -649,10 +660,10 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
+        "band": 1,
     }
 )
-@pytest.mark.wifi_dualband
+@pytest.mark.wifi_5g
 def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -724,11 +735,12 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 48, "security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -739,10 +751,10 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
+        "band": 1,
     }
 )
-@pytest.mark.wifi_dualband
+@pytest.mark.wifi_5g
 def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -821,11 +833,12 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 149, "security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -836,11 +849,11 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
+        "band": 1,
 
     }
 )
-@pytest.mark.wifi_dualband
+@pytest.mark.wifi_5g
 def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -918,7 +931,10 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
 
@@ -929,11 +945,9 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
 
     }
 )
-@pytest.mark.wifi_dualband
 def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
     validation = True
     iter_count = 2
@@ -985,6 +999,8 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -997,27 +1013,46 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "custom_features": RS9116CustomFeatureBitMap.Default | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
 
     }
 )
-@pytest.mark.wifi_dualband
+
 def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
+    testcase = "wpa3_BG_scan_C34511"
     rejoin_max = 10
     scan_interval = 6
     beacon_missedcount = 40
     first_time_retry = 0
     timeout = 10
     validation = True
+    channel_list = [1, 6, 8]
+    channel_bitmap_2_4 = 0
+    scan_expected_time = 0
+    for count in channel_list:
+        channel_bitmap_2_4 += 1 << (count - 1)
+        scan_expected_time += 100
 
+    channel_bitmap_5 = 0
+    scan_feature_extend = 0
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='main_capture')
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
     logger().info(f"***** Enabling BG scan parameters ******")
-    wifi_dut.interfaces.wifi.set_bgscan(1, 0, 2, 4, 2, 15, 20, 0)
+    wifi_dut.interfaces.wifi.set_bgscan(1, 0, 1, 4, 2, 15, 20, 0)
 
     time.sleep(2)
+
+    # enables the scan in DUT with the given channel bitmap value
+    logger().info("Initiating selective channel scan in DUT...")
+    scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                                   scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                       scan_bitmap_5=channel_bitmap_5,
+                                                                       scan_feature=scan_feature_extend)
+    time.sleep(5)
+    logger().info(scan_results)
+    assert len(scan_results) >= 1, "scan results not found"
 
     logger().info(f"***** preparing wifi_dut ******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
@@ -1029,34 +1064,41 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_specific_chal_wpa3_C34508')
-    time.sleep(2)
-
     logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave
     )
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(10)
+    for channel in channel_list:
+        logger().info(f"configuring the Sniffer with the channel : {channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_sel_ch_{channel}")
+        time.sleep(3)
+        logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+        time.sleep(10)
+        logger().info("*********##### Sniffer is going to stop")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(f"Validate Probe req(Broadcast)")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
+        logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+
 
     logger().info(f"DUT is going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
-    logger().info("*********##### Sniffer is going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
 
 
-@pytest.mark.parametrize(
-    "channel_list",
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1069,40 +1111,57 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "custom_features": RS9116CustomFeatureBitMap.Default | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 2,
+        "band": 0,
 
     }
 )
-@pytest.mark.wifi_dualband
-def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi_dut, channel_list):
+
+def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi_dut):
+    testcase = "test_bgscan_in_all_channel_wpa3_C34510"
     rejoin_max = 10
     scan_interval = 6
     beacon_missedcount = 40
     first_time_retry = 0
     timeout = 10
     validation = True
+    channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    channel_bitmap_2_4 = 0
+    scan_expected_time = 0
+    for count in channel_list:
+        channel_bitmap_2_4 += 1 << (count - 1)
+        scan_expected_time += 100
 
-    wifi_access_point.interfaces.wifi.start_ap(channel=channel_list)
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel_list)
+    channel_bitmap_5 = 0
+    scan_feature_extend = 0
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='main_capture')
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_max, scan_interval=scan_interval,
                                     beacon_missedcount=beacon_missedcount, first_time_retry=first_time_retry,
                                     timeout=timeout)
-    logger().info(f"***** Enabling bg-scan parameters******")
-    wifi_dut.interfaces.wifi.set_bgscan(1, 0, 2, 4, 2, 15, 20, 0)
+    logger().info(f"***** Enabling BG scan parameters ******")
+    wifi_dut.interfaces.wifi.set_bgscan(1, 0, 1, 4, 2, 15, 20, 0)
+
     time.sleep(2)
-    logger().info(f"***** preparing wifi_dut to connect third party AP******")
+
+    # enables the scan in DUT with the given channel bitmap value
+    logger().info("Initiating selective channel scan in DUT...")
+    scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                                   scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                   scan_bitmap_5=channel_bitmap_5,
+                                                                   scan_feature=scan_feature_extend)
+    time.sleep(5)
+    logger().info(scan_results)
+    assert len(scan_results) >= 1, "scan results not found"
+
+    logger().info(f"***** preparing wifi_dut ******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired,
-                                     bgscan_flag=True)
+                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"DUT MAC_Address: {mac_address}")
-
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_bgscan_in_all_channel_wpa3_C34510')
-    time.sleep(2)
 
     logger().info(f"*****Enabling Enhanced MAX PSP******")
     wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
@@ -1110,24 +1169,33 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
     wifi_dut.interfaces.wifi.bt_power_save(
         power_save_mode=RS9116PowerSaveModes.PowerSaveMode2, power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave
     )
-
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter1 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
     time.sleep(2)
-    logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
-    status = ping(device_ip, ping_count)
-    assert status is True, "DUT is not responding to ping request from third party device"
-    logger().info(f"ping is successful")
-    time.sleep(15)
+    for channel in channel_list:
+        logger().info(f"configuring the Sniffer with the channel : {channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{testcase}_sel_ch_{channel}")
+        time.sleep(3)
+        logger().info(f"*****Initiate ping from third party wifi-client to DUT******")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+        time.sleep(10)
+        logger().info("*********##### Sniffer is going to stop")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(f"Validate Probe req(Broadcast)")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
+        logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
 
     logger().info(f"DUT is going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
 
-    logger().info("*********##### Sniffer is going to stop")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    time.sleep(5)
-
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",

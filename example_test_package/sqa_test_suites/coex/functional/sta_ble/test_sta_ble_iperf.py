@@ -1,6 +1,4 @@
 import test_sta_ble_enterprise as sbe
-from utf.utils.thread_base import ThreadBase
-from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from typing import Dict
 from utf.interfaces.bluetooth import BLEDeviceState
@@ -366,7 +364,7 @@ def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C20230(wifi_dut, wifi_acces
         logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
         ble_obj.ble_slave_conection()
         logger().info(f"**********initiating wlan connection*******************")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True, associated=False)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {ap_bssid}")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -576,7 +574,7 @@ def test_TCP_Rx_packet_loss_with_LE_advertising_C20223(wifi_dut, wifi_access_poi
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features":  RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.Default,
@@ -594,7 +592,8 @@ def test_TCP_Rx_packet_loss_with_LE_advertising_C20223(wifi_dut, wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C20204(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, rs_helper, wifi_client, ble_client, net_perf_client):
+def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C20204(wifi_dut, wifi_access_point,
+                                    wifi_sniffer, utf_constants, rs_helper, wifi_client, ble_client, net_perf_client):
     logger().info("*******************C20204************************")
     validation = True
     clean_obj = Cleanup(wifi_dut)
@@ -607,8 +606,13 @@ def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C20204(wifi_
         ble_mode = "ble_slave"
         logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
         ble_obj.ble_slave_conection()
+        logger().info("Initiating wlan scan from DUT")
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        logger().info(scan_results)
+        assert len(scan_results) > 0, "scan_list not found"
+
         logger().info(f"**********initiating wlan connection*******************")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=False)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {ap_bssid}")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -641,8 +645,8 @@ def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C20204(wifi_
         ble_obj.disconnect()
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        packet_filter1 = f"wlan.addr=={dut_mac_address} && wlan.fc.type_subtype == 0 ||eapol"
-        packet_filter2 = f"wlan.addr=={ap_bssid} && wlan.fc.type_subtype == 1 ||eapol"
+        packet_filter1 = f"wlan.addr=={dut_mac_address} && wlan.fc.type_subtype == 0 || eapol"
+        packet_filter2 = f"wlan.addr=={ap_bssid} && wlan.fc.type_subtype == 1 || eapol"
         logger().info(
             f"Validating association, eapol from DUT"
         )

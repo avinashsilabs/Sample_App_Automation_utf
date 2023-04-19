@@ -44,7 +44,10 @@ This test case needs a sqa_test_agent_multi_gatt.hex file to be loaded on EFR me
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_fetch_profiles_from_RD1_C19860(ble_dut, ble_client):
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_fetch_profiles_from_RD1_C19860(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start GATT Services in DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
@@ -104,7 +107,10 @@ def test_fetch_profiles_from_RD1_C19860(ble_dut, ble_client):
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_fetch_a_particular_profiles_from_RD1_C19861(ble_dut, ble_client):
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_fetch_a_particular_profiles_from_RD1_C19861(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
@@ -173,7 +179,10 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(ble_dut, ble_client):
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
-def test_fetch_characteristis_from_RD1_C19863(ble_dut, ble_client):
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_fetch_characteristis_from_RD1_C19863(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
@@ -253,6 +262,8 @@ def test_fetch_characteristis_from_RD1_C19863(ble_dut, ble_client):
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C19866_C19867(firmware_loader,
                                                                                           ble_dut, ble_client):
@@ -318,16 +329,33 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
                     )
 def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
     service_uid = "0000180d-0000-1000-8000-00805f9b34fb"
-    char_uid = "0000180f-0000-1000-8000-00805f9b34fb"
+    char_uid1 = "00002a37-0000-1000-8000-00805f9b34fb"
+    char_uid2 = "00002a38-0000-1000-8000-00805f9b34fb"
+    char_uid3 = "00002a39-0000-1000-8000-00805f9b34fb"
     # start BLE in DUT
     logger().info(" ******* Start BLE GATT Service ******* ")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address, "Failed to load bt address..."
 
     # adding service, attributes, values
+    index = 1
+    # ble_add_service 6157 -> Heart rate service(0x180D)
     ble_dut.interfaces.bluetooth.ble_add_service(uid=0x180D)
-    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x180F)
-    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x180F)
+
+    # ble_add_char_serv_att 10807 26 1 2 -> Heart rate measurement(0x2A37)
+    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A37, service_handler_num=index,
+                                                       value_handler_num=index + 1)
+    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A37, value_handler_num=index + 1)
+
+    # ble_add_char_serv_att 10808 26 1 2 -> Body sensor location(0x2A38)
+    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A38, service_handler_num=index + 2,
+                                                       value_handler_num=index + 3)
+    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A38, value_handler_num=index + 3)
+
+    # ble_add_char_serv_att 10809 26 1 2 -> Heart rate control point(0x2A39)
+    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A39, service_handler_num=index + 4,
+                                                       value_handler_num=index + 5)
+    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A39, value_handler_num=index + 5)
     logger().info("enabled battery service")
 
     # Advertise data from DUT
@@ -345,7 +373,8 @@ def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
 
     assert ble_dut.interfaces.bluetooth.ble_address in found_devices, "failed to find dut address in scan list..."
     assert (found_devices[
-                ble_dut.interfaces.bluetooth.ble_address] == ble_dut.interfaces.bluetooth.ble_advertising_data), "failed to find dut in scan list..."
+                ble_dut.interfaces.bluetooth.ble_address] == ble_dut.interfaces.bluetooth.ble_advertising_data), \
+        "failed to find dut in scan list..."
 
     logger().info("connecting to dut....")
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
@@ -363,7 +392,24 @@ def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
 
     char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
                                                                                                 service_uid=service_uid,
-                                                                                                char_uid=char_uid)
+                                                                                                char_uid=char_uid1)
+    logger().info(f"char_path is {char_path}")
+    assert char_path, "characters are empty"
+    assert len(char_props) > 0, "length of characters is 0"
+
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                service_uid=service_uid,
+                                                                                                char_uid=char_uid2)
+    logger().info(f"char_path is {char_path}")
+    assert char_path, "characters are empty"
+    assert len(char_props) > 0, "length of characters is 0"
+
+    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                service_uid=service_uid,
+                                                                                                char_uid=char_uid3)
+    logger().info(f"char_path is {char_path}")
+    assert char_path, "characters are empty"
+    assert len(char_props) > 0, "length of characters is 0"
     logger().info(f"char_path is {char_path}")
     assert char_path, "characters are empty"
     assert len(char_props) > 0, "length of characters is 0"
@@ -521,6 +567,8 @@ def test_ble_multi_connect_disconnect_C19875(ble_dut, ble_client):
     "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
 }
                     )
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_advertising", "ble_stop_scan"])
 def test_fetch_profiles_from_rd1_c19862(firmware_loader, ble_dut, ble_client):

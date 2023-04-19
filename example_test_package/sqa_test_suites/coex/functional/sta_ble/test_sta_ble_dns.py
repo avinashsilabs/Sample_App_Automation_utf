@@ -385,9 +385,9 @@ class ConnectionStatus(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after_BLE_connection_as_slave_C20233(
+def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after_BLE_connection_as_slave_C133479(
         wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, ble_client):
-    logger().info("*******************C20233************************")
+    logger().info("*******************C133479************************")
     validation = True
     testcase = "dns_static + ble"
     channel = wifi_access_point.interfaces.wifi.channel
@@ -455,12 +455,12 @@ def test_DNS_client_functionality_by_configuring_the_DNS_server_statically_after
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_connection_C20234(wifi_dut,
+def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_connection_C133480(wifi_dut,
                                                                                               wifi_access_point,
                                                                                               wifi_sniffer,
                                                                                               utf_constants,
                                                                                               ble_client):
-    logger().info("*******************C20234************************")
+    logger().info("*******************C133480************************")
     validation = True
     testcase = "wrong_dnsserver + ble"
     channel = wifi_access_point.interfaces.wifi.channel
@@ -510,10 +510,10 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_state_C20360(wifi_dut, wifi_access_point,
+def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_state_C133583(wifi_dut, wifi_access_point,
                                                                                             utf_constants, wifi_sniffer,
                                                                                             ble_client):
-    logger().info("*******************C20360************************")
+    logger().info("*******************C133583************************")
     validation = True
     testcase = "dns_query+ble"
     channel = wifi_access_point.interfaces.wifi.channel

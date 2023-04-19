@@ -8,7 +8,6 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
 import time
 from utf.utils.logger import get_logger
 from utf.interfaces.wifi import WlanError
-import test_store_configuration as sc
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
 
@@ -36,6 +35,69 @@ def logger():
     return get_logger(__name__)
 
 
+class cleanup_store_config:
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def dut_recovery(self):
+        tries = 0
+        while tries < 3:
+            tries += 1
+            try:
+                logger().info("Initiating reset for device cleanup")
+                self.wifi_dut.interfaces.wifi.reset_soft()
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.associated = True
+                logger().info("Initializing the DUT")
+                self.wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=1)
+                time.sleep(10)
+                return True
+            except:
+                logger().info("clean up process failed ,retrying for 3 times")
+
+    def disconnect(self):
+
+        try:
+            logger().info("Initiating disconnect for cleanup")
+            self.wifi_dut.interfaces.wifi.leave()
+            time.sleep(5)
+            logger().info("cfg disable")
+            # Enables the store configuration
+            self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+            return True
+        except:
+            logger().info("clean up process failed")
+
+
+class wifi_join:
+    def __init__(self, wifi_dut, wifi_access_point):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+
+    def join_to_ap(self):
+        for i in range(0, 3):
+            try:
+                self.wifi_dut.interfaces.wifi.associated = False
+                logger().info("joining to the AP")
+                # DUT connects to AP after join_ap API is executed
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point, timeout=40)
+                return True
+            except Exception as e:
+                if "0x2" in str(e):
+                    logger().info(f"Error found:{str(e)} ->"
+                                  f" device already in connected step need to disconnect before connect")
+                    logger().info("Initiating disconnect for cleanup")
+                    self.wifi_dut.interfaces.wifi.leave(skip_check_for_association=True)
+                    time.sleep(5)
+                    logger().info("cfg disable")
+                    # Enables the store configuration
+                    self.wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+                if i == 2:
+                    raise
+
+
 class VerifyJoinIp:
     def __init__(self, wifi_dut, wifi_access_point, utf_constants, store_config=False, power_save=None):
         self.wifi_dut = wifi_dut
@@ -49,7 +111,7 @@ class VerifyJoinIp:
         ping_count = self.utf_constants.get("ping_count")
         logger().info("Joining to the AP")
 
-        join_obj = sc.wifi_join(self.wifi_dut, self.wifi_access_point)
+        join_obj = wifi_join(self.wifi_dut, self.wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
 
         logger().info("Getting the IP")
@@ -168,7 +230,7 @@ def test_Store_Config_AT_C101942(rs_helper, utf_constants, wifi_sniffer, wifi_ac
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -237,7 +299,7 @@ def test_Store_Config_powersave_C101943(rs_helper, utf_constants, wifi_sniffer, 
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -701,7 +763,7 @@ def test_Store_IP_PORT_TCP_CFG_AT_C101950(rs_helper, utf_constants, wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -778,7 +840,7 @@ def test_Store_IP_PORT_Transp_CFG_AT_C101958(rs_helper, utf_constants, wifi_snif
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -861,7 +923,7 @@ def test_Store_IP_PORT_Transp_CFG_PING_AT_C101952(rs_helper, utf_constants, wifi
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -1018,7 +1080,7 @@ def test_Store_IP_PORT_TCP_4_sock_CFG_AT_C101960(rs_helper, utf_constants, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -1481,7 +1543,7 @@ def test_Store_IP_PORT_AP_CFG_TCP_C101959(wifi_sniffer, net_perf_client, wifi_du
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()
@@ -1607,7 +1669,7 @@ def test_Store_IP_PORT_AP_3_TCP_SOCK_CFG_C101961(wifi_sniffer, net_perf_client, 
 
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
-        clean_up = sc.cleanup_store_config(wifi_dut)
+        clean_up = cleanup_store_config(wifi_dut)
         if ("wlan_disconnect" in str(e)) or ("0xFFFFFFE2" in str(e)) or ("0xFFFFFFD5" in str(e)):
             clean_up.dut_recovery()
         clean_up.disconnect()

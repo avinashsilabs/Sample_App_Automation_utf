@@ -76,8 +76,7 @@ class WifiThread(ThreadBase):
         with lock:
               count_i = 4
               logger().info("Scanning to the Wifi Access Point")
-              self.wifi_dut.interfaces.wifi.scan(channel=self.wifi_access_point.interfaces.wifi.channel,
-                                                   ssid=None)
+              self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
               logger().info("***************Joining to the Wifi Access Point*****************")
               self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
               self.bssid = self.wifi_access_point.interfaces.wifi.bssid
@@ -492,13 +491,14 @@ class ble_multi_connection(ThreadBase):
             self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
             time.sleep(5)
-            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address,
-                                                      expected="RSI_BLE_ENCRYPT_STARTED_EVENT", timeout=120)
+            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=120)
             time.sleep(20)
             logger().info("************BLE master connection success with ble_client**********")
-            logger().info(f"***************Disconnect DUT from DUT**************")
-            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=10)
+            logger().info(f"***************Disconnect DUT from remote device**************")
+            self.ble_client.interfaces.bluetooth.disconnect(dev_addr=ble_dut_address)
             logger().info(f"*****************iteration: {i+1}****************")
+
+
 
 class ble_continuous_scan_thread(ThreadBase):
     def __init__(self, wifi_dut, ble_client, ble_mode, ble_scan_interval=100, ble_scan_window=5,
@@ -602,8 +602,8 @@ class ble_continuous_scan_thread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_connect_and_disconnect_functionality_of_dut_ble_in_slave_mode_while_sta_is_in_connection_C20263(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client):
-    testcase = "sta+ble_C20263"
+def test_connect_and_disconnect_functionality_of_dut_ble_in_slave_mode_while_sta_is_in_connection_C133503(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client):
+    testcase = "sta+ble_C133503"
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
@@ -676,8 +676,8 @@ def test_connect_and_disconnect_functionality_of_dut_ble_in_slave_mode_while_sta
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_BG_SCAN_functionality_of_dut_when_dut_ble_in_connection_state_C20362(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,  utf_constants):
-    logger().info(f"************************C20362*********************")
+def test_BG_SCAN_functionality_of_dut_when_dut_ble_in_connection_state_C133585(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,  utf_constants):
+    logger().info(f"************************C133585*********************")
     validation = True
     testcase = "bgscan+ble"
     ping_count = utf_constants.get("ping_count")
@@ -789,6 +789,7 @@ def test_BG_SCAN_functionality_of_dut_when_dut_ble_in_connection_state_C20362(wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_functionality_of_BLE_for_disconnect_and_connect_multiple_times_When_STA_is_in_connection_C20341(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants, wifi_client, net_perf_client, protocol):
     logger().info(f"************************C20341*********************")
+    logger().info(f"couldn't find exact match of C20341 in sta_ble_latest")
     testcase = "http post functionality with non existing ip +ble"
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -868,8 +869,8 @@ def test_functionality_of_BLE_for_disconnect_and_connect_multiple_times_When_STA
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_http_post_functionality_with_nonexisting_ip_after_ble_connection_C20237(wifi_dut, ble_client, wifi_access_point, utf_constants, wifi_sniffer, http_server, index_path):
-    logger().info(f"************************C20237*********************")
+def test_http_post_functionality_with_nonexisting_ip_after_ble_connection_C133483(wifi_dut, ble_client, wifi_access_point, utf_constants, wifi_sniffer, http_server, index_path):
+    logger().info(f"************************C133483*********************")
     testcase = "http post functionality with non existing ip +ble"
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -924,9 +925,9 @@ def test_http_post_functionality_with_nonexisting_ip_after_ble_connection_C20237
 @pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_http_post_functionality_with_ble_connection_C20340(wifi_dut, wifi_access_point, wifi_sniffer, http_server, ble_client, utf_constants):
-    logger().info(f"************************C20340*********************")
-    testcase = "http_post + ble_C20340"
+def test_http_post_functionality_with_ble_connection_C133482(wifi_dut, wifi_access_point, wifi_sniffer, http_server, ble_client, utf_constants):
+    logger().info(f"************************C133482*********************")
+    testcase = "http_post + ble_C133482"
     iter_count = utf_constants.get("iter_count")
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -986,10 +987,10 @@ def test_http_post_functionality_with_ble_connection_C20340(wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_coex_functionality_ble_connection_as_a_master_C20183(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,  utf_constants):
-    logger().info(f"************************C20183*********************")
+def test_coex_functionality_ble_connection_as_a_master_C133429(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,  utf_constants):
+    logger().info(f"************************C133429*********************")
     try:
-        testcase = "Coex_functionality + ble_C20183"
+        testcase = "Coex_functionality + ble_C133429"
         iter_count = utf_constants.get("iter_count")
         validation = True
         channel = wifi_access_point.interfaces.wifi.channel
@@ -1052,10 +1053,10 @@ def test_coex_functionality_ble_connection_as_a_master_C20183(wifi_dut, ble_clie
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_coex_functionality_ble_connection_as_a_slave_C20182(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,  utf_constants):
-    logger().info(f"************************C20182*********************")
+def test_coex_functionality_ble_connection_as_a_slave_C133428(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,  utf_constants):
+    logger().info(f"************************C133428*********************")
     try:
-        testcase = "Coex_functionality + ble_C20182"
+        testcase = "Coex_functionality + ble_C133428"
         iter_count = utf_constants.get("iter_count")
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1111,10 +1112,10 @@ def test_coex_functionality_ble_connection_as_a_slave_C20182(wifi_dut, ble_clien
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_deinit_init_functionality_of_ble_C20326(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,  utf_constants):
-    logger().info(f"************************C20236*********************")
+def test_sta_deinit_init_functionality_of_ble_C133566(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,  utf_constants):
+    logger().info(f"************************C133566*********************")
     try:
-        testcase = "Coex_functionality + ble_C20236"
+        testcase = "Coex_functionality + ble_C133566"
         iteration_count = utf_constants.get("iter_count")
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1163,8 +1164,8 @@ def test_sta_deinit_init_functionality_of_ble_C20326(wifi_dut, ble_client, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                            wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_select_socket_ble_connection_as_master_C20356(wifi_dut, wifi_sniffer, wifi_access_point, ssl_server, ble_client, rs_helper, utf_constants, remote_socket):
-    logger().info("**************testcase : C20356*******************")
+def test_select_socket_ble_connection_as_master_C133579(wifi_dut, wifi_sniffer, wifi_access_point, ssl_server, ble_client, rs_helper, utf_constants, remote_socket):
+    logger().info("**************testcase : C133579*******************")
     try:
         channel = wifi_access_point.interfaces.wifi.channel
         testcase = "sta+ble_ssl_connection"
@@ -1243,8 +1244,8 @@ def test_select_socket_ble_connection_as_master_C20356(wifi_dut, wifi_sniffer, w
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_sta_ble_non_connectable_Adv_C20331(firmware_loader, wifi_dut, wifi_access_point, utf_constants,  wifi_sniffer, wifi_client, ble_client):
-    logger().info("**************testcase : C20331*******************")
+def test_sta_ble_non_connectable_Adv_C133571(firmware_loader, wifi_dut, wifi_access_point, utf_constants,  wifi_sniffer, wifi_client, ble_client):
+    logger().info("**************testcase : C133571*******************")
     try:
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -1288,11 +1289,11 @@ def test_sta_ble_non_connectable_Adv_C20331(firmware_loader, wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
-def test_coex_functionality_wlan_connection_while_ble_is_in_scan_state_C20184(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
-    logger().info("**************testcase : C20184*******************")
+def test_coex_functionality_wlan_connection_while_ble_is_in_scan_state_C133430(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
+    logger().info("**************testcase : C133430*******************")
     try:
         channel = wifi_access_point.interfaces.wifi.channel
-        testcase = "sta+ble_C20184"
+        testcase = "sta+ble_C133430"
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
         wifi_obj = wb.WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase=testcase)
@@ -1341,8 +1342,8 @@ def test_coex_functionality_wlan_connection_while_ble_is_in_scan_state_C20184(wi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
-def test_wlan_connection_while_ble_passive_scan_C20187(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
-    capture_filename = "wlan_connection_while_ble_passive_scan_C20187"
+def test_wlan_connection_while_ble_passive_scan_C133433(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
+    capture_filename = "wlan_connection_while_ble_passive_scan_C133433"
     ble_mode = "ble_master"
     validation = True
     try:
@@ -1425,8 +1426,8 @@ def test_wlan_connection_while_ble_passive_scan_C20187(wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan","ble_disconnect"])
-def test_ble_conn_req_wlan_connection_C20185(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
-    capture_filename = "ble_conn_req_wlan_connection_C20185"
+def test_ble_conn_req_wlan_connection_C133431(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
+    capture_filename = "ble_conn_req_wlan_connection_C133431"
     ble_mode = "ble_master"
     con_flag =0
     role_flag = 0
@@ -1508,7 +1509,6 @@ def test_ble_conn_req_wlan_connection_C20185(wifi_dut, wifi_access_point, wifi_s
         wifi_dut.interfaces.wifi.power_save(0, 0)
         wifi_dut.interfaces.wifi.bt_power_save(0, 0)
 
-@pytest.mark.firmware_app("test_ble_coex_custom")
 @pytest.mark.config(
      "wifi_dut",
      wifi={
@@ -1531,8 +1531,8 @@ def test_ble_conn_req_wlan_connection_C20185(wifi_dut, wifi_access_point, wifi_s
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
-def test_wlan_connection_while_ble_active_scan_C20186(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
-    capture_filename = "wlan_connection_while_ble_passive_scan_C20186"
+def test_wlan_connection_while_ble_active_scan_C133432(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants, rs_helper):
+    capture_filename = "wlan_connection_while_ble_passive_scan_C133432"
     ble_mode = "ble_master"
     validation = True
     try:
@@ -1606,12 +1606,12 @@ def test_wlan_connection_while_ble_active_scan_C20186(firmware_loader, wifi_dut,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.ble_client("raspi_ble_client")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_sta_ble_deep_sleep_msg_power_save_C20276(firmware_loader, wifi_dut, wifi_sniffer, wifi_access_point, wifi_client,
+def test_sta_ble_deep_sleep_msg_power_save_C133516(firmware_loader, wifi_dut, wifi_sniffer, wifi_access_point, wifi_client,
                                               ble_client, utf_constants):
 
     # Get the Wi-Fi channel number
     channel = wifi_access_point.interfaces.wifi.channel
-    capture_filename = "test_sta_ble_msg_deep_sleep_power_save_C20276"
+    capture_filename = "test_sta_ble_msg_deep_sleep_power_save_C133516"
     validation = True
 
     try:
@@ -1703,10 +1703,10 @@ def test_sta_ble_deep_sleep_msg_power_save_C20276(firmware_loader, wifi_dut, wif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_disconnect_connect_multiple_times_when_sta_is_in_connection_C20342(wifi_access_point, utf_constants, wifi_sniffer, wifi_dut, ble_client, wifi_client, net_perf_client,
-                protocol):
+def test_disconnect_connect_multiple_times_when_sta_is_in_connection_C133520(wifi_access_point, utf_constants, wifi_sniffer, wifi_dut,
+                                                                            ble_client, wifi_client, net_perf_client, protocol):
     try:
-        testcase = "sta+ble_C20342"
+        testcase = "sta+ble_C133520"
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)

@@ -480,7 +480,7 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
-def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20201(wifi_dut, wifi_sniffer,
+def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C133447(wifi_dut, wifi_sniffer,
                                                                                     wifi_access_point, wifi_client,
                                                                                     ble_clients, net_perf_client,
                                                                                     protocol, utf_constants):
@@ -509,7 +509,7 @@ def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20
         wifi_dut.interfaces.wifi.ble_start_advertising()
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file="Capture_C20201")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="Capture_C133447")
         time.sleep(3)
 
         with TimeMeasurer() as t:
@@ -609,7 +609,7 @@ def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C20
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
-def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi_dut, ble_clients, wifi_access_point,
+def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C133507(wifi_dut, ble_clients, wifi_access_point,
                                                                             wifi_client, wifi_sniffer, rs_helper,
                                                                             utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -625,7 +625,7 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi
         ping_counts = utf_constants.get("ping_count")
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C20267')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C133507')
         time.sleep(3)
 
         with TimeMeasurer() as t:
@@ -726,7 +726,7 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C20267(wifi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
-def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi_dut, ble_clients, wifi_access_point,
+def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C133508(wifi_dut, ble_clients, wifi_access_point,
                                                                             wifi_client, wifi_sniffer, rs_helper,
                                                                             utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -741,7 +741,7 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi
     ping_counts = utf_constants.get("ping_count")
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C20268')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C133508')
     time.sleep(3)
 
     with TimeMeasurer() as t:
@@ -840,7 +840,7 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C20268(wifi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
-def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client,
+def test_dual_role_wlan_udp_rx_data_transfer_C133511(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client,
                                                     wifi_client, ble_clients, protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -853,7 +853,7 @@ def test_dual_role_wlan_udp_rx_data_transfer_C20271(wifi_dut, wifi_sniffer, wifi
     time_duration = utf_constants.get("time_duration")
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C20271')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='Capture_C133511')
     time.sleep(3)
 
     with TimeMeasurer() as t:

@@ -24,6 +24,7 @@ from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import print_dict
+
 lock = threading.RLock()
 
 
@@ -447,7 +448,7 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"), pytest.mark.config('wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.remote_socket("raspi_ip_socket")
 # In raspi_ip_socket section of harness file interface needs to updated according to the raspi interface which is connected to AP.
-def test_verify_tcp_udp_tx_data_transfer_c20224(recovery, remote_socket, rs_helper, utf_constants, wifi_sniffer,
+def test_verify_tcp_udp_tx_data_transfer_c133470(recovery, remote_socket, rs_helper, utf_constants, wifi_sniffer,
                                                 wifi_dut, wifi_access_point, wifi_client, net_perf_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -456,7 +457,7 @@ def test_verify_tcp_udp_tx_data_transfer_c20224(recovery, remote_socket, rs_help
         logger().info(
             "testcase : Verify WLAN TCP, UDP Tx data transfer with variable size(1-1460 bytes) after BLE connection")
         logger().info("configuring the Sniffer with the channel")
-        testcase = 'verify_tcp_udp_tx_data_transfer_c20224'
+        testcase = 'verify_tcp_udp_tx_data_transfer_c133470'
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
@@ -553,7 +554,7 @@ def test_verify_tcp_udp_tx_data_transfer_c20224(recovery, remote_socket, rs_help
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "cipher": "AES"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_verify_wlan_scan_and_ble_scan_c20199(wifi_access_point, recovery, wifi_dut, ble_client):
+def test_verify_wlan_scan_and_ble_scan_c133446(wifi_access_point, recovery, wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     try:
@@ -596,7 +597,6 @@ def test_verify_wlan_scan_and_ble_scan_c20199(wifi_access_point, recovery, wifi_
         dut_clean_up(wifi_dut)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -617,13 +617,13 @@ def test_verify_wlan_scan_and_ble_scan_c20199(wifi_access_point, recovery, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.remote_socket("raspi_ip_socket")
 # In raspi_ip_socket section of harness file interface needs to updated according to the raspi interface which is connected to AP.
-def test_tcp_data_transfer_functionality_while_rejoin_c20225(switch, utf_constants, rs_helper, wifi_sniffer, recovery,
+def test_tcp_data_transfer_functionality_while_rejoin_c133471(switch, utf_constants, rs_helper, wifi_sniffer, recovery,
                                                              wifi_dut, wifi_access_point, ble_client, remote_socket):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     ble_client_address = None
     try:
-        testcase = "test_TCP_functionality_while_rejoin_C20225"
+        testcase = "test_TCP_functionality_while_rejoin_C133471"
         logger().info("testcase : TCP data transfer functionality while STA is in rejoin process")
 
         logger().info("Setting Rejoin Parameters in DUT")
@@ -737,7 +737,6 @@ def test_tcp_data_transfer_functionality_while_rejoin_c20225(switch, utf_constan
         dut_clean_up(wifi_dut, ble_client_address)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -758,13 +757,13 @@ def test_tcp_data_transfer_functionality_while_rejoin_c20225(switch, utf_constan
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.remote_socket("raspi_ip_socket")
 # In raspi_ip_socket section of harness file interface needs to updated according to the raspi interface which is connected to AP.
-def test_udp_functionality_while_rejoin_c20226(switch, utf_constants, rs_helper, wifi_access_point, wifi_sniffer,
+def test_udp_functionality_while_rejoin_c133472(switch, utf_constants, rs_helper, wifi_access_point, wifi_sniffer,
                                                recovery, wifi_dut, ble_client, remote_socket):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     ble_client_address = None
     try:
-        testcase = "test_UDP_functionality_while_rejoin_C20226"
+        testcase = "test_UDP_functionality_while_rejoin_C133472"
         logger().info("testcase : UDP data transfer functionality while STA is in rejoin process")
 
         logger().info("Setting Rejoin Parameters in DUT")
@@ -879,13 +878,14 @@ def test_udp_functionality_while_rejoin_c20226(switch, utf_constants, rs_helper,
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -893,7 +893,7 @@ def test_udp_functionality_while_rejoin_c20226(switch, utf_constants, rs_helper,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
-def test_read_char_value_of_remote_ble_when_wlan_is_in_connected_state_c20188(firmware_loader, utf_constants, rs_helper,
+def test_read_char_value_of_remote_ble_when_wlan_is_in_connected_state_c133434(firmware_loader, utf_constants, rs_helper,
                                                                               wifi_sniffer, recovery, wifi_access_point,
                                                                               wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -904,7 +904,7 @@ def test_read_char_value_of_remote_ble_when_wlan_is_in_connected_state_c20188(fi
             "testcase : Read the characteristic value by UUID of remote BLE device when WLAN is in connected state")
 
         time_duration = utf_constants.get("time_duration")
-        capture_filename = "test_c20188"
+        capture_filename = "test_c133434"
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")

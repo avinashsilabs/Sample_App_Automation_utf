@@ -1,7 +1,6 @@
 from datetime import datetime
 import datetime
 import pytest as pytest
-
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116BTFeatureBitMap,RS9116PowerSaveProcedureTypes
 from utf.utils.logger import get_logger
@@ -9,13 +8,11 @@ from utf.utils.iperf.iperf_utils import ping
 from utf.utils.time_measurer import TimeMeasurer
 import time
 from utf.utils.thread_base import ThreadBase
-
 from utf.interfaces.bluetooth import BTSocketRole
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect.devices.rs911x import RS9116TCPIPFeatureBitMap,RS9116ExtTCPIPFeatureBitMap,RS9116CertificateType,RS9116CoexMode,RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap
-import test_sta_ble_connection
+# import test_sta_ble_connection
 from utf_wiseconnect.devices.rs911x import RS9116AsyncEventType
-
 from utf_wiseconnect.devices.rs911x import RS9116CustomFeatureBitMap, RS9116ExtCustomFeatureBitMap
 
 def logger():

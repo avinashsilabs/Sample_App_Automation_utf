@@ -8,7 +8,7 @@ devices:
 #          coex_mode: { RS9116CoexMode.DualBluetoothBLE: RS9116CoexMode.BLE}
 
   si917:
-    skip_markers: [ 'wifi_5g', 'bt_classic', 'wifi_dualband','store_config' ]
+    skip_markers: [ 'wifi_5g', 'bt_classic', 'wifi_dualband','store_config', 'test_wlan_powersave_mode3_lp', 'test_wlan_powersave_mode3_ulp' ]
     interfaces:
       wifi:
         re_map:

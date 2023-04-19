@@ -71,8 +71,8 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client):
                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
         ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-        for i in range(1, 2):
+        number_of_iterations = 11
+        for i in range(1, number_of_iterations):
             logger().info(f"======= spinning the case for count of {i}")
             time.sleep(0.2)
             logger().info("======= start scanning in remote ble device")
@@ -109,8 +109,13 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client):
                                                                                                         char_uid=char_uid)
             assert char_path, "characters are empty"
             assert len(char_props) > 0, "length of characters is 0"
-
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+            try:
+                read_charac_value = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+                logger().info(f"read_charac_value = {read_charac_value}")
+            except Exception as e:
+                if read_charac_value != "data":
+                    logger().warning(f"read_charac_value command failed:{e},\nTrying for 2nd time")
+                    ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
 
             # subscribe to notifications
             ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
@@ -431,13 +436,18 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
             assert len(servs) > 0, "no services fetched"
             assert len(chars) > 0, "fetched characters are empty"
 
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                                        service_uid=service_uid,
-                                                                                                        char_uid=char_uid)
+            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                services=servs, service_uid=service_uid, char_uid=char_uid)
             assert char_path, "characters are empty"
             assert len(char_props) > 0, "length of characters is 0"
 
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+            try:
+                read_charac_value = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+                logger().info(f"read_charac_value = {read_charac_value}")
+            except Exception as e:
+                if read_charac_value != "data":
+                    logger().warning(f"read_charac_value command failed:{e},\nTrying for 2nd time")
+                    ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
 
             # subscribe to notifications
             ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
@@ -466,6 +476,7 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
             time.sleep(0.2)
             logger().info("======= start ble adv in dut")
             ble_dut.interfaces.bluetooth.ble_start_advertising()
+        ble_dut.interfaces.wifi.ble_stop_advertising()
 
 
 @pytest.mark.config(

@@ -88,7 +88,7 @@ pipeline
                         responseJson = null
                         
                         changedFiles = sh (
-                            script: "git --no-pager diff HEAD refs/remotes/upstream/$CHANGE_TARGET --name-only",
+                            script: "git --no-pager diff HEAD refs/remotes/origin/$CHANGE_TARGET --name-only",
                             returnStdout: true
                         )
                         println(changedFiles)
@@ -108,7 +108,7 @@ pipeline
                 script {
 
                     try{
-                        prJob = build job: 'UTF_WIFI_CODE_SANITY', parameters: [
+                        prJob = build job: 'UTF_WiFi_PullRequests', parameters: [
                                                 string(name: 'UTF_WIFI_BRANCH', value: env.CHANGE_BRANCH),
                                                 string(name: 'SSH_TARGET', value: env.SSH_TARGET),
                                                 string(name: 'RS9116_FIRMWARE', value: env.RS9116_FIRMWARE),
@@ -126,7 +126,7 @@ pipeline
                     }
                     env.RS9116_FIRMWARE = null
                     env.build_num = prJob.getNumber()
-                    PR_TEST_LOG = "[Logs](${env.JENKINS_URL}job/UTF_WiFi_SQA/$build_num/console)"
+                    PR_TEST_LOG = "[Logs](${env.JENKINS_URL}job/UTF_WiFi_PullRequests/$build_num/console)"
                     if( prJob.getCurrentResult() != 'SUCCESS' )  {
                                     
                         post_pr_message("$BUILD_HYPERLINK PR test build failed. See $PR_TEST_LOG")

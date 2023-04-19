@@ -140,14 +140,22 @@ pipeline {
                                         rm -rf rs9116_binary
                                         mkdir rs9116_binary
                                         cd rs9116_binary
-                                        curl -k -u ${USERNAME}:${PASSWORD} -O https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip --output ${RS9116_FIRMWARE}.zip
+                                           if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then 
+                                                wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip           
+                                            else 
+                                                wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116_WiSeConnect_SDK/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip           
+                                            fi 
                                     '''
                                 } else {
                                     sh '''
                                         rm -rf rs9116_binary
                                         mkdir rs9116_binary
                                         cd rs9116_binary
-                                        curl -k -u ${USERNAME}:${PASSWORD} -O https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip --output ${RS9116_FIRMWARE}.zip
+                                           if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
+                                                wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip
+                                            else 
+                                                wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116_WiSeConnect_SDK/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip
+                                            fi 
                                     '''
                                 }
                             }
@@ -272,8 +280,8 @@ pipeline {
                             junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                             sh '''
                             zip -r reports.zip reports
-                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/reports/" -T reports.zip
-                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/UTF_Wifi_SQA/${BUILD_NUMBER}/config/harnesses/${HARNESS_NAME}" -T config/harnesses/${HARNESS_NAME}
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/reports/" -T reports.zip
+                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/config/harnesses/${HARNESS_NAME}" -T config/harnesses/${HARNESS_NAME}
                             '''
                         }
                     }

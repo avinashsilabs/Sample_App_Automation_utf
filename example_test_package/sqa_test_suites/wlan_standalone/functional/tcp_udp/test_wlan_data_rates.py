@@ -1069,3 +1069,59 @@ def test_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_access_point
         logger().info(f'Attenuation and Data Rates value = {attenuation_data_rates_dict}')
         wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
         wifi_dut.interfaces.wifi.leave()
+
+#########################
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+def test_data_rates_for_data_packets_12mbps_C19633(wifi_sniffer, wifi_access_point, wifi_dut):
+    validation = True
+
+    '''Set Fixed data rate to 12Mbps and verify which data rate is using for 4GHz .DataNull Data and Qos Null dataQos 
+       Data'''
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_data_rates_for_data_packets_12mbps')
+
+    # set data rate in 12 Mbps
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, data_rate=RS9116DataRate.Mbps_12)
+
+    result = wifi_dut.interfaces.wifi.start_ip()
+    dut_ip = result.ip.decode()
+    logger().info(f"DUT ip address : {dut_ip}")
+
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+
+    logger().info(f"DUT MAC_Address: {mac_address}")
+
+    logger().info(f"*****Enable Max PSP in DUT******")
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable bt power save"
+    # Verify Data/Null/Qos packets
+    packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} or ' \
+                     f'wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == ' \
+                     f'0x0024 ' \
+                     f'and wlan_radio.data_rate == 12 and !wlan.mgt'
+    wifi_dut.interfaces.wifi.leave()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger().info("Stop Sniffer finally")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
+        'Unable to find any packet for Data/Null/Qos packets'

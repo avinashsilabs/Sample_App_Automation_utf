@@ -1,0 +1,16 @@
+[
+    {
+      "UTF_WIFI_BRANCH": "release/22q4",
+      "SILICON_REV": "1.5",
+      "SQA_TEST_AGENT": "",
+      "SSH_TARGET": "10.207.17.102",
+      "HARNESS_NAME": "dev_sanity_harness_example_1_5.yaml",
+      "BUILD_LOCATION":"build_artifacts",
+      "FLASH_RS9116": true,
+      "FLASH_EFR32": true,
+      "PUBLISH_TEST_RESULTS": true,
+      "UTF_PYTEST_COMMAND": "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity_1_5.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+      "device_group_name": "utf_sqa_hyd_2_dev_sanity_9116_device_group",
+      "device_group_label": ""
+    }
+]

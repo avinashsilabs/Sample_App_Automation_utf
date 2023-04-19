@@ -202,13 +202,21 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
     logger().info(f'device ip {device_ip}')
 
-    logger().info("performing fw upgrade on dut....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/RS9116.2.5.0.4.xml")
-    time.sleep(10)
+    logger().info("performing fw upgrade on dut by removing data in .xls file....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "RS9116.2.5.0.4_remove.xls")
+
+    time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-        time.sleep(10)
     assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
+
+    logger().info("performing fw upgrade on dut by adding data in .xls file....")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "RS9116.2.5.0.4_add.xls")
+
+    time.sleep(120)
+    with pytest.raises(WlanError) as exc_info:
+        wifi_dut.interfaces.wifi.get_http_otaf_status()
+    assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xBB41"
 
     time.sleep(5)
     logger().info("resetting DUT....")

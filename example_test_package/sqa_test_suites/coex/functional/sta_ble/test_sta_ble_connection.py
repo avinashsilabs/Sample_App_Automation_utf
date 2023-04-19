@@ -293,7 +293,6 @@ def wifi_join(wifi_dut, wifi_access_point, tcp_ip_bypass=False, fast_powersave=T
     assert status, "Unable to connect to ap"
     logger().info(f"wifi_join status: {status}")
     time.sleep(5)
-
     ip_fail = 1
     if not tcp_ip_bypass:
         for count in range(1, 4):
@@ -462,6 +461,7 @@ class wifi_ScanThread(ThreadBase):
             select_channel_all_2_4=[],
             select_channel_all_5=[],
             deep_powersave=False,
+            no_ps=False
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -472,34 +472,47 @@ class wifi_ScanThread(ThreadBase):
         self.select_channel_all_2_4 = select_channel_all_2_4
         self.select_channel_all_5 = select_channel_all_5
         self.deep_powersave = deep_powersave
+        self.no_powersave = no_ps
 
     def run(self):
         logger().info("Setting DUT in wlan power save...")
-        if self.deep_powersave:
-            logger().info("** Setting DUT in deep powersave **")
-            wifi_ps = self.wifi_dut.interfaces.wifi.power_save(
-                RS9116PowerSaveModes.PowerSaveMode8,
-                RS9116PowerSaveProcedureTypes.FastPowerSave,
-            )
-            assert wifi_ps, "Wifi powersave failed"
-            logger().info("Setting DUT in bt deep power save...")
-            bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(
-                RS9116PowerSaveModes.PowerSaveMode8,
-                RS9116PowerSaveProcedureTypes.FastPowerSave,
-            )
-            assert bt_ps, "BT powersave failed"
-        else:
-            wifi_ps = self.wifi_dut.interfaces.wifi.power_save(
-                RS9116PowerSaveModes.PowerSaveMode2,
-                RS9116PowerSaveProcedureTypes.FastPowerSave,
-            )
-            assert wifi_ps, "Wifi powersave failed"
-            logger().info("Setting DUT in bt fast power save...")
-            bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(
-                RS9116PowerSaveModes.PowerSaveMode2,
-                RS9116PowerSaveProcedureTypes.FastPowerSave,
-            )
-            assert bt_ps, "BT Powersave failed"
+        if not self.no_powersave:
+            if self.deep_powersave:
+                logger().info("** Setting DUT in deep powersave **")
+                wifi_ps = self.wifi_dut.interfaces.wifi.power_save(
+                    RS9116PowerSaveModes.PowerSaveMode8,
+                    RS9116PowerSaveProcedureTypes.FastPowerSave,
+                )
+                assert wifi_ps, "Wifi powersave failed"
+                logger().info("Setting DUT in bt deep power save...")
+                bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(
+                    RS9116PowerSaveModes.PowerSaveMode8,
+                    RS9116PowerSaveProcedureTypes.FastPowerSave,
+                )
+                assert bt_ps, "BT powersave failed"
+            elif self.scan_powersave:
+                logger().info("** Setting DUT in deep powersave **")
+                wifi_ps = self.wifi_dut.interfaces.wifi.power_save(
+                    RS9116PowerSaveModes.PowerSaveMode8
+                )
+                assert wifi_ps, "Wifi powersave failed"
+                logger().info("Setting DUT in bt deep power save...")
+                bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(
+                    RS9116PowerSaveModes.PowerSaveMode8
+                )
+                assert bt_ps, "BT powersave failed"
+            else:
+                wifi_ps = self.wifi_dut.interfaces.wifi.power_save(
+                    RS9116PowerSaveModes.PowerSaveMode2,
+                    RS9116PowerSaveProcedureTypes.FastPowerSave,
+                )
+                assert wifi_ps, "Wifi powersave failed"
+                logger().info("Setting DUT in bt fast power save...")
+                bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(
+                    RS9116PowerSaveModes.PowerSaveMode2,
+                    RS9116PowerSaveProcedureTypes.FastPowerSave,
+                )
+                assert bt_ps, "BT Powersave failed"
         logger().info(f"thread for scan functionality")
         channel_bitmap_2_4 = 0
         channel_bitmap_5 = 0
@@ -1064,7 +1077,7 @@ def packet_check(
         "ble_stop_scan",
     ],
 )
-def test_scantime_all_channels_2_4g_ble_advertise_C20207(
+def test_scantime_all_channels_2_4g_ble_advertise_C133453(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = []
@@ -1080,6 +1093,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_C20207(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -1124,7 +1138,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_C20207(
         "ble_stop_scan",
     ],
 )
-def test_threading_selective_channels_2_4_C20208(
+def test_threading_selective_channels_2_4_C133454(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = [1, 6, 11]
@@ -1140,6 +1154,7 @@ def test_threading_selective_channels_2_4_C20208(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=True
@@ -1188,7 +1203,7 @@ def test_threading_selective_channels_2_4_C20208(
         "ble_stop_scan",
     ],
 )
-def test_scantime_selective_channels_5g_ble_advertise_bypass_C20209(
+def test_scantime_selective_channels_5g_ble_advertise_bypass_C133455(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = []
@@ -1204,6 +1219,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20209(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -1248,7 +1264,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20209(
         "ble_stop_scan",
     ],
 )
-def test_scantime_selective_channels_5g_ble_advertise_bypass_C20210(
+def test_scantime_selective_channels_5g_ble_advertise_bypass_C133456(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = []
@@ -1264,6 +1280,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20210(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -1317,7 +1334,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20210(
         "ble_stop_scan",
     ],
 )
-def test_sta_ble_rejoin_deauth_C20219(
+def test_sta_ble_rejoin_deauth_C133465(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants
 ):
     ping_count = utf_constants.get("ping_count")
@@ -1424,7 +1441,7 @@ def test_sta_ble_rejoin_deauth_C20219(
         "ble_stop_scan",
     ],
 )
-def test_connect_disconnect_ap_after_ble_slave_connection_C20220(
+def test_connect_disconnect_ap_after_ble_slave_connection_C133466(
         wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client
 ):
     ping_count = utf_constants.get("ping_count")
@@ -1523,7 +1540,7 @@ def test_connect_disconnect_ap_after_ble_slave_connection_C20220(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi={"channel": 8})
-def test_sta_ssl_ble_slave_C20232(
+def test_sta_ssl_ble_slave_C133478(
         wifi_dut, ble_client, wifi_sniffer, wifi_access_point, ssl_server
 ):
     test_run_time = 50
@@ -1731,12 +1748,12 @@ def test_sta_ssl_ble_slave_C20232(
         "ble_stop_scan",
     ],
 )
-def test_threading_http_post_functionality_ble_C20236(wifi_dut, wifi_access_point, http_server, index_path,
+def test_threading_http_post_functionality_ble_C133482(wifi_dut, wifi_access_point, http_server, index_path,
                                                       wifi_sniffer, ble_client, utf_constants, rs_helper):
     iteration_count = utf_constants.get("iter_count")
     try:
         ble_mode = "ble_slave"
-        capture_filename = "test_threading_httppostfunctionality_ble_C20236"
+        capture_filename = "test_threading_httppostfunctionality_ble_C133482"
         ble_clint_address, ble_dut_address = ble_master_slave(
             wifi_dut, ble_client, ble_mode
         )
@@ -1850,7 +1867,7 @@ def test_threading_http_post_functionality_ble_C20236(wifi_dut, wifi_access_poin
         "ble_stop_scan",
     ],
 )
-def test_threading_http_get_functionality_ble_c20339(
+def test_threading_http_get_functionality_ble_C133481(
         wifi_dut,
         wifi_access_point,
         http_server,
@@ -1914,7 +1931,7 @@ def test_threading_http_get_functionality_ble_c20339(
         "ble_stop_scan",
     ],
 )
-def test_scantime_all_channels_2_4g_ble_advertise_bypass_C20248(
+def test_scantime_all_channels_2_4g_ble_advertise_bypass_C133489(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = []
@@ -1930,6 +1947,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_bypass_C20248(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -1976,7 +1994,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_bypass_C20248(
         "ble_stop_scan",
     ],
 )
-def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C20249(
+def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C133490(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = [1, 6, 11]
@@ -1992,6 +2010,7 @@ def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C20249(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -2039,7 +2058,7 @@ def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C20249(
         "ble_stop_scan",
     ],
 )
-def test_scantime_all_channels_5g_ble_advertise_bypass_C20250(
+def test_scantime_all_channels_5g_ble_advertise_bypass_C133491(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = []
@@ -2055,6 +2074,7 @@ def test_scantime_all_channels_5g_ble_advertise_bypass_C20250(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -2073,7 +2093,7 @@ def test_scantime_all_channels_5g_ble_advertise_bypass_C20250(
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.config("wifi_access_point", wifi={"ssid": "test_C20251", "channel": 36})
+@pytest.mark.config("wifi_access_point", wifi={"ssid": "test_C133492", "channel": 36})
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2103,7 +2123,7 @@ def test_scantime_all_channels_5g_ble_advertise_bypass_C20250(
     ],
 )
 @pytest.mark.wifi_5g
-def test_scantime_selective_channels_5g_ble_advertise_bypass_C20251(
+def test_scantime_selective_channels_5g_ble_advertise_bypass_C133492(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
     channel_2_4_list = []
@@ -2119,6 +2139,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20251(
         channel_5_list,
         select_channel_all_2_4,
         select_channel_all_5,
+        no_ps=True
     )
     ble_obj = Ble_continuous_advertise_and_connection_thread(
         wifi_dut, ble_client, ble_mode, connect=False
@@ -2167,7 +2188,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C20251(
         "ble_stop_scan",
     ],
 )
-def test_sta_rejoin_maximum_retry_with_ble_C20259_case1(switch, wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
+def test_sta_rejoin_maximum_retry_with_ble_C133500_case1(switch, wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
                                                         utf_constants):
     try:
         logger().info("******* Infinite retry there should not be any rejoin error Positive case assert if any rejoin "
@@ -2191,7 +2212,7 @@ def test_sta_rejoin_maximum_retry_with_ble_C20259_case1(switch, wifi_dut, wifi_a
             channel=wifi_access_point.interfaces.wifi.channel
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file="test_sta_rejoin_maximum_retry_with_ble_C20259_case1")
+            capture_file="test_sta_rejoin_maximum_retry_with_ble_C133500_case1")
 
         iteration_count = utf_constants.get('iter_count')
         for iteration in range(iteration_count):
@@ -2284,7 +2305,7 @@ def test_sta_rejoin_maximum_retry_with_ble_C20259_case1(switch, wifi_dut, wifi_a
         "ble_stop_scan",
     ],
 )
-def test_sta_rejoin_maximum_retry_with_ble_C20259_case2(switch, wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
+def test_sta_rejoin_maximum_retry_with_ble_C133500_case2(switch, wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
                                                         utf_constants):
     try:
         validation = True
@@ -2323,7 +2344,7 @@ def test_sta_rejoin_maximum_retry_with_ble_C20259_case2(switch, wifi_dut, wifi_a
         time.sleep(10)
         logger().info(f"\n\n ****** Access point is going to turn off  ******")
         for i in range(0, iter_count):
-            capture_file = f"test_sta_rejoin_maximum_retry_with_ble_C20259_case2_iteration_{i}"
+            capture_file = f"test_sta_rejoin_maximum_retry_with_ble_C133500_case2_iteration_{i}"
             logger().info(f"Sniffer capture start")
             wifi_sniffer.interfaces.capture.configure_interface(
                 channel=wifi_access_point.interfaces.wifi.channel
@@ -2397,7 +2418,7 @@ def test_sta_rejoin_maximum_retry_with_ble_C20259_case2(switch, wifi_dut, wifi_a
         "ble_stop_scan",
     ],
 )
-def test_sta_ble_rejoin_deauth_C20260(
+def test_sta_ble_rejoin_deauth_C133501(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants
 ):
     try:
@@ -2490,7 +2511,7 @@ def test_sta_ble_rejoin_deauth_C20260(
         "ble_stop_scan",
     ],
 )
-def test_wlan_disconnection_functionality_after_ble_connection_C20261(
+def test_wlan_disconnection_functionality_after_ble_connection_C133502(
         wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client
 ):
     validation = True
@@ -2623,7 +2644,7 @@ def test_wlan_disconnection_functionality_after_ble_connection_C20261(
         "ble_stop_scan",
     ],
 )
-def test_threading_sta_deeppowersave_ble_C20274(
+def test_threading_sta_deeppowersave_ble_C133514(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants
 ):
     iter_count = utf_constants.get("iter_count")
@@ -2639,6 +2660,10 @@ def test_threading_sta_deeppowersave_ble_C20274(
             RS9116PowerSaveModes.PowerSaveMode8,
             RS9116PowerSaveProcedureTypes.FastPowerSave,
         )
+        logger().info("Disable DUT in wlan deep Power save....")
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
+        logger().info("Disable DUT in bt deep power save..... ")
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled)
         validation = True
         for i in range(1, iter_count + 1):
             logger().info(
@@ -2656,7 +2681,7 @@ def test_threading_sta_deeppowersave_ble_C20274(
             wifi_sniffer.interfaces.capture.start_capture(
                 "sta_deeppowersave +  ble connection "
             )
-            device_ip = wifi_join(wifi_dut, wifi_access_point, fast_powersave=False)
+            device_ip = wifi_join(wifi_dut, wifi_access_point, fast_powersave=True)
             ap_bssid = wifi_access_point.interfaces.wifi.bssid
             logger().info(f"AP bssid {ap_bssid}")
             dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()

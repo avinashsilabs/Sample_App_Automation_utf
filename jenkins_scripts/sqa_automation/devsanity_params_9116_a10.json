@@ -9,7 +9,7 @@
       "FLASH_RS9116": true,
       "FLASH_EFR32": true,
       "PUBLISH_TEST_RESULTS": true,
-      "UTF_PYTEST_COMMAND": "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/wifi_dev_sanity.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
+      "UTF_PYTEST_COMMAND": "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml",
       "device_group_name": "utf_sqa_hyd_1_dev_sanity_9116_device_group",
       "device_group_label": ""
     }

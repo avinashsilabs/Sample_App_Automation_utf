@@ -1356,25 +1356,15 @@ def test_DUTAP_open_10_client_sockets_send_tx_C19473(wifi_access_point, wifi_sni
 def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
     try:
         socket_limit = 11
-        client_ips = []
-        client_sockets = []
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="multi_sockets_C19472")
         socket_obj = MultiSocketsConnectionTx(wifi_dut, wifi_client, remote_socket_factory, utf_constants)
         socket_obj.joining_to_client()
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        for _ in range(1, socket_limit + 1):
-            client_ips.append(host_ip)
-            client_socket = remote_socket_factory.interfaces.socket.create_socket()
-            client_sockets.append(client_socket)
         server_base_port = 5001
         dut_sockets = []
-        for index, client_socket in enumerate(client_sockets):
-            client_ip = client_ips[index]
+        for index in range(socket_limit):
             server_port = server_base_port + index
-            client_socket.start_server(server_ip=client_ip, port=server_port)
-            time.sleep(2)
             logger().info(f"opening socket_id_{index}")
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
             dut_sockets.append(sock)
@@ -1386,11 +1376,11 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as err:
-            error_code = "0xffffffff"
-            if error_code in str(err):
-                logger().info(f"expected error code : {error_code}")
-            else:
-                raise err
+        error_code = "0xffffffff"
+        if error_code in str(err):
+            logger().info(f"expected error code : {error_code}")
+        else:
+            raise err
     finally:
         cleanup_obj = Cleanup(wifi_dut)
         cleanup_obj.dut_clean_up()

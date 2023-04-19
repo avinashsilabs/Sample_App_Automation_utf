@@ -1446,7 +1446,7 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
         "oper_mode": RS9116OperatingMode.ConcurrentMode,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.PSKSecurity,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "band": RS9116Band.TwoPointFourGHz,

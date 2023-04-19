@@ -1,10 +1,11 @@
-import pytest
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116TCPIPFeatureBitMap,\
-    RS9116ExtTCPIPFeatureBitMap,RS9116ExtCustomFeatureBitMap,RS9116CustomFeatureBitMap,RS9116PowerSaveProcedureTypes
-from utf.utils.logger import get_logger
-from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes, RS9116AsyncEventType
 import time
+import pytest
+from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
+    RS9116TCPIPFeatureBitMap, \
+    RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap
+from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes, RS9116AsyncEventType
 
 
 def logger():
@@ -38,7 +39,8 @@ pytestmark = [
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.IEEE802_11W | RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
          },
                      )
 ]
@@ -58,8 +60,16 @@ class BleScan(ThreadBase):
                                                                        ble_scan_interval=self.ble_scan_interval,
                                                                        ble_scan_window=self.ble_scan_window, timeout=60)
         logger().info(f"dut_scan_results: {dut_scan_results}")
-        time.sleep(10)
+        time.sleep(60)
         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+
+        enable_wifips = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifips, f" unable to enable the wifips"
+        enable_btps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_btps, f"unable to enable the btps"
+
         events = self.wifi_dut.interfaces.wifi.get_async_events()
         for event in events:
             if event.event_type == RS9116AsyncEventType.Adv_Report:
@@ -68,14 +78,9 @@ class BleScan(ThreadBase):
                 logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
                 logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
                 break
-        enable_wifips = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_wifips, f" unable to enable the wifips"
-        enable_btps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_btps, f"unable to enable the btps"
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -106,7 +111,7 @@ def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
         assert bt_client_address is not None
         time.sleep(10)
 
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address, ble_scan_interval=256, ble_scan_window=80)
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
     finally:
@@ -117,6 +122,7 @@ def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
         time.sleep(5)
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -146,7 +152,7 @@ def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client):
         assert bt_client_address is not None
         time.sleep(10)
 
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address, ble_scan_interval=256, ble_scan_window=80)
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
     finally:
@@ -157,6 +163,7 @@ def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client):
         time.sleep(5)
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -186,7 +193,7 @@ def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client):
         assert bt_client_address is not None
         time.sleep(10)
 
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address, ble_scan_interval=256, ble_scan_window=80)
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
     finally:
@@ -197,6 +204,7 @@ def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client):
         time.sleep(5)
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -256,6 +264,7 @@ def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
         time.sleep(5)
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_diable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start DUT**************\n\n")
@@ -297,6 +306,7 @@ def test_diable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client):
         time.sleep(5)
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_client, ble_clients):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]
@@ -343,10 +353,10 @@ def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_c
                            "0x00"  # Advertising_Filter_Policy
 
         )
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address1, ble_scan_interval=256, ble_scan_window=80)
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address2, ble_scan_interval=256, ble_scan_window=80)
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
 
@@ -358,6 +368,7 @@ def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_c
         ble_client2.interfaces.bluetooth.close()
         time.sleep(5)
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_dut, ble_client, ble_clients):
     try:
         logger().info(f"\n\n**************Start DUT**************\n\n")
@@ -384,7 +395,7 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_dut,
                            "0x00"  # Advertising_Filter_Policy
 
         )
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address, ble_scan_interval=160, ble_scan_window=80)
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=160, ble_scan_window=80)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
     finally:
@@ -394,6 +405,8 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_dut,
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
 
+
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19957(wifi_dut, ble_client, ble_clients):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]
@@ -439,10 +452,10 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19
                            "0x00"  # Advertising_Filter_Policy
 
         )
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address1, ble_scan_interval=960, ble_scan_window=640)
-        blescan_obj.start()
-        blescan_obj.wait_for_exit()
-        blescan_obj = BleScan(wifi_dut, bt_client_address=bt_client_address2, ble_scan_interval=960, ble_scan_window=640)
+        logger().info(f"bt_client_address1: {bt_client_address1}")
+        logger().info(f"bt_client_address2: {bt_client_address2}")
+
+        blescan_obj = BleScan(wifi_dut, ble_scan_interval=960, ble_scan_window=640)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
 

@@ -68,8 +68,14 @@ def join_get_ip(wifi_dut, wifi_access_point, ping_count):
 
     logger().info(f'DUT ip {device_ip}')
     logger().info("pinging to dut.....")
-    status = ping(device_ip, ping_count)
-    assert status == 1, "DUT not responding for ping request......"
+    for count in range(5):
+        try:
+            status = ping(device_ip, ping_count)
+            break
+        except:
+            logger().info(f"pinging to DUT is failed...retry count -> {count}")
+            time.sleep(5)
+    assert status, "DUT not responding for ping request......"
     logger().info("ping to DUT is successful....")
     return device_ip
 
@@ -508,8 +514,6 @@ def test_http_get_func_host_name_with_tcp_C19218(http_server, wifi_dut, http_cli
         wifi_sniffer.interfaces.capture.stop_capture()
     logger().info(content)
     logger().info(f"******************* iteration {count} completed ********************* ")
-
-
 
 
 @pytest.mark.config(
@@ -968,6 +972,8 @@ pytest.mark.config(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
+
+
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1023,6 +1029,8 @@ pytest.mark.config(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
+
+
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])

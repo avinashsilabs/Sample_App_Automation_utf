@@ -1,5 +1,5 @@
 import pytest
-import test_sta_ble as sb
+import test_sta_ble_garmin as sb
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap, \

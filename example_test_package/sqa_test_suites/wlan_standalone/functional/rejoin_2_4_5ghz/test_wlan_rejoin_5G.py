@@ -8,7 +8,7 @@ from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.wifi import WlanError, SecurityMode
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
-from utf_core.src.utf.interfaces.cli import CLITransportException
+from utf.interfaces.cli import CLITransportException
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116AsyncEventType, \
     RS9116CustomFeatureBitMap, RS9116PowerSaveModes, RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap
