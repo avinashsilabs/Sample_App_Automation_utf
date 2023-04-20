@@ -1432,6 +1432,7 @@ def test_static_ip_ip_conflict_with_multiple_times_in_loop_C101980(wifi_sniffer,
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.dut("rs9116")
+@pytest.mark.AT
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1530,6 +1531,7 @@ def test_static_ip_ip_Conflict_in_at_mode_DUT_C101981(wifi_sniffer, wifi_dut, wi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.dut("rs9116")
+@pytest.mark.AT
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

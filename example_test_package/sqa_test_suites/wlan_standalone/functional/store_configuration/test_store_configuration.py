@@ -2230,6 +2230,7 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
         "beacon_missed_count": 40,
         }
     )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.store_config
 @pytest.mark.wiseconnect_duts(["rs9116"])
@@ -2353,6 +2354,7 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         "beacon_missed_count": 40,
         }
     )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.store_config
 @pytest.mark.wiseconnect_duts(["rs9116"])
