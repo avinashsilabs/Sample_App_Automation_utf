@@ -235,13 +235,18 @@ def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
         time.sleep(10)
 
         logger().info(f" \n\n******************* START SCANNING FROM DUT ***********************\n\n ")
-        dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address,
-                                                                       ble_scan_interval=256,
-                                                                       ble_scan_window=80,
+        dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_scan_interval=256, ble_scan_window=80,
                                                                        timeout=60)
+        logger().info("Scan for 60 sec")
+        time.sleep(60)
         logger().info(f"dut_scan_results: {dut_scan_results}")
         wifi_dut.interfaces.wifi.ble_stop_scanning()
-        time.sleep(10)
+        enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifips, f" unable to enable the wifips"
+        enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_btps, f"unable to enable the btps"
         events = wifi_dut.interfaces.wifi.get_async_events()
         for event in events:
             if event.event_type == RS9116AsyncEventType.Adv_Report:
@@ -250,12 +255,6 @@ def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
                 logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
                 logger().info(f"found advertising data: {whitelist_data}")
                 break
-        enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                            RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_wifips, f" unable to enable the wifips"
-        enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
-        assert enable_btps, f"unable to enable the btps"
     finally:
         logger().info(f"Disabling powersave")
         wifi_dut.interfaces.wifi.power_save(0, 0)
