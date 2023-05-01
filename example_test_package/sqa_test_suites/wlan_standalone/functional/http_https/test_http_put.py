@@ -232,11 +232,17 @@ def test_https_put_functionality_c19234(http_server, wifi_sniffer, wifi_dut, htt
     logger().info("Creating of HTTP PUT ")
     wifi_dut.interfaces.http.http_put_create()
 
+    data = "HellotestingforHTTPPUTfunctionalityusingHTTPserver"
+
     logger().info("HTTP PUT command initialization")
-    wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path, "" "" "" '50')
+    wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path, length=len(data))
 
     logger().info("HTTP PUT DATA")
-    wifi_dut.interfaces.http.http_put_pkt("HellotestingforHTTPPUTfunctionalityusingHTTPserver")
+    wifi_dut.interfaces.http.http_put_pkt(data)
+
+    status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+    logger().info(f"fetching the data {content1}")
+    assert content1.decode() == data
 
     packet_filter1 = f'(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && ' \
                      f'(wlan.sa == {mac_address}) && (wlan.da == {bssid}))'
