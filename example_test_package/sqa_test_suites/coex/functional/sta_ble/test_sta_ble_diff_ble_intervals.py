@@ -67,14 +67,25 @@ class WifiThread(ThreadBase):
         self.ap_bssid = None
 
     def run_http_download(self):
-
         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
         # API used to get the http data
+        logger().info("checking weather server is running....")
+        server_stat = self.http_server.interfaces.http.started
+        assert server_stat, "server is inactive"
+        logger().info(f'http server state is {server_stat}')
+
+        logger().info("fetching server ip....")
+        host_ip = self.http_server.interfaces.http.hostname_or_ip_address
+        logger().info(f"http_server_ip: {host_ip}")
+
+        logger().info("pinging to http_server_ip....")
+        status = ping(host_ip, ping_count)
+        assert status, "unable to ping to http_server, please check testline connection and interface in harness"
+
         self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http, self.index_path)
         logger().info(f"Http download is successful")
 
     def run(self):
-
         with lock:
             self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
             logger().info(f"AP bssid {self.ap_bssid}")
@@ -955,9 +966,9 @@ def test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178(wifi_sniffer, http
     logger().info("start capturing with Sniffer by giving the test case name as filename")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=7.5, ble_scan_window=2.5)
-    wifi_obj = WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, http_server=http_server,
-                          index_path=index_path)
+    wifi_obj = WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, http_server=http_server, index_path=index_path)
     ble_obj.start()
+    time.sleep(10)
     wifi_obj.start()
     wifi_obj.wait_for_exit()
     ble_obj.wait_for_exit()
