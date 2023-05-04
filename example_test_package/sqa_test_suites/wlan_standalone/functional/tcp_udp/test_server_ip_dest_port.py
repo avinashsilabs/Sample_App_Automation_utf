@@ -1720,9 +1720,8 @@ def test_Store_IP_PORT_AP_3_TCP_SOCK_CFG_C101961(wifi_sniffer, net_perf_client, 
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678", "channel": 36})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated", "disable_store_config"])
 def test_Store_IP_PORT_TCP_A7_5G_AT_C101955(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
