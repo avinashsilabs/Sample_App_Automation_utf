@@ -55,20 +55,12 @@ packet """
 def logger():
     return get_logger(__name__)
 
-def dut_recovery(wifi_dut, error):
-    recovery_error_codes = ['0xffffffe2', '0xffffffd5']
-    for error_code in recovery_error_codes:
-        if error_code in str(error):
-            logger().info('******* Initiating DUT Recovery using Reset **********')
-            wifi_dut.interfaces.wifi.reset()
-
 def dut_clean_up(wifi_dut):
     logger().info("Closing all opened sockets")
     wifi_dut.interfaces.wifi.close_sockets()
     logger().info("Disconnect from AP")
     wifi_dut.interfaces.wifi.leave()
     wifi_dut.interfaces.wifi.associated = False
-    wifi_dut.interfaces.wifi.inited = False
     time.sleep(3)
 
 
@@ -899,10 +891,8 @@ def test_advertise_ciphers_ssl_tx_TC19612(wifi_sniffer, wifi_dut, wifi_access_po
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
     except Exception as error:
-        dut_recovery(wifi_dut, error)
-        raise error
-    finally:
         dut_clean_up(wifi_dut)
+        raise error
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1008,10 +998,8 @@ def test_advertise_ciphers_ssl_rx_TC19613(
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
     except Exception as error:
-        dut_recovery(wifi_dut, error)
-        raise error
-    finally:
         dut_clean_up(wifi_dut)
+        raise error
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1115,10 +1103,8 @@ def test_advertise_ciphers_ssl_tx_TC19614(wifi_sniffer, wifi_dut, wifi_access_po
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
     except Exception as error:
-        dut_recovery(wifi_dut, error)
-        raise error
-    finally:
         dut_clean_up(wifi_dut)
+        raise error
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1223,7 +1209,5 @@ def test_advertise_ciphers_ssl_rx_TC19615(
                         f"is {expected_cipher}\nBut "
                         f"observed {cipher_suite} ")
     except Exception as error:
-        dut_recovery(wifi_dut, error)
-        raise error
-    finally:
         dut_clean_up(wifi_dut)
+        raise error
