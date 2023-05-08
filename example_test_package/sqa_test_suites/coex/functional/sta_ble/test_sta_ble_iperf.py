@@ -261,12 +261,12 @@ class Cleanup:
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C20229(wifi_dut, ble_client, wifi_access_point, utf_constants, wifi_client, wifi_sniffer, net_perf_client, rs_helper):
-    logger().info("*******************C20229************************")
+def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C133475(wifi_dut, ble_client, wifi_access_point, utf_constants, wifi_client, wifi_sniffer, net_perf_client, rs_helper):
+    logger().info("*******************C133475************************")
     clean_obj = Cleanup(wifi_dut)
     ble_obj = BleSlaveConn(wifi_dut, ble_client, ble_dut_address=None)
     try:
-        capture_filename = "sta + ble_C20229"
+        capture_filename = "sta + ble_C133475"
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
@@ -351,12 +351,12 @@ def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C20229(wifi_dut, ble_client
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C20230(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, rs_helper, utf_constants, wifi_client, net_perf_client):
-    logger().info("*******************C20230************************")
+def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C133476(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, rs_helper, utf_constants, wifi_client, net_perf_client):
+    logger().info("*******************C133476************************")
     clean_obj = Cleanup(wifi_dut)
     ble_obj = BleSlaveConn(wifi_dut, ble_client)
     try:
-        capture_filename = "tcp_tcp_udp_rx + ble_C20230"
+        capture_filename = "tcp_tcp_udp_rx + ble_C133476"
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
@@ -364,7 +364,7 @@ def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C20230(wifi_dut, wifi_acces
         logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
         ble_obj.ble_slave_conection()
         logger().info(f"**********initiating wlan connection*******************")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True, associated=False)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {ap_bssid}")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -441,8 +441,8 @@ def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C20230(wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C20203(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, rs_helper, wifi_client, ble_client, net_perf_client):
-    logger().info("*******************C20203************************")
+def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C133449(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, rs_helper, wifi_client, ble_client, net_perf_client):
+    logger().info("*******************C133449************************")
     clean_obj = Cleanup(wifi_dut)
     ble_obj = BleSlaveConn(wifi_dut, ble_client)
     try:
@@ -519,8 +519,8 @@ def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C20203(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
-def test_TCP_Rx_packet_loss_with_LE_advertising_C20223(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer, rs_helper, utf_constants, ble_client, net_perf_client):
-    logger().info("*******************C20223************************")
+def test_TCP_Rx_packet_loss_with_LE_advertising_C133469(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer, rs_helper, utf_constants, ble_client, net_perf_client):
+    logger().info("*******************C133469************************")
     clean_obj = Cleanup(wifi_dut)
     try:
         testcase = "tcp_rx_packet_loss + ble_advertising"
@@ -592,9 +592,9 @@ def test_TCP_Rx_packet_loss_with_LE_advertising_C20223(wifi_dut, wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C20204(wifi_dut, wifi_access_point,
-                                    wifi_sniffer, utf_constants, rs_helper, wifi_client, ble_client, net_perf_client):
-    logger().info("*******************C20204************************")
+def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C133450(wifi_dut, wifi_access_point, wifi_sniffer,
+                                    utf_constants, rs_helper, wifi_client, ble_client, net_perf_client):
+    logger().info("*******************C133450************************")
     validation = True
     clean_obj = Cleanup(wifi_dut)
     ble_obj = BleSlaveConn(wifi_dut, ble_client)
@@ -612,7 +612,7 @@ def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C20204(wifi_
         assert len(scan_results) > 0, "scan_list not found"
 
         logger().info(f"**********initiating wlan connection*******************")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=False)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {ap_bssid}")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()

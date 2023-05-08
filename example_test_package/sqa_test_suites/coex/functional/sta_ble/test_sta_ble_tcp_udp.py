@@ -554,7 +554,7 @@ def test_verify_tcp_udp_tx_data_transfer_c133470(recovery, remote_socket, rs_hel
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "cipher": "AES"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_verify_wlan_scan_and_ble_scan_c133446(wifi_access_point, recovery, wifi_dut, ble_client):
+def test_verify_wlan_scan_and_ble_scan_c133445(wifi_access_point, recovery, wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     try:
