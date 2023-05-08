@@ -1177,10 +1177,10 @@ def test_functionality_of_sta_when_ble_scan_C133555(wifi_dut, ble_client, wifi_a
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -1201,7 +1201,7 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C133554(wifi_dut, 
             ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
             logger().info(f"ble_address: '{ble_client_address}'")
             time.sleep(2)
-            for i in range(1, iter_count):
+            for i in range(1, iter_count+1):
                 logger().info(f"Initiating WLAN connection and disconnection for iteration {i}")
                 wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
                 wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C133554.txt')
