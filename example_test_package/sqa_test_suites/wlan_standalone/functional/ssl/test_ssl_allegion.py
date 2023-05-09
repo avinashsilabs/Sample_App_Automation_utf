@@ -73,8 +73,7 @@ def dut_clean_up(wifi_dut):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
-        time.sleep(3)
+        time.sleep(5)
 
 def tcp_socket_rx(remote_socket_factory, index, no_of_pkts, data_size, logger):
     data_length = 0
@@ -4131,13 +4130,14 @@ def test_ssl_AWS_testcaseTC19202(
             'security': 'WPA2',
             'passphrase': '123123123',
             'channel': 6,
-
+            'interface':'wlan0'
         },
         1: {
             'ssid': 'TESTAPTWO',
             'security': 'WPA2',
             'passphrase': '1234567890',
             'channel': 6,
+            'interface':'wlan0'
         }
     }
 )
@@ -4200,7 +4200,7 @@ def test_autojoin_functionality_with_Two_APs_TC19181(wifi_sniffer, wifi_access_p
 
         wifi_dut.interfaces.wifi.config_enable(config=0)
         wifi_dut.interfaces.wifi.wireless_deinit()
-        time.sleep(3)
+        time.sleep(5)
         wifi_dut.interfaces.wifi.dut_init(timeout=100, retries=0)
         validation = True
         packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
@@ -4259,13 +4259,14 @@ def test_autojoin_functionality_with_Two_APs_TC19181(wifi_sniffer, wifi_access_p
             'security': 'WPA2',
             'passphrase': '123123123',
             'channel': 6,
-
+            'interface':'wlan0'
         },
         1: {
             'ssid': 'TESTTWO',
             'security': 'WPA2',
             'passphrase': '123123321',
             'channel': 6,
+            'interface':'wlan0'
         }
     }
 )
@@ -5017,13 +5018,14 @@ def test_rtc_get_multiple_times_TC19178(
             'security': 'WPA2',
             'passphrase': '123123123',
             'channel': 6,
-
+            'interface':'wlan0'
         },
         1: {
             'ssid': 'TESTAPONE',
             'security': 'WPA2',
             'passphrase': '987654321',
             'channel': 6,
+            'interface':'wlan0'
         }
     }
 )
@@ -5134,8 +5136,6 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
     finally:
         logger.info("Disable store configuration")
         wifi_dut.interfaces.wifi.config_enable(config=0)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
         time.sleep(3)
 
 
@@ -5149,13 +5149,14 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
             'security': 'WPA2',
             'passphrase': '123456789',
             'channel': 7,
-
+            'interface':'wlan0'
         },
         1: {
             'ssid': 'TESTAPTWO95',
             'security': 'WPA2',
             'passphrase': '123456789',
             'channel': 7,
+            'interface':'wlan0'
         }
     }
 )
@@ -5256,7 +5257,7 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         assert e.value.error_code == 0x0003 or e.value.error_code == 0x0019, "Observed wrong error code"
         logger.info("joining failed to 2nd AP which has different SSID")
 
-
+        time.sleep(10)
         wifi_dut.interfaces.wifi.inited = True
         wifi_dut.interfaces.wifi.associated = False
         time.sleep(5)
@@ -5315,8 +5316,6 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         wifi_access_points[1].interfaces.wifi.stop_ap()
         time.sleep(2)
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
         time.sleep(3)
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
