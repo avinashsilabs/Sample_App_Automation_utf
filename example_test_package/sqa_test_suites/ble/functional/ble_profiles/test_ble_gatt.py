@@ -10,7 +10,8 @@ from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, RS9116TCPIPFeatureBitMap, \
-    RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap, RS9116PowerSaveProcedureTypes
+    RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap, \
+    RS9116PowerSaveProcedureTypes
 
 
 def logger():
@@ -39,9 +40,12 @@ This test case needs a sqa_test_agent_multi_gatt.hex file to be loaded on EFR me
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
@@ -66,16 +70,18 @@ def test_fetch_profiles_from_RD1_C19860(firmware_loader, ble_dut, ble_client):
     ble_dut.interfaces.wifi.ble_stop_scanning()
     assert bt_client_address in str(scan_results), "Remote Device not listed in Scan Results"
     timeout = 60
-    logger().info(f"Initiating the Connection can take upto {timeout} seconds....")
+    logger().info(f"Initiating the Connection can take up to {timeout} seconds....")
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
                                              expected="RSI_BLE_SECURITY_KEYS_EVENT")
     time.sleep(60)
 
-    # Enables the wifi power save in dut
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # Enables the Wi-Fi power save in dut
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "Failed to enable WiFi power save"
     # Enables the bt power save in dut
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "Failed to enable BT power save"
 
     # Get the state of the dut
@@ -102,9 +108,12 @@ def test_fetch_profiles_from_RD1_C19860(firmware_loader, ble_dut, ble_client):
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
@@ -128,18 +137,20 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(firmware_loader, ble_dut, b
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
     time.sleep(15)
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
-    # Enables the wifi power save in dut
+    # Enables the Wi-Fi power save in dut
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
                                              expected="RSI_BLE_SECURITY_KEYS_EVENT")
     time.sleep(30)
 
-    # Enables the wifi power save in dut
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # Enables the Wi-Fi power save in dut
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "Failed to enable WiFi power save"
     # Enables the bt power save in dut
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "Failed to enable BT power save"
 
     # Get the state of the dut
@@ -174,9 +185,12 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(firmware_loader, ble_dut, b
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
@@ -197,18 +211,20 @@ def test_fetch_characteristis_from_RD1_C19863(firmware_loader, ble_dut, ble_clie
     # Start scanning and connect to ble client
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
-    # Enables the wifi power save in dut
+    # Enables the Wi-Fi power save in dut
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
 
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
                                              expected="RSI_BLE_SECURITY_KEYS_EVENT")
 
     # enable power save in dut
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
     # Enables the bt power save in dut
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
@@ -257,9 +273,12 @@ def test_fetch_characteristis_from_RD1_C19863(firmware_loader, ble_dut, ble_clie
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
@@ -284,7 +303,7 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 60
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
                                              expected="RSI_BLE_SECURITY_KEYS_EVENT")
 
@@ -315,18 +334,22 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
     logger().info(" Issued BLE disconnect.... ")
 
 
-@pytest.mark.config("wifi_dut",
-                    wifi={
-                        "oper_mode": 0,
-                        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-                        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
-                        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-                        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-                        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-                        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-                        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-                    },
-                    )
+@pytest.mark.config(
+    "wifi_dut", wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.
+        ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        },
+    )
 def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
     service_uid = "0000180d-0000-1000-8000-00805f9b34fb"
     char_uid1 = "00002a37-0000-1000-8000-00805f9b34fb"
@@ -449,11 +472,13 @@ def test_link_loss_profiles_from_rd1_c19872_c19874(firmware_loader, ble_dut, ble
     ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A06)
 
     ble_dut.interfaces.bluetooth.ble_start_advertising()
-    # Enables the wifi power save in dut
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    # Enables the Wi-Fi power save in dut
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
     # Enables the bt power save in dut
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
     # Begin Scanning for BLE devices
@@ -516,10 +541,12 @@ def test_ble_multi_connect_disconnect_C19875(ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert bt_dut_address is not None, "failed to load bt address"
     ble_dut.interfaces.bluetooth.ble_start_advertising()
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
     # Enables the bt power save in dut
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
@@ -564,13 +591,15 @@ def test_ble_multi_connect_disconnect_C19875(ble_dut, ble_client):
     "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
     "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
     "bt_features": RS9116BTFeatureBitMap.Default,
-    "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+    "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+    RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
 }
                     )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_advertising", "ble_stop_scan"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_advertising",
+                                         "ble_stop_scan"])
 def test_fetch_profiles_from_rd1_c19862(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start GATT Services in DUT
@@ -596,10 +625,12 @@ def test_fetch_profiles_from_rd1_c19862(firmware_loader, ble_dut, ble_client):
     time.sleep(60)
 
     # Enables the Wi-Fi power save in dut
-    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "Failed to enable WiFi power save"
     # Enables the bt power save in dut
-    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,RS9116PowerSaveProcedureTypes.FastPowerSave)
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "Failed to enable BT power save"
 
     # Get the state of the dut
@@ -617,3 +648,93 @@ def test_fetch_profiles_from_rd1_c19862(firmware_loader, ble_dut, ble_client):
     # Disconnect
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
     logger().info(" Issued BLE disconnect ")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_battery_service_connection_stability_in_client_role_c19882(firmware_loader, ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
+                                                                      service_classes=["BatteryService"])
+    assert bt_client_address is not None, "Failed to start RD advertising"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    ble_dut.interfaces.wifi.ble_stop_scanning()
+    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT and RD are not connected"
+
+    # get all profiles
+    uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+    assert BatteryService.UUID in uuids, "Failed to get RD profiles"
+
+    # resolve battery profile
+    start_handle, end_handle = ble_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
+                                                                             uuid=int(BatteryService.UUID, 16))
+    assert start_handle is not None, "failed to fetch the RD1 address.."
+    assert end_handle is not None, "failed to fetch the UUID.."
+
+    # resolve characteristics of battery profile
+    uuids, write_handles, char_properties = ble_dut.interfaces.wifi.ble_get_char_services_async(
+        ble_remote_dev_address=bt_client_address,
+        start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
+
+    logger().info(f"uuids, write_handles, char_properties: {uuids, write_handles, char_properties}")
+    assert BatteryLevelCharacteristic.BLEVEL_UUID in uuids, "Unable to find BatteryLevelCharacteristic UUID"
+    index = uuids.index(BatteryLevelCharacteristic.BLEVEL_UUID)
+
+    assert char_properties[index].isdigit()
+    assert BatteryLevelCharacteristic.prop_int == int(char_properties[index])
+
+    write_handle = int(write_handles[index], 16)
+    assert write_handle > 0
+
+    # read value
+    val = ble_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                          char_property=write_handle)
+    assert int(val) > 0
+
+    # enable notifications
+    since_time = time.perf_counter_ns()
+    ble_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                    char_property=(write_handle + 1), value=1)
+    time.sleep(6)
+    events = ble_dut.interfaces.wifi.get_async_events(since_time=since_time)
+    assert len(events) > 0
+    latest_val = events[-1].event_data  # capturing the last value notified by Gatt server
+    assert int(latest_val) < int(val)
+
+    # read value
+    val = ble_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
+                                                          char_property=write_handle)
+    assert int(val) <= int(latest_val)
+    # Disconnect
+    ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
