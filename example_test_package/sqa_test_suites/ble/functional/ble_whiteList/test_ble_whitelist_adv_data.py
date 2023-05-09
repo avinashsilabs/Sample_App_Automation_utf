@@ -468,6 +468,131 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19
         ble_client2.interfaces.bluetooth.close()
         time.sleep(5)
 
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_enable_and_disable_whitelist_for_100_iterations_c19955(wifi_dut, ble_clients):
+        assert len(ble_clients) >= 2, f"minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[1]
+        ble_client2 = ble_clients[0]
+        try:
+            for i in range(0, 100):
+                logger().info(f"\n\n**************Start DUT**************\n\n")
+                bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+                assert bt_dut_address is not None
+                wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=5,
+                                                                    compare_data_length=10,
+                                                                    data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I',
+                                                                               'O',
+                                                                               'N'])
+                ble_client1.interfaces.bluetooth.close()
+                logger().info(f"\n\n************Start ble client******************\n\n")
+                bt_client_address1 = ble_client1.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(
+                    bt_dut_address=bt_dut_address,
+                    hci_whitelist_adv_data="0x1F "  # Number of bytes that follow in the advertisement(payload length)
+                                           "0x00 0x00 0x00 0x00 0x00 "  # prepend 00s at start, based on whitelist data index(5 here)
+                                           "0x41, 0x55, 0x54, 0x4F, 0x4D, 0x41 "  # whitelist data
+                                           "0x54, 0x49, 0x4F, 0x4E, 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00",
+                    # append 00s at end, based on length of payload
+                    hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min
+                                   "0x20 0x00 "  # Advertising_Interval_Max
+                                   "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                                   "0x00 "  # Own_Address_Type
+                                   "0x00 "  # Peer_Address_Type
+                                   "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                                   "0x07 "  # Advertising_Channel_Map
+                                   "0x00"  # Advertising_Filter_Policy
+
+                )
+                time.sleep(5)
+                ble_client2.interfaces.bluetooth.close()
+                bt_client_address2 = ble_client2.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(
+                    bt_dut_address=bt_dut_address,
+                    # append 00s at end, based on length of payload
+                    hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min
+                                   "0x20 0x00 "  # Advertising_Interval_Max
+                                   "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                                   "0x00 "  # Own_Address_Type
+                                   "0x00 "  # Peer_Address_Type
+                                   "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                                   "0x07 "  # Advertising_Channel_Map
+                                   "0x00"  # Advertising_Filter_Policy
+
+                )
+                time.sleep(5)
+                wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=5,
+                                                                    compare_data_length=10,
+                                                                    data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I',
+                                                                               'O',
+                                                                               'N'])
+                logger().info(f" \n\n******************* START SCANNING FROM DUT ***********************\n\n ")
+                dut_scan_results1 = wifi_dut.interfaces.wifi.ble_start_scanning(timeout=30)
+                logger().info(f"dut_scan_results: {dut_scan_results1}")
+                time.sleep(60)
+
+                enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                     RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_btps, f"unable to enable the btps"
+
+                enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_wifips, f" unable to enable the wifips"
+
+                time.sleep(2)
+                wifi_dut.interfaces.wifi.bt_power_save(0, 0)
+                wifi_dut.interfaces.wifi.power_save(0, 0)
+                wifi_dut.interfaces.wifi.ble_stop_scanning()
+                logger().info(f"******************************************")
+                wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=0, data_compare_index=5,
+                                                                    compare_data_length=10,
+                                                                    data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I',
+                                                                               'O',
+                                                                               'N'])
+                logger().info(f" \n\n******************* START SCANNING FROM DUT ***********************\n\n ")
+                dut_scan_results2 = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address2, timeout=30)
+                logger().info(f"dut_scan_results: {dut_scan_results2}")
+                time.sleep(60)
+                wifi_dut.interfaces.wifi.ble_stop_scanning(timeout=10)
+
+                events = wifi_dut.interfaces.wifi.get_async_events()
+                for event in events:
+                    if event.event_type == RS9116AsyncEventType.Adv_Report:
+                        whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+                        assert whitelist_data == "AUTOMATION", "whitelist data not found"
+                        logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
+                        logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
+                        break
+                logger().info("verifying client ble addr1, is available in scan list...")
+                if str(bt_client_address1) in str(
+                        dut_scan_results1):
+                    logger().info(f"found bt addr1 in scan list")
+                else:
+                    logger().info(f" \n\n******************* START SCANNING FROM DUT ***********************\n\n ")
+                    dut_scan_results1 = wifi_dut.interfaces.wifi.ble_start_scanning(timeout=30)
+                    time.sleep(120)
+                    assert str(bt_client_address1) in str(
+                        dut_scan_results1), "failed to find client bt addr1 in scan list...."
+                    wifi_dut.interfaces.wifi.ble_stop_scanning(timeout=10)
+
+                if str(bt_client_address2) in str(
+                    dut_scan_results2):
+                    logger().info(f"found bt addr2 in scan list")
+                else:
+                    logger().info(f" \n\n******************* START SCANNING FROM DUT ***********************\n\n ")
+                    dut_scan_results2 = wifi_dut.interfaces.wifi.ble_start_scanning(timeout=30)
+                    time.sleep(120)
+                    assert str(bt_client_address2) in str(
+                         dut_scan_results2), "failed to find client bt addr2 in scan list...."
+                    wifi_dut.interfaces.wifi.ble_stop_scanning(timeout=10)
+
+                logger().info(f"\n\n************iteration: {i + 1}*****************\n\n")
+
+        except Exception as e:
+            logger().info(f"\n******Testcase failed with : {e}******")
+            raise e
+
+        finally:
+            ble_client1.interfaces.bluetooth.close()
+            ble_client2.interfaces.bluetooth.close()
+            time.sleep(5)
 
 @pytest.mark.config(
     "wifi_dut",
