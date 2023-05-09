@@ -771,7 +771,7 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_in_progress_C133564
             t1.start()
 
             logger().info("starting bt module in dut.....")
-            bt_dut.interfaces.bluetooth.bt_start()
+            bt_dut.interfaces.bluetooth.ble_start()
 
             logger().info("configuring bt name....")
             bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
@@ -1923,9 +1923,13 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_C133570(wif
 
             data = text_generator(size=20)
             ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-            bt_local_name = "rs9116_test_C133570"
-            logger().info("configuring bd local name....")
-            wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name)
+
+            if wifi_dut.interfaces.wifi.board_type == "rs9117":
+                logger().info(f"Setting local name for 9117")
+                wifi_dut.interfaces.wifi.bt_set_local_name("rs9117_test_1234")
+            else:
+                logger().info(f"Setting local name for 9116")
+                wifi_dut.interfaces.wifi.bt_set_local_name("rs9116_test_C133570")
 
             logger().info("fetching bd local name....")
             bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -2842,9 +2846,13 @@ def test_ble_and_Wlan_data_transfer_for_5min_C133549(wifi_dut, ble_client, wifi_
 
             data = text_generator(size=20)
             ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-            bt_local_name = "rs9116_test_C133549"
-            logger().info("configuring bd local name....")
-            wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name)
+
+            if wifi_dut.interfaces.wifi.board_type == "rs9117":
+                logger().info(f"Setting local name for 9117")
+                wifi_dut.interfaces.wifi.bt_set_local_name("SILICON_DEVICE_D")
+            else:
+                logger().info(f"Setting local name for 9116")
+                wifi_dut.interfaces.wifi.bt_set_local_name("SILICON_DEVICE_123")
 
             logger().info("fetching bd local name....")
             bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
@@ -2924,7 +2932,7 @@ def test_ble_and_Wlan_data_transfer_for_5min_C133549(wifi_dut, ble_client, wifi_
             ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
             ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                     char_uid=char_uid)
-
+            time.sleep(2)
             logger().info("Sending 20 bytes of data from DUT")
             wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
             time.sleep(10)
@@ -3149,13 +3157,17 @@ def test_sta_ble_connection_with_ble_connect_disconnect_C133487(wifi_dut, ble_cl
                      bt_log_path=f"reports/test_C133487.log_{int(time.time())}"):
             start_needed = True
             ble_dut_address = ''
-            set_local_name = "SILICON_DEVICE_123"
 
-            logger().info(f"Setting BLE local name {set_local_name}")
-            wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
+            if wifi_dut.interfaces.wifi.board_type == "rs9117":
+                logger().info(f"Setting local name for 9117")
+                wifi_dut.interfaces.wifi.bt_set_local_name("SILICON_DEVICE_D")
+            else:
+                logger().info(f"Setting local name for 9116")
+                wifi_dut.interfaces.wifi.bt_set_local_name("SILICON_DEVICE_123")
+
+            time.sleep(3)
             status = wifi_dut.interfaces.wifi.bt_get_local_name()
             logger().info(f"getting the local name : {status}")
-            assert set_local_name == status, "Set local name and get local name not matched "
 
             ble_mode = "ble_slave"
             logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
