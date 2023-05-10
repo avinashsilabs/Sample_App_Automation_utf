@@ -31,7 +31,7 @@ from utf.interfaces.shell.ssh_shell import SSHShell
 def logger():
     return get_logger(__name__)
 
-
+ping_count = 10
 """Author : Vivek"""
 
 """This function runs below test steps for DUT-RS9116 for Rejoin test case verification
@@ -259,7 +259,7 @@ def clean_up_method(wifi_dut, switch):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        # wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.inited = False
     except:
         logger().info("******* Recovering the DUT  **********")
         wifi_dut.interfaces.wifi.reset()
@@ -323,7 +323,7 @@ def test_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_co
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_c19721')
 
         logger().info('***** Turn off Access point *****')
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
@@ -398,7 +398,7 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
         rejoin_value = 4
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
@@ -528,60 +528,71 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
-def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
+def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, switch, utf_constants):
     """Check rejoin is happening in All channels(1-11) or not and Verify whether module is sending probe requests in all
        channels or not"""
     try:
-        end_time = utf_constants.get("time_duration")
-        tcp_socket_obj = IopTcpIpSockets()
-        send_bytes = 1000
         validation = True
         channel_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-        result_list = []
+        true_result_list = []
+        false_result_list = []
+        Probe_captured_channel_list = []
+        Probe_not_captured_channel_list = []
+        channel_bitmap_2_4 = 0
+        scan_expected_time = 0
+        for count in channel_list_2g:
+            channel_bitmap_2_4 += 1 << (count - 1)
+            scan_expected_time += 100
+
+        channel_bitmap_5 = 0
+        scan_feature_extend = 0
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
 
-        wifi_access_point.interfaces.wifi.start_ap()
-        time.sleep(15)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_All_channels_c19723')
+        logger().info("Initiating the selective channel scan in dut...")
+        scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
+                                                                       scan_bitmap_2_4=channel_bitmap_2_4,
+                                                                       scan_bitmap_5=channel_bitmap_5,
+                                                                       scan_feature=scan_feature_extend)
+        time.sleep(5)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "Scan results not found"
 
-        logger().info("Joining into wifi_access_point")
-        dut_ip = wifi_join(wifi_dut, wifi_access_point)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {mac_address}")
-        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"***** preparing wifi_dut ******")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,channel=0)
 
-        time.sleep(2)
-        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-        time.sleep(2)
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
-        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            sw = Stopwatch()
-            while sw.elapsed_sec < end_time:
-                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-                logger().info(f'SEND-RESPONSE = {send_response}')
-                if 'status 10' in str(send_response):
-                    result = send_response.decode().replace("\r\n", '').strip()
-                    match = re.findall(r"\d+", result)
-                    if int(match[1]) == send_bytes:
-                        logger().info(f"Send {send_bytes} bytes successfully")
-                else:
-                    logger().info(f"Data transfer failed")
-                    assert send_response
-        # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+        logger().info(f"***** Start getting the remote PC IP address ******")
+        logger().info(f"*****Initiating Power_save Mode2 in DUT******")
+        logger().info("Enabling wifi power save")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "failed to enable wifi power save"
+
+        logger().info("Enabling bt power save")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "failed to enable bt power save"
+
+        logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+        status = ping(dut_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=60)
+        switch.interfaces.pdu_switch.turn_off(delay=30)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -593,25 +604,32 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
             time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
             logger().info("Delaying for some time to get the capture")
-            time.sleep(100)
+            time.sleep(10)
 
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
 
             packet_filter1 = f'(wlan_radio.channel == {channel} ' \
                              f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and ' \
-                             f'(wlan.sa == {mac_address})'
+                             f'(wlan.sa == {dut_mac_address})'
 
             output = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count']
-            result_list.append(bool(output))
-            logger().info(f"result = {result_list}")
-            if False in result_list:
-                message = f'Unable to find Broadcast Probe request packet in channel = {channel}'
-                logger().info(message)
-                assert False, message
-            time.sleep(5)
-        del result_list
+            if bool(output) is False:
+                false_result_list.append(bool(output))
+                Probe_not_captured_channel_list.append(channel)
+
+            else:
+                true_result_list.append(bool(output))
+                Probe_captured_channel_list.append(channel)
+
+            logger().info(f"True list = {true_result_list}")
+            logger().info(f"false list = {false_result_list}")
+
+        assert Probe_not_captured_channel_list == [],logger().info(f"******* unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list} ")
+
+        logger().info(f"******* Probe requests are captured in all the channels:{Probe_captured_channel_list} ")
+
 
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
@@ -637,7 +655,7 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
-def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
+def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,  switch, utf_constants):
     """select particular channels(ex: select 1,6,11) and Check rejoin is happening only in selected channels or not and
            Verify whether module is sending probe request only in selected channel"""
     try:
@@ -647,7 +665,11 @@ def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_du
         validation = True
         result_list = []
 
-        channel_list = [1, 6, 8]
+        channel_list = [1, 6, 11]
+        true_result_list = []
+        false_result_list = []
+        Probe_captured_channel_list = []
+        Probe_not_captured_channel_list = []
         channel_bitmap_2_4 = 0
         scan_expected_time = 0
         for count in channel_list:
@@ -658,81 +680,90 @@ def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_du
         scan_feature_extend = 0
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
-        wifi_access_point.interfaces.wifi.start_ap()
+        switch.interfaces.pdu_switch.turn_on(delay=30)
 
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_selected_channel_c19725')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_All_channels_c19723')
+        logger().info("Initiating the selective channel scan in dut...")
         scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=0, ssid=None,
                                                                        scan_bitmap_2_4=channel_bitmap_2_4,
                                                                        scan_bitmap_5=channel_bitmap_5,
                                                                        scan_feature=scan_feature_extend)
+        time.sleep(5)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "Scan results not found"
 
-        logger().info("Joining into wifi_access_point")
-        dut_ip = wifi_join(wifi_dut, wifi_access_point)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {mac_address}")
+        logger().info(f"***** preparing wifi_dut ******")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, channel=0)
 
-        time.sleep(2)
-        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-        time.sleep(2)
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
-        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            sw = Stopwatch()
-            while sw.elapsed_sec < end_time:
-                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes)
-                logger().info(f'SEND-RESPONSE = {send_response}')
-                if 'status 10' in str(send_response):
-                    result = send_response.decode().replace("\r\n", '').strip()
-                    match = re.findall(r"\d+", result)
-                    if int(match[1]) == send_bytes:
-                        logger().info(f"Send {send_bytes} bytes successfully")
-                else:
-                    logger().info(f"Data transfer failed")
-                    assert send_response
-        # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
+        logger().info(f"***** Start getting the remote PC IP address ******")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"remote ip is : {host_ip}")
+        logger().info(f"*****Initiating Power_save Mode2 in DUT******")
+        logger().info("Enabling wifi power save")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_wifi_ps, "failed to enable wifi power save"
+
+        logger().info("Enabling bt power save")
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps, "failed to enable bt power save"
+
+        logger().info(f"Initiating ping to DUT ip {dut_ip} after power save")
+        status = ping(dut_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=60)
-
+        switch.interfaces.pdu_switch.turn_off(delay=30)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info(f"\n\n Broadcast Probe request packet validation is start for channel = {channel_list}\n\n")
+        logger().info(
+            f"\n\n Broadcast Probe request packet validation is start for channel = {channel_list}\n\n")
         for channel in channel_list:
             file_name = f'test_rejoin_for_ch_{channel}'
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
             time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
             logger().info("Delaying for some time to get the capture")
-            time.sleep(100)
+            time.sleep(10)
 
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
-            time.sleep(3)
 
             packet_filter1 = f'(wlan_radio.channel == {channel} ' \
                              f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and ' \
-                             f'(wlan.sa == {mac_address})'
+                             f'(wlan.sa == {dut_mac_address})'
 
             output = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count']
-            result_list.append(bool(output))
-            logger().info(f"result = {result_list}")
-            if False in result_list:
-                message = f'Unable to find Broadcast Probe request packet in channel = {channel}'
-                logger().info(message)
-                assert False, message
-            time.sleep(5)
-        del result_list
+            if bool(output) is False:
+                false_result_list.append(bool(output))
+                Probe_not_captured_channel_list.append(channel)
+
+            else:
+                true_result_list.append(bool(output))
+                Probe_captured_channel_list.append(channel)
+
+            logger().info(f"True list = {true_result_list}")
+            logger().info(f"false list = {false_result_list}")
+
+        assert Probe_not_captured_channel_list == [], logger().info(
+            f"******* unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list} ")
+
+        logger().info(f"******* Probe requests are captured in all the channels:{Probe_captured_channel_list} ")
+
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
         for error_code in recovery_error_codes:
@@ -769,7 +800,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         rejoin_value = 4
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
@@ -883,7 +914,7 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
         rejoin_max_value = 20
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
         logger().info(f"Configuring Rejoin parameters")
@@ -988,7 +1019,7 @@ def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_
         validation = True
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         if wifi_dut.interfaces.wifi.associated is True:
             wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1068,7 +1099,7 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         validation = True
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=1)
         time.sleep(2)
@@ -1121,7 +1152,7 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         logger().info("******** Turn on the access point ********")
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         wifi_dut.interfaces.wifi.init()
         logger().info("Joining into wifi_access_point")
         wifi_join(wifi_dut, wifi_access_point)
@@ -1158,7 +1189,7 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
         send_bytes = 1000
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info("Start sniffer capture")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_beacon_miss_counter_19736_1')
@@ -1451,7 +1482,7 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
                     switch.interfaces.pdu_switch.turn_off(delay=20)
 
                     logger().info('******* Turn on Access point **********')
-                    switch.interfaces.pdu_switch.turn_on(delay=60)
+                    switch.interfaces.pdu_switch.turn_on(delay=30)
                     check_flag = True
         time.sleep(5)
 
@@ -1518,7 +1549,7 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
         validation = True
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        switch.interfaces.pdu_switch.turn_on(delay=30)
         if wifi_dut.interfaces.wifi.associated is True:
             wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1678,7 +1709,7 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
 
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=30)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1750,7 +1781,7 @@ def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, s
 
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1823,7 +1854,7 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
 
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1897,7 +1928,7 @@ def test_rejoin_in_japan_region_C19744(wifi_sniffer, wifi_access_point, wifi_dut
 
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1972,7 +2003,7 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
 
         time.sleep(2)
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
