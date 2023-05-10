@@ -6,3 +6,4 @@ user-preferences.yaml
 *.lnk
 venv/
 example_test_package/test_sequence.yaml
+manifest/binary_data.yaml
