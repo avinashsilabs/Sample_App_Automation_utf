@@ -1,5 +1,5 @@
 firmware:
-  rs911x: &firmware_file_anchor RS9116W.2.8.0.13.rps
+  rs911x: &firmware_file_anchor RS9116W.2.8.0.31.rps
   efx32: coex_custom_test_agent.hex
 
 firmware_version_file: *firmware_file_anchor
@@ -13,7 +13,7 @@ firmware_applications:
     # List of devices and their firmware images for this marker
     - device_type: 'rs911x'
       device_subtype: 'rs9116'
-      filename: 'RS9116W.2.8.0.13.rps'
+      filename: 'RS9116W.2.8.0.31.rps'
     - device_type: 'efx32'
       device_subtype: 'efr32'
       filename: 'generic_test_agent_without_aws.hex'
