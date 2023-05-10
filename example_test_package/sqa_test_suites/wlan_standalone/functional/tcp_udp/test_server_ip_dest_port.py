@@ -196,6 +196,7 @@ def dut_clean_up(wifi_dut):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -259,6 +260,7 @@ def test_Store_Config_AT_C101942(rs_helper, utf_constants, wifi_sniffer, wifi_ac
     }
 )
 @pytest.mark.dut("rs9116")
+@pytest.mark.AT
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -326,6 +328,7 @@ def test_Store_Config_powersave_C101943(rs_helper, utf_constants, wifi_sniffer, 
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -391,6 +394,7 @@ def test_Store_IP_PORT_TCP_AT_C101944(rs_helper, utf_constants, wifi_sniffer, wi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -457,6 +461,7 @@ def test_Store_IP_PORT_Transp_AT_C101945(rs_helper, utf_constants, wifi_sniffer,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -524,6 +529,7 @@ def test_Store_IP_PORT_TCP_diff_indeces_AT_C101946(rs_helper, utf_constants, wif
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -594,6 +600,7 @@ def test_Store_IP_PORT_Transp_diff_indeces_AT_C101947(rs_helper, utf_constants, 
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -647,6 +654,7 @@ def test_Store_IP_PORT_TCP_worng_index_AT_C101948(rs_helper, utf_constants, wifi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -717,6 +725,7 @@ def test_Store_IP_PORT_TCP_data_AT_C101949(rs_helper, utf_constants, wifi_sniffe
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -792,6 +801,7 @@ def test_Store_IP_PORT_TCP_CFG_AT_C101950(rs_helper, utf_constants, wifi_sniffer
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -869,6 +879,7 @@ def test_Store_IP_PORT_Transp_CFG_AT_C101958(rs_helper, utf_constants, wifi_snif
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -949,6 +960,7 @@ def test_Store_IP_PORT_Transp_CFG_PING_AT_C101952(rs_helper, utf_constants, wifi
         "config_features": 0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1020,6 +1032,7 @@ def test_Store_IP_PORT_TCP_SSL_AT_C101951(rs_helper, utf_constants, wifi_sniffer
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1111,6 +1124,7 @@ def test_Store_IP_PORT_TCP_4_sock_CFG_AT_C101960(rs_helper, utf_constants, wifi_
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1211,6 +1225,7 @@ def test_Store_IP_PORT_TCP_2_sock_AT_C101956(rs_helper, utf_constants, wifi_snif
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1306,6 +1321,7 @@ def test_Store_IP_PORT_TCP_4_sock_AT_C101957(rs_helper, utf_constants, wifi_snif
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "Store_AP", "passphrase": "1234567890", "interface": "wlan0"}
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
@@ -1377,6 +1393,7 @@ def test_Store_IP_PORT_AP_TCP_C101953(wifi_sniffer, net_perf_client, wifi_dut, w
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "Store_AP", "passphrase": "1234567890", "interface": "wlan0"}
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
@@ -1472,6 +1489,7 @@ def test_Store_IP_PORT_AP_3_TCP_SOCK_C101954(wifi_sniffer, net_perf_client, wifi
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "Store_AP", "passphrase": "1234567890", "interface": "wlan0"}
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
@@ -1569,6 +1587,7 @@ def test_Store_IP_PORT_AP_CFG_TCP_C101959(wifi_sniffer, net_perf_client, wifi_du
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "Store_AP", "passphrase": "1234567890", "interface": "wlan0"}
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
@@ -1697,12 +1716,12 @@ def test_Store_IP_PORT_AP_3_TCP_SOCK_CFG_C101961(wifi_sniffer, net_perf_client, 
         "band": 1,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678", "channel": 36})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated", "disable_store_config"])
 def test_Store_IP_PORT_TCP_A7_5G_AT_C101955(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,

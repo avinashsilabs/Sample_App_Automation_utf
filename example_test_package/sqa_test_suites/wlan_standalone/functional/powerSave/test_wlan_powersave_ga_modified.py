@@ -1997,6 +1997,7 @@ def test_Pwrmode_8_with_ULP_C19504(wifi_sniffer, wifi_dut, wifi_access_point,
         "band": 0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
@@ -2084,6 +2085,7 @@ def test_Pwrmode_9_with_LP_C19503(wifi_sniffer, wifi_dut, wifi_access_point, utf
         "band": 0,
     }
 )
+@pytest.mark.AT
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
@@ -2170,6 +2172,7 @@ def test_Pwrmode_9_with_ULP_C19505(wifi_sniffer, wifi_dut, wifi_access_point, ut
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -2259,6 +2262,7 @@ def test_power_mode3_slp_ack_TCP_UDP_TX_C19498(wifi_sniffer, wifi_access_point, 
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -2328,6 +2332,7 @@ def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_poin
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])

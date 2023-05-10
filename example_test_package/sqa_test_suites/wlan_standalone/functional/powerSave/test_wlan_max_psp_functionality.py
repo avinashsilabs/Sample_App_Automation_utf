@@ -729,15 +729,17 @@ class FilterPacket:
             frame_list.append(line.strip().split('\t'))
         filter_file.close()
         no_of_filtered_packets = len(frame_list)
-        no_of_filtered_packets = no_of_filtered_packets - 10 # removing last packets from capture
-        for frame_number in range(no_of_filtered_packets):
-            if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
-                logger().info("found Null frame with PM '1'")
-                logger().info(frame_list[frame_number])
-                frame_number = count + 1
-                break
-            else:
-                count = count + 1
+        if no_of_filtered_packets > 10:
+            no_of_filtered_packets = no_of_filtered_packets - 10 # removing last packets from capture
+        if no_of_filtered_packets > 1:
+            for frame_number in range(no_of_filtered_packets):
+                if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
+                    logger().info("found Null frame with PM '1'")
+                    logger().info(frame_list[frame_number])
+                    frame_number = count + 1
+                    break
+                else:
+                    count = count + 1
 
         while frame_number < no_of_filtered_packets:
             if frame_list[frame_number][2] == str(beacon):

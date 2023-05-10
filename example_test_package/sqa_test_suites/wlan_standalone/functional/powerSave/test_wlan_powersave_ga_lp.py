@@ -415,6 +415,7 @@ def test_Pwrmode_8_with_LP_C19502(firmware_loader, wifi_sniffer, wifi_dut, wifi_
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])

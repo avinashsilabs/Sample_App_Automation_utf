@@ -422,7 +422,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19313", "passphrase": "12345678", "channel": 8, "interface": "wlan0"}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19313", "passphrase": "12345678", "channel": 8}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -436,6 +436,9 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
+    eth_interface = wifi_client.interfaces.wifi.config["interface"]
+    wifi_client.interfaces.wifi.config['interface'] = "wlan0"
+
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -483,10 +486,8 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info("dut station mode ip: " + device_ip_dut_as_client)
     logger().info("access point ip: " + str(access_point_ip))
 
-    logger().info("setting eth0 interface on raspi ")
-    wifi_client.interfaces.wifi.interface = "eth0"
-    logger().info("fetching eth0 interface ip of raspi wifi connected to 3rd party ap over ethernet")
-    raspi_ap_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface="eth0")
+    logger().info("fetching ip of raspi wifi connected to 3rd party ap over ethernet")
+    raspi_ap_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface=eth_interface)
     logger().info(f"raspi_ap_ip:{raspi_ap_ip}")
 
     # starting iperf server at raspi client
@@ -555,8 +556,7 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_5Ghz_C19322", "passphrase": "1234567890", "channel": 149,
-          "interface": "wlan0"}
+    wifi={"security": "WPA2", "ssid": "RS9116_5Ghz_C19322", "passphrase": "1234567890", "channel": 149}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -570,6 +570,9 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
+    eth_interface = wifi_client.interfaces.wifi.config["interface"]
+    wifi_client.interfaces.wifi.config['interface'] = "wlan0"
+
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -618,9 +621,8 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
     status = ping(host_ip, ping_iterations)
     assert status == 1, "failed to ping to client"
 
-    wifi_client.interfaces.wifi.interface = "eth0"
-
-    raspi_ap_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface="eth0")
+    logger().info("fetching ip of raspi wifi connected to 3rd party ap over ethernet")
+    raspi_ap_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface=eth_interface)
     logger().info(f"raspi_ap_ip:{raspi_ap_ip}")
 
     # starting iperf server at raspi client
@@ -1023,7 +1025,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19320", "channel": 8, "passphrase": "12345678", "interface": "wlan0"}
+    wifi={"security": "WPA2", "ssid": "RS9116_AP_C19320", "channel": 8, "passphrase": "12345678"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -1037,6 +1039,9 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
+    eth_interface = wifi_client.interfaces.wifi.config["interface"]
+    wifi_client.interfaces.wifi.config['interface'] = "wlan0"
+
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
@@ -1097,12 +1102,10 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
         net_perf_client.interfaces.net_perf.protocol,
         net_perf_client.interfaces.net_perf.client_options,
     )
-    logger().info("data transfer successful to 3rd party station from dut ap"
-                  )
-    logger().info("setting eth0 interface on raspi ")
-    wifi_client.interfaces.wifi.interface = "eth0"
-    logger().info("fetching eth0 interface ip of raspi wifi connected to 3rd party ap over ethernet")
-    raspi_ap_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface="eth0")
+    logger().info("data transfer successful to 3rd party station from dut ap")
+
+    logger().info("fetching ip of raspi wifi connected to 3rd party ap over ethernet")
+    raspi_ap_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface=eth_interface)
     logger().info(f"raspi_ap_ip:{raspi_ap_ip}")
 
     # starting iperf server at raspi client

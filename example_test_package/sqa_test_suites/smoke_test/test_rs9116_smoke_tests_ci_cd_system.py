@@ -60,6 +60,7 @@ pytestmark = [
                                                        test_case_id='testcase_id1',
                                                        notes='test notes'))
 @pytest.mark.dut("rs9116")
+@pytest.mark.AT
 @pytest.mark.config(
     "wifi_dut",
     wifi=

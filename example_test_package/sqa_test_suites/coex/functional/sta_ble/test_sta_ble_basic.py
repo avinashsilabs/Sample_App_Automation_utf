@@ -865,7 +865,6 @@ def test_functionality_of_BLE_for_disconnect_and_connect_multiple_times_When_STA
         "first_time_retry": 0,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -922,7 +921,6 @@ def test_http_post_functionality_with_nonexisting_ip_after_ble_connection_C13348
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_post_functionality_with_ble_connection_C133482(wifi_dut, wifi_access_point, wifi_sniffer, http_server, ble_client, utf_constants):

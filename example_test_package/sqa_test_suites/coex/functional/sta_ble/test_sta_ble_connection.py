@@ -1733,7 +1733,6 @@ def test_sta_ssl_ble_slave_C133478(
         "set_feature_frame": True,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1850,7 +1849,6 @@ def test_threading_http_post_functionality_ble_C133482(wifi_dut, wifi_access_poi
         "region_code": RS9116RegionCode.US,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index_long_crlf.html"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

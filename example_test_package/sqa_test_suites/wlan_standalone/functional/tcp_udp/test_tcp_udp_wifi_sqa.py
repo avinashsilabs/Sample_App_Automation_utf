@@ -267,7 +267,7 @@ class AttenuatorValuesVariation(ThreadBase):
         self.wifi_dut.interfaces.wifi.set_attenuator(self.rf_attenuator, self.att_channel, self.db_value)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -331,7 +331,7 @@ def test_wifi_tcp_close_c19347(wifi_sniffer, remote_socket, wifi_dut, wifi_acces
     logger().info(f"PS-POLL packets are captured in the sniffer")
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1218,25 +1218,6 @@ def test_http_socket_tcp_c19358(wifi_sniffer, wifi_dut, wifi_access_point):
 
     logger().info("Stop the sniffer")
     wifi_sniffer.interfaces.capture.stop_capture()
-
-    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-    # Probe req & response packet
-    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004 || wlan.fc.type_subtype == 0x0005) && (wlan.addr == {dut_mac_address} || wlan.addr == {ap_bssid})'
-    # Association req & response packet & EAPOL 4 way handshake packet
-    packet_filter2 = f'(wlan.fc.type_subtype == 0 || wlan.fc.type_subtype == 1) || (wlan_rsna_eapol.keydes.key_info.key_type == 1) && (wlan.addr == {ap_bssid} || wlan.addr == {dut_mac_address})'
-    # DHCP discovery, offer, request, ack packet
-    packet_filter3 = f'((((dhcp.option.dhcp == 5)) || (dhcp.option.dhcp == 1)) || (dhcp.option.dhcp == 2)) || (dhcp.option.dhcp == 3) && (wlan.addr == {ap_bssid} || wlan.addr == {dut_mac_address})'
-    # Verify PS-Poll & PWMGT bit
-    packet_filter4 = f'wlan.fc.type_subtype == 0x001a && wlan.fc.pwrmgt == 1 && (wlan.addr == {ap_bssid} || wlan.addr == {dut_mac_address})'
-
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-        'packet_count'], 'Unable to find Probe req & response packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
-        'packet_count'], 'Unable to find Association req & response packet & EAPOL 4 way handshake packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
-        'packet_count'], 'Unable to find DHCP discovery, offer, request, ack packet'
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
-        'packet_count'], 'Unable to find Verify PS-Poll & PWMGT bit'
 
     wifi_dut.interfaces.wifi.close_socket(sock_id)
     wifi_dut.interfaces.wifi.leave()

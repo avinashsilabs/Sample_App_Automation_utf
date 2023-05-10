@@ -93,6 +93,7 @@ devices:
         type: 'rs911x'
         subtype: 'rs9116'
         src_dir: 'utf_wiseconnect'
+        commander_options: '--serialno 000440192804' #configure primary EVK serial number
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -116,6 +117,7 @@ devices:
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+                serial_number: '000440192722' # configure primary evk serial number
 
             # 'firmware_uart' is a special interface that indicates which UART is used
             # when loading firmware on the device
@@ -1080,7 +1082,7 @@ defaults:
 
     logic_analyzer: 'saleae_logic_analyzer'
 
-    ble_client: 'bt_wiseconnect'
+    ble_client: 'bt_wiseconnect' # use raspi_ble_client to run single evk test cases on same test bed
 
     power_msrmt_dut: 'per_wiseconnect' #2nd evk per related config's
 

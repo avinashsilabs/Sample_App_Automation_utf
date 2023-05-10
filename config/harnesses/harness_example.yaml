@@ -761,6 +761,16 @@ devices:
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
 
+    python_http_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.python_http'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
     raspi_http_client:
         interfaces:
             http:

@@ -1242,7 +1242,7 @@ class WebsocketEventHandler:
         "wifi_dut",
         wifi={
             "oper_mode": 2,
-            "coex_mode": RS9116CoexMode.WLANOnly,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
@@ -1332,9 +1332,9 @@ def test_web_socket_over_ssl_in_wpa2_enterprise_C113802(wifi_sniffer, wifi_acces
         "wifi_dut",
         wifi={
             "oper_mode": 2,
-            "coex_mode": RS9116CoexMode.WLANOnly,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL
                               | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1438,9 +1438,9 @@ def test_ssl_socket_connection_in_wpa2_enterprise_C113793(wifi_sniffer, wifi_acc
         "wifi_dut",
         wifi={
             "oper_mode": 2,
-            "coex_mode": RS9116CoexMode.WLANOnly,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
-            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL
                               | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1602,4 +1602,222 @@ def test_three_ssl_connection_in_wpa2_enterprise_C113797(utf_constants, ssl_serv
          logger().info("\n******Disabling powersave******")
          wifi_dut.interfaces.wifi.power_save(0, 0)
          wifi_dut.interfaces.wifi.bt_power_save(0, 0)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+            "oper_mode": 2,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.HTTPClient | RS9116TCPIPFeatureBitMap.SSL
+                              | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features":  RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose |RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.IEEE802_11W | RS9116ExtCustomFeatureBitMap.FeatureLowPower
+                                   | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "band": 0,
+            "ca_cert": "ca-chain.cert.pem",
+            "eap_cert": "wifi-user.pem",
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+def test_https_client_connection_wpa2_enterprise_C113805(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
+                                        index_path, rs_helper, utf_constants, radius_server):
+    try:
+        file_name = 'test_https_put_functionality_C113805'
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+        logger().info("enable eap method")
+        device_ip, dut_mac_address = rs_helper.check_eap_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                  eap_type="TLS")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+        logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+        logger().info("Creating of HTTP PUT ")
+        wifi_dut.interfaces.http.http_put_create()
+
+        logger().info("Creating of HTTP PUT ")
+        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+
+        logger().info(f"Delete https client")
+        wifi_dut.interfaces.http.http_client_put_delete()
+
+
+        logger().info("Giving http get command")
+        wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
+        logger().info("Giving http post command")
+        wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                           post_data="hellothisiaatestcaseforget")
+
+        logger().info(f"DUT going to leave")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        logger().info("Sniffer going to stop")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
+        verify_sniffer.verify_sniffer_validation()
+
+    except Exception as e:
+        logger().info(f"\n******Assertion {e}******")
+        raise e
+
+    finally:
+        logger().info("\n******Disabling powersave******")
+        wifi_dut.interfaces.wifi.power_save(0, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
+
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 2,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
+                              | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features":  RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose |RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.IEEE802_11W | RS9116ExtCustomFeatureBitMap.FeatureLowPower
+                                   | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "band": 0,
+            "eap_cert": "wifi-user.pem",
+        },
+    )
+@pytest.mark.skip("Enhancements required")
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+def test_pmk_caching_wpa2_enterprise_C113790(rs_helper, wifi_sniffer, wifi_access_point,
+                                                                    wifi_dut, wifi_client, utf_constants, radius_server, switches):
+    testcase = "test_pmk_caching_in_WPA2_EAP_C113790"
+    try:
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        logger().info('******* Turn on Access point **********')
+        switches[0].interfaces.pdu_switch.turn_on(delay=60)
+        logger().info("enable eap method")
+        device_ip, dut_mac_address = rs_helper.check_eap_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                      eap_type="TLS")
+        switches[1].interfaces.pdu_switch.turn_on(delay=60)
+        switches[0].interfaces.pdu_switch.turn_off(delay=10)
+        logger().info("pinging to dut.....")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT not responding for ping request......"
+        logger().info("ping to DUT is successful....")
+        wifi_dut.interfaces.wifi.leave(timeout=30)
+        logger().info("\n******Stop Sniffer finally******")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
+        verify_sniffer.verify_sniffer_validation()
+
+    except Exception as e:
+        logger().info(f"\n******Assertion {e}******")
+        raise e
+
+    finally:
+        switches[1].interfaces.pdu_switch.turn_on(delay=10)
+        logger().info("\n******Disabling powersave******")
+        wifi_dut.interfaces.wifi.power_save(0, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+            "oper_mode": 2,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.HTTPClient
+                              | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features":  RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose |RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.IEEE802_11W | RS9116ExtCustomFeatureBitMap.FeatureLowPower
+                                   | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+            "band": 0,
+            "eap_cert": "wifi-user.pem",
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+def test_http_client_connection_wpa2_enterprise_C113806(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
+                                        index_path, rs_helper, utf_constants, radius_server):
+    try:
+        file_name = 'test_https_put_functionality_C113806'
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
+        logger().info("enable eap method")
+        device_ip, dut_mac_address = rs_helper.check_eap_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                      eap_type="TLS")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP bssid {ap_bssid}")
+        logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+
+        logger().info("Creating of HTTP PUT ")
+        wifi_dut.interfaces.http.http_put_create()
+
+        logger().info("Creating of HTTP PUT ")
+        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+
+        logger().info(f"Delete https client")
+        wifi_dut.interfaces.http.http_client_put_delete()
+
+        logger().info("Giving http get command")
+        wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
+        logger().info("Giving http post command")
+        wifi_dut.interfaces.http.http_post(http_server.interfaces.http, "cgi-bin/cgi_example.py",
+                                           post_data="hellothisiaatestcaseforget")
+
+        logger().info(f"DUT going to leave")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        logger().info("Sniffer going to stop")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        verify_sniffer = SnifferValidationProcess(wifi_sniffer, wifi_dut, wifi_access_point, dut_mac_address, ap_bssid)
+        verify_sniffer.verify_sniffer_validation()
+
+    except Exception as e:
+        logger().info(f"\n******Assertion {e}******")
+        raise e
+
+    finally:
+        logger().info("\n******Disabling powersave******")
+        wifi_dut.interfaces.wifi.power_save(0, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
+
+
+
+
+
 

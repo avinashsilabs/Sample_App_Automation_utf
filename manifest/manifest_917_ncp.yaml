@@ -71,4 +71,4 @@ firmware_applications:
     test_coex_custom:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'coex_custom_test_agent.hex'
+        filename: '917_ncp/coex_custom_test_agent.hex'
