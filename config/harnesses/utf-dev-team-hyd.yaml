@@ -520,6 +520,19 @@ devices:
             client:
                 type: 'openssl.client'
 
+    50pa500_attenuator:
+        interfaces:
+            attenuator:
+                type: 'attenuator.50pa500'
+                shell: 'telnet_shell'
+            telnet_shell:
+                type: 'shell.telnet_shell'
+                remote: '192.168.50.70'
+                port: 3001
+                username: null
+                password: null
+                timeout: 2
+
     # this represents an brakttoth docker running on the NUC machine using sniffer
     bt_braktooth:
         interfaces:
@@ -644,7 +657,7 @@ defaults:
         stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
         bt_exploit_type: "au_rand_flooding"
         script: ""
-
+    rf_attenuator: '50pa500_attenuator'
     net_perf:
         server_options:
             # seconds between periodic bandwidth reports

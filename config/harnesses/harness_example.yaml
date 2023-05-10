@@ -876,6 +876,7 @@ devices:
                 port: 3001
                 username: null
                 password: null
+                timeout: 2
 
 
     raspi_ssl_server:
