@@ -136,6 +136,7 @@ def ApWirelessOff(switch, wait_time, logger):
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.AT
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
@@ -237,6 +238,7 @@ def test_mqtt_authentication_ssl_TC19258(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -352,6 +354,7 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -480,6 +483,7 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -582,6 +586,7 @@ def test_mqtt_rx_ssl_TC19285(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1200, 1024000, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -686,6 +691,7 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1370, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -790,6 +796,7 @@ def test_mqtt_publish_max_len_ssl_TC19287(
         "ca_cert": "ca_ecdsa.crt"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1370, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -990,6 +997,7 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
         "ca_cert": "ca_ecdsa.crt"
     }
 )
+@pytest.mark.AT
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])

@@ -466,7 +466,7 @@ def test_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, http_c
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_sockets"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_http_get_func_host_name_with_tcp_C19218(http_server, wifi_dut, http_client, net_perf_client, wifi_access_point,
                                                  wifi_client, protocol, utf_constants, wifi_sniffer, rs_helper):
     ping_count = utf_constants.get("ping_count")
@@ -492,7 +492,6 @@ def test_http_get_func_host_name_with_tcp_C19218(http_server, wifi_dut, http_cli
         status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
-        time.sleep(5)
 
         logger().info(f"Host IP: {host_ip}")
         logger().info(f"Dut IP: {device_ip}")
@@ -505,10 +504,8 @@ def test_http_get_func_host_name_with_tcp_C19218(http_server, wifi_dut, http_cli
         assert status, "failed to post data"
         logger().info(status)
 
-        wifi_dut.interfaces.wifi.close_sockets()
         logger().info("disconnecting ap")
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()

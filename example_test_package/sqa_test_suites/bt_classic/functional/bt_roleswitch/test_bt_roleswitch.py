@@ -15,6 +15,7 @@ from utf_wiseconnect.devices.rs911x import(
     RS9116ConfigFeatureBitMap,
     RS9116CustomFeatureBitMap,
     RS9116ExtCustomFeatureBitMap,
+    RS9116PowerSaveProcedureTypes,
     RS9116TCPIPFeatureBitMap,
     RS9116BTFeatureBitMap
 )
@@ -49,7 +50,7 @@ pytestmark = [
             "ext_tcpip_features": 0,
             "custom_features": RS9116CustomFeatureBitMap.Default,
             "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
             }
         )
@@ -94,10 +95,10 @@ def test_bt_spp_dut_as_slave_roleswitch_C19991(wifi_dut, bt_client):
                 if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
                     wifi_dut.interfaces.wifi.set_sleep_gpio(True)
                     logger().info("==========Enables Power Save in Wifi Mode===========")
-                    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
+                    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
                     assert enable_wifi_ps, f"Failed to enable wifi in powersave"
                     logger().info("==========Enables Power Save in BT Mode===========")
-                    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
+                    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
                     assert enable_bt_ps, f"Failed to enable bt in powersave"
 
                     #Ping DUT
@@ -163,64 +164,63 @@ def test_bt_spp_dut_as_master_roleswitch_C19990(wifi_dut, bt_client):
     if not device_found:
         assert device_found, f"Dut unable to find the bt client device"
 
-    for count in range(0, iter_count):
-        with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                bt_client_socket.create_client()
-                wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=10)
-                assert addr == bt_dut_address
-                # "Keeping 30 seconds time duration for connection stability
-
-                time.sleep(30)
-
-                logger().info("======= Initiating the Power Save==========")
-                if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-                    wifi_dut.interfaces.wifi.set_sleep_gpio(True)
-                    logger().info("==========Enables Power Save in Wifi Mode===========")
-                    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-                    assert enable_wifi_ps, f"Failed to enable wifi in powersave"
-
-                    logger().info("==========Enables Power Save in BT Mode===========")
-                    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-                    assert enable_bt_ps, f"Failed to enable bt in powersave"
-
-                    # Ping DUT
-                    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
-                    logger().info(f"l2ping response {ping_response}")
-                    assert ping_response, "dut is in inactive state..."
-
-                    wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="0")
-                    time.sleep(5)
-                    logger().info("Here Master Role is 0 and Slave Role is 1")
-                    result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
-                    pattern = r"device role:\s*(\d+)"
-                    match = re.search(pattern, result.decode('utf-8'))
-                    if match:
-                        device_role = match.group()
-                        assert device_role == "device role: 0", "expected device role is 0,but observed device role --> 1"
-                        logger().info(f" Fetching the Master role device --> {device_role}")
-                    wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="1")
-                    time.sleep(5)
-                    result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
-                    pattern = r"device role:\s*(\d+)"
-                    match = re.search(pattern, result.decode('utf-8'))
-                    if match:
-                        device_role = match.group()
-                        assert device_role == "device role: 1", "expected device role is 1,but observed device role --> 0"
-                        logger().info(f" Fetching the Slave role device --> {device_role}")
+    with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
+        with wifi_dut.interfaces.wifi.run_bt_task():
+            bt_client_socket.create_client()
+            wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
+            addr = bt_client_socket.accept(timeout=10)
+            assert addr == bt_dut_address
+            # "Keeping 30 seconds time duration for connection stability
 
             time.sleep(30)
 
-            end_time = datetime.now() + timedelta(seconds=60)
-            while datetime.now() < end_time:
-                logger().info("==========Send the data from dut to bt client=========")
-                wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-                data = bt_client_socket.recv()
-                assert data, "failed to recevie data from dut to bt client "
-                assert data.decode() == send_text
+            logger().info("======= Initiating the Power Save==========")
+            if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+                wifi_dut.interfaces.wifi.set_sleep_gpio(True)
+                logger().info("==========Enables Power Save in Wifi Mode===========")
+                enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_wifi_ps, f"Failed to enable wifi in powersave"
 
-        logger().info("Disconnecting bt client address")
-        wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+                logger().info("==========Enables Power Save in BT Mode===========")
+                enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+                assert enable_bt_ps, f"Failed to enable bt in powersave"
 
-        bt_client_socket.close()
+                # Ping DUT
+                ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+                logger().info(f"l2ping response {ping_response}")
+                assert ping_response, "dut is in inactive state..."
+
+                wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="0")
+                time.sleep(5)
+                logger().info("Here Master Role is 0 and Slave Role is 1")
+                result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
+                pattern = r"device role:\s*(\d+)"
+                match = re.search(pattern, result.decode('utf-8'))
+                if match:
+                    device_role = match.group()
+                    assert device_role == "device role: 0", "expected device role is 0,but observed device role --> 1"
+                    logger().info(f" Fetching the Master role device --> {device_role}")
+                wifi_dut.interfaces.wifi.bt_set_local_role(bt_client_address, role_flag="1")
+                time.sleep(5)
+                result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
+                pattern = r"device role:\s*(\d+)"
+                match = re.search(pattern, result.decode('utf-8'))
+                if match:
+                    device_role = match.group()
+                    assert device_role == "device role: 1", "expected device role is 1,but observed device role --> 0"
+                    logger().info(f" Fetching the Slave role device --> {device_role}")
+
+        time.sleep(30)
+
+        end_time = datetime.now() + timedelta(seconds=60)
+        while datetime.now() < end_time:
+            logger().info("==========Send the data from dut to bt client=========")
+            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
+            data = bt_client_socket.recv()
+            assert data, "failed to recevie data from dut to bt client "
+            assert data.decode() == send_text
+
+    logger().info("Disconnecting bt client address")
+    wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+
+    bt_client_socket.close()

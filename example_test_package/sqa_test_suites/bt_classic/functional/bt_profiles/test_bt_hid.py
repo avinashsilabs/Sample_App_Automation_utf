@@ -58,7 +58,7 @@ test_data = ["9,01,00,00,04,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",
     Note: ******** This test plan supports only in AT mode **********
 """
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -117,7 +117,7 @@ def test_hid_conn_in_device_role_c20017(bt_dut, bt_client):
             bt_client.interfaces.bluetooth.close()
     logger().info(f"test completed in {t.duration} seconds")
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -183,7 +183,7 @@ def test_interrupt_data_after_hid_conn_c20021(bt_dut, bt_client):
         time.sleep(5)
     logger().info(f"test completed in {t.duration} seconds")
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -249,7 +249,7 @@ def test_set_local_cod_class_002560_c20023(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -314,7 +314,7 @@ def test_set_local_cod_class_002540_c20023(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -379,7 +379,7 @@ def test_set_local_cod_class_002580_c20023(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -444,7 +444,7 @@ def test_hid_connectivity_ssp_with_io_capa_display_only_c20025(bt_dut, bt_client
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -509,7 +509,7 @@ def test_hid_connectivity_ssp_with_io_capa_display_yes_no_c20026(bt_dut, bt_clie
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -574,7 +574,7 @@ def test_hid_connectivity_ssp_with_io_capa_no_input_output_c20028(bt_dut, bt_cli
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -651,7 +651,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20031(bt_dut, bt_client)
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -713,7 +713,7 @@ def test_hid_conn_and_disconn_c20019(bt_dut, bt_client):
             logger().info(f"******************* iteration {count} completed ********************* ")
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -772,7 +772,7 @@ def test_hid_disconn_in_device_role_c20018(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -837,7 +837,7 @@ def test_hid_connectivity_ssp_with_io_capa_keyboard_only_c20027(bt_dut, bt_clien
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -915,7 +915,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20035(bt_dut, bt_client)
         logger().info(f"******************* iteration {count} completed ********************* ")
     time.sleep(10)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -992,7 +992,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20034(bt_dut, bt_client):
         logger().info(f"******************* iteration {count} completed ********************* ")
     time.sleep(10)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -1071,7 +1071,7 @@ def test_bt_hid_functionality_in_sniff_mode_c20037(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -1167,7 +1167,7 @@ def test_bt_hid_send_continuous_hid_interrupt_data_c20038(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -1244,7 +1244,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20030(bt_dut, bt_client):
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(
@@ -1313,7 +1313,7 @@ def test_bt_hid_disabling_sniff_feature_c20036(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
 
-
+@pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
 @pytest.mark.config(

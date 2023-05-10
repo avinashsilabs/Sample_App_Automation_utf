@@ -17,7 +17,9 @@ from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
 from utf.interfaces.cli import CLITransportException
-
+from utf.utils.firmware_manager import FirmwareManager
+from utf.utils.commander import reset_device
+from utf.rpi import usb_power
 
 
 def logger():
@@ -49,16 +51,16 @@ def otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, wifi_client, utf
     upgrade_fw = utf_constants.get("upgrade_fw")
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True, "server is inactive"
+    assert server_stat, "server is inactive"
     logger().info(f'http server state is {server_stat}')
 
-    logger().info("fetching server ip....")
-    host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    logger().info(f"server ip is {host_ip}")
+    host_ip = http_server.interfaces.http.hostname_or_ip_address
+    logger().info(f"host_ip: {host_ip}")
+    server_port = http_server.interfaces.http.port
 
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
-    assert status == 1, "unable to ping to server"
+    assert status, "unable to ping to server"
 
     logger().info("fetching the DUT version...")
     wifi_dut.interfaces.wifi.version()
@@ -71,10 +73,13 @@ def otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, wifi_client, utf
     time.sleep(10)
 
     logger().info("Performing fw upgrade on DUT....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, upgrade_fw)
+    wifi_dut.interfaces.wifi.register_http_server_callbacks()
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, server_port, upgrade_fw)
     time.sleep(120)
 
     logger().info("fetching otaf upgrade status....")
+    status = ping(host_ip, 10)
+    assert status, "unable to ping to server"
     wifi_dut.interfaces.wifi.get_http_otaf_status()
     time.sleep(10)
 
@@ -1481,6 +1486,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
         server_stat = http_server.interfaces.http.started
         assert server_stat, "server is inactive"
         logger().info(f'http server state is {server_stat}')
+        server_port = http_server.interfaces.http.port
 
         logger().info("fetching server ip....")
         http_interface = http_server.interfaces.http.interface
@@ -1538,7 +1544,8 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
         time.sleep(2)
 
         # performs the firmware upgrade on DUT over the http port
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
+        wifi_dut.interfaces.wifi.register_http_server_callbacks()
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, server_port)
         time.sleep(150)
         ping(wifi_client_ip, ping_iterations)
         wifi_dut.interfaces.wifi.get_http_otaf_status()
@@ -1583,21 +1590,26 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
     finally:
-        logger().info("performing dut reset....")
-        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
-        time.sleep(10)
+        logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
+        wifi_client.interfaces.wifi.leave()
+        time.sleep(3)
+        logger().info(wifi_dut.interfaces.wifi.version())
 
-        logger().info("Initialising DUT after the reset....")
+        default_fw = utf_constants.get('upgrade_fw')
+        if default_fw.startswith("/"):
+            default_fw = default_fw[1:]
+        fw_mgr = FirmwareManager.get_instance()
+        device = fw_mgr.get_device("rs911x")
+        reset_device(wifi_dut.interfaces.wifi.device_commander_options)
+        fw_mgr._write_firmware_with_retries(device, default_fw)
+        device.set_state("reset_state")
+        wifi_dut.interfaces.wifi.bus.release_resources()
+        if wifi_dut.interfaces.wifi.gpio_bus is not None:
+            wifi_dut.interfaces.wifi.gpio_bus.release_resources()
+        usb_power.cycle(1.0)
+        time.sleep(5)
         wifi_dut.interfaces.wifi.inited = False
-        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
-
         wifi_dut.interfaces.wifi.associated = False
-
-        otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, wifi_client, utf_constants)
-        final_fw_upgrade = wifi_dut.interfaces.wifi.version()
-        assert fw_before_upgrade == final_fw_upgrade, "f\n Firmware versions should be match after loading."
-        logger().info(f"\n Before {fw_before_upgrade} and Final {final_fw_upgrade} are matched.")
-        logger().info(f"\n ***firmware versions matched after loading firmware through otaf\n")
 
 
 @pytest.mark.config(
@@ -1796,7 +1808,8 @@ def test_https_fw_upgrade_on_off_ethernet_and_measure_time_C19765(http_server, w
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
         logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_https_fw_upgd_on_off_ethernet_and_msr_time_C19765')
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file='test_https_fw_upgd_on_off_ethernet_and_msr_time_C19765')
 
         logger().info("dut fw version before upgrade...")
         fw_before_upgrade = wifi_dut.interfaces.wifi.version()

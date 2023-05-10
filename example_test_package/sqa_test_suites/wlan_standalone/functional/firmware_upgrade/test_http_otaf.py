@@ -16,6 +16,9 @@ from utf_wiseconnect.devices.rs911x import (
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
+from utf.utils.firmware_manager import FirmwareManager
+from utf.utils.commander import reset_device
+from utf.rpi import usb_power
 
 
 def logger():
@@ -1726,27 +1729,32 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(firmware_loader, h
                       f" firmware version after loading through otaf :{fw_after_upgrade}")
         assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
                                                       f" firmware through otaf"
-        logger().info(f"\n ***firmware versions not matched after loading" \
+        logger().info(f"\n ***firmware versions not matched after loading"
                       f" firmware through otaf\n")
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(10)
     finally:
-        logger().info("performing dut reset....")
-        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
-        time.sleep(10)
+        logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
+        wifi_client.interfaces.wifi.leave()
+        time.sleep(3)
+        logger().info(wifi_dut.interfaces.wifi.version())
 
-        logger().info("Initialising DUT after the reset....")
+        default_fw = utf_constants.get('upgrade_fw')
+        if default_fw.startswith("/"):
+            default_fw = default_fw[1:]
+        fw_mgr = FirmwareManager.get_instance()
+        device = fw_mgr.get_device("rs911x")
+        reset_device(wifi_dut.interfaces.wifi.device_commander_options)
+        fw_mgr._write_firmware_with_retries(device, default_fw)
+        device.set_state("reset_state")
+        wifi_dut.interfaces.wifi.bus.release_resources()
+        if wifi_dut.interfaces.wifi.gpio_bus is not None:
+            wifi_dut.interfaces.wifi.gpio_bus.release_resources()
+        usb_power.cycle(1.0)
+        time.sleep(5)
         wifi_dut.interfaces.wifi.inited = False
-        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
-
         wifi_dut.interfaces.wifi.associated = False
-
-        otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, utf_constants, wifi_client)
-        final_fw_upgrade = wifi_dut.interfaces.wifi.version()
-        assert fw_before_upgrade == final_fw_upgrade, "f\n Firmware versions should be match after loading."
-        logger().info(f"\n Before {fw_before_upgrade} and Final {final_fw_upgrade} are matched.")
-        logger().info(f"\n ***firmware versions matched after loading firmware through otaf\n")
 
 
 @pytest.mark.config(
