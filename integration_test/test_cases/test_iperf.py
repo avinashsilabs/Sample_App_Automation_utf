@@ -1,12 +1,14 @@
-from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
+from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
+from utf_wiseconnect.devices.rs911x import RS9116TCPIPFeatureBitMap
 
 
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
+
 
 pytestmark = [
     pytest.mark.framework_integration_test,
@@ -21,7 +23,6 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-
     # preparing wifi_client
     if wifi_access_point != wifi_client:
         wifi_client.interfaces.wifi.join_ap(wifi_access_point)
@@ -54,7 +55,8 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
     __print_throughput(tp)
 
 
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video})
+@pytest.mark.config("net_perf_client",
+                    net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
