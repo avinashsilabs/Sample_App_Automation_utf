@@ -1,10 +1,14 @@
+import re
+
 import pytest
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
+from utf.interfaces.bluetooth.bluez import HealthThermometerService
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, \
-    RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap, RS9116PowerSaveProcedureTypes
+    RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap, RS9116PowerSaveProcedureTypes, RS9116BTFeatureBitMap, \
+    RS9116BLECustomFeatureBitMap, RS9116BLEFeatureBitMap
 from utf.utils.logger import get_logger
 from utf.interfaces.wifi import WlanError
 import time
@@ -1668,40 +1672,111 @@ def test_BLE_continuousscanning_for_48_hours_C19829(wifi_dut, ble_client):
     time.sleep(5)
 
 
+@pytest.mark.dut("rs9116")
+@pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    },
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
+        "features": 0,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid |
+        RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode | RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "ext_tcpip_features": 0,
+        "ble_features": RS9116BLEFeatureBitMap.TXPowerIndex | RS9116BLEFeatureBitMap.BLECustomFeatureBitmapValid |
+        RS9116BLEFeatureBitMap.RS9113_RS9116_Compatible_Feature,
+        "ble_custom_ext_features": RS9116BLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
+    }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_thePowersavemode2_functionality_of_DUT_C19859(wifi_dut, ble_client):
-    logger().info("start ble in dut")
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-    assert bt_dut_address, "ble initialization failed in dut"
-    logger().info("start ble scan in rd_1")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "ble initialization failed in remote device_1"
-    time.sleep(2)
-    scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address,
-                                                               ble_scan_interval=int(500 / 0.625),
-                                                               ble_scan_window=int(400 / 0.625),
-                                                               timeout=120)
-    time.sleep(10)
-    # Enables the wifi power save in dut
-    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    # Enables the bt power save in dut
-    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
-    wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
-    logger().info(f" scan result '{scan_results}")
-    assert scan_results, "ble devices not found"
-    logger().info(f"Currently we are supporting this "
-                  f"Check weather the DUT is able receive adverse report in 3 channel are not using sniffer")
-    logger().info(f"found BT client address of {bt_client_address}")
+    with BleLogs(start_collecting_logs=True,
+                 bt_log_path=f"reports/test_thePowersavemode2_functionality_of_DUT_C19859.log_{int(time.time())}"):
+        try:
+            logger().info("start ble in dut")
+            wifi_dut.interfaces.wifi.bt_start()
+            logger().info("get dut bt address.....")
+            bt_dut_address = wifi_dut.interfaces.wifi.bt_get_local_address()
+            logger().info(f'bt dut address {bt_dut_address}')
+
+            result = wifi_dut.interfaces.wifi.ble_add_service(uid=1910)
+
+            service_handler = re.search(r"b'OK (.*),(.*)", str(result), re.M | re.I)
+            wifi_dut.interfaces.wifi.ble_add_attribute(service_handler.group(1), "B", 2, "2803", 8, 6,  1,
+                                                       "4,0,0C,00,11,2B")
+            wifi_dut.interfaces.wifi.ble_add_attribute(service_handler.group(1), "C", 2, "2B11", 4, 14, 1,
+                                                       "1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0")
+            wifi_dut.interfaces.wifi.ble_add_attribute(service_handler.group(1), "D", 2, "2803", 2, 6, 1,
+                                                       "10,0,0E,00,10,2B")
+            wifi_dut.interfaces.wifi.ble_add_attribute(service_handler.group(1), "E", 2, "2B10", 10, 14, 1,
+                                                       "1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0")
+            wifi_dut.interfaces.wifi.ble_add_attribute(service_handler.group(1), "F", 2, "2902", "A", 2, 0, "0, 0")
+
+            logger().info(f"start advertising")
+            wifi_dut.interfaces.wifi.ble_set_advertise_data()
+            wifi_dut.interfaces.wifi.ble_set_scan_response_data()
+            wifi_dut.interfaces.wifi.ble_start_advertising()
+            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                               service_classes=
+                                                                               ["HealthThermometerService"])
+            assert bt_client_address is not None
+            time.sleep(5)
+            device_found = False
+            sw = Stopwatch()
+            while sw.elapsed_sec < 30:
+                found_devices = ble_client.interfaces.bluetooth.get_devices()
+                logger().info(f"found_devices::{found_devices}")
+                if bt_dut_address in found_devices:
+                    device_found = True
+                    break
+
+            ble_client.interfaces.bluetooth.stop_scanning()
+            assert device_found, "Unable to find the device in scan list"
+            logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
+            connect_state = ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address)
+            assert connect_state, "UNABLE TO CONNECT TO GIVEN ADDRESS"
+            time.sleep(10)
+            logger().info("enabling wifi power save")
+            enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(3, 1)
+            assert enable_wifi_ps, "failed to enable"
+
+            service_uid = "00001910-0000-1000-8000-00805f9b34fb"
+            char_uid = "00002b10-0000-1000-8000-00805f9b34fb"
+            data = "1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0"
+
+            # resolving charecteristic
+            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+            assert len(servs) > 0
+            assert len(chars) > 0
+
+            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                services=servs, service_uid=service_uid, char_uid=char_uid)
+            assert char_path is not None
+            assert len(char_props) > 0
+
+            # subscribe to notifications
+            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                    char_uid=char_uid)
+            try:
+                ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data)
+                time.sleep(1)
+            except:
+                pass
+
+        finally:
+            wifi_dut.interfaces.wifi.ble_remove_attribute(service_handler.group(1), "B")
+            wifi_dut.interfaces.wifi.ble_remove_attribute(service_handler.group(1), "C")
+            wifi_dut.interfaces.wifi.ble_remove_attribute(service_handler.group(1), "D")
+            wifi_dut.interfaces.wifi.ble_remove_attribute(service_handler.group(1), "E")
+            wifi_dut.interfaces.wifi.ble_remove_attribute(service_handler.group(1), "F")
+
+            # disconnecting from dut
+            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
 # written by Benazeer K
