@@ -26,10 +26,13 @@ ENV UTF_CORE_PATH /app/utf_core/src
 COPY utf_wiseconnect/ ./utf_wiseconnect/
 RUN ./utf_wiseconnect/target-install.sh
 
+COPY utf_wiseconnect_3/ ./utf_wiseconnect_3/
+RUN ./utf_wiseconnect_3/target-install.sh
+
 # Set UTF_EXTENSIONS_PATH to include all extensions.
 # Separate extension paths with ":"
 # e.g.  UTF_EXTENSIONS_PATH=$APP_DIR/utf_extensions/utf_wiseconnect
-ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect
+ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect:$APP_DIR/utf_wiseconnect_3
 
 # Set PYTHONPATH to include UTF core + all extensions
 ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH

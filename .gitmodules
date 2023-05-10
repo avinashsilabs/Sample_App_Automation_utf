@@ -7,3 +7,6 @@
 [submodule "utf_wiseconnect"]
 	path = utf_wiseconnect
 	url = ../../utf/utf_wiseconnect
+[submodule "utf_wiseconnect_3"]
+	path = utf_wiseconnect_3
+	url = ../../redpine/sl_net.git

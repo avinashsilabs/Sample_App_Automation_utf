@@ -17,6 +17,13 @@ utf_pytest/
 rs911x/
 mini_gecko_sdk/
 
+utf_wiseconnect_3/.yakka
+utf_wiseconnect_3/components
+utf_wiseconnect_3/examples
+utf_wiseconnect_3/resources
+utf_wiseconnect_3/third_party
+utf_wiseconnect_3/wiseconnect3
+
 # on a raspberry pi we don't need the AMD64 commander binaries
 utf_core/src/utf/utils/commander_AMD64/
 
