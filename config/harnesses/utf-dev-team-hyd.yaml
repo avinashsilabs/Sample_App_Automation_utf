@@ -553,6 +553,18 @@ devices:
                 pid: 0x6010
             linux_shell:
                 type: 'shell.shell'
+    
+    nrf_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.android.nrf_connect.nrf_connect_mi'
+                # This is should be unique for each ble client
+                port: 4701
+                # This is id of mobile need retrive this manually
+                device_id: '9a60d4ba'
+                device_type: 'mi'
+                # This is should be as same as ble_advertising_data
+                advertising_data: "HELLO"
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
