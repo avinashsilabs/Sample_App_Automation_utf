@@ -794,6 +794,7 @@ devices:
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
+                timeout: 15
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
