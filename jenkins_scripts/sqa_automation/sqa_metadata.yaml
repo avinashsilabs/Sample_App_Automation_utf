@@ -1,0 +1,131 @@
+utf_wifi_sqa_regression_label:
+  metadata:
+    RS9116_FIRMWARE: "RS9116W.2.8.0.34"
+  device_groups:
+    utf_wifi_sqa_regression_1_device_group:   
+      metadata: 
+        SQA_TEST_AGENT: ""
+        SSH_TARGET: "10.207.18.106"
+        HARNESS_NAME: "sqa_jenkins_tb1_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB1-WLAN-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_1_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+    utf_wifi_sqa_regression_2_device_group: 
+      metadata:
+        SSH_TARGET: "10.207.18.108"
+        HARNESS_NAME: "sqa_jenkins_tb2_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB2-BLE-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_2_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+    utf_wifi_sqa_regression_3_device_group:
+      metadata:
+        SSH_TARGET: "10.207.18.120"
+        HARNESS_NAME: "sqa_jenkins_tb3_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB3-BT-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_3_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+    utf_wifi_sqa_regression_4_device_group:
+      metadata:
+        SSH_TARGET: "10.207.18.133"
+        HARNESS_NAME: "sqa_jenkins_tb4_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB4-WLAN-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_4_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+    utf_wifi_sqa_regression_5_device_group:
+      metadata:
+        SSH_TARGET: "10.207.18.126"
+        HARNESS_NAME: "sqa_jenkins_tb5_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB5-COEX-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_5_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+    utf_wifi_sqa_regression_6_device_group:
+      metadata:
+        SSH_TARGET: "10.207.18.166"
+        HARNESS_NAME: "sqa_jenkins_tb6_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB6-WLAN-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_6_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+    utf_wifi_sqa_regression_7_device_group:
+      metadata:
+        SSH_TARGET: "10.207.18.170"
+        HARNESS_NAME: "sqa_jenkins_tb7_harness_sapi.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --count=1 --tmconfig example_test_package/.sequence_manager/test_execution_definitions/Jenkins-TB7-WLAN-APR-2023.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_regression_7_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+utf_wifi_sqa_code_sanity_label:
+  metadata:
+    RS9116_FIRMWARE: "RS9116W.2.8.0.13"
+  device_groups: 
+    utf_wifi_sqa_code_sanity_1_device_group:
+      metadata:
+        UTF_WIFI_BRANCH: "SQA_Wifi_Regression"
+        SILICON_REV: "1.4"
+        SQA_TEST_AGENT: ""
+        RS9116_FIRMWARE: "RS9116W.2.7.0.39"
+        SSH_TARGET: "10.207.18.192"
+        HARNESS_NAME: "sqa_codecommit_testbed.yaml"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+        UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig
+          example_test_package/.sequence_manager/test_execution_definitions/Wifi_sqa_sanity.yaml
+          --skip_parametrization example_test_package --manifest
+          /app/manifest/manifest_without_aws_test_agent.yaml"
+        device_group_name: "utf_wifi_sqa_code_sanity_1_device_group"
+        device_group_label: ""

@@ -35,14 +35,6 @@ pipeline {
                     url= "https://hwmux.silabs.net/api/groups/${id_num}/"
                     def responseJson = hwmuxUtils.httpCallToJson(url, 'GET', '200', null, UTF_HWMUX_TOKEN)
                     echo JsonOutput.toJson(responseJson)
-                    env.SSH_TARGET= hwmuxUtils.getGroupMetadataProperty(id_num,UTF_HWMUX_TOKEN,"host_ip")
-                    env.HARNESS_NAME=hwmuxUtils.getGroupMetadataProperty(id_num,UTF_HWMUX_TOKEN,"HARNESS_NAME")
-                    echo env.SSH_TARGET
-                    echo env.HARNESS_NAME
-                    env.SSH_TARGET=env.SSH_TARGET.replace("\"","")
-                    env.HARNESS_NAME=env.HARNESS_NAME.replace("\"","")
-                    echo env.SSH_TARGET
-                    echo env.HARNESS_NAME
                     env.tests_url= env.JENKINS_URL + 'view/UTF/job/'+env.JOB_NAME+ '/'+env.BUILD_NUMBER + '/testReport/'
 
                     try {
