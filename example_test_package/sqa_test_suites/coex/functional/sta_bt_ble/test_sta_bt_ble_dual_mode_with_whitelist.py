@@ -995,7 +995,6 @@ def test_sta_bt_ble_connection_with_http_download_C20079(firmware_loader, wifi_s
     },
 )
 @pytest.mark.bt_classic
-@pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
