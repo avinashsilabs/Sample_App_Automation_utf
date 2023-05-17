@@ -53,7 +53,6 @@ def clean_up_method(wifi_dut, switch):
     logger().info("\n ----------------------------Cleaning UP of DUT is Completed ----------------------------")
 
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -160,7 +159,6 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
 #######c19315##########
 
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -271,7 +269,6 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
 ######c19324##########
 
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -397,7 +394,6 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 
 # #########19313###########
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -528,7 +524,6 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
 
 # @pytest.mark.skip()
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -656,7 +651,6 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
 # ##############19312###############
 
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 8})
 @pytest.mark.config(
     "wifi_dut",
@@ -779,7 +773,6 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
 # ###################19319#########################
 # ##Connectivity of concurrent mode in WPA2 security#######
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 8})
 @pytest.mark.config(
     "wifi_dut",
@@ -880,7 +873,6 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 
 # ##############19318###############
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1000,7 +992,6 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 
 # ##########19320#########
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1145,7 +1136,6 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
 #################################################################################
 
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1442,7 +1432,6 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
 
 
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={

@@ -905,7 +905,6 @@ def test_sta_bt_ble_connection_stability_C20078(firmware_loader, wifi_sniffer, r
     },
 )
 @pytest.mark.bt_classic
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut",

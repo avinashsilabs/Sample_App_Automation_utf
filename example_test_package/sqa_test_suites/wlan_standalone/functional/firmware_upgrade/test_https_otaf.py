@@ -1435,7 +1435,6 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
 
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={

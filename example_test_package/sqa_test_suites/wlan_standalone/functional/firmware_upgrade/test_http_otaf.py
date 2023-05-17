@@ -1589,7 +1589,6 @@ def test_http_fw_upgrade_failure_when_enabled_only_dual_bt_C19796(http_server, w
 
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
