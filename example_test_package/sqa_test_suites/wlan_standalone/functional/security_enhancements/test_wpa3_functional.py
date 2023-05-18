@@ -55,6 +55,13 @@ def ping_to_dut(dut_ip, ping_count=10):
     return status
 
 
+@retry(Exception, delay=5, tries=5)
+def ping_to_host(wifi_client, device_ip):
+    status = wifi_client.interfaces.wifi.ping(server_ip=device_ip)
+    assert status < 1, "Failed to ping to host"
+    return status
+
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -601,8 +608,10 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
-    logger().info("ping successful to host")
+
+    status = ping_to_host(wifi_client, device_ip)
+    assert status < 1, f"ping failed to host"
+    logger().info(f" ping to host successful")
 
     time.sleep(2)
 
@@ -646,7 +655,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 40, "security": 'WPA3'})
@@ -692,8 +701,9 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
-    logger().info("ping successful to host")
+    status = ping_to_host(wifi_client, device_ip)
+    assert status < 1, f"ping failed to host"
+    logger().info(f" ping to host successful")
 
     time.sleep(2)
 
@@ -737,7 +747,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 48, "security": 'WPA3'})
@@ -783,8 +793,9 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
-    logger().info("ping successful to host")
+    status = ping_to_host(wifi_client, device_ip)
+    assert status < 1, f"ping failed to host"
+    logger().info(f" ping to host successful")
 
     time.sleep(2)
 
@@ -835,7 +846,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 149, "security": 'WPA3'})
@@ -882,8 +893,9 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     logger().info(f"***** Start get IP address ******")
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 1, "fail to ping host"
-    logger().info("ping successful to host")
+    status = ping_to_host(wifi_client, device_ip)
+    assert status < 1, f"ping failed to host"
+    logger().info(f" ping to host successful")
     time.sleep(2)
 
     logger().info(f"Host IP: {host_ip}")
@@ -932,9 +944,8 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 149, "security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
 
@@ -945,7 +956,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-
+        "band": 1,
     }
 )
 def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, utf_constants):
