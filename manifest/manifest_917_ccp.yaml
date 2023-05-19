@@ -57,3 +57,8 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_coex_custom:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/coex_custom_test_agent.hex'
