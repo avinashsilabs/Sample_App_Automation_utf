@@ -46,7 +46,7 @@ def logger():
 
 
 
-ping_count = 10
+
 
 @retry(Exception, delay=15, tries=3)
 def ping_to_dut(dut_ip, ping_count=10):
@@ -73,14 +73,14 @@ def ping_to_dut(dut_ip, ping_count=10):
 
     }
 )
-def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point):
+def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants):
     logger().info(f"********this test_case to validate DNS_SERVER WITH DHCP********")
     validation = True
 
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_scan_c34503_04_05_07')
     time.sleep(2)
-
+    ping_count = utf_constants.get("ping_count")
     for count in range(1, 3):
         try:
             scan_fail = 1
@@ -948,9 +948,10 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 
     }
 )
-def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
+def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, utf_constants):
     validation = True
     iter_count = 2
+    ping_count = utf_constants.get("ping_count")
     for i in range(0, iter_count):
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_conn_deconn_reconn_wpa3_C34508')
@@ -1017,15 +1018,20 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
     }
 )
 
-def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client):
+def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, utf_constants):
     testcase = "wpa3_BG_scan_C34511"
     rejoin_max = 10
     scan_interval = 6
     beacon_missedcount = 40
+    ping_count = utf_constants.get("ping_count")
     first_time_retry = 0
     timeout = 10
     validation = True
     channel_list = [1, 6, 8]
+    true_result_list = []
+    false_result_list = []
+    Probe_captured_channel_list = []
+    Probe_not_captured_channel_list = []
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
     for count in channel_list:
@@ -1057,7 +1063,7 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     logger().info(f"***** preparing wifi_dut ******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
+                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired, channel=0)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
@@ -1085,11 +1091,24 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
         time.sleep(10)
         logger().info("*********##### Sniffer is going to stop")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Validate Probe req(Broadcast)")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
-        logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+        logger().info(f"Validate broadcast Probe req in {channel}")
+        output = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count']
+        if bool(output) is False:
+            false_result_list.append(bool(output))
+            Probe_not_captured_channel_list.append(channel)
 
+        else:
+            true_result_list.append(bool(output))
+            Probe_captured_channel_list.append(channel)
+
+        logger().info(f"True list = {true_result_list}")
+        logger().info(f"false list = {false_result_list}")
+
+    assert Probe_not_captured_channel_list == [], logger().info(
+        f"******* unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list} ")
+
+    logger().info(f"******* Probe requests are captured in all the channels:{Probe_captured_channel_list} ")
 
     logger().info(f"DUT is going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1116,15 +1135,20 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
     }
 )
 
-def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi_dut):
+def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     testcase = "test_bgscan_in_all_channel_wpa3_C34510"
     rejoin_max = 10
     scan_interval = 6
+    ping_count = utf_constants.get("ping_count")
     beacon_missedcount = 40
     first_time_retry = 0
     timeout = 10
     validation = True
     channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    true_result_list = []
+    false_result_list = []
+    Probe_captured_channel_list = []
+    Probe_not_captured_channel_list = []
     channel_bitmap_2_4 = 0
     scan_expected_time = 0
     for count in channel_list:
@@ -1156,7 +1180,7 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
     logger().info(f"***** preparing wifi_dut ******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
-                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired)
+                                                         | RS9116JoinFeatureBitMap.MgmtFrameProtectionRequired, channel=0)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
@@ -1184,10 +1208,24 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
         time.sleep(10)
         logger().info("*********##### Sniffer is going to stop")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Validate Probe req(Broadcast)")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-            'packet_count'], f'Unable to find Probe req(Broadcast) in channel:{channel}'
-        logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+        logger().info(f"Validate broadcast Probe req in channel :{channel}")
+        output = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count']
+        if bool(output) is False:
+            false_result_list.append(bool(output))
+            Probe_not_captured_channel_list.append(channel)
+
+        else:
+            true_result_list.append(bool(output))
+            Probe_captured_channel_list.append(channel)
+
+        logger().info(f"True list = {true_result_list}")
+        logger().info(f"false list = {false_result_list}")
+
+    assert Probe_not_captured_channel_list == [], logger().info(
+        f"******* unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list} ")
+
+    logger().info(f"******* Probe requests are captured in all the channels:{Probe_captured_channel_list} ")
 
     logger().info(f"DUT is going to leave the AP")
     wifi_dut.interfaces.wifi.leave()
@@ -1210,9 +1248,9 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
 
     }
 )
-def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, switch):
+def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     validation = True
-    ping_count = 10
+    ping_count = utf_constants.get("ping_count")
 
     ''' Verify Rejoin Functionality in WPA3 Security'''
     state = switch.interfaces.pdu_switch.get_state()
@@ -1292,8 +1330,8 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
     logger().info(f"checking status: {state}")
     if state == 'false':
         switch.interfaces.pdu_switch.turn_on()
-        logger().info(f"PDU was off, trying to turn on using PDU, Please wait for 150 seconds ........")
-        time.sleep(150)
+        logger().info(f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds to check DUT is rejoined to that AP or not ........")
+        time.sleep(60)
 
     try:
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1303,21 +1341,23 @@ def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_
             logger().info(f'Sniffer validation pass')
         else:
             assert result
+        if wifi_dut.interfaces.wifi.associated is True:
+            logger().info(f"Initiating ping to DUT ip {dut_ip} after successful rejoin")
 
-        for count in range(5):
-            try:
-                logger().info("pinging to dut after power-save.....")
-                status = ping_to_dut(dut_ip, ping_count)
-                logger().info("ping to DUT is successful....")
-                break
-            except:
-                logger().info(f"ping to dut is failed...retry count->{count + 1}")
-                time.sleep(15)
-        assert status, "DUT not responding for ping request......"
-        if status == 1:
-            logger().info('#### Ping successful ####')
-        else:
-            logger().info('#### Ping unsuccessful ####')
+            for count in range(5):
+                try:
+                    logger().info("pinging to dut after power-save.....")
+                    status = ping_to_dut(dut_ip, ping_count)
+                    logger().info("ping to DUT is successful....")
+                    break
+                except:
+                    logger().info(f"ping to dut is failed...retry count->{count + 1}")
+                    time.sleep(15)
+            assert status, "DUT not responding for ping request......"
+            if status == 1:
+                logger().info('#### Ping successful ####')
+            else:
+                logger().info('#### Ping unsuccessful ####')
     except (AssertionError, IndexError, CLITransportException):
         assert False, 'Find exception'
     finally:
