@@ -34,7 +34,7 @@ from utf_wiseconnect.devices.rs911x import (
         4. Opens Bt socket and connects to the remote client.
         5. Verifies ping after the connection.
 
-    Author: RaviNemali and Harshitha
+    Author: RaviNemali, Harshitha and Vishakha
 """
 
 
@@ -373,15 +373,10 @@ def test_bt_master_with_wrong_pin_c20074(bt_dut, bt_client):
 def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut, bt_client):
     logger().info("Verify the behaviour of DUT(Master) when remote BT device is not responding to SSP connection")
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
-                                      power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-    bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
-                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
     logger().info("configuring dut in spp master role")
-    bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
-    assert bt_dut_address, f"failed to initialise bt in dut"
-    logger().info(f"BT Dut address {bt_dut_address}")
+    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_master_ssp_display(pair_mode="1", capability="3")
+    assert bt_dut_address, "failed to initialise bt in dut"
+    logger().info(f"BT DUT address is{bt_dut_address}")
 
     bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="")
     assert bt_client_address, f"Failed to initiate master in remote device"
@@ -396,6 +391,12 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
         with bt_dut.interfaces.bluetooth.run_bt_task():
             bt_client_socket.create_client()
             bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
+
+    logger().info(f"*****Enable Max PSP in DUT******")
+    bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
+                                      power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
+    bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
+                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
 
     for i in range(3):
         logger().info("Send SPP Connection From DUT and reject pairing request from remote device")
