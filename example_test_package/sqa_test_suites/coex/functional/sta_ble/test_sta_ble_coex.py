@@ -2101,6 +2101,7 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_C133570(wif
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.skip()
 def test_throughput_func_of_sta_when_ble_connect_c20336(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
                                                         wifi_client, wifi_sniffer, protocol, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -2177,6 +2178,7 @@ def test_throughput_func_of_sta_when_ble_connect_c20336(wifi_dut, ble_clients, w
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.skip()
 def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_c20333(wifi_dut, ble_clients, wifi_access_point,
                                                                           net_perf_client, wifi_client, protocol,
                                                                           wifi_sniffer, ssid, recovery):

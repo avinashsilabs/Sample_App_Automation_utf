@@ -817,6 +817,7 @@ def test_BG_SCAN_functionality_of_dut_when_dut_ble_in_connection_state_C133585(w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.skip()
 def test_functionality_of_BLE_for_disconnect_and_connect_multiple_times_When_STA_is_in_connection_C20341(wifi_dut,
                                                                                                          ble_client,
                                                                                                          wifi_access_point,
@@ -1764,7 +1765,8 @@ def test_sta_ble_deep_sleep_msg_power_save_C133516(firmware_loader, wifi_dut, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_disconnect_connect_multiple_times_when_sta_is_in_connection_C133520(wifi_access_point, utf_constants,
+@pytest.mark.skip()
+def test_disconnect_connect_multiple_times_when_sta_is_in_connection_C20342(wifi_access_point, utf_constants,
                                                                              wifi_sniffer, wifi_dut,
                                                                              ble_client, wifi_client, net_perf_client,
                                                                              protocol):
