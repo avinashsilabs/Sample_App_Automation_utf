@@ -1663,3 +1663,31 @@ def test_mqtt_connect_clean_session_0_TC19289(
     logger.info(f"PS-POLL packets are captured in the sniffer")
     wifi_dut.interfaces.wifi.mqtt_client_close()
     wifi_dut.interfaces.wifi.leave()
+
+@pytest.mark.mqtt_server("raspi_mosquitto_auth")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+# The test case should produce error 0X0036 as username or password is more than 60 bytes
+def test_mqtt_check_error_0X0036_C19275(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
+        ):
+    # The api generates 100 bytes of random data
+    username = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+    capture_filename = "test_mqtt_check_error_0X0036_C19275"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+    logger.info(f"username is {username}")
+    with pytest.raises(WlanError) as exc_info:
+        # DUT tries to connect to mqtt server
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt, username=username)
+        logger.info(f"DUT sent {exc_info.value.error_code} code when the username or password is more than 60 bytes")
+    assert exc_info.value.error_code == 0X0036, "DUT sent wrong error code, expected is 0X0036"
+
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
