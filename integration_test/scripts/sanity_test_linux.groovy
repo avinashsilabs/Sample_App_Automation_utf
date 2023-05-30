@@ -32,7 +32,9 @@ pipeline {
                 stage('Setup Environment') {
                     steps {
                         sh '''
-                        . workspace_setup.sh
+
+                        ./workspace_setup.sh
+
                         if ! command -v ./yq &> /dev/null
                         then
                            curl -k -L https://artifactory.silabs.net/artifactory/tcmgr-generic-production/yq/yq_linux_amd64 --output yq
@@ -55,7 +57,12 @@ pipeline {
 
                                     rm -rf reports
 
-                                    . venv/bin/activate
+                                    if [ -d venv/bin ]; then
+                                        . venv/bin/activate
+                                    elif [ -d venv/Scripts ]; then
+                                        . venv/Scripts/activate
+                                    fi
+
                                     cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
                                     PYTEST_COMMAND="pytest --tb=native --tmconfig integration_test/$TEST_CONFIG_FILE --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
