@@ -35,6 +35,8 @@ pipeline {
 
                         ./workspace_setup.sh
 
+                        PYTHON3_VENV_DIR=$SCRIPT_DIR/../venv/pyvenv.cfg
+
                         if ! command -v ./yq &> /dev/null
                         then
                            curl -k -L https://artifactory.silabs.net/artifactory/tcmgr-generic-production/yq/yq_linux_amd64 --output yq
@@ -57,11 +59,7 @@ pipeline {
 
                                     rm -rf reports
 
-                                    if [ -d venv/bin ]; then
-                                        . venv/bin/activate
-                                    elif [ -d venv/Scripts ]; then
-                                        . venv/Scripts/activate
-                                    fi
+                                    . $PYTHON3_VENV_DIR/bin/activate
 
                                     cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
