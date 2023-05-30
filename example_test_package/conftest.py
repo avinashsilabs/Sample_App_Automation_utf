@@ -191,10 +191,10 @@ def reset_on_test_mode_change(request, wiseconnect_duts, harness):
         current_test_mode = default_test_mode
     global last_test_mode
     dut = harness.create_device(current_test_mode)
-    if isinstance(wiseconnect_duts[0], RS911X):
-        wiseconnect_duts[0] = dut
-    else:
-        wiseconnect_duts[1] = dut
+    for i in range(len(wiseconnect_duts)):
+        if isinstance(wiseconnect_duts[i], RS911X):
+            wiseconnect_duts[i] = dut
+            break
     if current_test_mode != last_test_mode:
         for device in wiseconnect_duts:
             device.reset()
