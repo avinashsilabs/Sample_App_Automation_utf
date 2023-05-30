@@ -1537,6 +1537,7 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(firmware_loader, recovery, wi
         raise error
     finally:
         dut_clean_up(wifi_dut, ble_client_address, bt_client_address, bt_socket)
+        wifi_dut.interfaces.wifi.inited = False
 
 
 # Verify the functionality of DUT when we bringup and connect RSI_BT and RSI_BLE with remote devices first and then initiate RSI_STA scan and connect to AP in STA_BT_BLE mode.
