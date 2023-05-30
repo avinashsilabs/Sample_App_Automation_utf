@@ -33,6 +33,8 @@ pipeline {
                     steps {
                         sh '''
 
+                        SCRIPT_DIR=$(dirname "$0")
+
                         ./workspace_setup.sh
 
                         PYTHON3_VENV_DIR=$SCRIPT_DIR/../venv/pyvenv.cfg
