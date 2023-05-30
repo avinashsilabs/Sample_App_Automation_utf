@@ -35,7 +35,7 @@ pipeline {
                         ./workspace_setup.sh
                         if ! command -v ./yq &> /dev/null
                         then
-                           curl -k -L https://nexus.silabs.net/repository/TCMGR/yq/yq_linux_amd64 --output yq
+                           curl -k -L https://artifactory.silabs.net/artifactory/tcmgr-generic-production/yq/yq_linux_amd64 --output yq
                            chmod +x yq
                         fi
                         '''
