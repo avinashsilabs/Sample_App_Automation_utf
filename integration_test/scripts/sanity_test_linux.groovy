@@ -55,7 +55,7 @@ pipeline {
 
                                     rm -rf reports
 
-                                    . $PYTHON3_VENV_DIR/bin/activate
+                                    . venv/bin/activate
                                     cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
                                     PYTEST_COMMAND="pytest --tb=native --tmconfig integration_test/$TEST_CONFIG_FILE --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
