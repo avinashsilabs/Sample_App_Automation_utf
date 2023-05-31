@@ -25,9 +25,10 @@ def logger():
 
 """
     Setup Requirement: DUT(RS9116) , EFR32, 1 Raspberry PI required,
+    Raspi should be connected to AP and configured with static IP in ap page
     Access Point(Third Party AP'), Sniffer(NUC) , 
-    Reported by cg team, rashmi
-    Description:Sta_ble_coex Test cases
+    Reported by Sairam & Pallavi
+    Description:ip_conflict cases
 """
 
 
