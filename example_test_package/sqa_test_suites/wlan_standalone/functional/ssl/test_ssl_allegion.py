@@ -17,6 +17,7 @@ from utf_wiseconnect.devices.rs911x import (
     DeviceConstants,
     RS9116JoinFeatureBitMap,
     RS9116PowerSaveProcedureTypes,
+    RS9116AwsQos
 )
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.cli import CLITransportException
@@ -75,6 +76,8 @@ def dut_clean_up(wifi_dut):
         wifi_dut.interfaces.wifi.associated = False
         time.sleep(5)
 
+def text_generator(size=200):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 def tcp_socket_rx(remote_socket_factory, index, no_of_pkts, data_size, logger):
     data_length = 0
     index = index - 1
@@ -3993,133 +3996,173 @@ def test_ssl_three_sockets_tx_rx_data_testcaseTC19201(
 def test_ssl_AWS_testcaseTC19202(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert2, logger
 ):
-    try:
-        listen_interval = 700
-        capture_filename = "test_ssl_AWS_testcaseTC19202"
-        dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
-                                      listen_interval_feature=True,
-                                      listen_interval=listen_interval)
-        port1 = 8883
-        port2 = ssl_server.interfaces.ssl.config['device_port3']
-        port3 = 5005
 
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    topic_1 = "sdk/test/Python"
+    listen_interval = 700
+    capture_filename = "test_ssl_AWS_testcaseTC19202"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
+                                  listen_interval_feature=True,
+                                  listen_interval=listen_interval)
+    port1 = 8883
+    port2 = ssl_server.interfaces.ssl.config['device_port3']
+    port3 = 5005
 
-        # Open ssl server socket in remote device(Raspberry pi or static device)
-        ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+    # The below api parses DUTs IP address
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
-        # Tcperver started
-        server_socket = remote_socket_factory.interfaces.socket.create_socket()
-        server_socket.time_limit = 3600
-        status = server_socket.start_server(port=port3, socket_type=SOCKET_TYPE_TCP)
+    # Open ssl server socket in remote device(Raspberry pi or static device)
+    ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
 
-        for sock_count in range(0, 3):
-            if sock_count < 2:
-                # Open ssl client socket in the DUT
-                sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-                wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                           SocketOptions.TCP_MAX_RETRY)
-                wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-                                                           SocketOptions.SSL_ENABLE)
-                wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
-                                                           eval("SocketOptions.CERT_INDEX" + str(sock_count)))
-            else:
-                sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
-                wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                           SocketOptions.TCP_MAX_RETRY)
-            if sock_count == 0:
-                socket_port = port1
-                local_port = randint(5001, 20000)
-            elif sock_count == 1:
-                socket_port = port2
-                local_port = randint(20001, 40000)
-            else:
-                socket_port = port3
-                local_port = randint(40001, 60000)
+    # Tcperver started
+    server_socket = remote_socket_factory.interfaces.socket.create_socket()
+    server_socket.time_limit = 3600
+    status = server_socket.start_server(port=port3, socket_type=SOCKET_TYPE_TCP)
 
+    for sock_count in range(0, 3):
+        if sock_count == 1:
+            # Open ssl client socket in the DUT
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                       SocketOptions.SSL_ENABLE)
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                       eval("SocketOptions.CERT_INDEX" + str(sock_count)))
+        elif sock_count == 2:
+            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket()
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                       SocketOptions.TCP_MAX_RETRY)
+        if sock_count == 0:
+            socket_port = port1
+            local_port = randint(5001, 20000)
+        elif sock_count == 1:
+            socket_port = port2
+            local_port = randint(20001, 40000)
+        else:
+            socket_port = port3
+            local_port = randint(40001, 60000)
+
+        if sock_count == 0:
+            status = False
+            for count in range(0, 3):
+                try:
+                    logger.info(f"Connecting to AWS server")
+                    wifi_dut.interfaces.wifi.aws_iot_connect(load_cert=False)
+                    status = True
+                    break
+                except Exception as err:
+                    logger.error(str(err))
+                    if "0x2" in str(err):
+                        logger.warning("AWS server is not reachable from DUT, Please check your internet connection")
+                        wifi_dut.interfaces.wifi.aws_iot_disconnect()
+                    time.sleep(10)
+                assert status, "Connecting to AWS server from DUT is failed"
+        elif sock_count == 1:
             wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+            # ssl socket opened in DUT connects to the server
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        elif sock_count == 2:
+            wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+            wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket)
 
-            if sock_count == 0:
-                result = wifi_dut.interfaces.wifi.dns_get(4, "a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com", "NULL",
-                                                          "NULL")
-                logger.info(f"dns response is {result}")
-                server_ip = result.split(b"\n")[1].split(b":")[1].decode()
-                for count in range(0, 3):
-                    try:
-                        wifi_dut.interfaces.wifi.connect(sock, server_ip, socket_port)
-                        break
-                    except:
-                        logger.info(f"Connecting to AWS server is failed. retry count->{count + 1}")
-                        time.sleep(1)
-                        if count == 2:
-                            raise
-                logger.info(f"Connection to AWS server on socket id->{sock} is successful")
-            elif sock_count == 1:
-                # ssl socket opened in DUT connects to the server
-                wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
-            elif sock_count == 2:
-                wifi_dut.interfaces.wifi.connect_to_server(sock, server_socket)
+    pkt_count = 500
+    buffer_length = 100
+    data_size = 100
 
-        pkt_count = 500
-        buffer_length = 100
-        data_size = 100
+    list_sock = [0, 1, 2]
+    for sock_id in list_sock:
+        if sock_id == 0:
+            messages = []
+            for i in range(5):
+                messages.append(text_generator(size=100))
+            logger.info(f"Messages are:{messages}")
 
-        list_sock = [0, 1, 2]
-        send_list = []
-        for sock_id in list_sock:
-            if sock_id == 0:
-                continue
-            elif sock_id == 1:
-                sock_id = 0
-                th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
+            subscribe_fail = 1
+            for count in range(3):
+                try:
+                    logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
+                    wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
+                    subscribe_fail = 0
+                    break
+                except:
+                    logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
+                    time.sleep(5)
 
-            elif sock_id == 2:
-                sock_id = 1
-                th_start = Thread(target=tcp_socket_rx,
-                                  args=(remote_socket_factory, 1, pkt_count, buffer_length, logger), )
+            assert subscribe_fail == 0, "Subscribing to topic is failed"
 
-            send_list.append(th_start)
+            for msg in messages:
+                try:
+                    logger.info(f"Sending message {msg} on topic {topic_1}")
+                    wifi_dut.interfaces.wifi.aws_iot_publish(
+                        topic_1, msg, 0
+                    )
+                    time.sleep(1)
+                except:
+                    logger.info(f"Failed to publish the message{msg}")
+                    time.sleep(1)
+            time.sleep(5)
+
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            count = 0
+            iot_event = 0
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
+                    iot_event = 1
+                    aws_event_qos = event.event_data.qos
+                    aws_event_topic = event.event_data.topic
+                    aws_event_payload = event.event_data.payload
+                    logger.info(f" aws message received:'{aws_event_payload}'")
+                    assert topic_1 == aws_event_topic, f"received wrong topic, expected is {topic_1}"
+                    assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
+                    assert messages[count] == aws_event_payload, "sent and received messages are not matching"
+                    count += 1
+            assert iot_event == 1, f"published message '{messages[count]}' not received on DUT"
+
+        elif sock_id == 1:
+            sock_id = 0
+            th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
             th_start.start()
+        elif sock_id == 2:
+            sock_id = 1
+            th1_start = Thread(target=tcp_socket_rx,
+                              args=(remote_socket_factory, 1, pkt_count, buffer_length, logger), )
+            th1_start.start()
 
-        result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=6, data_len=buffer_length,
-                                                                     time_interval=500,
-                                                                     number_of_pkts=pkt_count,timeout=600)
-        time.sleep(2)
-        socket_list = result
-        bytes_sent = (pkt_count * buffer_length)
-        bytes_sent_ssl = (pkt_count * buffer_length)
-        sock_count = 0
-        for socket_stats in socket_list:
-            if sock_count == 0:
-                continue
-            elif sock_count == 1:
-                logger.info(
-                    f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
-                assert bytes_sent_ssl == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT " \
-                                                          f"are not " \
-                                                          f"matched. Initiated->{bytes_sent_ssl} bytes. But Sent by DUT->{socket_stats[0]} bytes "
-            sock_count = sock_count + 1
-        bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
-        assert bytes_sent_ssl == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-                                                 f"not matched on socket_id->0"
+    result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=6, data_len=buffer_length,
+                                                                 time_interval=500,
+                                                                 number_of_pkts=pkt_count,timeout=600)
+    time.sleep(2)
+    socket_list = result
+    bytes_sent = (pkt_count * buffer_length)
+    bytes_sent_ssl = (pkt_count * buffer_length)
+    sock_count = 0
+    for socket_stats in socket_list:
+        if sock_count == 0:
+            continue
+        elif sock_count == 1:
+            logger.info(
+                f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
+            assert bytes_sent_ssl == socket_stats[0], f"Number of bytes initiated by test and actually sent by DUT " \
+                                                      f"are not " \
+                                                      f"matched. Initiated->{bytes_sent_ssl} bytes. But Sent by DUT->{socket_stats[0]} bytes "
+        sock_count = sock_count + 1
+    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
+    assert bytes_sent_ssl == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
+                                             f"not matched on socket_id->0"
 
-        validation = True
-        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
-        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-        logger.info(f"PS-POLL packets are captured in the sniffer")
+    try:
+        wifi_dut.interfaces.wifi.aws_iot_unsubscribe(topic_1, timeout=30)
+        wifi_dut.interfaces.wifi.aws_iot_disconnect()
+    except Exception as err:
+        logger.info(str(err))
 
-        for sock_count in range(0, 3):
-            logger.info(f"Closing socket_id->{sock_count}")
-            result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-            assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-            logger.info(f"Successfully closed socket_id->{sock_count}")
-    except Exception as error:
-        dut_recovery(wifi_dut, error)
-        raise error
-    finally:
-        dut_clean_up(wifi_dut)
+    wifi_dut.interfaces.wifi.leave()
+
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
