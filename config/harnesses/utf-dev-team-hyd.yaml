@@ -639,7 +639,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'asus_static'
+    wifi_access_point: 'tp_link_e12ad0_static'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
