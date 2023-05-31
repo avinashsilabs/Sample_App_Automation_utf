@@ -216,9 +216,9 @@ def test_static_ip_assignment_with_existing_ip_C101962(wifi_sniffer, wifi_dut, w
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
 
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -313,9 +313,9 @@ def test_static_ip_assignment_to_DUT_C101963(wifi_sniffer, wifi_dut, wifi_access
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
 
 
@@ -402,9 +402,9 @@ def test_Dynamic_ip_assignment_to_DUT_C101964(wifi_sniffer, wifi_dut, wifi_acces
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
 
 
@@ -504,9 +504,9 @@ def test_static_ip_assignment_with_and_Without_ip_Conflict_to_DUT_C101965(wifi_s
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -622,9 +622,9 @@ def test_Dynamic_ip_assignment_with_and_Without_ip_Conflict_to_DUT_C101966(wifi_
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -698,9 +698,9 @@ def test_Dynamic_IP_Assignment_when_DHCP_Pool_Exhausted_C101969(wifi_sniffer,
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         ap_ip = wifi_access_point.interfaces.wifi.ap_test_ip
         assert ap_ip, "Please Add the AP test ip in the ap section of harness"
@@ -827,9 +827,9 @@ def test_TCP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101974(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -936,9 +936,9 @@ def test_TCP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101975(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -1056,9 +1056,9 @@ def test_UDP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101976(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -1168,9 +1168,9 @@ def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
         time.sleep(10)
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
@@ -1323,8 +1323,8 @@ def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
 
@@ -1466,8 +1466,8 @@ def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -1573,8 +1573,8 @@ def test_static_ip_ip_conflict_with_multiple_times_in_loop_C101980(wifi_sniffer,
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -1694,6 +1694,7 @@ def test_ip_conflict_detection_during_auto_join_C101983(wifi_sniffer, wifi_dut, 
         clean_up.dut_recovery()
         clean_up.disconnect()
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -1780,8 +1781,8 @@ def test_IP_Conflict_Detection_When_DHCP_Fails_C101985(wifi_sniffer,
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -1894,8 +1895,8 @@ def test_static_ip_assignment_in_at_mode_with_and_Without_ip_Conflict_to_DUT_C10
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -1998,8 +1999,8 @@ def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loade
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
 
@@ -2090,8 +2091,8 @@ def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_load
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
 
@@ -2202,8 +2203,8 @@ def test_Dynamic_IP_assignment_when_DHCP_Pool_Exhausted_in_concurrent_Mode_C1019
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -2319,8 +2320,8 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
@@ -2431,8 +2432,8 @@ def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C1019
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.inited = False
 
 
@@ -2528,8 +2529,8 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
 
@@ -2630,7 +2631,7 @@ def test_static_ip_ip_Conflict_in_at_mode_DUT_C101981(wifi_sniffer, wifi_dut, wi
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
         time.sleep(10)
         wifi_dut.interfaces.wifi.inited = False
