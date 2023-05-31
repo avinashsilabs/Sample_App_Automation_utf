@@ -177,6 +177,16 @@ devices:
                 channel: 1
                 cipher: 'AES'
 
+    asus_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'ABCDEFGH'
+                passphrase: 'thisisatestnetwork'
+                channel: 2
+                cipher: 'AES'
+
     asus_rt_ax3000_ap:
         interfaces:
             wifi:
@@ -344,6 +354,20 @@ devices:
                 interface: 'wlan0'
                 tls_enabled: false
 
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled with ipv6
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+                ip_version: 6
+
     raspi_mosquitto_auth:
         interfaces:
             linux_shell:
@@ -357,6 +381,21 @@ devices:
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: false
+
+    raspi_mosquitto_auth_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+                ip_version: 6
 
     raspi_mosquitto_tls:
         interfaces:
@@ -374,6 +413,24 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
 
     static_mqtt_broker:
         interfaces:
@@ -582,7 +639,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'tp_link_e12ad0_static'
+    wifi_access_point: 'asus_static'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
