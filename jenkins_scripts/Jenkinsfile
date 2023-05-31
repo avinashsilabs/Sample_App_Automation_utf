@@ -267,7 +267,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                             //archiveArtifacts 'example_test_package/**'
                             //archiveArtifacts 'manifest/**'
-                            // archiveArtifacts 'reports/**'
+                            archiveArtifacts 'reports/junit_report.xml'
                             // archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                             junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                             sh '''
@@ -276,6 +276,18 @@ pipeline {
                             curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/config/harnesses/${HARNESS_NAME}" -T config/harnesses/${HARNESS_NAME}
                             '''
                         }
+                        emailext(mimeType: "text/html",
+                                body: """
+                                    Dear all, <br>
+                                    <br>
+                                    Build ${BUILD_NUMBER} of ${JOB_NAME} is ${BUILD_STATUS}, with firmware version ${RS9116_FIRMWARE}. Please check the detailed test result in the URL below.<br>
+                                    <br>
+                                    ${BUILD_URL}
+                                    <br>
+                                    Thank you!
+                                    """,
+                                subject: "[${JOB_NAME}] ${BUILD_NUMBER} ${BUILD_STATUS}", 
+                                to: "DL.Wifi.Build.Reports@silabs.com,DL.Hyd-Connectivity-Regression-Team@silabs.com")
                     }
                 }
             }
