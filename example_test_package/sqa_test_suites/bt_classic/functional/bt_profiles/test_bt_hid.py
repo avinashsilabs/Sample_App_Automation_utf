@@ -200,7 +200,7 @@ def test_interrupt_data_after_hid_conn_c20021(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
-def test_set_local_cod_class_002560_c20023(bt_dut, bt_client):
+def test_set_local_cod_class_002560_c109698(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='REDPINE_HID_KEYBOARD')
     logger().info(f'bt dut address {bt_dut_address}')
@@ -266,7 +266,7 @@ def test_set_local_cod_class_002560_c20023(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
-def test_set_local_cod_class_002540_c20023(bt_dut, bt_client):
+def test_set_local_cod_class_002540_c109697(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         cod="002540", bt_local_name='REDPINE_HID_KEYBOARD')
     logger().info(f'bt dut address {bt_dut_address}')
