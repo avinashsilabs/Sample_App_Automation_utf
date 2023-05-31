@@ -202,7 +202,7 @@ def ping_from_client(wifi_client, dut_ip, ping_count=10):
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_firmware_version_C34753(wifi_dut):
+def test_wifi_sdk_firmware_version_C34753(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
         pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
@@ -218,7 +218,7 @@ def test_firmware_version_C34753(wifi_dut):
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'Asia'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+def test_wifi_sdk_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_WORLD_2_4_C34788"
     test_type = "None"
     logger().info("DUT set to Region -. World domain")
@@ -248,7 +248,7 @@ def test_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client, wif
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+def test_wifi_sdk_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_EU_2_4_C34786"
     test_type = "None"
     logger().info("Setting the DUT to Region Europe")
@@ -279,7 +279,7 @@ def test_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_s
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
+def test_wifi_sdk_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client, protocol):
     testcase = "test_join_US_2_4_C34785"
     test_type = "None"
 
@@ -305,7 +305,7 @@ def test_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client, wifi_s
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '123456789'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, wifi_sniffer):
+def test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
 
@@ -406,7 +406,7 @@ def test_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, 
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
-def test_DUT_soft_reset_sta_to_ap_C19449(wifi_sniffer, wifi_dut, wifi_client, channel,
+def test_wifi_sdk_DUT_soft_reset_sta_to_ap_C19449(wifi_sniffer, wifi_dut, wifi_client, channel,
                                          wifi_access_point,
                                          utf_constants):
     ping_count = utf_constants.get("ping_count")
@@ -517,7 +517,7 @@ def test_DUT_soft_reset_sta_to_ap_C19449(wifi_sniffer, wifi_dut, wifi_client, ch
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
+def test_wifi_sdk_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     validation = True
 
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
@@ -542,7 +542,7 @@ def test_Connectivity_with_11n_only_mode_AP_C19707(wifi_dut, wifi_access_point, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
+def test_wifi_sdk_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     validation = True
 
     logger().info(" ====== configuring the Sniffer with access point channel ====== ")
@@ -574,7 +574,7 @@ def test_Connectivity_with_hidden_mode_AP_C19708(wifi_dut, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
+def test_wifi_sdk_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     validation = True
     packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
     time_obj = FilterPacket()
@@ -626,7 +626,7 @@ def test_Join_time_providing_PSK_C19712(wifi_dut, wifi_access_point, wifi_sniffe
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
+def test_wifi_sdk_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     validation = True
 
     logger().info(" ====== configuring the sniffer with access point channel ======")
@@ -652,7 +652,7 @@ def test_Joining_by_rsi_psk_command_C19714(wifi_dut, wifi_access_point, wifi_sni
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
+def test_wifi_sdk_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     validation = True
 
     wifi_dut.interfaces.wifi.associated = False
@@ -679,7 +679,7 @@ def test_psk_with_64_different_characters_C19719(wifi_dut, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
+def test_wifi_sdk_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     with TimeMeasurer() as t:
         t_end = time.time() + 60 * 30
         while time.time() < t_end:
