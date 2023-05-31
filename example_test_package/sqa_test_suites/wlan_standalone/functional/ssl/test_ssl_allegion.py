@@ -258,58 +258,76 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         "oper_mode": RS9116OperatingMode.AccessPoint,
         "features": RS9116FeatureBitMap.PSKSecurity,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Server,
-        "security": "WPA2", "ssid": "SILABS_AP_C19176", "passphrase": "12345678", "dtim_period": 3, "beacon_interval": 100,
+        "security": "WPA2", "ssid": "SILABS_AP_C19176", "passphrase": "12345678", "dtim_period": 5, "beacon_interval": 100,
     },
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_wifi_wireless_statistics_AP_TC19176(wifi_sniffer, wifi_client, wifi_dut, channel, logger):
-    validation = True
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    beacon_interval_obj = FilterPacket()
-    dtim_period_obj = FilterPacket()
-    packet_filter3 = "Type/Subtype: Beacon (0x0008)"
-    capture_filename = "test_wifi_wireless_statistics_AP_TC19176"
-    logger.info(f"Sniffer capture started")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
-    dut_ip = wifi_dut.interfaces.wifi.ip
-    if not dut_ip:
-        wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
-                                                         static_gateway=static_gateway)
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        capture_filename = "test_wifi_wireless_statistics_AP_TC19176"
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        validation = True
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        beacon_interval_obj = FilterPacket()
+        dtim_period_obj = FilterPacket()
+        packet_filter3 = "Type/Subtype: Beacon frame (0x0008)"
+        logger.info(f"Sniffer capture started")
 
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    time.sleep(3)
+        dut_ip = wifi_dut.interfaces.wifi.ip
+        if not dut_ip:
+            wifi_dut.interfaces.wifi.start_ip_in_static_mode(static_ip=static_ip, static_subnet=static_subnet,
+                                                             static_gateway=static_gateway)
 
-    wifi_dut.interfaces.wifi.start_ap(channel=channel)
-    time.sleep(10)
+        dut_as_ap = False
+        for retry in range(3):
+            try:
+                wifi_dut.interfaces.wifi.start_ap(channel=channel)
+                time.sleep(10)
+                dut_as_ap = True
+                break
+            except:
+                logger.info(f"Failed to start DUT as an AP")
+        assert dut_as_ap, "Failed to start DUT as an AP"
 
-    operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
-    logger.info("****************Beacon Filter******************")
-    packet_filter = f'(wlan.addr == {dut_mac_address} and (wlan.fc.type_subtype == 0x008))'
-    wifi_sniffer.interfaces.capture.stop_capture()
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
-        'packet_count']
+        operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
+        logger.info("****************Beacon Filter******************")
+        packet_filter = f'(wlan.addr == {dut_mac_address} and (wlan.fc.type_subtype == 0x008))'
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
+            'packet_count']
 
-    beacon_interval_dut_as_ap = beacon_interval_obj.get_beacon_interval()
-    if beacon_interval_dut_as_ap is None:
-        logger.info(f'Unable to find Beacon Interval={beacon_interval_dut_as_ap}')
-        assert False
-    else:
-        logger.info(f'\n\n *** Beacon Interval ={beacon_interval_dut_as_ap} *** \n')
+        beacon_interval_dut_as_ap = beacon_interval_obj.get_beacon_interval()
+        if beacon_interval_dut_as_ap is None:
+            logger.info(f'Unable to find Beacon Interval={beacon_interval_dut_as_ap}')
+            assert False
+        else:
+            logger.info(f'\n\n *** Beacon Interval ={beacon_interval_dut_as_ap} *** \n')
 
-    packet_filter1 = f'(wlan.addr == {dut_mac_address}) and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_dut_as_ap})'
+        packet_filter1 = f'(wlan.addr == {dut_mac_address}) and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_dut_as_ap})'
 
-    dtim_period_dut_as_ap = dtim_period_obj.get_dtim_period()
-    if dtim_period_dut_as_ap is None:
-        logger.info(f'Unable to find DTIM Period={dtim_period_dut_as_ap}')
-        assert False
-    else:
-        logger.info(f'\n\n *** DTIM Period ={dtim_period_dut_as_ap} *** \n')
+        dtim_period_dut_as_ap = dtim_period_obj.get_dtim_period()
+        if dtim_period_dut_as_ap is None:
+            logger.info(f'Unable to find DTIM Period={dtim_period_dut_as_ap}')
+            assert False
+        else:
+            logger.info(f'\n\n *** DTIM Period ={dtim_period_dut_as_ap} *** \n')
 
-    logger.info(f"DUT as Access point Beacon interval -> {beacon_interval_dut_as_ap},  DTIM period-> {dtim_period_dut_as_ap}")
+        logger.info(f"DUT as Access point Beacon interval -> {beacon_interval_dut_as_ap},  DTIM period-> {dtim_period_dut_as_ap}")
 
-    assert operating_mode == RS9116OperatingMode.AccessPoint, "Operating mode is not matching, expected is 0"
+        assert operating_mode == RS9116OperatingMode.AccessPoint, "Operating mode is not matching, expected is 0"
+    except Exception as error:
+        raise error
+    finally:
+        logger.info("Closing all opened sockets")
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger.info("Disconnect from AP")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
+        wifi_dut.interfaces.wifi.inited = False
+        time.sleep(5)
 
 
 @pytest.mark.config(
