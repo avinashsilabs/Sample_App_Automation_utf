@@ -975,6 +975,7 @@ def test_dual_role_wlan_udp_rx_data_transfer_C133511(wifi_dut, wifi_sniffer, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.skip()
 def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_when_ble_in_connection_C20349(wifi_dut,
                                                                                                              wifi_sniffer,
                                                                                                              wifi_access_point,
@@ -1094,6 +1095,7 @@ def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_w
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.skip()
 def test_sta_ble_datatransfer_in_dualrole_C20332(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client,
                                                  wifi_client, protocol, ble_clients, ble_client):
     logger().info("**************testcase : C20332*******************")

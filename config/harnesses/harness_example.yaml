@@ -475,8 +475,8 @@ devices:
             multicast:
                 type: 'multicast.multicast_socket'
                 ip_version: 0
-                multicast_ip: '239.255.255.250'
-                multicast_ip2: '239.255.255.250'
+                multicast_ip: '239.0.0.1'
+                multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
                 destination_socket: 5002
                 ttl: 32
@@ -841,6 +841,7 @@ devices:
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
+                timeout: 30
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'

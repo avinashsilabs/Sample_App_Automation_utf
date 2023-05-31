@@ -634,7 +634,6 @@ def test_bt_ble_connection_stability_C19996(firmware_loader, wifi_dut, bt_client
     },
 )
 @pytest.mark.bt_classic
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.ble_client("secondary_raspi_ble_client")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",

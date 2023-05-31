@@ -172,6 +172,7 @@ pytestmark = [pytest.mark.firmware_app("test_ap_ht_caps")]
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_dut_ap_mode_tx_rules_EUregion_C19455(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                               utf_constants):
+    assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
     if not dut_ip:
@@ -297,6 +298,7 @@ def test_dut_ap_mode_tx_rules_EUregion_C19455(firmware_loader, wifi_sniffer, wif
 # channel 14 is not supported by raspberrypi
 def test_dut_ap_mode_tx_rules_JPregion_C19456(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                               utf_constants):
+    assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
     if not dut_ip:
@@ -421,6 +423,7 @@ def test_dut_ap_mode_tx_rules_JPregion_C19456(firmware_loader, wifi_sniffer, wif
 @pytest.mark.parametrize("channel", [11])
 def test_dut_ap_mode_tx_rules_USregion_C19454(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                               utf_constants):
+    assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
     if not dut_ip:
@@ -880,6 +883,7 @@ def test_DUTAP_errorneous_band_config_C19435(firmware_loader, wifi_sniffer, wifi
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_DUPAP_multiclient_connect_disconnect_C19432(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                                      utf_constants):
+    assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
     if not dut_ip:
@@ -1004,6 +1008,7 @@ def test_DUPAP_multiclient_connect_disconnect_C19432(firmware_loader, wifi_sniff
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                                        utf_constants):
+    assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
     if not dut_ip:

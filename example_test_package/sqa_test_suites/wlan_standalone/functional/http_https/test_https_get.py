@@ -826,7 +826,6 @@ def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, 
         "ca_cert": "ca-chain.cert.pem"
     }
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])

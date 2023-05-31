@@ -958,6 +958,8 @@ def test_ble_master_tx_rx_230_bytes_C19925(firmware_loader, ble_dut, ble_client)
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "enable_duty_cycle": True,
+        "duty_cycle": 1,
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
@@ -1039,6 +1041,8 @@ def test_ble_master_rx_230_bytes_C19927(firmware_loader, ble_dut, ble_client):
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "enable_duty_cycle": True,
+        "duty_cycle": 1,
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
