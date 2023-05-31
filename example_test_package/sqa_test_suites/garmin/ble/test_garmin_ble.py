@@ -118,6 +118,14 @@ def test_C18792_verify_ble_adv_on_dut(ble_dut, ble_client, rs_helper_ble):
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.scanning})
 
+def test_verify_ble_passive_scan_C18799(ble_dut, ble_client, rs_helper_ble):
+    #test case to verify BLE passive scanning
+    with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/HCI_log_test_C18799_verify_ble_passive_scan.log_{int(time.time())}"):
+        ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+        ble_remote_address=rs_helper_ble.ble_advertise_on_remote(adv_device=ble_client, ble_dut_address=ble_dut_address)
+        rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, ble_client_address=ble_remote_address, ble_scan_type=1, timeout=60)
+        rs_helper_ble.ble_stop_scanning_on_dut(scan_device=ble_dut)
+
 def test_C91303_ble_connect_disconnect_dut_as_slave(ble_dut, ble_client, rs_helper_ble):  
     #test case to verify connection stability where Dut is perfoming Peripheral/Slave role with multiple times connect disconnect
     try:
@@ -285,8 +293,6 @@ def test_static_activity_C91316(ble_dut, ble_clients, rs_helper_ble):
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_clients[0]:BleDeviceState.connected, ble_clients[1]:BleDeviceState.connected})
 
-#blocked with connection param api
-#@pytest.mark.skip
 def test_update_conn_param_in_loop_C91312_dut_as_slave(ble_dut, ble_client, rs_helper_ble):
     #test case to verify updating the connection parameter form remote in a loop for 10 min duration, where DUT is performing slave role
     test_duration = 600
@@ -389,14 +395,14 @@ def test_wrong_passkey_C18795(ble_dut, ble_client, rs_helper_ble):
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 def test_C91278_dual_role_connection_stability_both_unsecure(ble_dut, ble_clients, rs_helper_ble):
-    #test case to verify Dual role connection stability with both unencrypted
+    #test case to verify Dual role unsecure connection stability
     ble_obj = BleDeviceState()
     try:
         ble_remote_slave = ble_clients[0]
         ble_remote_master = ble_clients[1]
-        connection_time=60
+        connection_time=300
         loop=4
-        ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut, bond_info=1, set_smp=0)
+        ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut, bond_info=0, set_smp=0)
 
         ble_remote_slave_address=rs_helper_ble.ble_advertise_on_remote(adv_device=ble_remote_slave, ble_dut_address=ble_dut_address)
 
@@ -474,12 +480,13 @@ def test_C91279_dual_role_connection_stability_both_secure(ble_dut, ble_clients,
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address)
 
-def test_conn_stability_with_2_master_conn_C91275(ble_dut, ble_client, ble_clients, rs_helper_ble):
-    #test case to verify connection stability with 2 master connections.
+def test_two_slave_conn_stability_both_secure_C91275(ble_dut, ble_client, ble_clients, rs_helper_ble):
+    #test case to verify connection stability with 2 slave smp connections
     try:
         remote1 = ble_client
         remote2 = ble_clients[0]
         ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut, capability=1, set_smp=1)
+        #rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
 
         for i in range(5):
             #Initiating a connection from remote1 without giving a passkey
@@ -505,7 +512,14 @@ def test_conn_stability_with_2_master_conn_C91275(ble_dut, ble_client, ble_clien
             assert not connected, "BLE Connection is established even with Wrong Passkey, Expected SMP Fail with 0x4b04"
             logger().info(f"\n\n ** Connection is not successfull with Remote 2 {remote_2_add} as passkey is not given...! \n")
 
+        time.sleep(10)
+        ble_dut.interfaces.bluetooth.ble_stop_advertising(timeout=10)
+        remote1.interfaces.bluetooth.close()
+
         logger().info("\n\n\n *** Initiating a connection with remote 1 and checking the stability for 15 min ***\n\n")
+        rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
+        remote_1_add = rs_helper_ble.ble_scanning_on_remote(scan_device=remote1, bt_dut_address=ble_dut_address)
+        rs_helper_ble.ble_stop_scanning_on_remote(scan_device=remote1, bt_dut_address=ble_dut_address)
         rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, smp_flag=True)
         time.sleep(60)
         rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, start_adv=False)
@@ -516,32 +530,123 @@ def test_conn_stability_with_2_master_conn_C91275(ble_dut, ble_client, ble_clien
     finally:
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
- 
-@pytest.mark.skip
-def test_5_remote(ble_dut, ble_client, ble_clients, rs_helper_ble):
+
+#below apis are going to be used in multi connection test cases to initiate master connection
+def master_conn(ble_dut, ble_dut_address, s_remote, conn_count, rs_helper_ble):
+    s_remote_addr = rs_helper_ble.ble_advertise_on_remote(adv_device=s_remote, ble_dut_address=ble_dut_address)
+    logger().info(f"\n\n ** Initiating a {conn_count} connection with slave remote 1 {s_remote_addr}**\n\n")
+    rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, ble_client_address=s_remote_addr, timeout=60)
+    rs_helper_ble.ble_stop_scanning_on_dut(scan_device=ble_dut)
+    time.sleep(5)
+    rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=s_remote, ble_dut_address=ble_dut_address,
+                                                    ble_remote_address=s_remote_addr, smp_flag=False)
+    
+#below apis are going to be used in multi connection test cases to initiate slave connection       
+def slave_conn(ble_dut, ble_dut_address, m_remote, conn_count, rs_helper_ble):
+    rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
+    m_remote_add = rs_helper_ble.ble_scanning_on_remote(scan_device=m_remote, bt_dut_address=ble_dut_address)
+    rs_helper_ble.ble_stop_scanning_on_remote(scan_device=m_remote, bt_dut_address=ble_dut_address)
+    logger().info(f"\n\n ** Initiating a {conn_count} connection with Master remote 1 {m_remote_add}**\n\n")
+    rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=m_remote, ble_dut_address=ble_dut_address,
+                                                    smp_flag=True)
+    
+@pytest.mark.skip #test case is not completely implemented as need support from test agent team for MIC error
+def test_5_remote_3m_2s_conn_reconn_c91282(ble_dut, ble_client, ble_clients, rs_helper_ble):
+    #test case to verify connection stability with 3 master connections and 2 slave connections
     try:
-        s_remote_1 = ble_client
-        s_remote_2 = ble_clients[0]
-        s_remote_3 = ble_clients[1]
-        m_remote_1 = ble_clients[2]
-        m_remote_2 = ble_clients[3]
+        s_remote_1 = ble_clients[0]
+        s_remote_2 = ble_clients[1]
+        s_remote_3 = ble_clients[2]
+        m_remote_1 = ble_clients[3]
+        m_remote_2 = ble_clients[4]
         ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut, bond_info=1, set_smp=1)
+        
+        for i in range(3):
+            logger().info(f"\n\n *** Iteration :{i+1}")
+            
+            slave_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, m_remote=m_remote_1, conn_count="4th", rs_helper_ble=rs_helper_ble)
+            time.sleep(10)
+            slave_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, m_remote=m_remote_2, conn_count="5th", rs_helper_ble=rs_helper_ble)
+            time.sleep(10)
+            master_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, s_remote=s_remote_1, conn_count="1st", rs_helper_ble=rs_helper_ble)
+            time.sleep(10)
+            master_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, s_remote=s_remote_2, conn_count="2nd", rs_helper_ble=rs_helper_ble)
+            time.sleep(10)
+            master_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, s_remote=s_remote_3, conn_count="3rd", rs_helper_ble=rs_helper_ble)
+            time.sleep(10)
+            
+            logger().info("\n\n\n ** Verifiying connection states of connected devices\n\n")
+            assert s_remote_1.interfaces.bluetooth.get_connection_status(ble_dut_address), "First Connection link is not found"
+            assert s_remote_2.interfaces.bluetooth.get_connection_status(ble_dut_address), "Second Connection link is not found"
+            assert s_remote_3.interfaces.bluetooth.get_connection_status(ble_dut_address), "Third Connection link is not found"
+            assert m_remote_1.interfaces.bluetooth.get_connection_status(ble_dut_address), "Forth Connection link is not found"
+            assert m_remote_2.interfaces.bluetooth.get_connection_status(ble_dut_address), "Fifth Connection link is not found"
+            
+            time.sleep(60)
 
-        s_remote_1_addr = rs_helper_ble.ble_advertise_on_remote(adv_device=s_remote_1, ble_dut_address=ble_dut_address)
-        s_remote_2_addr = rs_helper_ble.ble_advertise_on_remote(adv_device=s_remote_2, ble_dut_address=ble_dut_address)
-        s_remote_3_addr = rs_helper_ble.ble_advertise_on_remote(adv_device=s_remote_3, ble_dut_address=ble_dut_address)
-
-        rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, timeout=120)
-
-        rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=s_remote_1, ble_dut_address=ble_dut_address,
-                                                ble_remote_address=s_remote_1_addr, smp_flag=True)
-        rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=s_remote_2, ble_dut_address=ble_dut_address,
-                                                ble_remote_address=s_remote_2_addr, smp_flag=True)
-        rs_helper_ble.ble_connect_DUT_as_master(ble_dut=ble_dut, ble_remote=s_remote_3, ble_dut_address=ble_dut_address,
-                                                ble_remote_address=s_remote_3_addr, smp_flag=True)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=s_remote_1, ble_dut_address=ble_dut_address, start_adv=False)
+            time.sleep(5)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=s_remote_2, ble_dut_address=ble_dut_address, start_adv=False)
+            time.sleep(5)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=s_remote_3, ble_dut_address=ble_dut_address, start_adv=False)
+            time.sleep(5)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=m_remote_1, ble_dut_address=ble_dut_address, start_adv=False)
+            time.sleep(5)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=m_remote_2, ble_dut_address=ble_dut_address, start_adv=False)
 
     except Exception as e:
-        assert False, "Test case is failed with exception:  {}".format(str(e))
+        assert False, f"Test case is failed with exception:  {str(e)}"
+    else:
+        logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+    finally:
+        logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
+        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address)
+
+def test_5_remote_3m_2s_conn_reconn_c91283(ble_dut, ble_client, ble_clients, rs_helper_ble):
+    #test case to verify connection stability with 2 master connections and 2 slave connections and scanning from DUT 
+    try:
+        s_remote_1 = ble_clients[1]
+        s_remote_2 = ble_clients[0]
+        m_remote_1 = ble_clients[3]
+        m_remote_2 = ble_clients[4]
+        ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut, bond_info=1, set_smp=1)
+        
+        for i in range(3):
+            logger().info(f"\n\n *** Iteration :{i+1}")
+            hci_log_m1 = f"reprots/m1hci.log_"+str(int(time.time()))
+            hci_log_m2 = f"reports/m2hci.log_"+str(int(time.time()))
+            with s_remote_1.interfaces.bluetooth.ble_logs(start_collecting_logs=True, bt_log_path=hci_log_m1):
+                master_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, s_remote=s_remote_1, conn_count="1st", rs_helper_ble=rs_helper_ble)
+                time.sleep(10)
+            with s_remote_1.interfaces.bluetooth.ble_logs(start_collecting_logs=True, bt_log_path=hci_log_m2):
+                master_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, s_remote=s_remote_2, conn_count="2nd", rs_helper_ble=rs_helper_ble)
+                time.sleep(10)
+            # slave_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, m_remote=m_remote_1, conn_count="3rd", rs_helper_ble=rs_helper_ble)
+            # time.sleep(10)
+            # slave_conn(ble_dut=ble_dut, ble_dut_address=ble_dut_address, m_remote=m_remote_2, conn_count="4th", rs_helper_ble=rs_helper_ble)
+            # time.sleep(10)
+            # rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, timeout=300)
+
+
+            
+            logger().info("\n\n\n ** Verifiying connection states of connected devices\n\n")
+            assert s_remote_1.interfaces.bluetooth.get_connection_status(ble_dut_address), "First Connection link is not found"
+            assert s_remote_2.interfaces.bluetooth.get_connection_status(ble_dut_address), "Second Connection link is not found"
+            # assert m_remote_1.interfaces.bluetooth.get_connection_status(ble_dut_address), "Third Connection link is not found"
+            # assert m_remote_2.interfaces.bluetooth.get_connection_status(ble_dut_address), "Forth Connection link is not found"
+            
+            time.sleep(60)
+
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=s_remote_1, ble_dut_address=ble_dut_address, start_adv=False)
+            time.sleep(5)
+            rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=s_remote_2, ble_dut_address=ble_dut_address, start_adv=False)
+            time.sleep(5)
+            # rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=m_remote_1, ble_dut_address=ble_dut_address, start_adv=False)
+            # time.sleep(5)
+            # rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=m_remote_2, ble_dut_address=ble_dut_address, start_adv=False)
+
+    except Exception as e:
+        assert False, f"Test case is failed with exception:  {str(e)}"
     else:
         logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     finally:

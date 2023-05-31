@@ -2578,7 +2578,6 @@ def test_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wi
 @pytest.mark.skip()
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.wifi_client("raspi_wifi")
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(

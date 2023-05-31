@@ -704,7 +704,6 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_SBC_codec_c34679(wifi_dut,bt_
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -737,7 +736,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_2DH5_C34680(http
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -771,7 +769,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_2DH5_C34681(http
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -804,7 +801,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34682(http
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -838,7 +834,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34683(http
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -872,7 +867,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34684(http
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -906,7 +900,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_acceptor_3DH5_C34685(http_
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -940,7 +933,6 @@ def test_StaRejoin_BT_Streaming_C34690(http_server,wifi_dut,bt_client,wifi_acces
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -975,7 +967,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_C34696(http_serv
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -1008,7 +999,6 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_C34697(http_serv
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1041,7 +1031,6 @@ def test_sta_connect_ping_disconnect_reconnect_C34687(http_server,wifi_dut,bt_cl
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1073,7 +1062,6 @@ def test_WLAN_continious_scan_with_A2DP_C34688(http_server,wifi_dut,bt_client,wi
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1102,7 +1090,6 @@ def test_continious_scan_with_BT_inquiry_BTandBLE_enabled_C34689(http_server,wif
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1130,7 +1117,6 @@ def test_continious_scan_with_BT_inquiry_onlyBTenabled_C34689(http_server,wifi_d
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1164,7 +1150,6 @@ def test_WLAN_continious_scan_with_A2DP_C34692(http_server,wifi_dut,bt_client,wi
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"6kB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1198,7 +1183,6 @@ def Test_HTTPS6KB_download_BTA2DP_2DH3_initiator_C34698(http_server, wifi_dut,bt
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -1230,7 +1214,6 @@ def Test_HTTPS1MB_download_BTA2DP_2DH3_initiator_C34699(http_server, wifi_dut,bt
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def  test_Wlan_connection_dualpairOn_DUT_C34700(wifi_dut,bt_client,wifi_access_point):
@@ -1260,7 +1243,6 @@ def  test_Wlan_connection_dualpairOn_DUT_C34700(wifi_dut,bt_client,wifi_access_p
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_A2DP_Sta_connection_BLE_connect_disconnect_C34701(wifi_dut,bt_client,wifi_access_point,ble_client):
@@ -1295,7 +1277,6 @@ def test_A2DP_Sta_connection_BLE_connect_disconnect_C34701(wifi_dut,bt_client,wi
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_A2DP_Sta_connection_BLE_connect_disconnect_C34703(wifi_dut,bt_client,wifi_access_point,ble_client):
@@ -1332,7 +1313,6 @@ def test_A2DP_Sta_connection_BLE_connect_disconnect_C34703(wifi_dut,bt_client,wi
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_long_run_A2DP_wifi_join_C34704(wifi_dut,bt_client,wifi_access_point):
@@ -1364,7 +1344,6 @@ def test_long_run_A2DP_wifi_join_C34704(wifi_dut,bt_client,wifi_access_point):
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
@@ -1418,7 +1397,6 @@ def  test_AVRCP_DUT_when_WLAN_is_connected_and_A2DPdata_transfer_is_happening_C3
             | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def  test_A2DP_WLan_radioONOFF_C34709(wifi_dut,bt_client,wifi_access_point):

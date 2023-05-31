@@ -692,7 +692,7 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
     wifi_dut.interfaces.wifi.leave()
     wifi_sniffer.interfaces.capture.stop_capture()
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -759,7 +759,7 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
     time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -820,7 +820,7 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
     time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -883,7 +883,7 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
     time.sleep(2)
     wifi_sniffer.interfaces.capture.stop_capture()
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -981,8 +981,8 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
                                            tcp_rx_high_performance_sockets=1, tcp_rx_window_size_cap=10,
                                            tcp_rx_window_div_factor=10)
 
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+    #logger().info("Setting the dut IO capability to display only.....")
+  #bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
 
     # Set up DUT for BLE advertising
     logger().info("Initiate ble service in DUT")
@@ -1063,8 +1063,8 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+    #logger().info("Setting the dut IO capability to display only.....")
+  #bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
 
     # Set up DUT for BLE advertising
     logger().info("Initiate ble service in DUT")
@@ -1141,8 +1141,8 @@ def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+    #logger().info("Setting the dut IO capability to display only.....")
+  #bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
 
     # Set up DUT for BLE advertising
     logger().info("Initiate ble service in DUT")
@@ -1221,8 +1221,8 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
     wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-    logger().info("Setting the dut IO capability to display only.....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
+    #logger().info("Setting the dut IO capability to display only.....")
+    # bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=0)
 
     # Set up DUT for BLE advertising
     logger().info("Initiate ble service in DUT")
@@ -1268,7 +1268,7 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
     logger().info(f"Sniffer going to stop")
     wifi_sniffer.interfaces.capture.stop_capture()
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1346,7 +1346,7 @@ def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wi
         dut_clean_up(wifi_dut)
         raise
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1416,7 +1416,7 @@ def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wi
         dut_clean_up(wifi_dut)
         raise
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1493,7 +1493,7 @@ def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wi
         dut_clean_up(wifi_dut)
         raise
 
-
+@pytest.mark.bt_classic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1734,7 +1734,7 @@ def test_ssl_standalone_testcase_rx_C20778(wifi_sniffer, wifi_access_point, wifi
     wifi_sniffer.interfaces.capture.stop_capture()
     logger().info("Stop Sniffer finally")
 
-
+@pytest.mark.bt_classic
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config(
@@ -1828,7 +1828,7 @@ def test_ssl_wlan_bt_data_transfer_tcp_tx_C20760(
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
 
-
+@pytest.mark.bt_classic
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.config(

@@ -11,6 +11,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtCustomFeatureBitMap,
     RS9116CustomFeatureBitMap,
     RS9116PowerSaveModes,
+    RS9116AsyncEventType,
     SocketOptions,
     SocketType,
     Cipher,
@@ -865,3 +866,173 @@ def test_ssl_server_1_0version_client_1_0_testcase_TC19113(
         raise error
     finally:
         dut_clean_up(wifi_dut)
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.MultipleSslVersionSupport,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid ,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "server_cert": "server-cert.pem",
+        "server_key": "server-key.pem",
+        "set_send_feature_frame": True,
+        "scan_interval": 4,
+        "beacon_missed_count": 40,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_tcp_retransmission_functionality_over_ssl_server_after_remote_terminate_event_C19126(wifi_dut, wifi_access_point, wifi_sniffer, openssl, logger):
+    capture_filename = "test_ssl_server_1_0version_client_1_0_testcase_TC19113"
+    ping_count = 10
+    result = wifi_dut.interfaces.wifi.version()
+    logger.info(f"DUT firmware version: {result}")
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    # configure interface for the channel of the access point
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+    )
+    for count in range(1, 3):
+        try:
+            scan_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Scanning to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.scan(ssid=None)
+            scan_fail = 0
+            break
+        except:
+            logger.info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
+            time.sleep(1)
+    if scan_fail:
+        logger.info(f"Scanning to the AP has failed")
+        assert scan_fail == 0, "Scanning to the AP is failed"
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {dut_mac_address}")
+
+    wifi_sniffer.interfaces.capture.start_capture(
+        capture_file=f"{capture_filename}.pcap"
+    )
+
+    wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
+                                    scan_interval=4,
+                                    beacon_missedcount=40,
+                                    first_time_retry=0)
+    for count in range(1, 3):
+        try:
+            join_fail = 1
+            # DUT connects to AP after join_ap API is executed
+            logger.info("Joining to the Wifi Access Point")
+            wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+            join_fail = 0
+            break
+        except:
+            logger.info(f"Joining to the Wifi Access point is failed. retry count -> {count}")
+            time.sleep(1)
+    if join_fail:
+        logger.info(f"Joining to the AP has failed")
+        assert join_fail == 0, "Joining to the AP is failed"
+
+    ip = False
+    for i in range(3):
+        try:
+            wifi_dut.interfaces.wifi.start_ip(timeout=60)
+            ip = True
+            break
+        except:
+            logger.info(f"Retrying for {i}times")
+
+    assert ip == True, "Fetching IP failed"
+
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # DUT to power save in Wifi+bluetooth mode
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                        RS9116PowerSaveProcedureTypes.FastPowerSave)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+    # openssl.interfaces.client.start(tls_version="-tls1")
+    sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SO_SSL_V_1_2_ENABLE)
+    assert sock == 0, "Socket id received is wrong. expected is 0"
+    logger.info(f"Successfully opened tcp  socket and socket id received is {sock} which is expected")
+    logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+    TCP_MAX_RETRY = 10
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                               TCP_MAX_RETRY)
+
+    # Enable ssl option for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+    logger.info(f"Selecting SSL version {SocketOptions.SO_SSL_V_1_2_ENABLE} for the socket-id->{sock} using "
+                f"rsi_setsockopt API")
+    # # Enable cert index 0 for socket opened
+    wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_V_1_2_ENABLE,
+                                               SocketOptions.SSL_ENABLE)
+
+    logger.info(f"TLS VERSION USED BY DUT SERVER--->{SocketOptions.SO_SSL_V_1_2_ENABLE}")
+
+    wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
+    wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+
+    th_start = Thread(target=dut_server_accept, args=(wifi_dut, sock, logger))
+    th_start.start()
+
+    logger.info(f"Stating the open ssl client with tls version 1")
+    openssl.interfaces.client.start(host=device_ip, port=5001)
+    th_start.join(timeout=10)
+    time.sleep(5)
+
+    wifi_dut.interfaces.wifi.wlan_get_status()
+
+    buffer_length = 200
+
+    data = "".join(
+        random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+    )
+    buff_len = len(data)
+    logger.info(f"DATA sent from remote PC to dut {data}")
+    openssl.interfaces.client.send_message(data)
+    time.sleep(5)
+    buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(1, data_len=buff_len)
+    logger.info(f"Data received on dut {buffer}")
+    assert data == buffer.decode(), "Date received on dut does not match the data sent from host"
+    openssl.interfaces.client.stop()
+    time.sleep(10)
+    buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(1, data_len=buff_len)
+
+    since_time = 0
+    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+    for event in events:
+        if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
+            logger.info("Received TCP_REMOTE_TERMINATE event")
+            logger.info(f"Received the Event Type {event.event_type}, Event data {event.event_data}")
+            remote_terminate = event.event_data
+            assert remote_terminate, f"unable to find remote terminate event"
+    wifi_dut.interfaces.wifi.close_socket(sock)
+    wifi_dut.interfaces.wifi.leave()
+    validation = True
+
+    logger.info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    packet_filter1 = f'((wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0))'
+    packet_filter2 = f'((wlan.addr == {ap_bssid} && wlan.fc.type_subtype == 1))'
+
+    logger.info("association request packet")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find association request and association response packets'
+    logger.info("association response packet")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find association request and association response packets'

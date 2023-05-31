@@ -47,6 +47,21 @@ pipeline
                 }
             }
         }*/
+        stage('Setup parameters') {
+            steps {
+                script { 
+                    properties([
+                        parameters([
+                            string(
+                                defaultValue: 'utf_wifi_sqa_code_sanity_label', 
+                                name: 'label_name', 
+                                trim: true
+                            )
+                        ])
+                    ])
+                }
+            }
+        }
         stage('SCM Checkout')
         {            
             when {
@@ -58,7 +73,7 @@ pipeline
             {
                 echo 'Checkout repository ...'
                 checkout scm
-                hwmuxReserveAnyGroupFromLabel('utf_wifi_sqa_pr_hyd_jenkins_label', "HWMUX_RESERVED_GROUP_ID", UTF_HWMUX_TOKEN,"HWMUX_RESERVED_GROUP")  {
+                hwmuxReserveAnyGroupFromLabel(params.label_name, "HWMUX_RESERVED_GROUP_ID", UTF_HWMUX_TOKEN,"HWMUX_RESERVED_GROUP")  {
                     script
                     {
                         def hwmuxUtils = new HWMuxUtils()
@@ -67,26 +82,28 @@ pipeline
                         echo "Group JSON: " + env.HWMUX_RESERVED_GROUP
                         configString = env.HWMUX_RESERVED_GROUP.trim()
                         def configJSON = jsonParsefun(configString)
+                        DEVICE_GROUP_NAME = configJSON["name"]
+                        withCredentials([usernamePassword(credentialsId: 'stash-username-token', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                            sh """
+                                curl --user ${USERNAME}:${PASSWORD} "https://stash.silabs.com/projects/REDPINE/repos/build_tools/raw/jenkins/sqa_automation/utf_wifi_branches.yaml?at=refs%2Fheads%2Fnomad-master" -o utf_wifi_branches.yaml
+                            """
+                            def yaml_object = readYaml(file: 'utf_wifi_branches.yaml')
+                            utf_branch_name = yaml_object['sqa_branch']
+                     
+                            sh """
+                                curl --user ${USERNAME}:${PASSWORD} "https://stash.silabs.com/projects/IOT_INFRA_SW/repos/utf_wifi/raw/jenkins_scripts/sqa_automation/sqa_metadata.yaml?at=refs%2Fheads%2F${utf_branch_name}" -o sqa_metadata.yaml
+                                pwd && ls -alh
+                            """
+                            
+                        }
+                        def yamlObject = readYaml(file: 'sqa_metadata.yaml') 
+                        local_vars=[:]
+                        device_group_object = yamlObject."${params.label_name}"['device_groups'][DEVICE_GROUP_NAME]
+                        local_vars = device_group_object['metadata'].clone() 
+                        println(local_vars)
                         
-                        env.SSH_TARGET = configJSON["metadata"]["host_ip"]
-                        env.SSH_TARGET = configJSON["metadata"]["host_ip"]
-                        env.HARNESS_NAME = configJSON["metadata"]["HARNESS_NAME"]
-                        env.UTF_PYTEST_COMMAND = configJSON["metadata"]["UTF_PYTEST_COMMAND"]
-                        env.BUILD_LOCATION = configJSON["metadata"]["BUILD_LOCATION"]
-                        env.SQA_TEST_AGENT = configJSON["metadata"]["SQA_TEST_AGENT"]
-                        env.FLASH_EFR32 = configJSON["metadata"]["FLASH_EFR32"]
-                        env.FLASH_RS9116 = configJSON["metadata"]["FLASH_RS9116"]
-                        env.DEVICE_GROUP_NAME = configJSON["name"]
-                        println(env.SSH_TARGET)
-                        println(env.HARNESS_NAME)
-                        
-                        url= "https://hwmux.silabs.net/api/labels/228"
-                        def responseJson = getResponse(url)
-                      
-                        println(responseJson['metadata']['RS9116_FIRMWARE'])
-                        env.RS9116_FIRMWARE = responseJson['metadata']['RS9116_FIRMWARE']
-                        responseJson = null
-                        
+                        local_vars = local_vars + yamlObject."${params.label_name}"['metadata']
+                        println(local_vars)
                         changedFiles = sh (
                             script: "git --no-pager diff HEAD refs/remotes/origin/$CHANGE_TARGET --name-only",
                             returnStdout: true
@@ -110,22 +127,22 @@ pipeline
                     try{
                         prJob = build job: 'UTF_WiFi_PullRequests', parameters: [
                                                 string(name: 'UTF_WIFI_BRANCH', value: env.CHANGE_BRANCH),
-                                                string(name: 'SSH_TARGET', value: env.SSH_TARGET),
-                                                string(name: 'RS9116_FIRMWARE', value: env.RS9116_FIRMWARE),
-                                                booleanParam(name: 'FLASH_RS9116', value: env.FLASH_RS9116),
-                                                booleanParam(name: 'FLASH_EFR32', value: env.FLASH_EFR32),
-                                                string(name: 'HARNESS_NAME', value: env.HARNESS_NAME),
-                                                string(name: 'device_group_name', value: env.DEVICE_GROUP_NAME),
+                                                string(name: 'SSH_TARGET', value: local_vars.SSH_TARGET),
+                                                string(name: 'RS9116_FIRMWARE', value: local_vars.RS9116_FIRMWARE),
+                                                booleanParam(name: 'FLASH_RS9116', value: local_vars.FLASH_RS9116),
+                                                booleanParam(name: 'FLASH_EFR32', value: local_vars.FLASH_EFR32),
+                                                string(name: 'HARNESS_NAME', value: local_vars.HARNESS_NAME),
+                                                string(name: 'device_group_name', value: local_vars.device_group_name),
                                                 string(name: 'device_group_label', value: ""),
-                                                string(name: 'BUILD_LOCATION', value: env.BUILD_LOCATION),
-                                                string(name: 'UTF_PYTEST_COMMAND', value: env.UTF_PYTEST_COMMAND)],
+                                                string(name: 'BUILD_LOCATION', value: local_vars.BUILD_LOCATION),
+                                                string(name: 'UTF_PYTEST_COMMAND', value: local_vars.UTF_PYTEST_COMMAND)],
                                                 propagate: false
                     }                 
                     catch (err ) {
                         echo 'pr job failed'
                     }
-                    env.RS9116_FIRMWARE = null
-                    env.build_num = prJob.getNumber()
+                    local_vars.RS9116_FIRMWARE = null
+                    build_num = prJob.getNumber()
                     PR_TEST_LOG = "[Logs](${env.JENKINS_URL}job/UTF_WiFi_PullRequests/$build_num/console)"
                     if( prJob.getCurrentResult() != 'SUCCESS' )  {
                                     

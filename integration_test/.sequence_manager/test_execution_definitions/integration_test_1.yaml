@@ -128,28 +128,6 @@ test_sequence:
       - asus_rt_ax3000
     iterations: 1
     visible: true
-  - id: e69b9ec24291e9702aaa4f11d22def2f2b1814df
-    test_case_id: test_prepare_static_ap
-    test_function: test_prepare_static_ap
-    test_id: test_prepare_static_ap::1
-    test_module: test_cases/test_wifi.py
-    test_markers:
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.wifi_access_point('dlink810_ap',)
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.end_state('wifi_access_point',wifi=None)
-      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-    test_params: []
-    test_class: null
-    description: null
-    library_name: ''
-    version: 0
-    enabled: true
-    labels:
-      - cases
-      - wifi
-    iterations: 1
-    visible: true
   - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_case_id: test_ble_advertisement
     test_function: test_ble_advertisement

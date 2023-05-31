@@ -2,6 +2,7 @@ import time
 import pytest
 import re
 from utf.interfaces.bluetooth import BLEDeviceState
+from example_test_package.conftest import rs_helper_ble
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
 from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService, \
@@ -17,6 +18,12 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
 def logger():
     return get_logger(__name__)
 
+class BleDeviceState():
+    advertising  = 1
+    scanning = 2
+    initiating = 4
+    connected = 8
+    standby = 0
 
 """ Author: Achal Raghav / RaviNemali
 This test plan aims to verify the BLE_GATT services test cases
@@ -738,3 +745,107 @@ def test_battery_service_connection_stability_in_client_role_c19882(firmware_loa
     assert int(val) <= int(latest_val)
     # Disconnect
     ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+def gatt_conn_stability(service_uuid, char_uuid, data, service, characteristic, ble_dut, ble_client, rs_helper_ble):
+    
+    gatt_obj = rs_helper_ble.ble_gatt(ble_dut=ble_dut, ble_remote=ble_client)
+    
+    try:
+        # Configuring BLE Server on DUT
+        #ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+        assert ble_dut_address is not None, "failed to load bt address"
+        gatt_obj.add_service(service_uuid=service) #adding heartrate Service
+        gatt_obj.add_characteristic(characteristic_uuid=characteristic)
+        ble_dut.interfaces.wifi.ble_add_char_val_att(uid=characteristic, data=data)
+
+        # Establishing BLE connection with DUT as slave
+        rs_helper_ble.ble_advertise_on_dut(adv_device=ble_dut, ble_dut_address=ble_dut_address)
+        rs_helper_ble.enable_power_save(ble_dut=ble_dut)
+        rs_helper_ble.ble_scanning_on_remote(scan_device=ble_client, bt_dut_address=ble_dut_address)
+        rs_helper_ble.ble_stop_scanning_on_remote(scan_device=ble_client, bt_dut_address=ble_dut_address)
+        rs_helper_ble.ble_connect_DUT_as_slave(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, smp_flag=True)
+        
+        #resolving charecteristic
+        char_path = gatt_obj.service_discovery_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
+
+        # # reading value on characterisics from remote (GATT_client)
+        # gatt_obj.gatt_read(char_path=char_path, data=data)
+
+        # subscribe to notifications
+        gatt_obj.gatt_notify_tx(char_path=char_path, char_uuid=char_uuid, notify_time=60, data=data)
+
+        rs_helper_ble.ble_disconnect_from_remote(ble_dut=ble_dut, ble_remote=ble_client, ble_dut_address=ble_dut_address, start_adv=False)
+    except Exception as e:
+        assert False, "Test case failed with exception: {}".format(str(e))
+    else:
+        logger().info("\n\n\n *** Test case is passed successfully..! ***")
+    finally:
+        rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
+
+pytestmark = [
+    pytest.mark.dut("rs9116_sapi"),
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,# | RS9116CoexMode.ANT,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        },
+    ),
+]
+def test_gatt_server_conn_stability_HeartRateService_C19879(ble_dut, ble_client, rs_helper_ble):
+    #test case to verify GATT connection stability in server role with HeartRateService
+    service_uuid = "0000180d-0000-1000-8000-00805f9b34fb" #HeartRateService
+    char_uuid = "00002a37-0000-1000-8000-00805f9b34fb" #HeartRateMeasurementCharacterstic
+    data = "sAmPe_TeXtsAmPe_TeXt" #20bytes of data
+
+    gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x180d, 
+                        characteristic=0x2A37, ble_dut=ble_dut, ble_client=ble_client, 
+                        rs_helper_ble=rs_helper_ble)
+
+#Not working
+def test_gatt_server_conn_stability_BatteryService_C19881(ble_dut, ble_client, rs_helper_ble):
+    #test case to verify GATT connection stability in server role with BatteryService
+    service_uuid = "0000180f-0000-1000-8000-00805f9b34fb" #BatteryService
+    char_uuid = "00002a19-0000-1000-8000-00805f9b34fb" #BatteryLevelCharacteristic
+    data = "sAmPe_TeXtsAmPe_TeXt" #20bytes of data
+
+    gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x180f, 
+                        characteristic=0x2A19, ble_dut=ble_dut, ble_client=ble_client, 
+                        rs_helper_ble=rs_helper_ble)
+    
+def test_gatt_server_conn_stability_BloodPressureService_C19883(ble_dut, ble_client, rs_helper_ble):
+    #test case to verify GATT connection stability in server role with BloodPressureService
+    service_uuid = "00001810-0000-1000-8000-00805f9b34fb" #BloodPressureService
+    char_uuid = "00002a35-0000-1000-8000-00805f9b34fb" #BloodPressureMeasurementCharacteristic
+    data = "sAmPe_TeXtsAmPe_TeXt" #20bytes of data
+
+    gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1810, 
+                        characteristic=0x2A35, ble_dut=ble_dut, ble_client=ble_client, 
+                        rs_helper_ble=rs_helper_ble)
+    
+def test_gatt_server_conn_stability_health_thermometer_service_C19885(ble_dut, ble_client, rs_helper_ble):
+    #test case to verify GATT connection stability in server role with health_thermometer_service
+    service_uuid = "00001809-0000-1000-8000-00805f9b34fb" #health_thermometer_service
+    char_uuid = "00002a1c-0000-1000-8000-00805f9b34fb" #HealthThermometerMeasurementCharacteristic
+    data = "sAmPe_TeXtsAmPe_TeXt" #20bytes of data
+
+    gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1809, 
+                        characteristic=0x2A1C, ble_dut=ble_dut, ble_client=ble_client, 
+                        rs_helper_ble=rs_helper_ble)
+    
+def test_gatt_server_conn_stability_glucose_service_C19887(ble_dut, ble_client, rs_helper_ble):
+    #test case to verify GATT connection stability in server role with glucose service
+    service_uuid = "00001808-0000-1000-8000-00805f9b34fb" #glucose_service
+    char_uuid = "00002a18-0000-1000-8000-00805f9b34fb" #GlucoseMeasurementCharacteristic
+    data = "sAmPe_TeXtsAmPe_TeXt" #20bytes of data
+
+    gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1808, 
+                        characteristic=0x2A18, ble_dut=ble_dut, ble_client=ble_client, 
+                        rs_helper_ble=rs_helper_ble)

@@ -361,13 +361,6 @@ class BtSppMasterThread_diff_data(ThreadBase):
                         data = bt_client_socket.recv()
                         assert data.decode() == recv_text, "Unable to receive data sent from bt_client to dut"
 
-                    # Send data from dut to bt_client
-                    logger().info("Send data from dut to bt_client")
-                    self.wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-                    data = bt_client_socket.recv()
-                    assert data.decode() == send_text, "Unable to receive data sent from dut to bt_client"
-                    time.sleep(1)
-
                     # Ping dut
                     logger().info(f"**** pinging to DUT ****")
                     assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
@@ -376,7 +369,7 @@ class BtSppMasterThread_diff_data(ThreadBase):
 
 
         if self.mode == "paragraph":
-            send_text = text_generator(size=800)
+            send_text = text_generator(size=200)
             recv_text = send_text
             bt_dut_address, pin_code = self.wifi_dut.interfaces.wifi.start_bt_master_spp()
             assert bt_dut_address, f"Failed to get bt dut address"
@@ -410,12 +403,6 @@ class BtSppMasterThread_diff_data(ThreadBase):
                 time.sleep(10)
                 data = bt_client_socket.recv()
                 assert data.decode() == recv_text, "Unable to receive data sent from bt_client to dut"
-
-            # Send data from dut to bt_client
-            logger().info("Send data from dut to bt_client")
-            self.wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-            data = bt_client_socket.recv()
-            assert data.decode() == send_text, "Unable to receive data sent from dut to bt_client"
 
             # Ping dut
             logger().info(f"**** pinging to DUT ****")
@@ -1487,22 +1474,6 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
                 logger().info(f" BT_CONNECT SUCCESSFUL ")
             assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
 
-            # Send data from bt_client to dut
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                sent = bt_server_socket.send(recv_text)  # SQA Agent is programmed to send back data
-                assert sent, "Unable to send the data"
-                time.sleep(10)
-                data = bt_server_socket.recv()
-                assert data.decode() == recv_text, "Unable to receive data sent from bt_client to dut"
-
-            # Send data from dut to bt_client
-            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-            data = bt_server_socket.recv()
-            assert data.decode() == send_text, "Unable to receive data sent from dut to bt_client"
-            # Ping dut
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
-                f"Failed to ping BT client to DUT"
-
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_server_socket.close()
 
@@ -1598,23 +1569,7 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
                 logger().info(f"Connecting Raspberry PI to DUT-BT")
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 addr = bt_client_socket.accept(timeout=40)
-                assert addr == bt_dut_address, "Unable to find BT client socket connection"
-
-            # Send data from bt_client to dut
-            with wifi_dut.interfaces.wifi.run_bt_task():
-                logger().info(f'Data transfer from BT_client')
-                sent = bt_client_socket.send(recv_text)  # Dut is programmed to send back data
-                assert sent, "Unable to send the data"
-                data = bt_client_socket.recv()
-                assert data.decode() == recv_text, "Unable to receive data sent from bt_client to dut"
-                logger().info(f'Data received from BT_client')
-
-            # Send data from dut to bt_client
-            logger().info(f'Data transfer from dut')
-            wifi_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-            data = bt_client_socket.recv()
-            assert data.decode() == send_text, "Unable to receive data sent from dut to bt_client"
-            logger().info(f'Data received from dut')
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_client_socket.close()

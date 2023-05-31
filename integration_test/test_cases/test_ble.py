@@ -335,7 +335,7 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
 
     # enable notifications
     since_time = time.perf_counter_ns()
-    wifi_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
+    wifi_dut.interfaces.wifi.ble_set_att_int_value_async(ble_remote_dev_address=bt_client_address,
                                                      char_property=(write_handle+1), value=1)
     time.sleep(6)
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
