@@ -3,7 +3,7 @@ import pytest
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ExtCustomFeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, RS9116BTFeatureBitMap, \
-    RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CustomFeatureBitMap
+    RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116PowerSaveProcedureTypes
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
@@ -28,7 +28,7 @@ def logger():
         4. Verifies ping after the connection.
         5. Disconnects from the DUT and close the bt socket.
 
-    Author: RaviNemali
+    Author: RaviNemali & Vishakha
 """
 
 
@@ -1260,3 +1260,259 @@ def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
         assert received_authentication_failure, "Unable to receive authentication error code 4E18"
     logger().info(f"Scan in {t.duration} seconds")
 
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+            "bt_features": RS9116BTFeatureBitMap.Default,
+            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+def test_bt_cancel_inquiry_C19986(bt_dut, bt_client):
+    with TimeMeasurer() as t:
+        logger().info(f"Configuring DUT as SPP Master")
+        wifi_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
+        assert wifi_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {wifi_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(wifi_dut_address, pin_code)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
+
+        logger().info(f"Enabling the Wi-Fi powersave")
+        bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info(f"Enabling the BT powersave")
+        bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        logger().info(f' initialize bt inquiry ')
+        bt_dut.interfaces.wifi.bt_inquiry(inquiry_type=0, inquiry_duration_ms=10000, max_device_cnt=10)
+        logger().info(f'bt inquiry successful')
+        time.sleep(1)
+
+        # Cancel BT inquiry
+        bt_dut.interfaces.wifi.bt_cancel_inquiry()
+        logger().info("Inquiry cancelled")
+    logger().info(f"Scan in {t.duration} seconds")
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+def test_cancel_pairing_request_C19964(bt_dut, bt_client):
+    with TimeMeasurer() as t:
+        logger().info(f"Configuring DUT as SPP Master")
+        bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
+
+        found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                               inquiry_type=1,
+                                                               inquiry_duration_ms=20000,
+                                                               timeout=22,
+                                                               retry_counts=5)
+        assert found, f"Dut unable to find the bt client device:{bt_client_address}"
+
+        for i in range(3):
+            logger().info(
+                "Send SPP Connection From DUT and reject pairing request from remote device")
+            logger().info(f"Create SPP Connection attempt: {i + 1}")
+            with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
+                with bt_dut.interfaces.bluetooth.run_bt_task():
+                    bt_client_socket.create_client()
+                    time.sleep(5)
+                    bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
+
+        logger().info(f"Enabling the Wi-Fi powersave")
+        bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info(f"Enabling the BT powersave")
+        bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        received_authentication_failure = False
+        events = bt_dut.interfaces.bluetooth.get_async_events()
+        if len(events):
+            for event in events:
+                for err_code in [b"4E18", b"4E16"]:
+                    if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
+                        received_authentication_failure = err_code in event.event_data
+                        break
+        assert received_authentication_failure, f"Did not receive authentication failure message"
+        logger().info("Received Authentication failure message")
+    logger().info(f"Scan in {t.duration} seconds")
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
+    with TimeMeasurer() as t:
+        logger().info(f"Configuring DUT as SPP Master")
+        bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
+
+        found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                               inquiry_type=1,
+                                                               inquiry_duration_ms=20000,
+                                                               timeout=22,
+                                                               retry_counts=5)
+        assert found, f"Dut unable to find the bt client device:{bt_client_address}"
+
+        for i in range(3):
+            logger().info(
+                "Send SPP Connection From DUT and reject pairing request from remote device")
+            logger().info(f"Create SPP Connection attempt: {i + 1}")
+            with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
+                with bt_dut.interfaces.bluetooth.run_bt_task():
+                    bt_client_socket.create_client()
+                    time.sleep(5)
+                    connected = bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
+                    assert connected, "failed to connect to bt dut"
+
+        logger().info(f"Enabling the Wi-Fi powersave")
+        bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info(f"Enabling the BT powersave")
+        bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        received_authentication_failure = False
+        events = bt_dut.interfaces.bluetooth.get_async_events()
+        if len(events):
+            for event in events:
+                for err_code in [b"4E18", b"4E16"]:
+                    if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
+                        received_authentication_failure = err_code in event.event_data
+                    break
+        assert received_authentication_failure, f"Did not receive authentication failure message"
+        logger().info("Received Authentication failure message")
+
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
+    logger().info(f"Scan in {t.duration} seconds")
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
+    with TimeMeasurer() as t:
+        bt_local_name = "test_bt_spp_max_leng_remote_device_name_C19980"
+        pin_code = '2345'
+        logger().info(f"Configuring DUT as SPP Master")
+        logger().info("starting bt module in dut.....")
+        bt_dut.interfaces.bluetooth.bt_start()
+        logger().info("fetching dut bd address....")
+        bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address(timeout=120)
+        logger().info("configuring bt name....")
+        bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
+        logger().info("Fetching bt local name....")
+        local_name =bt_dut.interfaces.bluetooth.bt_get_local_name()
+        logger().info(f"Fetching local name: {local_name}")
+        logger().info("configuring eir data....")
+        bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}")
+        logger().info("configuring dut in slave role...")
+        bt_dut.interfaces.bluetooth.bt_set_slave_role()
+        logger().info("setting ssp mode...")
+        bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=pin_code)
+        assert bt_client_address, "Unable to get BT client address"
+        logger().info(f"Raspberry PI is BT-Slave with MAC address {bt_client_address} ")
+
+        time.sleep(4)
+        logger().info(f' initialize bt inquiry ')
+        found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
+                                                             inquiry_type=1,
+                                                             inquiry_duration_ms=10000,
+                                                             timeout=22,
+                                                             retry_counts=3)
+        if not found:
+            assert found, "Dut unable to find the bt client device. The test case may fail"
+        logger().info(f' bt inquiry successful')
+
+        logger().info(f"Enabling the Wi-Fi powersave")
+        bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+        logger().info(f"Enabling the BT powersave")
+        bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
+
+        time.sleep(3)
+        received_name = False
+        logger().info("initiating remote name request")
+        for i in range(3):
+            event_data = ""
+            bt_dut.interfaces.bluetooth.bt_remote_name_request_async(bt_client_address, timeout=10)
+            events = bt_dut.interfaces.wifi.get_async_events()
+            if len(events):
+                for event in events:
+                    event_data = event_data + str(event.event_data.decode())
+                    if "0x4E04" in event_data:
+                        continue
+                    elif "RSI_APP_EVENT_REMOTE_NAME_RESP" in event_data and "resp_status: 0x0" in event_data:
+                        logger().info(f"event.event_data: {event_data}")
+                        received_name = True
+                        break
+            if received_name:
+                logger().info("Found remote device name")
+                break
+            else:
+                logger().info("Wait for 5 sec")
+                time.sleep(5)
+        assert received_name, "Failed to get remote device name"
+    logger().info(f"Scan in {t.duration} seconds")
