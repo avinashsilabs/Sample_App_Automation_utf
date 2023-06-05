@@ -1170,8 +1170,7 @@ def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8,
-          "interface": "wlan0"}
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1180,6 +1179,7 @@ def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer
 def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, ssl_server, utf_constants):
     try:
+        interface = wifi_client.interfaces.wifi.config["interface"]
         validation = True
         channel = wifi_access_point.interfaces.wifi.channel
         ping_count = utf_constants.get("ping_count")
@@ -1207,6 +1207,7 @@ def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file='test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978')
         time.sleep(3)
+        wifi_client.interfaces.wifi.config['interface'] = "wlan0"
         wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start,
                                                                           dhcp_end)
         result = wifi_dut.interfaces.wifi.version()
@@ -1233,6 +1234,7 @@ def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
         time.sleep(2)
+        wifi_client.interfaces.wifi.config['interface'] = interface
         ssl_server.interfaces.ssl.start_server()
         logger().info(f"###Open ssl client socket in the DUT###")
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
@@ -1327,6 +1329,7 @@ def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer
 def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, ssl_server, utf_constants):
     try:
+        interface = wifi_client.interfaces.wifi.config["interface"]
         channel = wifi_access_point.interfaces.wifi.channel
         ping_count = utf_constants.get("ping_count")
         pkt_count = 30000
@@ -1379,6 +1382,7 @@ def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
         time.sleep(2)
+        wifi_client.interfaces.wifi.config["interface"] = interface
         ssl_server.interfaces.ssl.start_server()
         wifi_dut.interfaces.wifi.socket_config(total_sockets=1, total_tcp_sockets=1, total_udp_sockets=0,
                                                tcp_tx_only_sockets=0,
@@ -2195,6 +2199,8 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="3600")
         logger().info(f" dhcp_start {dhcp_start} and dhcp_end value {dhcp_end}")
+        result = wifi_dut.interfaces.wifi.version()
+        logger().info(f" DUT_Version: {result}")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                         scan_interval=6,
@@ -2221,7 +2227,6 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         logger().info("============ Associating the dut to AP ================")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         logger().info("============ ip address sending ================")
-        logger().info(f"Conflict the DUT ip with the raspi client ip {wifi_client_ip}")
         with pytest.raises(WlanError) as exc_info:
             result = wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
                                                                       static_ip=wifi_client_ip,
