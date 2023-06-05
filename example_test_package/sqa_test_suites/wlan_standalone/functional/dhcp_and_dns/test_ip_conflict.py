@@ -2195,8 +2195,6 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="3600")
         logger().info(f" dhcp_start {dhcp_start} and dhcp_end value {dhcp_end}")
-        result = wifi_dut.interfaces.wifi.version()
-        logger().info(f" DUT_Version: {result}")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                         scan_interval=6,
@@ -2223,6 +2221,7 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         logger().info("============ Associating the dut to AP ================")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         logger().info("============ ip address sending ================")
+        logger().info(f"Conflict the DUT ip with the raspi client ip {wifi_client_ip}")
         with pytest.raises(WlanError) as exc_info:
             result = wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
                                                                       static_ip=wifi_client_ip,
