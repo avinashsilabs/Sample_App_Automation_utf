@@ -175,7 +175,9 @@ def test_static_ip_assignment_with_existing_ip_C101962(wifi_sniffer, wifi_dut, w
         logger().info(f"AP Ip {ap_ip}")
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
-        logger().info(f" dhcp_start {dhcp_start} and dhcp_end value {dhcp_end}")
+        logger().info(f"start AP with dhcp_start {dhcp_start} and dhcp_end value {dhcp_end}")
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
+                                                         dhcp_lease="36000")
 
         wifi_dut.interfaces.wifi.associated = False
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
