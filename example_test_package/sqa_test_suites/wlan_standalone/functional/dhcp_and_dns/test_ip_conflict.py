@@ -1394,34 +1394,29 @@ def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer
         assert sock == 0, "Socket id received is wrong. expected is 0"
         logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
         logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-        logger().info(f" *****# Enable ssl option for socket opened *****#")
+        logger().info("Enable ssl option for socket opened")
         wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                    SocketOptions.SSL_ENABLE)
-
-        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, 38,
-                                                   128)
-
         local_port = randint(5001, 60000)
-        logger().info(f"#*****Socket binds with device_ip and Port number 5001 in DUT****#")
+        logger().info(f"Socket binds with device_ip and Port number {local_port} in DUT")
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-        logger().info(f"#****ssl socket opened in DUT connects to the server****#")
+        logger().info(f"ssl socket opened in DUT connects to the ssl server")
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
         server_socket_no = 1
         pkt_count = 50000
         duration = 60
-        with TimeMeasurer() as t:
-            ssl_server.interfaces.ssl.send_data_socket(server_socket_no, pkt_count, msg_length=buffer_length,
-                                                       duration=duration)
-        time_duration = t.duration
-        result = wifi_dut.interfaces.wifi.close_socket(sock)
-        assert b"success" in result, "unable to close opened ssl socket in the dut"
-        logger().info("Successfully closed opened socket in the DUT")
+        ssl_server.interfaces.ssl.send_data(server_socket_no, pkt_count, msg_length=buffer_length, duration=duration)
+        time.sleep(80)
         bytes_sent = ssl_server.interfaces.ssl.data_send_stats(server_socket_no)
         result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
+        logger().info(f"*** result of rx_stats in wifidut {result}")
         bytes_received = int(result.split(b":")[1])
         logger().info(f"bytes sent by remote peer -> {bytes_sent}")
         logger().info(f"bytes received on socket {sock} -> {bytes_received}")
-        logger().info(f"SSL rx throughput ->  {(bytes_received * 8) / (1000 * 1000 * time_duration)} Mbps")
+        logger().info(f"SSL rx throughput ->  {((bytes_received * 8) / (1000 * 1000 * duration))} Mbps")
+        result = wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, "unable to close opened ssl socket in the dut"
+        logger().info("Successfully closed opened socket in the DUT")
         ssl_server.interfaces.ssl.stop_server()
         time.sleep(5)
         wifi_dut.interfaces.wifi.leave()
