@@ -421,7 +421,6 @@ def dut_clean_up(wifi_dut):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
         time.sleep(3)
     except:
         logger().info("******* Recovering the DUT using reset **********")

@@ -403,7 +403,6 @@ def dut_clean_up(wifi_dut):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
         time.sleep(3)
     except:
         logger().info("******* Recovering the DUT using reset **********")
@@ -894,7 +893,6 @@ def test_functionality_of_BLE_for_disconnect_and_connect_multiple_times_When_STA
                           | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts,
         "custom_features": RS9116CustomFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "ext_custom_features": 0,
         "bt_features": RS9116BTFeatureBitMap.Default,
         "band": 0,
         "rejoin_max_retry": 0,
