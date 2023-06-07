@@ -440,6 +440,7 @@ def dut_clean_up(wifi_dut, ble_client_address=None, bt_client_address=None, bt_s
             f"******* Exception occurred while cleaning up the DUT\nException is:{err}\nRecovering the DUT using reset **********")
         wifi_dut.interfaces.wifi.reset()
         time.sleep(20)
+    wifi_dut.interfaces.wifi.inited = False
     logger().info("\n ---------------------------- Cleaning UP of DUT is Completed ----------------------------")
 
 
