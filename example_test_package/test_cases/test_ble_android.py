@@ -19,7 +19,7 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-@pytest.mark.net_perf_client("nrf_ble_client")
+@pytest.mark.ble_client("nrf_ble_client")
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -82,7 +82,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-@pytest.mark.net_perf_client("nrf_ble_client")
+@pytest.mark.ble_client("nrf_ble_client")
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
