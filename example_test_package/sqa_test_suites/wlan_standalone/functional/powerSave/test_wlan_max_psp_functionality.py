@@ -1641,7 +1641,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     else:
         assert True, "DUT is sending PS-POLL to retrieve the data at DTIM skip beacon only"
 
-
+@pytest.mark.test_wlan_powersave_lp
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")

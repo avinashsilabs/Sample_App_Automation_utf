@@ -81,6 +81,7 @@ def logger():
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.test_wlan_powersave_lp
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -150,6 +151,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
 @pytest.mark.firmware_app("test_wlan_powersave_mode2_lp")
 @pytest.mark.config('wifi_access_point',
                     wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.test_wlan_powersave_lp
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, net_perf_client, wifi_sniffer,
                                                                wifi_access_point, wifi_dut,
                                                                wifi_client,
@@ -222,6 +224,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
 @pytest.mark.parametrize("number_of_pkts", [500])
 @pytest.mark.parametrize("test_run_time", [100])
 @pytest.mark.skip("Getting FFD5 error while sending data")
+@pytest.mark.test_wlan_powersave_lp
 def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(firmware_loader, wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
                                                              number_of_pkts, test_run_time,
                                                              rs_helper, utf_constants):
@@ -359,6 +362,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(firmware_loader, wi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678',
                                                "dtim": 3, "beacon_interval": 100})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_wlan_powersave_lp
 def test_Pwrmode_8_with_LP_C19502(firmware_loader, wifi_sniffer, wifi_dut, wifi_access_point,
                                    utf_constants, rs_helper):
     testcase = "test_Pwrmode_8_with_ULP_C19502"
@@ -423,6 +427,7 @@ def test_Pwrmode_8_with_LP_C19502(firmware_loader, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_wlan_powersave_lp
 def test_power_mode_switching_after_assoc_lp_C19499(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
 
         testcase = "test_power_mode_switching_after_assoc_lp_C19499"
