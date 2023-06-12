@@ -784,7 +784,6 @@ def gatt_conn_stability(service_uuid, char_uuid, data, service, characteristic, 
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 pytestmark = [
-    pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",
         wifi={

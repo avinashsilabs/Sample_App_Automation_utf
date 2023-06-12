@@ -357,7 +357,6 @@ def test_tcp_socket_max_psp(wifi_sniffer, wifi_associated_dut_with_sniffer, rf_a
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
-    pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -430,7 +429,6 @@ def test_aws_enhanced_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
-    pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -508,7 +506,6 @@ def test_aws_max_psp(wifi_sniffer, wifi_networked_dut_with_sniffer, aws_iot_dut,
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
-    pytest.mark.dut("rs9116_sapi"),
     pytest.mark.firmware_app("test_aws"),
     pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator'),
     pytest.mark.config(
@@ -631,7 +628,6 @@ def test_aws_device_shadow_enhanced_max_psp_c34033(firmware_loader, wifi_dut, wi
 pytestmark = [
     pytest.mark.framework_integration_test,
     pytest.mark.wifi_access_point("static_ap"),
-    pytest.mark.dut("rs9116_sapi"),
     pytest.mark.firmware_app("test_aws"),
     pytest.mark.start_state("rf_attenuator", device='50pa500_attenuator'),
     pytest.mark.config(

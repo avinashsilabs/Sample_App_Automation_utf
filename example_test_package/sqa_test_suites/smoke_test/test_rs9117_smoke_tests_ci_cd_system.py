@@ -85,7 +85,6 @@ def test_version_testcase_id1(wifi_dut):
                                                        test_case_name='test_version_testcase_id2',
                                                        test_case_id='testcase_id2',
                                                        notes='test notes'))
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -111,7 +110,6 @@ def test_version_testcase_id2(wifi_dut):
                                                        test_case_name='test_wifi_connect_testcase_id6',
                                                        test_case_id='testcase_id6',
                                                        notes='test notes'))
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -147,7 +145,6 @@ def test_wifi_connect_testcase_id6(wifi_dut, wifi_access_point):
                                                        test_case_id='testcase_id_19',
                                                        notes='test notes'))
 @pytest.mark.skip()
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -197,7 +194,6 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
                                                        test_case_id='testcase_id_27',
                                                        notes='test notes'))
 @pytest.mark.skip()
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -256,7 +252,6 @@ def __print_throughput(iperf_throughput: dict):
                                                        test_case_name='test_throughput_tcp_tx_2_4_channel1',
                                                        test_case_id='tcp_tx_2_4_channel1',
                                                        notes='test notes'))
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -302,7 +297,6 @@ def test_throughput_tcp_tx_2_4_channel1(net_perf_client, wifi_access_point, wifi
                                                        test_case_name='test_throughput_udp_rx_2_4_channel1',
                                                        test_case_id='udp_rx_2_4_channel1',
                                                        notes='test notes'))
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -355,7 +349,6 @@ def test_throughput_udp_rx_2_4_channel1(net_perf_client, wifi_access_point, wifi
                                                        test_case_id='master_ssp_keyboardonly',
                                                        notes='test notes'))
 @pytest.mark.skip()
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -398,7 +391,6 @@ def test_bt_master_ssp_keyboardonly(wifi_dut, bt_client):
                                                        test_case_id='C19983',
                                                        notes='test notes'))
 @pytest.mark.skip()
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.config(
     "wifi_dut",
     wifi=

@@ -279,7 +279,6 @@ class gatt_notify_tx_thread(threading.Thread):
 # Mark all tests in this module with 'framework_integration_test'
 pytestmark = [
     pytest.mark.framework_integration_test,
-    pytest.mark.dut("rs9116_sapi"),
     pytest.mark.config(
         "wifi_dut",
         wifi={
