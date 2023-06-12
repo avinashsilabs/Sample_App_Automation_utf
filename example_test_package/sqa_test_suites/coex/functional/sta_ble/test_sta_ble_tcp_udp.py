@@ -351,19 +351,6 @@ def dut_clean_up(wifi_dut, ble_client_address=None):
     logger().info("\n ---------------------------- Cleaning UP of DUT is Completed -------------------")
 
 
-@pytest.fixture()
-def recovery(wifi_dut):
-    try:
-        wifi_dut.interfaces.wifi.init()
-        time.sleep(5)
-    except:
-        wifi_dut.interfaces.wifi.reset_mode = "hard"
-        wifi_dut.interfaces.wifi.reset()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.init()
-        time.sleep(5)
-
-
 def print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
@@ -448,7 +435,7 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"), pytest.mark.config('wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.remote_socket("raspi_ip_socket")
 # In raspi_ip_socket section of harness file interface needs to updated according to the raspi interface which is connected to AP.
-def test_verify_tcp_udp_tx_data_transfer_c133470(recovery, remote_socket, rs_helper, utf_constants, wifi_sniffer,
+def test_verify_tcp_udp_tx_data_transfer_c133470(remote_socket, rs_helper, utf_constants, wifi_sniffer,
                                                 wifi_dut, wifi_access_point, wifi_client, net_perf_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -554,7 +541,7 @@ def test_verify_tcp_udp_tx_data_transfer_c133470(recovery, remote_socket, rs_hel
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "cipher": "AES"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_verify_wlan_scan_and_ble_scan_c133445(wifi_access_point, recovery, wifi_dut, ble_client):
+def test_verify_wlan_scan_and_ble_scan_c133445(wifi_access_point, wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     try:
@@ -617,7 +604,7 @@ def test_verify_wlan_scan_and_ble_scan_c133445(wifi_access_point, recovery, wifi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.remote_socket("raspi_ip_socket")
 # In raspi_ip_socket section of harness file interface needs to updated according to the raspi interface which is connected to AP.
-def test_tcp_data_transfer_functionality_while_rejoin_c133471(switch, utf_constants, rs_helper, wifi_sniffer, recovery,
+def test_tcp_data_transfer_functionality_while_rejoin_c133471(switch, utf_constants, rs_helper, wifi_sniffer,
                                                              wifi_dut, wifi_access_point, ble_client, remote_socket):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -758,7 +745,7 @@ def test_tcp_data_transfer_functionality_while_rejoin_c133471(switch, utf_consta
 @pytest.mark.remote_socket("raspi_ip_socket")
 # In raspi_ip_socket section of harness file interface needs to updated according to the raspi interface which is connected to AP.
 def test_udp_functionality_while_rejoin_c133472(switch, utf_constants, rs_helper, wifi_access_point, wifi_sniffer,
-                                               recovery, wifi_dut, ble_client, remote_socket):
+                                               wifi_dut, ble_client, remote_socket):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
     ble_client_address = None
@@ -894,7 +881,7 @@ def test_udp_functionality_while_rejoin_c133472(switch, utf_constants, rs_helper
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 def test_read_char_value_of_remote_ble_when_wlan_is_in_connected_state_c133434(firmware_loader, utf_constants, rs_helper,
-                                                                              wifi_sniffer, recovery, wifi_access_point,
+                                                                              wifi_sniffer, wifi_access_point,
                                                                               wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
