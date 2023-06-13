@@ -5,10 +5,13 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
+from utf.utils.iperf.iperf_utils import get_host_ip, ping
+from utf.interfaces.bluetooth import BLEDeviceState
+from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.interfaces.wifi import WlanError
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ConfigFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, \
-    RS9116PowerSaveProcedureTypes
+    RS9116PowerSaveProcedureTypes, RS9116CustomFeatureBitMap, RS9116BTFeatureBitMap
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.thread_base import ThreadBase
 import threading
@@ -213,6 +216,120 @@ class WifiThread(ThreadBase):
         logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
             'packet_count'], 'Unable to find ps polls in sniffer capture'
+
+
+class BleThread_aggresive(ThreadBase):
+    def __init__(self, wifi_dut, ble_client):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+
+    def run(self):
+        Connection_Handle = "0x61 0x00"
+        Connection_Interval_Min = "0x28 0x00"
+        Connection_Interval_Max = "0x28 0x00"
+        Max_Latency = "0x05 0x00"
+        Supervision_Timeout = "0x40 0x06"
+        Min_CE_Length = "0x00 0x00"
+        Max_CE_Length = "0x00 0x00"
+        logger().info(f"Set up DUT for BLE advertising")
+        ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+        assert ble_dut_address, f"Unable to find ble dut address"
+        self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+        logger().info(f"Begin Scanning for BLE devices")
+        logger().info("Executing lescan in raspi")
+        ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "Unable to get BLE client address"
+        time.sleep(1)
+        logger().info(f"Stop Scanning for BLE devices")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        logger().info("Initiating BLE connection")
+        self.ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        logger().info("BLE Connection success")
+        time.sleep(5)
+
+        # setting data length on ble_client
+        with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
+            logger().info("Updating ble connection with connection parameters")
+            self.ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                                  connection_handle=Connection_Handle,
+                                                                                  connection_interval_min=Connection_Interval_Min,
+                                                                                  connection_interval_max=Connection_Interval_Max,
+                                                                                  max_latency=Max_Latency,
+                                                                                  supervision_timeout=Supervision_Timeout,
+                                                                                  min_ce_length=Min_CE_Length,
+                                                                                  max_ce_length=Max_CE_Length
+                                                                                  )
+        # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
+        time.sleep(300)
+        logger().info("Checking connection status of BLE")
+        state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
+        logger().info("DUT is not disconnected from BLE")
+
+        logger().info("Disconnect BLE connection")
+        self.ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+        logger().info("BLE diconnect successful")
+
+
+class BleThread_relaxed(ThreadBase):
+    def __init__(self, wifi_dut, ble_client):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+
+    def run(self):
+        Connection_Handle = "0x61 0x00"
+        Connection_Interval_Min = "0x28 0x00"
+        Connection_Interval_Max = "0x28 0x00"
+        Max_Latency = "0x00 0x00"
+        Supervision_Timeout = "0xE8 0x03"
+        Min_CE_Length = "0x00 0x00"
+        Max_CE_Length = "0x00 0x00"
+        logger().info(f"Set up DUT for BLE advertising")
+        ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+        assert ble_dut_address, f"Unable to find ble dut address"
+        self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+        logger().info(f"Begin Scanning for BLE devices")
+        logger().info("Executing lescan in raspi")
+        ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "Unable to get BLE client address"
+        time.sleep(1)
+        logger().info(f"Stop Scanning for BLE devices")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        logger().info("Initiating BLE connection")
+        self.ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        logger().info("BLE Connection success")
+        time.sleep(5)
+
+        # setting data length on ble_client
+        with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/test_ble_anchorpoints.log_{int(time.time())}"):
+            logger().info("Updating ble connection with connection parameters")
+            self.ble_client.interfaces.bluetooth.hci_tool_manager.ble_update_conn(dev_addr=ble_dut_address,
+                                                                                  connection_handle=Connection_Handle,
+                                                                                  connection_interval_min=Connection_Interval_Min,
+                                                                                  connection_interval_max=Connection_Interval_Max,
+                                                                                  max_latency=Max_Latency,
+                                                                                  supervision_timeout=Supervision_Timeout,
+                                                                                  min_ce_length=Min_CE_Length,
+                                                                                  max_ce_length=Max_CE_Length
+                                                                                  )
+        # BLE SNIFFER VALIDATION SUPPORT NEEDED WAITING FOR 5 MINS FOR CHECKING BLE CONNECTION STABILITY
+        time.sleep(300)
+        logger().info("Checking connection status of BLE")
+        state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT is not connected to BLE"
+        logger().info("DUT is not disconnected from BLE")
+
+        logger().info("Disconnect BLE connection")
+        self.ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+        logger().info("BLE diconnect successful")
 
 
 # this thread used for sta+ble as a slave
@@ -962,13 +1079,104 @@ def test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178(wifi_sniffer, http
     logger().info("start capturing with Sniffer by giving the test case name as filename")
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     ble_obj = BleThread_Scan(wifi_dut, ble_client, ble_scan_interval=7.5, ble_scan_window=2.5)
-    wifi_obj = WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, http_server=http_server, index_path=index_path)
+    wifi_obj = WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, http_server=http_server,
+                          index_path=index_path)
     ble_obj.start()
     time.sleep(10)
     wifi_obj.start()
     wifi_obj.wait_for_exit()
     ble_obj.wait_for_exit()
     ble_obj.stop_adv_scan()
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_obj.verify_sniffer_validation()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection | RS9116BTFeatureBitMap.BLEFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+    },
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"6KB.html"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_socket", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "ble_stop_adv", "ble_stop_scan"])
+def test_sta_ble_slave_latency_with_aggressive_anchorpoints_C20180(wifi_sniffer, wifi_dut, wifi_access_point,
+                                                                   ble_client, http_server, index_path):
+    testcase = "test_sta_ble_slave_latency_with_aggressive_anchorpoints_C20180"
+    logger().info("testcase : test_sta_ble_slave_latency_with_aggressive_anchorpoints_C20180")
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    wifi_obj = WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase=testcase, http_server=http_server,
+                          index_path=index_path)
+    ble_obj = BleThread_aggresive(wifi_dut, ble_client)
+    ble_obj.start()
+    time.sleep(10)
+    wifi_obj.start()
+    wifi_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
+    logger().info("stopping capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_obj.verify_sniffer_validation()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection | RS9116BTFeatureBitMap.BLEFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.LoadSSLCertificatesToRAM
+                          | RS9116TCPIPFeatureBitMap.LoadPublicPrivateCerts | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+    },
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"6KB.html"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_socket", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "ble_stop_adv", "ble_stop_scan"])
+def test_sta_ble_slave_latency_with_relaxed_anchorpoints_C20181(wifi_sniffer, wifi_dut, wifi_access_point,
+                                                                ble_client, index_path, http_server):
+    testcase = "test_sta_ble_slave_latency_with_relaxed_anchorpoints_C20181"
+    logger().info("testcase : test_sta_ble_slave_latency_with_relaxed_anchorpoints_C20181")
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    wifi_obj = WifiThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase=testcase, http_server=http_server,
+                          index_path=index_path)
+    ble_obj = BleThread_relaxed(wifi_dut, ble_client)
+    ble_obj.start()
+    time.sleep(10)
+    wifi_obj.start()
+    wifi_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
