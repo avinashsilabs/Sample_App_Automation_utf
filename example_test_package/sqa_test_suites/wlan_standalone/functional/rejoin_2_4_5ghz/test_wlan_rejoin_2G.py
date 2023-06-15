@@ -2854,15 +2854,11 @@ def test_rejoin_with_bad_rssi_C19727(wifi_dut, wifi_access_point, wifi_sniffer, 
     try:
         ping_count = 120
         validation = True
-        att_channel = 2
-        set_db_value = 0
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
         wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
-        logger().info(f"setting the attenuation value {set_db_value}")
-        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
-        time.sleep(5)
+
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid,
                                                      channel=wifi_access_point.interfaces.wifi.channel)
         txt = str(scan_results)
@@ -2891,16 +2887,24 @@ def test_rejoin_with_bad_rssi_C19727(wifi_dut, wifi_access_point, wifi_sniffer, 
         wifi_sniffer.interfaces.capture.start_capture(capture_file='with_bad_rssi_connection')
         switches[1].interfaces.pdu_switch.turn_on(delay=10)
         logger().info(f"\n\n######=====>>>>Access point is going to turn ON<<<<<=======######\n\n")
-        time.sleep(160)
+        time.sleep(140)
+
+        logger().info("\npinging to dut.....\n")
+        status = ping(dut_ip, ping_count)
+        assert status == True, "DUT not responding for ping request......"
+        logger().info("\nping to DUT is successful....\n")
+
         packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
                          f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
-        logger().info("pinging to dut.....")
-        status = ping(dut_ip, ping_count)
-        assert status == True, "DUT not responding for ping request......"
-        logger().info("ping to DUT is successful....")
+
     finally:
         logger().info("\n\n #####******====>>>> Access point is going to turn ON <<<<<<======******#####\n\n")
         switches[1].interfaces.pdu_switch.turn_on(delay=10)
+        time.sleep(2)
+        att_channel = 2
+        set_db_value = 0
+        logger().info(f"\n#####====>>>>setting the attenuation value {set_db_value} back normal state#####====>>>>>\n")
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
         time.sleep(2)
