@@ -840,7 +840,7 @@ def test_ble_gatt_client_master(
         timeout=timeout,
         expected="RSI_BLE_ENHC_CONN_EVENT",
     )
-
+    time.sleep(5)
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
