@@ -1739,3 +1739,49 @@ def test_reconnection_MQTT_server_C19278(
     finally:
         wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
         logger.info("\n\nEnabling Ethernet Adaptor<<<<<<<<*******===========")
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_reconnection_MQTT_server_with_same_client_port_C19276(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, wifi_client,
+):
+    try:
+        topic1 = "mytesttopic/1"
+        capture_filename = "test_reconnection_MQTT_server_with_same_client_port_C19276"
+        dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        logger.info("\n\n*******Both DUT and third-party mqtt client connects to MQTT server*******")
+        for iteration in range(1, 3):
+            wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt)
+            mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt)
+            time.sleep(5)
+            if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
+                wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1)
+            interface = 'eth1'
+            if iteration == 1:
+                logger.info("\n\n*********==========>>>>>>>>Disable Ethernet Adaptor\n\n")
+                wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} down")
+                time.sleep(300)
+                events = wifi_dut.interfaces.mqtt.get_async_events()
+                if len(events):
+                    for event in events:
+                        if event.event_type == RS9116AsyncEventType.MQTT_REMOTE_TERMINATE:
+                            break
+                logger.info("\n\nEnable Ethernet Adaptor<<<<<<<<*******===========\n\n")
+                wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
+                time.sleep(20)
+        logger.info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Sniffer is going stop capture")
+        validation = True
+        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+        logger.info(f"PS-POLL packets are captured in the sniffer")
+        wifi_dut.interfaces.wifi.leave()
+    finally:
+        logger.info("\n\nEnabling Ethernet Adaptor<<<<<<<<*******===========")
+        wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
+        time.sleep(5)
