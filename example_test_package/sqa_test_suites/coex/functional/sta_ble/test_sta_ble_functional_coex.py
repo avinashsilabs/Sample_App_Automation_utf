@@ -12,7 +12,8 @@ from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType, \
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116CustomFeatureBitMap, \
     RS9116BTFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ConfigFeatureBitMap, SocketOptions, SocketType, \
-    RS9116PowerSaveProcedureTypes, DeviceConstants
+    RS9116PowerSaveProcedureTypes, DeviceConstants, RS9116BLEFeatureBitMap, RS9116BLECustomFeatureBitMap, RS9116MqttQos, \
+    RS9116JoinFeatureBitMap, RS9116CertificateType
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.bluetooth import BLEDeviceState
@@ -22,14 +23,9 @@ from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import B
 from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import ImmediateAlertService, \
     ImmediateAlertLevelCharacteristic
 from utf.utils.stopwatch import Stopwatch
-
-iperf_started = False
-ping_count = 30
-
-
-def logger():
-    return get_logger(__name__)
-
+from utf.interfaces.bluetooth.bluez.gatt_application.link_loss_service import LinkLossService, \
+    LinkLossAlertLevelCharacteristic
+from utf.utils import get_tls_certificate_dir
 
 """
     Setup Requirement: DUT(RS9116) , EFR32, 2 Raspberry PI required [ 2 BLE CLIENTS],
@@ -37,6 +33,13 @@ def logger():
     Reported by cg team:  rashmi & team
     Description:Sta_ble_coex_basic_functionality Test cases
 """
+
+iperf_started = False
+ping_count = 30
+
+
+def logger():
+    return get_logger(__name__)
 
 
 def text_generator(size=200):
@@ -1925,7 +1928,7 @@ def test_query_att_descriptors_of_remote_ble_device_while_wlan_tcp_tx_C133435(fi
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address,
                                                                         service_classes=[HeartRateService])
     assert ble_client_address, f"Unable to get ble_client_address"
-    time.sleep(2)
+    time.sleep(1)
     ble_client.interfaces.bluetooth.stop_scanning()
     found_devices = ble_client.interfaces.bluetooth.get_devices()
     assert ble_dut_address in found_devices, "Unable to find DUT BLE from remote device scan list"
@@ -2074,10 +2077,16 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
     assert ble_dut_address in found_devices, "Unable to find DUT BLE from remote device scan list"
     logger().info(f"BLE Scan list: {found_devices}")
     logger().info(f"See that we found our device: '{ble_dut_address}'")
-
-    logger().info("Connecting ble_client to DUT")
-    ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address)
-    time.sleep(10)
+    conn_params = {"min_conn_interval": 40,
+                   "max_conn_interval": 40,
+                   "conn_latency": 0,
+                   "supervision_timeout": 200}
+    ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address,
+                                            min_conn_interval=conn_params["min_conn_interval"],
+                                            max_conn_interval=conn_params["max_conn_interval"],
+                                            conn_latency=conn_params["conn_latency"],
+                                            supervision_timeout=conn_params["supervision_timeout"])
+    time.sleep(15)
     logger().info("BLE SLAVE connection successful")
 
     # resolve ImmediateAlertService profile
@@ -2152,6 +2161,492 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
 
     logger().info("Initiating BLE disconnection from DUT")
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=30)
+
+    logger().info("Initiating WLAN disconnection from DUT")
+    wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+@pytest.mark.ble_client("raspi_ble_client")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
+                             "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_ble_pxp_link_loss_alert_func_when_tcp_tx_is_in_progress_C133561(firmware_loader, wifi_dut,
+                                                                         wifi_sniffer, protocol, wifi_client,
+                                                                         utf_constants, wifi_access_point,
+                                                                         net_perf_client, ble_client):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    channel = wifi_access_point.interfaces.wifi.channel
+    capture_filename = "test_ble_pxp_link_loss_alert_C133561"
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+    time.sleep(3)
+
+    logger().info("Initiating wlan scan from DUT")
+    wlan_scan(wifi_dut, channel=0)
+
+    logger().info("Joining into Wi-Fi on DUT")
+    device_ip = wifi_join(wifi_dut, wifi_access_point)
+
+    traffic_thread = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=60)
+    logger().info("start ble GATT service in DUT")
+    ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+    assert ble_dut_address, "Unable to find ble_dut_address"
+
+    logger().info("Initiating wlan data transfer from DUT")
+    traffic_thread.start()
+
+    ble_client.interfaces.bluetooth.close()
+    logger().info(f"Configuring LinkLossService and Initiating BLE adv from remote device")
+    ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address,
+                                                                       service_classes=[LinkLossService])
+    assert ble_client_address, f"failed to initiate ble in remote device, Unable to fetch ble_client_address"
+    time.sleep(5)
+    logger().info("Start scanning and connect to ble client")
+    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+    wifi_dut.interfaces.wifi.ble_stop_scanning()
+
+    logger().info("Initiating BLE connection with ble_client")
+    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=120,
+                                         expected="RSI_BLE_SECURITY_KEYS_EVENT")
+    time.sleep(2)
+    logger().info("DUT as BLE Master connection successful\n\n")
+
+    uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_client_address)
+    assert LinkLossService.UUID in uuids, "Unable fetch LinkLossService uuid from DUT"
+
+    # resolve LinkLossService profile
+    start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(
+        ble_remote_dev_address=ble_client_address,
+        uuid=int(LinkLossService.UUID, 16),
+        timeout=30)
+    assert start_handle, "Unable to get start_handle of LinkLossService"
+    assert end_handle, "Unable to get end_handle of LinkLossService"
+
+    # resolve characteristics of LinkLossService profile
+    uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(
+        ble_remote_dev_address=ble_client_address, start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
+    assert LinkLossAlertLevelCharacteristic.LLA_UUID in uuids, "Unable to find LinkLossService uuid"
+    index = uuids.index(LinkLossAlertLevelCharacteristic.LLA_UUID)
+    assert char_properties[index].isdigit(), "Character property found is not an integer"
+    assert LinkLossAlertLevelCharacteristic.prop_int == int(char_properties[index]), "Invalid character property found"
+    write_handle = int(write_handles[index], 16)
+    assert write_handle > 0, "Unable to get write handle for configured service"
+    traffic_thread.wait_for_exit(True)
+
+    alerts_allowed = {0: 'NO_ALERT', 1: 'MID_ALERT', 2: 'HIGH_ALERT'}
+    logger().info(f"\n\nAlerts Allowed: {alerts_allowed}")
+    for alert in alerts_allowed.keys():
+        logger().info(f"\n\nSetting alert level '{alert}' from DUT to remote BLE Device ")
+        wifi_dut.interfaces.wifi.ble_set_att_cmd(ble_remote_dev_address=ble_client_address, char_property=write_handle,
+                                                 value=alert)
+        time.sleep(5)
+        # read value
+        received_alert = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_client_address, write_handle)
+        assert int(received_alert) == alert, "Sent alert and received alerts are not matching"
+        logger().info(f"Received alert level:'{received_alert}'")
+
+    logger().info(f"\n\nWaiting for '60' seconds for checking connection stability")
+    time.sleep(60)
+    check_connection_status(wifi_dut, ble=True, wlan=True)
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    # Validate probe request from DUT
+    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) && (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)'
+
+    # Validate association request and association response packets
+    packet_filter2 = f'((wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0) || eapol) and ((wlan.addr == {ap_bssid} && wlan.fc.type_subtype == 1) || eapol)'
+
+    # Validate qos data packets should be observed with more data bit set to 1
+    packet_filter3 = f'(wlan.ta == {ap_bssid}) && (wlan.da=={dut_mac_address}) && (wlan.fc.moredata==1)'
+
+    # Validate PS Polls with power management Bit set to 1
+    packet_filter4 = f'(wlan.addr == {dut_mac_address} || wlan.fc.type_subtype == 0x001a)'
+
+    logger().info("Validating probe request packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find probe request packets'
+
+    logger().info("Validating association request and association response packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find association request and association response packets'
+
+    logger().info("Validating qos data packets should be observed with more data bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to find qos data packets should be observed with more data bit set to 1'
+
+    logger().info("Validating PS Polls with power management Bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
+
+    logger().info("Initiating BLE disconnection from DUT")
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address, timeout=30)
+
+    logger().info("Initiating WLAN disconnection from DUT")
+    wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.HTTPServer | RS9116TCPIPFeatureBitMap.HTTPClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "rejoin_max_retry": 10,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.ble_client("raspi_ble_client")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_ble_dev_C133574(wifi_dut, wifi_sniffer,
+                                                                                               mqtt_client, mqtt_server,
+                                                                                               wifi_client, ble_client,
+                                                                                               wifi_access_point):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    channel = wifi_access_point.interfaces.wifi.channel
+    capture_filename = "test_mqtt_func_in_wlan_ble_mode_C133574"
+    validation = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+    time.sleep(3)
+
+    logger().info("Initiating wlan scan from DUT")
+    wlan_scan(wifi_dut, channel=0)
+
+    logger().info("Joining into Wi-Fi on DUT")
+    wifi_join(wifi_dut, wifi_access_point, powersave=False)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    logger().info("Initiating BLE test with DUT as BLE Slave")
+    mode = "ble_slave"
+    _, ble_dut_address = ble_master_slave(wifi_dut, ble_client, mode)
+
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    # Both DUT and third-party mqtt client connects to MQTT server
+    topic = "mytesttopic"
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+    client_devices = [wifi_dut, mqtt_client]
+    logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+    for device in client_devices:
+        device.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+        if device.interfaces.mqtt.mqtt_client_is_connected:
+            logger().info(f"MQTT Client:{device.name} subscribes to the topic with QOS 1")
+            device.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+
+    # publish a message from the dut
+    message1 = text_generator(20)
+    logger().info(f"\n\nDUT is publishing message1:'{message1}' over the topic:'{topic}'")
+    wifi_dut.interfaces.mqtt.mqtt_client_publish(topic, message1, qos=RS9116MqttQos.QOS1)
+
+    logger().info("\nValidating received MQTT message1 from raspi_mqtt_client")
+    sw = Stopwatch()
+    msg = None
+    while sw.elapsed_sec < 20:
+        msg = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+        if len(msg):
+            break
+    assert len(msg) == 1, "Message1 is not received by mqtt-client"
+    logger().info(
+        f"QOS received: '{msg[0].qos}', mqtt topic received: '{msg[0].topic}', mqtt message received:'{msg[0].payload.decode()}'")
+    assert msg[0].topic == topic, "Message1 not received by mqtt-client on subscribed topic"
+    assert msg[0].payload.decode() == message1, "Published message1 is not matching with received message1"
+    assert msg[0].qos == RS9116MqttQos.QOS1, "mqtt client received message1 with wrong QOS. expected is QOS1"
+    time.sleep(3)
+    logger().info("MQTT message1 validated successfully")
+
+    # publish a message from the 3rd party mqtt_client
+    message2 = text_generator(20)
+    logger().info(f"\n\n3rd party mqtt client is publishing message2:'{message2}' over subscribed topic:'{topic}'")
+    mqtt_client.interfaces.mqtt.mqtt_client_publish(topic, message2, qos=RS9116MqttQos.QOS1)
+
+    logger().info("\nValidating received MQTT message2 from DUT")
+    sw = Stopwatch()
+    msg = None
+    while sw.elapsed_sec < 20:
+        msg = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        if len(msg) == 2:
+            break
+    assert len(msg) == 2, "Message2 is not received by DUT"
+    logger().info(
+        f"QOS received: '{msg[1].qos}', mqtt topic received: '{msg[1].topic}', mqtt message received:'{msg[1].payload.decode()}'")
+    assert msg[1].topic == topic, "Message2 not received by mqtt-client on subscribed topic"
+    assert msg[1].payload.decode() == message2, "Published message2 is not matching with received message2"
+    assert msg[1].qos == RS9116MqttQos.QOS1, "DUT received message2 with wrong QOS. expected is QOS1"
+    logger().info("MQTT message2 validated successfully")
+
+    logger().info(f"\n\nWaiting for '60' seconds for checking connection stability")
+    time.sleep(60)
+    check_connection_status(wifi_dut, ble=True, wlan=True)
+
+    logger().info("\nUnsubscribing from the topic....")
+    wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic)
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    # Validate probe request from DUT
+    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) && (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)'
+
+    # Validate association request and association response packets
+    packet_filter2 = f'((wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0) || eapol) and ((wlan.addr == {ap_bssid} && wlan.fc.type_subtype == 1) || eapol)'
+
+    # Validate qos data packets should be observed with more data bit set to 1
+    packet_filter3 = f'(wlan.ta == {ap_bssid}) && (wlan.da=={dut_mac_address}) && (wlan.fc.moredata==1)'
+
+    # Validate PS Polls with power management Bit set to 1
+    packet_filter4 = f'(wlan.addr == {dut_mac_address} || wlan.fc.type_subtype == 0x001a)'
+
+    logger().info("Validating probe request packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find probe request packets'
+
+    logger().info("Validating association request and association response packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find association request and association response packets'
+
+    logger().info("Validating qos data packets should be observed with more data bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to find qos data packets should be observed with more data bit set to 1'
+
+    logger().info("Validating PS Polls with power management Bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
+
+    logger().info("Initiating BLE disconnection from Raspi")
+    ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+
+    logger().info("Initiating WLAN disconnection from DUT")
+    wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.SSL,
+        "custom_features": RS9116CustomFeatureBitMap.Default,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "ca_cert": ["ca-chain.cert.pem", "start_field.pem"],
+        "client_cert": [False, "client-certificate.crt"],
+        "client_key": [False, "private-key.key"],
+    }
+)
+@pytest.mark.ble_client("raspi_ble_client")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_func_and_data_transfer_of_2_ssl_socket_conn_while_ble_is_in_connection_C133575(wifi_dut, wifi_sniffer,
+                                                                                        ble_client, wifi_access_point,
+                                                                                        ssl_server):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError("This test case is only currently implemented for SAPI")
+
+    validation = True
+    channel = wifi_access_point.interfaces.wifi.channel
+    capture_filename = "test_ble_with_2_ssl_socket_133575"
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+    time.sleep(3)
+
+    logger().info("Initiating wlan scan from DUT")
+    wlan_scan(wifi_dut, channel=0)
+
+    logger().info("Joining into Wi-Fi on DUT")
+    device_ip = wifi_join(wifi_dut, wifi_access_point, powersave=False)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"Device mac address: {dut_mac_address}")
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    logger().info("Initiating BLE test with DUT as BLE Slave")
+    mode = "ble_slave"
+    _, ble_dut_address = ble_master_slave(wifi_dut, ble_client, mode)
+
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
+    port1 = ssl_server.interfaces.ssl.config['device_port1']
+    ssl_server.interfaces.ssl.start_server(port=port1)
+
+    for sock_count in range(2):
+        logger().info(f"Opening tcp client socket:{sock_count} over SSL from DUT")
+        sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
+        assert sock == sock_count, f"socket id received is wrong, expected is {sock_count}"
+
+        logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_set sockopt API")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+                                                   SocketOptions.SSL_ENABLE)
+        logger().info(f"Setting the tcp retry count for the socket_id->{sock} to {SocketOptions.TCP_MAX_RETRY} seconds")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
+                                                   SocketOptions.TCP_MAX_RETRY)
+        if sock_count == 0:
+            socket_port = port1
+            local_port = randint(5001, 20000)
+            cert_index = SocketOptions.CERT_INDEX0
+        else:
+            socket_port = 8883
+            local_port = randint(40001, 60000)
+            cert_index = SocketOptions.CERT_INDEX1
+
+        logger().info(f"Mapping certificate index->{cert_index} for socket_id->{sock}")
+        wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
+                                                   cert_index)
+
+        logger().info(f"Binding socket with socket id:'{sock}'")
+        wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        if sock_count == 0:
+            wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
+        else:
+            result = wifi_dut.interfaces.wifi.dns_get(4)
+            logger().info(f"dns response is {result}")
+            aws_server_ip = result.split(b"\n")[1].split(b":")[1].decode()
+            logger().info(f"aws_server_ip is:{aws_server_ip}")
+            for count in range(3):
+                try:
+                    wifi_dut.interfaces.wifi.connect(sock, aws_server_ip, socket_port)
+                    break
+                except:
+                    logger().info(f"Connecting to AWS server is failed. retry count->{count + 1}")
+                    time.sleep(10)
+                    if count == 2:
+                        raise
+            logger().info(f"Connection to AWS server on socket id->{sock} is successful")
+
+    pkt_count = 10000
+    buffer_length = 1370
+    bytes_sent = (pkt_count * buffer_length)
+    logger().info(f"\n\nSending data from DUT over ssl socket with socket id 0")
+    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length)
+    wifi_dut.interfaces.wifi.send_data_pkts(0, buffer_length, pkt_count)
+    time.sleep(10)
+    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
+    assert bytes_sent == bytes_received, "Number of bytes sent by DUT and received on the remote peer not matched on socket 0"
+
+    send_bytes = 1000
+    sw = Stopwatch()
+    logger().info("\n\nSending data from DUT over ssl with socket id 1")
+    while sw.elapsed_sec < 30:
+        send_response = wifi_dut.interfaces.wifi.send(1, send_bytes)
+        assert send_response, "Data transfer failed from socket id 1"
+        if 'status 10' in str(send_response):
+            result = send_response.decode().replace("\r\n", '').strip()
+            match = re.findall(r"\d+", result)
+            if int(match[1]) == send_bytes:
+                logger().info(f"Send {send_bytes} bytes successfully")
+
+    logger().info(f"\n\nWaiting for '60' seconds for checking connection stability")
+    time.sleep(60)
+    check_connection_status(wifi_dut, ble=True, wlan=True)
+
+    for sock in range(2):
+        logger().info(f"\n\nClosing opend socket from DUT with socket_id->{sock}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock)
+        assert b"success" in result, f"unable to close opened socket in the dut for socket_id->{sock}"
+        logger().info(f"Successfully closed socket_id->{sock}")
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    # Validate probe request from DUT
+    packet_filter1 = f'(wlan.fc.type_subtype == 0x0004) && (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)'
+
+    # Validate association request and association response packets
+    packet_filter2 = f'((wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 0) || eapol) and ((wlan.addr == {ap_bssid} && wlan.fc.type_subtype == 1) || eapol)'
+
+    # Validate qos data packets should be observed with more data bit set to 1
+    packet_filter3 = f'(wlan.ta == {ap_bssid}) && (wlan.da=={dut_mac_address}) && (wlan.fc.moredata==1)'
+
+    # Validate PS Polls with power management Bit set to 1
+    packet_filter4 = f'(wlan.addr == {dut_mac_address} || wlan.fc.type_subtype == 0x001a)'
+
+    logger().info("Validating probe request packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+        'packet_count'], 'Unable to find probe request packets'
+
+    logger().info("Validating association request and association response packets")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        'packet_count'], 'Unable to find association request and association response packets'
+
+    logger().info("Validating qos data packets should be observed with more data bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+        'packet_count'], 'Unable to find qos data packets should be observed with more data bit set to 1'
+
+    logger().info("Validating PS Polls with power management Bit set to 1")
+    assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
+        'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
+
+    logger().info("Initiating BLE disconnection from Raspi")
+    ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
 
     logger().info("Initiating WLAN disconnection from DUT")
     wifi_dut.interfaces.wifi.leave()
