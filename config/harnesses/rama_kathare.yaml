@@ -643,6 +643,10 @@ defaults:
         - 'raspi_wifi'
         - 'secondary_raspi_client'
 
+    ble_clients:
+        - raspi_ble_client
+        - secondary_raspi_ble_client
+
     ble_client: 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
@@ -760,8 +764,9 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
-        wifi: 'init'
+        wifi:
+            - 'reset'
+            - 'init'
 
 end_state:
     wifi_access_point:
