@@ -324,6 +324,7 @@ def test_standby_assoc_novus_li10_c20554(power_meters, wifi_access_point, wifi_d
         time.sleep(30)
 
 
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.firmware_app("generic_test_agent_wt_aws_wt_ram_ret")
 @pytest.mark.config(
     "wifi_dut",
