@@ -259,7 +259,6 @@ def clean_up_method(wifi_dut, switch):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
     except:
         logger().info("******* Recovering the DUT  **********")
         wifi_dut.interfaces.wifi.reset()
@@ -2835,3 +2834,77 @@ def test_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, wifi_snif
         logger().info("pdu switch state for AP1: " + str(state))
         assert state == 'false', 'Please check PDU outlet manually'
         wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.PSKSecurity,
+        "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    }
+)
+def test_rejoin_with_bad_rssi_C19727(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, rs_helper, rf_attenuator,
+                                     switches, utf_constants):
+    try:
+        ping_count = 120
+        validation = True
+        logger().info(" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
+
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                     channel=wifi_access_point.interfaces.wifi.channel)
+        txt = str(scan_results)
+        m = re.search("(?<=rssi: -)\d+", txt)
+        get_rssi_value = int(m.group(0))
+        logger().info(f"\n\n #####===>>>>> Getting the RSSI value from the Scan: {get_rssi_value} #####=====>>>>>\n\n")
+
+        att_channel = 2
+        set_db_value = 80-get_rssi_value
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
+        time.sleep(10)
+
+        logger().info("Joining into wifi_access_point")
+        dut_ip = wifi_join(wifi_dut, wifi_access_point)
+
+        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger().info(f"DUT MAC_Address: {mac_address}")
+
+        actual_rssi_value = wifi_dut.interfaces.wifi.wlan_get_rssi()
+        logger().info(f'\n\n RSSI Value = {actual_rssi_value}\n')
+
+        switches[1].interfaces.pdu_switch.turn_off(delay=10)
+        logger().info(f"\n\n######=====>>>>>Access Point is going to turn OFF <<<<<=======######\n\n")
+        time.sleep(2)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='with_bad_rssi_connection')
+        switches[1].interfaces.pdu_switch.turn_on(delay=10)
+        logger().info(f"\n\n######=====>>>>Access point is going to turn ON<<<<<=======######\n\n")
+        time.sleep(140)
+
+        logger().info("\npinging to dut.....\n")
+        status = ping(dut_ip, ping_count)
+        assert status == True, "DUT not responding for ping request......"
+        logger().info("\nping to DUT is successful....\n")
+
+        packet_filter3 = f'(wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} ' \
+                         f'and wlan.fc.type_subtype == 0x0004 and wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.sa == {mac_address})'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+
+    finally:
+        logger().info("\n\n #####******====>>>> Access point is going to turn ON <<<<<<======******#####\n\n")
+        switches[1].interfaces.pdu_switch.turn_on(delay=10)
+        time.sleep(2)
+        att_channel = 2
+        set_db_value = 0
+        logger().info(f"\n#####====>>>>setting the attenuation value {set_db_value} back normal state#####====>>>>>\n")
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
+        time.sleep(2)

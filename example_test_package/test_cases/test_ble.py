@@ -1,24 +1,23 @@
 import time
 import pytest
+from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
-from utf.utils.stopwatch import Stopwatch
-from utf_wiseconnect.devices.rs911x import RS9116CoexMode
-from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
-from utf.utils.logger import get_logger
-from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import (
-    BatteryService,
-)
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import (
     BatteryLevelCharacteristic,
 )
-from utf.interfaces.bluetooth import BLEDeviceState
+from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import (
+    BatteryService,
+)
 from utf.interfaces.wifi import WlanError
-from utf.interfaces.bluetooth import BLEConnectError
-from utf_wiseconnect.devices.rs911x import RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes, RS9116AsyncEventType
+from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
+from utf_wiseconnect.devices.rs911x import RS9116AsyncEventType
+from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap
 from utf_wiseconnect.devices.rs911x import (
     RS9116PowerSaveModes,
     RS9116PowerSaveProcedureTypes,
 )
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 
 
 def logger():
@@ -65,7 +64,7 @@ def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
     )
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
     wifi_dut.interfaces.wifi.ble_connect(
         ble_remote_dev_address=bt_client_address, timeout=timeout
     )
@@ -123,8 +122,9 @@ def test_ble_whitelist_adv_data(wifi_dut, ble_client):
     wifi_dut.interfaces.wifi.ble_add_white_list(bt_client_address)
 
     # Start scanning for ble client
-    dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, ble_scan_filter_type=1, ble_scan_interval=256,
-                                                ble_scan_window=80, timeout=2)
+    dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address,
+                                                                   ble_scan_filter_type=1, ble_scan_interval=256,
+                                                                   ble_scan_window=80, timeout=2)
     logger().info(f"dut_scan_results: {dut_scan_results}")
 
     events = wifi_dut.interfaces.wifi.get_async_events()
@@ -147,6 +147,9 @@ def test_ble_whitelist_adv_data(wifi_dut, ble_client):
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
+        EnahanceMaxPsp,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
@@ -189,6 +192,7 @@ def test_ble_ibeacon_scanning_c19947(wifi_dut, ble_client):
     ble_client.interfaces.bluetooth.stop_ibeacon_scanning()
     wifi_dut.interfaces.wifi.ble_stop_advertising()
     time.sleep(2)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -235,7 +239,7 @@ def test_ble_scan_resp_adv_params(wifi_dut, ble_client):
     )
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
     wifi_dut.interfaces.wifi.ble_connect(
         ble_remote_dev_address=bt_client_address, timeout=timeout
     )
@@ -290,7 +294,7 @@ def test_ble_custom_adv_params(wifi_dut, ble_client):
     )
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
-    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
     wifi_dut.interfaces.wifi.ble_connect(
         ble_remote_dev_address=bt_client_address, timeout=timeout
     )
@@ -646,9 +650,9 @@ def test_ble_dual_role(wifi_dut, ble_clients):
     ble_client_2.interfaces.bluetooth.connect(bt_dut_address)
 
     # Advertisement can be started again to connect to a new master
-    # wifi_dut.interfaces.wifi.ble_start_advertising()
+    # wifi_dut.interfaces.Wi-Fi.ble_start_advertising()
     # scanning can be started to connect to a new slave
-    # wifi_dut.interfaces.wifi.ble_start_advertising()
+    # wifi_dut.interfaces.Wi-Fi.ble_start_advertising()
 
 
 @pytest.mark.config(
@@ -836,7 +840,7 @@ def test_ble_gatt_client_master(
         timeout=timeout,
         expected="RSI_BLE_ENHC_CONN_EVENT",
     )
-
+    time.sleep(5)
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1

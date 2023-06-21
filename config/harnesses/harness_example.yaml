@@ -485,7 +485,7 @@ devices:
                 no_of_pkts: 500
                 multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
                 multicast_ip2_mac_map1: '01:00:5e:7f:ff:fa'
-                interface: 'eth0'
+                interface: 'eth1'
 
     raspi_ip_socket:
         interfaces:

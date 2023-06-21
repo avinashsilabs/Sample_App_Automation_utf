@@ -127,6 +127,112 @@ def test_bt_spp_tx_rx_data_transfer_master_mode_c20041(bt_dut, bt_client):
                     assert data_sent.decode() == recv_text, f"Data sent by Remote is different from data received by DUT"
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_bt_spp_tx_rx_data_transfer_slave_mode_c20042(bt_dut, bt_client, tx_rx_duration=60):
+    send_text = text_generator()
+    recv_text = text_generator()
+
+    logger().info("configuring dut in spp slave role")
+    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
+    assert bt_dut_address, "failed to initialise bt in dut"
+    logger().info(f"BT dut address {bt_dut_address}")
+
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+    assert bt_client_address, "Failed to initiate master in remote device"
+    logger().info(f"BT Client address {bt_client_address}")
+
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+    assert found, f"Dut unable to find the bt client device:{bt_dut_address}"
+
+    logger().info(f"Starting Raspberry PI as BT Server")
+    bt_server_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server)
+    with bt_dut.interfaces.bluetooth.run_bt_task():
+        logger().info(f"Initiating BT_CONNECT ")
+        bt_server_socket.create_server()
+        connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
+        assert connected, "failed to connect to bt dut"
+        logger().info(f" BT_CONNECT SUCCESSFUL ")
+        logger().info("pinging dut...")
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
+
+    time.sleep(60)
+    ping_response = bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address)
+    logger().info(f"l2ping response {ping_response}")
+    assert ping_response, f"Failed to ping BT client to DUT"
+
+    logger().info("==========Enables Power Save in Wifi Mode===========")
+    enable_wifiPowersave = bt_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifiPowersave, f"Failed to enable wifi in powersave"
+
+    logger().info("==========Enables Power Save in BT Mode===========")
+    enable_btPowersave = bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2, RS9116PowerSaveProcedureTypes.FastPowerSave )
+    assert enable_btPowersave, f"Failed to enable BT in Powersave"
+
+    logger().info("Checking the BT Connection for 30 seconds")
+    time.sleep(30)
+
+    logger().info(f"Sending data from dut-SPP Tx for 60 sec")
+    t_end = time.time() + tx_rx_duration
+    while time.time() < t_end:
+        bt_dut.interfaces.bluetooth.bt_spp_transfer(send_text, bt_client_address)
+        data = bt_server_socket.recv()
+        assert data.decode() == send_text, f"Dut failed to recevie data from bt client"
+
+    logger().info(f"Sending data from bt_client to dut-SPP Rx for 60 sec")
+    t_end = time.time() + tx_rx_duration
+    while time.time() < t_end:
+        with bt_dut.interfaces.wifi.run_bt_task():
+            sent = bt_server_socket.send(recv_text)
+            assert sent, f"Sending Data to the DUT failed"
+            data_sent = bt_server_socket.recv()
+            assert data_sent.decode() == recv_text, f"Data sent by Remote is different from data received by DUT"
+
+    logger().info(f"**** Disconnect to BT device ****")
+    bt_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+
+
+#This testcase requirement to send 800 bytes or more data from bt_client to DUT, Please refer this testagent JIRA:WIFI_BT_UTFHELP-1393
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_bt_spp_rx_800bytes_data_transfer_c20044(bt_dut, bt_client):
+    send_text = text_generator(size=210)
+    recv_text = send_text
+    bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_slave_spp()
+    assert bt_dut_address, "Unable to get BT DUT device"
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
+    assert bt_client_address, "Unable to get BT client address"
+
+    found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+    assert found, f"Dut unable to find the bt client device:{bt_dut_address}"
+
+    logger().info(f"Starting Raspberry PI as BT Server")
+    bt_server_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server)
+    # SPP Connection
+    with bt_dut.interfaces.wifi.run_bt_task():
+        bt_server_socket.create_server()
+        logger().info(f"Connecting Raspberry PI to DUT-BT")
+        connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
+        assert connected, "Unable to find BT server socket connection"
+        logger().info(f" BT_CONNECT SUCCESSFUL ")
+    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+        dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
+
+    # Send data from bt_client to dut
+    with bt_dut.interfaces.wifi.run_bt_task():
+        sent = bt_server_socket.send(recv_text)  # SQA Agent is programmed to send back data
+        assert sent, "Unable to send data"
+        time.sleep(10)
+        data = bt_server_socket.recv()
+        assert data.decode() == recv_text, "Unable to receive data sent from bt_client to dut"
+
+    # Ping dut
+    logger().info(f"**** pinging to DUT ****")
+    assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
+        f"Failed to ping BT client to DUT"
+
+    logger().info(f"**** Disconnect to BT device ****")
+    bt_dut.interfaces.wifi.bt_disconnect(bt_client_address)
+
+
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_bt_spp_tx_remote_device_disconnect_c20046(bt_dut, bt_client, tx_rx_duration=30):
     send_text = text_generator()

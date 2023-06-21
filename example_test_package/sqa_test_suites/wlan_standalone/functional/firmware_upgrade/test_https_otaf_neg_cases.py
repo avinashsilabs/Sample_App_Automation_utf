@@ -12,8 +12,10 @@ from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
 
+
 def logger():
     return get_logger(__name__)
+
 
 """
     setup requirement:
@@ -35,6 +37,7 @@ def logger():
 # Otaf timeout for deinit
 timeout = 60
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -54,7 +57,7 @@ timeout = 60
 def test_https_fw_upgrade_failure_when_enabled_only_bt_C19774(http_server, wifi_dut, wifi_access_point):
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True,"server is inactive"
+    assert server_stat == True, "server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -93,7 +96,7 @@ def test_https_fw_upgrade_failure_when_enabled_only_ble_C19774(http_server, wifi
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True,"server is inactive"
+    assert server_stat == True, "server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -133,7 +136,7 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
     """ ******* SERVER CHECKS ******* """
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True,"server is inactive"
+    assert server_stat == True, "server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
@@ -152,6 +155,7 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
         wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443)
     assert exc_info.value.error_code == 0x21, "observed wrong error code expected is 0x21"
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -167,20 +171,21 @@ def test_https_fw_upgrade_failure_when_enabled_only_dual_bt_C19774(http_server, 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wifi_access_point, wifi_sniffer):
+def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
+                                                      utf_constants):
     """ ******* SERVER CHECKS ***** """
     logger().info("checking server stats....")
     server_stat = http_server.interfaces.http.started
-    assert server_stat == True,"server is inactive"
+    assert server_stat, "server is inactive"
     logger().info(f'http server state is {server_stat}')
 
     logger().info("fetching server ip....")
-    host_ip = get_host_ip()
+    host_ip = http_server.interfaces.http.hostname_or_ip_address
     logger().info(f"server ip is {host_ip}")
 
     logger().info("pinging to server ip....")
     status = ping(host_ip, 10)
-    assert status == 1, "unable to ping to server"
+    assert status, "unable to ping to server"
 
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -190,17 +195,9 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
 
     logger().info("dut fw version before upgrade...")
     wifi_dut.interfaces.wifi.version()
-
-    logger().info("Joining ap....")
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-
-    logger().info("configuring dhcp...")
-    result = wifi_dut.interfaces.wifi.start_ip()
-    assert isinstance(
-        result, wifi_dut.interfaces.wifi.IPConfig
-    ), f"Failed to get IP address. Result = {result}"
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-    logger().info(f'device ip {device_ip}')
+    device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                   power_save=False)
+    logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
 
     logger().info("performing fw upgrade on dut by removing data in .xls file....")
     wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "RS9116.2.5.0.4_remove.xls")
@@ -219,12 +216,14 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xBB41"
 
     time.sleep(5)
-    logger().info("resetting DUT....")
+    logger().info("Initiating wireless_deinit from DUT....")
     wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
     time.sleep(10)
 
     logger().info("Initialising DUT after the reset....")
-    wifi_dut.interfaces.wifi.dut_init()
+    wifi_dut.interfaces.wifi.inited = False
+    wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+    wifi_dut.interfaces.wifi.associated = False
 
     logger().info("Fetching the DUT version...")
     wifi_dut.interfaces.wifi.version()
@@ -232,3 +231,6 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
+
+
+

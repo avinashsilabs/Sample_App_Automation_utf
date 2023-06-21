@@ -46,7 +46,6 @@ def clean_up_method(wifi_dut, switch):
         logger().info("Disconnect from AP")
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
     except:
         logger().info("******* Recovering the DUT  **********")
         wifi_dut.interfaces.wifi.reset()
@@ -81,10 +80,8 @@ def clean_up_method(wifi_dut, switch):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
-def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      execute_number):
+def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -424,10 +421,9 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      protocol, net_perf_client, execute_number):
+                                      protocol, net_perf_client):
     ping_iterations = 10
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -557,10 +553,9 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      protocol, net_perf_client, execute_number):
+                                      protocol, net_perf_client):
     ping_iterations = 10
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -682,10 +677,9 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      protocol, net_perf_client, execute_number):
+                                      protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -903,10 +897,9 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(2))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      protocol, net_perf_client, execute_number):
+                                      protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -1022,10 +1015,9 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      protocol, net_perf_client, execute_number):
+                                      protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -1169,10 +1161,9 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config('wifi_access_point',
                     wifi={"dhcp_start": "192.168.50.12", "dhcp_end": "192.168.50.20", "dhcp_lease": "180"})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize('execute_number', range(1))
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
-                                      protocol, net_perf_client, execute_number):
+                                      protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False

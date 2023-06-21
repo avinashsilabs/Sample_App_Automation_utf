@@ -14,6 +14,7 @@ from utf.utils.thread_base import ThreadBase
 import threading
 from threading import *
 import time
+
 lock = threading.RLock()
 
 """
@@ -36,8 +37,10 @@ lock = threading.RLock()
     Author: swathi.pathuri
 """
 
+
 def logger():
     return get_logger(__name__)
+
 
 ping_count = 120
 
@@ -116,7 +119,6 @@ class traffic_generator:
         self.__print_throughput(tp)
 
 
-
 class eap_join:
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, eap_type="TLS"):
@@ -134,12 +136,12 @@ class eap_join:
                                                   timeout=40)
 
 
-
 # this thread used for wifi join
 class WifiThread(ThreadBase):
-    def __init__(self, wifi_sniffer=None, wifi_dut=None, \
-                 wifi_access_point=None, eap_type="TLS", testcase=None, wifi_client=None, \
-                 net_perf_client=None, protocols=None, traffic_types=None, http_server=None, index_path=None):
+    def __init__(self, wifi_sniffer=None, wifi_dut=None,
+                 wifi_access_point=None, eap_type="TLS", testcase=None, wifi_client=None,
+                 net_perf_client=None, protocols=None, traffic_types=None, http_server=None, index_path=None,
+                 tcp_ip_bypass=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -156,6 +158,7 @@ class WifiThread(ThreadBase):
         self.ap_bssid = None
         self.http_server = http_server
         self.index_path = index_path
+        self.tcp_ip_bypass = tcp_ip_bypass
 
     def run_traffic(self):
 
@@ -184,20 +187,21 @@ class WifiThread(ThreadBase):
         with lock:
             ej = eap_join(self.wifi_dut, self.wifi_access_point, self.eap_type)
             ej.join_ap()
-            for count in range(1, 4):
-                try:
-                    ip_config = self.wifi_dut.interfaces.wifi.start_ip()
-                    assert isinstance(ip_config,
-                                      self.wifi_dut.interfaces.wifi.IPConfig), \
-                        f"Failed to get IP address. Result = {ip_config}"
-                    self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-                    break
-                except Exception as e:
-                    logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}"
-                                  f"\n Exception: {e}")
-                    time.sleep(10)
-            assert self.device_ip, "ip setting in DUT has failed"
-            logger().info(f"Found device ip :{self.device_ip}")
+            if not self.tcp_ip_bypass:
+                for count in range(1, 4):
+                    try:
+                        ip_config = self.wifi_dut.interfaces.wifi.start_ip()
+                        assert isinstance(ip_config,
+                                          self.wifi_dut.interfaces.wifi.IPConfig), \
+                            f"Failed to get IP address. Result = {ip_config}"
+                        self.device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                        break
+                    except Exception as e:
+                        logger().info(f"Get IP address through dhcp process is failed. retry count -> {count}"
+                                      f"\n Exception: {e}")
+                        time.sleep(10)
+                assert self.device_ip, "ip setting in DUT has failed"
+                logger().info(f"Found device ip :{self.device_ip}")
 
             logger().info("Getting the DUT mac")
             self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -222,25 +226,26 @@ class WifiThread(ThreadBase):
         else:
             ping_count = 100
 
-        for count in range(3):
-            try:
-                logger().info("pinging to dut after power-save.....")
-                status = ping(self.device_ip, ping_count)
-                assert status == 1, "DUT not responding for ping request......"
-                logger().info("ping to DUT is successful....")
-                break
-            except Exception as e:
-                logger().info(f"ping to dut is failed...retry count->{count + 1}"
-                              f"\n Exception: {e}")
+        if not self.tcp_ip_bypass:
+            for count in range(3):
+                try:
+                    logger().info("pinging to dut after power-save.....")
+                    status = ping(self.device_ip, ping_count)
+                    assert status == 1, "DUT not responding for ping request......"
+                    logger().info("ping to DUT is successful....")
+                    break
+                except Exception as e:
+                    logger().info(f"ping to dut is failed...retry count->{count + 1}"
+                                  f"\n Exception: {e}")
 
         if self.net_perf_client:
             self.run_traffic()
 
-        logger().info("Initiating disconnect from DUT")
-        # Wlan Disconnect
-        self.wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-
+        if not self.tcp_ip_bypass:
+            logger().info("Initiating disconnect from DUT")
+            # Wlan Disconnect
+            self.wifi_dut.interfaces.wifi.leave()
+            time.sleep(10)
 
     def verify_sniffer_validation(self):
 
@@ -289,16 +294,16 @@ class WifiThread(ThreadBase):
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
                 'packet_count'], 'Unable to find EAP frames sent from AP in sniffer '
 
-        logger().info(f"Validating QOS  data frames with more data bit")
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
-            'packet_count'], 'Unable to find more data bit set in QOS Data frames in sniffer capture'
+        if not self.tcp_ip_bypass:
+            logger().info(f"Validating QOS  data frames with more data bit")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+                'packet_count'], 'Unable to find more data bit set in QOS Data frames in sniffer capture'
 
         logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
             'packet_count'], 'Unable to find ps polls in sniffer capture'
 
         logger().info("Successfully validated sniffer packets")
-
 
 
 # this thread used for sta+ble as a slave
@@ -309,7 +314,6 @@ class BleThread_Advertise(ThreadBase):
         self.ble_client = ble_client
         self.adv_int = adv_int
         self.bt_dut_address = None
-
 
     def stop_adv_scan(self):
         logger().info("Initiating stop advertise from DUT")
@@ -328,7 +332,8 @@ class BleThread_Advertise(ThreadBase):
             logger().info(f"Advertising the DUT")
             if self.adv_int:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=int(self.adv_int / 0.625),
-                                                                    ble_adv_int_max=int(self.adv_int / 0.625), timeout=30)
+                                                                    ble_adv_int_max=int(self.adv_int / 0.625),
+                                                                    timeout=30)
             else:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
@@ -348,6 +353,7 @@ class BleThread_Advertise(ThreadBase):
             logger().info("\n***scan results:{}**********\n".format(found_devices))
 
         assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
+
 
 # this thread used for sta+ble as a slave
 class BleThread_Connection(ThreadBase):
@@ -412,13 +418,13 @@ class BleThread_Connection(ThreadBase):
                 # logger().info(f"Dut is in connected state {state_int}")
 
             if self.mode == "ble_slave":
-
                 logger().info("Initiating advertise from DUT")
                 self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
                 logger().info("Initiating BLE scan from remote device")
                 # Begin Scanning for BLE devices
-                self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
+                self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                    bt_dut_address=self.bt_dut_address)
                 assert self.bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
                 time.sleep(5)
                 # See that we found our device
@@ -430,8 +436,6 @@ class BleThread_Connection(ThreadBase):
                 time.sleep(60)
 
 
-
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -439,23 +443,23 @@ class BleThread_Connection(ThreadBase):
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
+                    | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
-        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+                              | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
         "eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TLS mode
+# EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
@@ -490,23 +494,23 @@ def test_sta_ble_TLS_BLE_adv_C133461(radius_server, wifi_sniffer, wifi_access_po
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
+                    | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
-        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+                              | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
-        #"eap_cert": "wifi-user.pem"
+        # "eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TLS mode
+# EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
@@ -541,23 +545,23 @@ def test_sta_ble_TTLS_BLE_adv_C133462(radius_server, wifi_sniffer, wifi_access_p
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
+                    | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
-        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+                              | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
-        #"eap_cert": "wifi-user.pem"
+        # "eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TLS mode
+# EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
@@ -584,8 +588,6 @@ def test_sta_ble_PEAP_BLE_adv_C133463(radius_server, wifi_sniffer, wifi_access_p
     ble_obj.stop()
 
 
-
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -593,28 +595,29 @@ def test_sta_ble_PEAP_BLE_adv_C133463(radius_server, wifi_sniffer, wifi_access_p
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
+                    | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
-        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+                              | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
         "eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TLS mode
+# EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
-def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client):
+def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
+                                     net_perf_client):
     testcase = "test_sta_ble_TCP_UDP_TLS_C133451"
     logger().info("testcase : test_sta_ble_TCP_UDP_TLS_C133451")
     validation = True
@@ -642,8 +645,6 @@ def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_po
     ble_obj.stop()
 
 
-
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -651,29 +652,29 @@ def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_po
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
+                    | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-        | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+                               | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
-        | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | RS9116CertificateType.EAPClientCertificate,
+                              | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "band": 0,
-        #"eap_cert": "wifi-user.pem"
+        # "eap_cert": "wifi-user.pem"
     }
 )
- #EAP Connection in TTLS mode
+# EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
 def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
-                                     net_perf_client):
+                                      net_perf_client):
     testcase = "test_sta_ble_TCP_UDP_TTLS_C133452"
     logger().info("testcase : test_sta_ble_TCP_UDP_TTLS_C133452")
     validation = True
@@ -699,5 +700,155 @@ def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_p
     logger().info("stopping capture")
     wifi_sniffer.interfaces.capture.stop_capture()
     wifi_obj.verify_sniffer_validation()
+    wifi_obj.stop()
+    ble_obj.stop()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+# EAP Connection in TLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
+                                         "disassociated", "ble_stop_adv", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server")
+def test_sta_connection_in_eap_tls_mode_when_ble_adv_in_tcpip_bypass_C133497(radius_server, wifi_sniffer,
+                                                                             wifi_access_point,
+                                                                             wifi_dut, ble_client):
+    logger().info("Configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file="test_sta_ble_eap_tls_C133497")
+    ble_obj = BleThread_Advertise(wifi_dut, ble_client)
+    wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          eap_type="TLS", tcp_ip_bypass=True)
+    ble_obj.start()
+    wifi_obj.start()
+
+    wifi_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
+    ble_obj.stop_adv_scan()
+
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_obj.verify_sniffer_validation()
+
+    wifi_obj.stop()
+    ble_obj.stop()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+# EAP Connection in TTLS mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
+                                         "disassociated", "ble_stop_adv", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server")
+def test_sta_connection_in_eap_ttls_mode_when_ble_adv_in_tcpip_bypass_C133498(radius_server, wifi_sniffer,
+                                                                              wifi_access_point,
+                                                                              wifi_dut, ble_client):
+    logger().info("Configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file="test_sta_ble_eap_ttls_C133498")
+    ble_obj = BleThread_Advertise(wifi_dut, ble_client)
+    wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          eap_type="TTLS", tcp_ip_bypass=True)
+    ble_obj.start()
+    wifi_obj.start()
+
+    wifi_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
+    ble_obj.stop_adv_scan()
+
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_obj.verify_sniffer_validation()
+
+    wifi_obj.stop()
+    ble_obj.stop()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 2,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
+                           | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | RS9116CertificateType.EAPClientCertificate,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "band": 0,
+        "eap_cert": "wifi-user.pem"
+    }
+)
+# EAP Connection in PEAP mode
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
+                                         "disassociated", "ble_stop_adv", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server")
+def test_sta_connection_in_eap_peap_mode_when_ble_adv_in_tcpip_bypass_C133499(radius_server, wifi_sniffer,
+                                                                              wifi_access_point,
+                                                                              wifi_dut, ble_client):
+    logger().info("Configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file="test_sta_ble_eap_peap_C133499")
+    ble_obj = BleThread_Advertise(wifi_dut, ble_client)
+    wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          eap_type="PEAP", tcp_ip_bypass=True)
+    ble_obj.start()
+    wifi_obj.start()
+
+    wifi_obj.wait_for_exit()
+    ble_obj.wait_for_exit()
+    ble_obj.stop_adv_scan()
+
+    logger().info("Stopping sniffer capture")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_obj.verify_sniffer_validation()
+
     wifi_obj.stop()
     ble_obj.stop()

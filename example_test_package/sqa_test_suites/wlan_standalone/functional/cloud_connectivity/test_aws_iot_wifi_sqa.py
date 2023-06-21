@@ -726,11 +726,11 @@ def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sni
         message1 = text_generator(size=1)
         message2 = text_generator(size=10)
         message3 = text_generator(size=100)
-        # message4 = text_generator(size=512)
-        # message5 = text_generator(size=1000)
+        message4 = text_generator(size=512)
+        message5 = text_generator(size=1000)
         # message6 = text_generator(size=1390)
 
-        message = {"message1": message1, "message2": message2, "message3": message3}
+        message = {"message1": message1, "message2": message2, "message3": message3, "message4":message4, "message5":message5}
         # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5, "message6": message6}
         logger.info(f"Messages are:{message}")
 

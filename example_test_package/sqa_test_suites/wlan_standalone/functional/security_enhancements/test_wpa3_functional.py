@@ -88,61 +88,13 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point,utf_cons
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_scan_c34503_04_05_07')
     time.sleep(2)
     ping_count = utf_constants.get("ping_count")
-    for count in range(1, 3):
-        try:
-            scan_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-            scan_fail = 0
-            break
-        except:
-            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
-            time.sleep(1)
-    if scan_fail:
-        logger().info(f"Scanning to the AP has failed")
-        assert scan_fail == 0, "Scanning to the AP is failed"
 
-    time.sleep(2)
+    scan_dict = [{"ssid": None, "channel": 0}, {"ssid": None, "channel": wifi_access_point.interfaces.wifi.channel},
+                 {"ssid": wifi_access_point.interfaces.wifi.ssid, "channel": wifi_access_point.interfaces.wifi.channel}]
 
-    for count in range(1, 3):
-        try:
-            scan_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel)
-            scan_fail = 0
-            break
-        except:
-            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
-            time.sleep(1)
-    if scan_fail:
-        logger().info(f"Scanning to the AP has failed")
-        assert scan_fail == 0, "Scanning to the AP is failed"
-
-    time.sleep(2)
-
-    for count in range(1, 3):
-        try:
-            scan_fail = 1
-            # DUT connects to AP after join_ap API is executed
-            logger().info("Scanning to the Wifi Access Point")
-            wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid,
-                                          channel=wifi_access_point.interfaces.wifi.channel)
-            scan_fail = 0
-            break
-        except:
-            logger().info(f"Scanning to the Wifi Access Point is failed. retry count -> {count}")
-            time.sleep(1)
-    if scan_fail:
-        logger().info(f"Scanning to the AP has failed")
-        assert scan_fail == 0, "Scanning to the AP is failed"
-
-    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    logger().info(f"DUT MAC_Address: {dut_mac_address}")
-
-    result = wifi_dut.interfaces.wifi.version()
-    logger().info(f" DUT_Version: {result}")
+    for i in range(len(scan_dict)):
+        assert wifi_dut.interfaces.wifi.scan(ssid=scan_dict[i]['ssid'], channel=scan_dict[i]['channel'])
+        time.sleep(3)
 
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point,
                                      join_feature_bitmap=RS9116JoinFeatureBitMap.MgmtFrameProtectionCapable
@@ -150,6 +102,12 @@ def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point,utf_cons
     time.sleep(1)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+    dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger().info(f"DUT MAC_Address: {dut_mac_address}")
+
+    result = wifi_dut.interfaces.wifi.version()
+    logger().info(f" DUT_Version: {result}")
 
     packet_filter3 = f'(wlan.fixed.sae_message_type == 1) || (wlan.fixed.sae_message_type == 2)' \
                      f' && wlan.addr == {dut_mac_address}'
@@ -944,7 +902,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"channel": 149, "security": 'WPA3'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -956,7 +914,6 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.ULPGPIOHandshake,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.IEEE802_11W,
-        "band": 1,
     }
 )
 def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, utf_constants):

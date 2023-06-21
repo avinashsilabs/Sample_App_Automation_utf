@@ -52,3 +52,8 @@ firmware_applications:
     - device_type: 'efx32'
       device_subtype: 'efr32'
       filename: 'ap_htcaps_enable.hex'
+
+    test_aws:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: 'aws_test_agent.hex'

@@ -440,6 +440,7 @@ def dut_clean_up(wifi_dut, ble_client_address=None, bt_client_address=None, bt_s
             f"******* Exception occurred while cleaning up the DUT\nException is:{err}\nRecovering the DUT using reset **********")
         wifi_dut.interfaces.wifi.reset()
         time.sleep(20)
+    wifi_dut.interfaces.wifi.inited = False
     logger().info("\n ---------------------------- Cleaning UP of DUT is Completed ----------------------------")
 
 
@@ -900,7 +901,6 @@ def test_sta_bt_ble_connection_stability_C20078(firmware_loader, wifi_sniffer, r
     },
 )
 @pytest.mark.bt_classic
-@pytest.mark.dut("rs9116_sapi")
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut",

@@ -47,7 +47,6 @@ def logger():
 timeout = 60
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -186,9 +185,9 @@ def test_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, 
     logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
                   f" firmware version after loading through otaf :{fw_after_upgrade}")
     assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
-                                                 f" firmware through otaf"
+                                                  f" firmware through otaf"
     logger().info(f"\n ***firmware versions not matched after loading" \
-                                                 f" firmware through otaf\n")
+                  f" firmware through otaf\n")
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
@@ -414,7 +413,6 @@ def test_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wi
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 def test_http_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19783(http_server, wifi_dut, wifi_access_point,
                                                                     wifi_sniffer, wifi_client, utf_constants):
-
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
@@ -674,7 +672,6 @@ def test_http_otaf_ap_11n_mode(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                               wifi_client, utf_constants):
-
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
@@ -752,7 +749,6 @@ def test_http_fw_upgrade_in_UART_mode_and_measure_time_C19789(http_server, wifi_
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     time.sleep(10)
-
 
 
 @pytest.mark.skip(reason="skipped as it is removed from test rail")
@@ -860,7 +856,6 @@ def test_http_fw_upgrade_in_ps_mode_and_measure_time_C19790(http_server, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 def test_http_fw_upgrade_in_Q7_board_and_measure_time_C19792(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                              wifi_client, utf_constants):
-
     logger().info("checking weather server is running....")
     server_stat = http_server.interfaces.http.started
     assert server_stat == True, "server is inactive"
@@ -1717,6 +1712,8 @@ def test_http_fw_upgrade_in_rejoin_and_measure_time_C19788(http_server, wifi_dut
             time.sleep(30)
 
 
+# Skipping the test case , Since the ethernet interface turn off and turn on making the firmware download stop and marking it as manual
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
