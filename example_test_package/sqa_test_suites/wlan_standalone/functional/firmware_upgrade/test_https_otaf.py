@@ -1570,6 +1570,8 @@ def test_https_fw_upgrade_in_rejoin_and_measure_time_C19766(http_server, wifi_du
             time.sleep(30)
 
 
+# Skipping the test case , Since the ethernet interface turn off and turn on making the firmware download stop and marking it as manual
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
