@@ -351,8 +351,8 @@ class BleThread_Advertise(ThreadBase):
             # See that we found our device
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
             logger().info("\n***scan results:{}**********\n".format(found_devices))
-
         assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
+        logger().info(f"DUT BLE address:'{self.bt_dut_address}' found in raspi scan results")
 
 
 # this thread used for sta+ble as a slave
@@ -711,7 +711,7 @@ def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_p
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
                            | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
@@ -731,7 +731,7 @@ def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_p
 @pytest.mark.radius_server("raspi_radius_server")
 def test_sta_connection_in_eap_tls_mode_when_ble_adv_in_tcpip_bypass_C133497(radius_server, wifi_sniffer,
                                                                              wifi_access_point,
-                                                                             wifi_dut, ble_client):
+                                                                              wifi_dut, ble_client):
     logger().info("Configuring the Sniffer with the channel")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info("start capturing with Sniffer by giving the test case name as filename")
@@ -761,7 +761,7 @@ def test_sta_connection_in_eap_tls_mode_when_ble_adv_in_tcpip_bypass_C133497(rad
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
                            | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
@@ -811,7 +811,7 @@ def test_sta_connection_in_eap_ttls_mode_when_ble_adv_in_tcpip_bypass_C133498(ra
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Default,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.TCPIPBypass,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid
                            | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
