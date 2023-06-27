@@ -1,4 +1,4 @@
-# Test author: Achal Raghav & Vinod G.
+# Test author: Achal Raghav,Vinod G & Pallavi Y D.
 # Test suite: MQTT_SAPI
 import time
 import pytest
@@ -19,6 +19,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116BLECustomFeatureBitMap
 )
 from utf.utils.stopwatch import Stopwatch
+from utf.utils.time_measurer import TimeMeasurer
 from retry import retry
 import string
 from utf.interfaces.wifi import WlanError
@@ -58,6 +59,17 @@ def ApWirelessOff(switch, wait_time, logger):
     time.sleep(wait_time)
     logger.info(f"Enable the PDU")
     switch.interfaces.pdu_switch.turn_on()
+
+
+@retry(Exception, delay=15, tries=5)
+def subscribe_and_publish(mqtt_client, wifi_dut, topic, message, logger, qos):
+    if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+        logger.info("MQTT client subscribes to the topic")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=qos)
+
+    # publish a message with the dut
+    logger.info("DUT publishes message over the topic")
+    wifi_dut.interfaces.mqtt.mqtt_client_publish(topic, message.encode(), qos=qos)
 
 
 def ssl_tcp_packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_address, ap_bssid, print_layers: list,
@@ -128,6 +140,18 @@ def ssl_tcp_packet_check(wifi_sniffer, logger, decryption_key: str, dut_mac_addr
     return result_ssl, result_tcp
 
 
+@retry(Exception, delay=60, tries=5)
+def wifi_bt_powersave(wifi_dut, logger):
+    # The below api puts DUT to power save
+    logger.info("Enabling WLAN and BT power save")
+    enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_ps, "WLAN power save failed"
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "BT power save failed"
+
+
 def get_mqtt_list(wifi_sniffer, dut_mac_address, logger, decryption_key: str, print_layers: list, capture_filename,
                   mode=0) -> Dict[str, int]:
     mqtt_capture_list = []
@@ -165,9 +189,10 @@ def get_mqtt_list(wifi_sniffer, dut_mac_address, logger, decryption_key: str, pr
     return mqtt_capture_list
 
 
-@retry(Exception, delay=15, tries=5)
+
 def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger):
     ping_count = 10
+    wifi_dut.interfaces.wifi.associated = False
     result = wifi_dut.interfaces.wifi.version()
     logger.info(f"DUT firmware version: {result}")
     logger.info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
@@ -219,14 +244,16 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         logger.info(f"ping to DUT is successful")
     else:
         logger.info(f"ping to DUT is failed")
-    # The below api puts DUT to power save
-    logger.info("Enabling WLAN and BT power save")
-    enable_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_ps, "WLAN power save failed"
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_bt_ps, "BT power save failed"
+    logger.info(f" API to enable wifi and BT powersave")
+    wifi_bt_powersave(wifi_dut, logger)
+    events = wifi_dut.interfaces.wifi.get_async_events()
+    rejoin_error_events = [event
+                           for event in events
+                           if event.event_type == RS9116AsyncEventType.RejoinError]
+    if len(rejoin_error_events):
+        logger.info(f" ==== Rejoin error occurred So Rejoining to the AP ======")
+        join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    time.sleep(0.1)
     return mac_address
 
 
@@ -405,6 +432,7 @@ def test_mqtt_qos0_connect_publish_max_data_1441bytes_check_dut_behaviour_TC1278
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
@@ -802,6 +830,7 @@ def test_mqtt_server_publish_data_and_check_rejoin_C127758(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -904,6 +933,7 @@ def test_mqtt_server_with_ssl_conn_enable_retain_bit_publish_data_C127759(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1009,9 +1039,11 @@ def test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_5_iter_C127803(
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
 def test_qos1_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_data_C127789(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
@@ -1116,6 +1148,7 @@ def test_qos1_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_dat
         "ca_cert": "ca-chain.cert.pem"
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1221,6 +1254,7 @@ def test_qos0_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_dat
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1309,6 +1343,7 @@ def test_qos0_mqtt_with_tcp_publish_diff_length_1_10_100_512_1000_1390_bytes_dat
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1378,3 +1413,309 @@ def test_qos1_mqtt_with_tcp_publish_diff_length_1_10_100_512_1000_1390_bytes_dat
         logger.info("===== Disconnect from DUT =======")
         wifi_dut.interfaces.wifi.leave()
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.HTTPServer | RS9116TCPIPFeatureBitMap.HTTPClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ble_features": RS9116BLEFeatureBitMap.TXPowerIndex | RS9116BLEFeatureBitMap.GattSyncBit | RS9116BLEFeatureBitMap.BLECustomFeatureBitmapValid,
+        "ble_custom_ext_features": RS9116BLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
+        "rejoin_max_retry": 0,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        "set_send_feature_frame": True,
+        "ca_cert": "ca-chain.cert.pem"
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+# The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+def test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_30_min_C127798(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
+):
+    loop_watch = Stopwatch()
+    while loop_watch.elapsed_sec < 1800:
+        logger.info(f"============ {loop_watch.elapsed_sec} seconds are completed for connect, subscribe, 400 bytes "
+                    f"of data publish and close ===========")
+        topic = "mytesttopic"
+        # The api returns 1441 bytes of random data
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
+        capture_filename = "test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_30_min_C127798"
+        dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        client_devices = [wifi_dut, mqtt_client]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        # Both DUT and third-party mqtt client connects to MQTT server
+        logger.info("Both DUT and third-party mqtt client connects to MQTT server")
+        mqtt_client.interfaces.mqtt.received_messages.clear()
+        for device in client_devices:
+            device.interfaces.mqtt.mqtt_client_connect_to_server(
+                mqtt_server.interfaces.mqtt
+            )
+        time.sleep(5)
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            logger.info("MQTT client subscribes to the topic")
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+
+        # publish a message with the dut
+        logger.info("DUT publishes message over the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic, message.encode(), qos=RS9116MqttQos.QOS1)
+
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                    "message " \
+                                                    "received is wrong"
+        assert msgs[0].qos == RS9116MqttQos.QOS1, "mqtt-client received message with wrong QOS. expected is QOS1"
+        # unsubscribe to the topic
+        logger.info("MQTT client unsubscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic)
+        wifi_dut.interfaces.wifi.mqtt_client_close()
+        logger.info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info(f"========== Validation of ssl packet (server hello, client hello, client key exchange, Encrypted "
+                    f"Handshake Message ==============")
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        logger.info(f"DECRYPTION KEY-->{decryption_key}")
+        ssl_pkt, tcp_pkt = ssl_tcp_packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid,
+                                                ["tls", "tcp"],
+                                                capture_filename, mode=0)
+        assert (message for message in ssl_pkt if "Client Hello" in ssl_pkt), "Unable to find 'Client Hello' message"
+        assert (message for message in ssl_pkt if "Server Hello" in ssl_pkt), "Unable to find 'Server Hello' message"
+        assert (message for message in ssl_pkt if "Client Key Exchange" in ssl_pkt), \
+            "Unable to find 'Client Key Exchange' message"
+        assert (message for message in ssl_pkt if "Encrypted Handshake Message" in ssl_pkt), \
+            "Unable to find 'Encrypted Handshake Message' "
+        assert (message for message in ssl_pkt if "Change Cipher Spec" in ssl_pkt), \
+            "Unable to find 'Change Cipher Spec' message"
+        logger.info(f"===== TCP Packet decryprtion and check SYN, FIN, ACK, FIN ACK ======")
+        assert (message for message in tcp_pkt if "Flags: 0x002 (SYN)" in tcp_pkt), "Unable to find SYN packet"
+        assert (message for message in tcp_pkt if "Flags: 0x012 (SYN, ACK)" in tcp_pkt), "Unable to find SYN ACK"
+        assert (message for message in tcp_pkt if "Flags: 0x010 (ACK)" in tcp_pkt), \
+            "Unable to find ACK"
+        assert (message for message in tcp_pkt if "Flags: 0x011 (FIN, ACK)" in tcp_pkt), \
+            "Unable to find FIN ACK "
+        wifi_dut.interfaces.wifi.leave()
+        logger.info("Disable the wifi and bt power save")
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled, 0)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.HTTPServer | RS9116TCPIPFeatureBitMap.HTTPClient | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ble_features": RS9116BLEFeatureBitMap.TXPowerIndex | RS9116BLEFeatureBitMap.GattSyncBit | RS9116BLEFeatureBitMap.BLECustomFeatureBitmapValid,
+        "ble_custom_ext_features": RS9116BLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
+        "rejoin_max_retry": 0,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        "set_send_feature_frame": True,
+        "ca_cert": "ca-chain.cert.pem"
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+# The test case checks whether the DUT is able to connect to MQTT server over TCP when authentication feature is enabled
+def test_subscribe_mqtt_qos0_with_ssl_subscribe_unscribe_for_30_min_C127788(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
+):
+    topic = "mytesttopic"
+    # The api returns 1441 bytes of random data
+    message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
+    capture_filename = "test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_30_min_C127798"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+    client_devices = [wifi_dut, mqtt_client]
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
+    # Both DUT and third-party mqtt client connects to MQTT server
+    logger.info("Both DUT and third-party mqtt client connects to MQTT server")
+    for device in client_devices:
+        device.interfaces.mqtt.mqtt_client_connect_to_server(
+            mqtt_server.interfaces.mqtt
+        )
+    time.sleep(5)
+    loop_watch = Stopwatch()
+    while loop_watch.elapsed_sec < 1800:
+        logger.info(f"====== {loop_watch.elapsed_sec} seconds are completed =======")
+        mqtt_client.interfaces.mqtt.received_messages.clear()
+        subscribe_and_publish(mqtt_client, wifi_dut, topic, message, logger, qos=RS9116MqttQos.QOS0)
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                    "message " \
+                                                    "received is wrong"
+        assert msgs[0].qos == RS9116MqttQos.QOS0, "mqtt-client received message with wrong QOS. expected is QOS0"
+        # unsubscribe to the topic
+        logger.info("MQTT client unsubscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic)
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    logger.info(f"========== Validation of ssl packet (server hello, client hello, client key exchange, Encrypted "
+                f"Handshake Message ==============")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger.info(f"DECRYPTION KEY-->{decryption_key}")
+    ssl_pkt, tcp_pkt = ssl_tcp_packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid,
+                                            ["tls", "tcp"],
+                                            capture_filename, mode=0)
+    assert (message for message in ssl_pkt if "Client Hello" in ssl_pkt), "Unable to find 'Client Hello' message"
+    assert (message for message in ssl_pkt if "Server Hello" in ssl_pkt), "Unable to find 'Server Hello' message"
+    assert (message for message in ssl_pkt if "Client Key Exchange" in ssl_pkt), \
+        "Unable to find 'Client Key Exchange' message"
+    assert (message for message in ssl_pkt if "Encrypted Handshake Message" in ssl_pkt), \
+        "Unable to find 'Encrypted Handshake Message' "
+    assert (message for message in ssl_pkt if "Change Cipher Spec" in ssl_pkt), \
+        "Unable to find 'Change Cipher Spec' message"
+    logger.info(f"===== TCP Packet decryprtion and check SYN, FIN, ACK, FIN ACK ======")
+    assert (message for message in tcp_pkt if "Flags: 0x002 (SYN)" in tcp_pkt), "Unable to find SYN packet"
+    assert (message for message in tcp_pkt if "Flags: 0x012 (SYN, ACK)" in tcp_pkt), "Unable to find SYN ACK"
+    assert (message for message in tcp_pkt if "Flags: 0x010 (ACK)" in tcp_pkt), \
+        "Unable to find ACK"
+    assert (message for message in tcp_pkt if "Flags: 0x011 (FIN, ACK)" in tcp_pkt), \
+        "Unable to find FIN ACK "
+    wifi_dut.interfaces.wifi.leave()
+    logger.info("Disable the wifi and bt power save")
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled, 0)
+    wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled, 0)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | RS9116TCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE | RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+        "ble_features": RS9116BLEFeatureBitMap.TXPowerIndex | RS9116BLEFeatureBitMap.GattSyncBit | RS9116BLEFeatureBitMap.BLECustomFeatureBitmapValid,
+        "ble_custom_ext_features": RS9116BLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
+        "rejoin_max_retry": 0,
+        "scan_interval": 6,
+        "beacon_missed_count": 40,
+        "first_time_retry": 0,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+# The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+def test_subscribe_mqtt_with_tcp_connnection_close_and_subscribe_again_for_30_min_C127796(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
+):
+    loop_watch = Stopwatch()
+    while loop_watch.elapsed_sec < 1800:
+        logger.info(f"============ {loop_watch.elapsed_sec} seconds are completed for connect, subscribe, 400 bytes "
+                    f"of data publish and close ===========")
+        topic = "mytesttopic"
+        capture_filename = "test_subscribe_mqtt_with_tcp_connnection_close_and_subscribe_again_for_30_min_C127796"
+        dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        client_devices = [wifi_dut, mqtt_client]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        # Both DUT and third-party mqtt client connects to MQTT server
+        logger.info("Both DUT and third-party mqtt client connects to MQTT server")
+        for device in client_devices:
+            device.interfaces.mqtt.mqtt_client_connect_to_server(
+                mqtt_server.interfaces.mqtt
+            )
+        time.sleep(5)
+        if mqtt_client.interfaces.mqtt.mqtt_client_is_connected:
+            logger.info("MQTT client subscribes to the topic")
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic, qos=RS9116MqttQos.QOS1)
+
+        logger.info(f" Publish data for length : {1000} bytes")
+        mqtt_client.interfaces.mqtt.received_messages.clear()
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
+        # publish a message with the dut
+        logger.info("DUT publishes message over the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic, message.encode(), qos=RS9116MqttQos.QOS1)
+
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[
+                   0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                   "message " \
+                                                   "received is wrong"
+        assert msgs[0].qos == RS9116MqttQos.QOS1, "mqtt-client received message with wrong QOS. expected is QOS1"
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop the sniffer")
+        # unsubscribe to the topic
+        logger.info("MQTT client unsubscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic)
+        wifi_dut.interfaces.wifi.mqtt_client_close()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop the sniffer")
+        logger.info(f"========== Validation of ssl packet (server hello, client hello, client key exchange, Encrypted "
+                    f"Handshake Message ==============")
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        logger.info(f"DECRYPTION KEY-->{decryption_key}")
+        ssl_pkt, tcp_pkt = ssl_tcp_packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid,
+                                                ["tls", "tcp"],
+                                                capture_filename, mode=0)
+        logger.info(f"===== TCP Packet decryprtion and check SYN, FIN, ACK, FIN ACK ======")
+        assert (message for message in tcp_pkt if "Flags: 0x002 (SYN)" in tcp_pkt), "Unable to find SYN packet"
+        assert (message for message in tcp_pkt if "Flags: 0x012 (SYN, ACK)" in tcp_pkt), "Unable to find SYN ACK"
+        assert (message for message in tcp_pkt if "Flags: 0x010 (ACK)" in tcp_pkt), \
+            "Unable to find ACK"
+        assert (message for message in tcp_pkt if "Flags: 0x011 (FIN, ACK)" in tcp_pkt), \
+            "Unable to find FIN ACK "
+        logger.info("===== Disconnect from DUT =======")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled, 0)
+        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled, 0)
