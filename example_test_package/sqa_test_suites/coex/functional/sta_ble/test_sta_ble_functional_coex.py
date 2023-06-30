@@ -25,7 +25,8 @@ from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service imp
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.bluetooth.bluez.gatt_application.link_loss_service import LinkLossService, \
     LinkLossAlertLevelCharacteristic
-from utf.utils import get_tls_certificate_dir
+from datetime import datetime
+import uuid
 
 """
     Setup Requirement: DUT(RS9116) , EFR32, 2 Raspberry PI required [ 2 BLE CLIENTS],
@@ -34,7 +35,6 @@ from utf.utils import get_tls_certificate_dir
     Description:Sta_ble_coex_basic_functionality Test cases
 """
 
-iperf_started = False
 ping_count = 30
 
 
@@ -398,6 +398,43 @@ def wlan_scan(wifi_dut, channel=None):
                 time.sleep(5)
                 if count == 4:
                     raise
+
+
+def packet_check(wifi_sniffer, decryption_key, dut_mac_address, ap_bssid, capture_filename):
+    current_time = time.time()
+    updated_capture_file = 'filter_' + capture_filename + '_' + str(
+        datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+    file_name = f'./reports/{updated_capture_file}.pcap'
+    local_capture_file = file_name
+    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.addr == {ap_bssid})'
+    wifi_sniffer.interfaces.capture.shell(
+        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+        f"frame.number -w "
+        f"{wlan_filter_file}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file, local_capture_file)
+
+    for packet in wifi_sniffer.interfaces.capture.iter_packets(
+            decrypt_packets=True,
+            encryption_type="WPA-PWD",
+            decryption_key=decryption_key,
+            capture_file_filter=local_capture_file):
+        for layer in packet.layers:
+            layer_name = layer.layer_name.lower()
+            if layer_name == "wlan":
+                mac_layer = str(layer)
+            if layer_name == "tcp":
+                tcp_layer = str(layer)
+                logger().info(tcp_layer)
+            if layer_name == "tls":
+                tls_layer = str(layer)
+                if re.search(".*Receiver address:", mac_layer) and re.search(".*Transmitter address:", mac_layer):
+                    received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
+                    receiver_address = re.search(received, mac_layer).group()
+                    transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
+                    transmitter_address = re.search(transmit, mac_layer).group()
+                    logger().info(f">>>>>>{receiver_address}>>>>>>{transmitter_address}")
 
 
 class wifi_traffic_thread(ThreadBase):
@@ -2174,7 +2211,7 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -2337,7 +2374,7 @@ def test_ble_pxp_link_loss_alert_func_when_tcp_tx_is_in_progress_C133561(firmwar
 @pytest.mark.ble_client("raspi_ble_client")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
 def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_ble_dev_C133574(wifi_dut, wifi_sniffer,
                                                                                                mqtt_client, mqtt_server,
@@ -2437,6 +2474,9 @@ def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_b
 
     logger().info("\nUnsubscribing from the topic....")
     wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic)
+
+    logger().info("Disconnecting from from the mqtt_server....")
+    wifi_dut.interfaces.mqtt.mqtt_client_close()
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -2582,27 +2622,19 @@ def test_func_and_data_transfer_of_2_ssl_socket_conn_while_ble_is_in_connection_
                         raise
             logger().info(f"Connection to AWS server on socket id->{sock} is successful")
 
-    pkt_count = 10000
-    buffer_length = 1370
-    bytes_sent = (pkt_count * buffer_length)
-    logger().info(f"\n\nSending data from DUT over ssl socket with socket id 0")
-    ssl_server.interfaces.ssl.data_receive(1, pkt_count, buffer_length)
-    wifi_dut.interfaces.wifi.send_data_pkts(0, buffer_length, pkt_count)
-    time.sleep(10)
-    bytes_received = ssl_server.interfaces.ssl.data_receive_stats(1)
-    assert bytes_sent == bytes_received, "Number of bytes sent by DUT and received on the remote peer not matched on socket 0"
-
     send_bytes = 1000
     sw = Stopwatch()
-    logger().info("\n\nSending data from DUT over ssl with socket id 1")
-    while sw.elapsed_sec < 30:
-        send_response = wifi_dut.interfaces.wifi.send(1, send_bytes)
-        assert send_response, "Data transfer failed from socket id 1"
-        if 'status 10' in str(send_response):
-            result = send_response.decode().replace("\r\n", '').strip()
-            match = re.findall(r"\d+", result)
-            if int(match[1]) == send_bytes:
-                logger().info(f"Send {send_bytes} bytes successfully")
+    logger().info("\n\nSending data from DUT with socket id 0 and 1 simultaneously")
+    while sw.elapsed_sec < 60:
+        result = ThreadBase.call_functions_simultaneously(
+            [(wifi_dut.interfaces.wifi.send, 0, send_bytes), (wifi_dut.interfaces.wifi.send, 1, send_bytes)])
+        for sock, send_response in enumerate(result):
+            assert send_response, f"Data transfer failed from socket id:{sock}"
+            if 'status 10' in str(send_response):
+                result = send_response.decode().replace("\r\n", '').strip()
+                match = re.findall(r"\d+", result)
+                assert int(match[1]) == send_bytes, f"Failed to send {send_bytes} bytes from socket id:{sock}"
+        time.sleep(1)
 
     logger().info(f"\n\nWaiting for '60' seconds for checking connection stability")
     time.sleep(60)
@@ -2644,6 +2676,11 @@ def test_func_and_data_transfer_of_2_ssl_socket_conn_while_ble_is_in_connection_
     logger().info("Validating PS Polls with power management Bit set to 1")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
         'packet_count'], 'Unable to find PS Polls with power management Bit set to 1'
+
+    logger().info("\n\n************ Initiating SSL packet decryption process which will take some time ************")
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"Decryption Key-->{decryption_key}")
+    packet_check(wifi_sniffer, decryption_key, dut_mac_address, ap_bssid, capture_filename)
 
     logger().info("Initiating BLE disconnection from Raspi")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
