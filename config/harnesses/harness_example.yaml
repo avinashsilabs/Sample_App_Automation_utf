@@ -1475,5 +1475,11 @@ constants:
         value: "/RS9116W.2.8.0.13.rps"
     board_version:
         value: "1.4Q7"
+    min_conn_interval:
+        value: 160
+    max_conn_interval:
+        value: 160
+    supervision_timeout:
+        value: 2000
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
