@@ -815,7 +815,7 @@ def test_gatt_server_conn_stability_HeartRateService_C19879(ble_dut, ble_client,
     # test case to verify GATT connection stability in server role with HeartRateService
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"  # HeartRateService
     char_uuid = "00002a37-0000-1000-8000-00805f9b34fb"  # HeartRateMeasurementCharacteristic
-    data = "HeartRateMeasurement:75bpm"
+    data = "HeartRateMeasurement:74bpm"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x180d,
                         characteristic=0x2A37, ble_dut=ble_dut, ble_client=ble_client,
@@ -838,7 +838,7 @@ def test_gatt_server_conn_stability_BloodPressureService_C19883(ble_dut, ble_cli
     # test case to verify GATT connection stability in server role with BloodPressureService
     service_uuid = "00001810-0000-1000-8000-00805f9b34fb"  # BloodPressureService
     char_uuid = "00002a35-0000-1000-8000-00805f9b34fb"  # BloodPressureMeasurementCharacteristic
-    data = "Diastolic:50mmHg"
+    data = "Systolic:83.0mmHg,Diastolic:50.0mmHg,MeanAP:61.0mmHg"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1810,
                         characteristic=0x2A35, ble_dut=ble_dut, ble_client=ble_client,
@@ -849,7 +849,7 @@ def test_gatt_server_conn_stability_health_thermometer_service_C19885(ble_dut, b
     # test case to verify GATT connection stability in server role with health_thermometer_service
     service_uuid = "00001809-0000-1000-8000-00805f9b34fb"  # health_thermometer_service
     char_uuid = "00002a1c-0000-1000-8000-00805f9b34fb"  # HealthThermometerMeasurementCharacteristic
-    data = "39.25'C"  # 20bytes of data
+    data = "38.010002'C,38.320004'C,38.630005'C,38.940006'C"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1809,
                         characteristic=0x2A1C, ble_dut=ble_dut, ble_client=ble_client,
@@ -860,7 +860,8 @@ def test_gatt_server_conn_stability_glucose_service_C19887(ble_dut, ble_client, 
     # test case to verify GATT connection stability in server role with glucose service
     service_uuid = "00001808-0000-1000-8000-00805f9b34fb"  # glucose_service
     char_uuid = "00002a18-0000-1000-8000-00805f9b34fb"  # GlucoseMeasurementCharacteristic
-    data = "measurement_notify_1"
+    data = "Sequence_Number:1,Base_Time:28_Sep_2017,02:15:00,Glucose_Concentration:0.00549mol/l,"\
+           "Sample_Type:Capillary_Whole_blood,Sample_Location:Finger,Context_information_follows:false"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1808,
                         characteristic=0x2A18, ble_dut=ble_dut, ble_client=ble_client,
