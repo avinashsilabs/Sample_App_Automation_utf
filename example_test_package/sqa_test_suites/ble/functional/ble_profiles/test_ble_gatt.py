@@ -21,7 +21,7 @@ def logger():
     return get_logger(__name__)
 
 
-class BleDeviceState():
+class BleDeviceState:
     advertising = 1
     scanning = 2
     initiating = 4
@@ -1077,3 +1077,104 @@ def test_health_thermometer_service_stability_in_client_role_c19886(firmware_loa
 
     # Disconnect
     ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
+                                                                      service_classes=["HeartRateService"])
+    assert bt_client_address is not None, "Failed to start RD advertising"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    time.sleep(2)
+    ble_dut.interfaces.wifi.ble_stop_scanning()
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT and RD are not connected"
+
+    # get all profiles
+    uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+    assert HeartRateService.UUID.lower() in uuids, "failed to fetch heartrate service"
+
+    # resolve battery profile
+    start_handle, end_handle = ble_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
+                                                                             uuid=int(HeartRateService.UUID, 16))
+    assert start_handle is not None, "failed to fetch the RD1 address.."
+    assert end_handle is not None, "failed to fetch the UUID.."
+
+    ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=0x1,
+                                                   end_handle=0xffff)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_to_fetch_descriptors_from_rd1_c19865(firmware_loader, ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None, "Failed to start RD advertising"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    ble_dut.interfaces.wifi.ble_stop_scanning()
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT and RD are not connected"
+
+    time.sleep(2)
+    ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=0x1,
+                                                   end_handle=0xffff)
