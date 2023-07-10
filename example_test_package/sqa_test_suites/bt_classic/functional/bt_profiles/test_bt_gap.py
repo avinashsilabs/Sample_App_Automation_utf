@@ -3,7 +3,7 @@ import pytest
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116FeatureBitMap, \
     RS9116ExtCustomFeatureBitMap, RS9116ConfigFeatureBitMap, RS9116AsyncEventType, RS9116BTFeatureBitMap, \
-    RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116PowerSaveProcedureTypes
+    RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CustomFeatureBitMap
 from utf.interfaces.bluetooth import BTSocketRole
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
@@ -80,7 +80,7 @@ def test_bt_connectable_c19974(bt_dut, bt_client):
         logger().info("fetching dut bd address....")
         bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address(timeout=120)
 
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2)
 
         logger().info("configuring bt name....")
@@ -485,12 +485,12 @@ def test_pair_unpair_multiple_c19965(bt_dut, bt_client):
                 with bt_dut.interfaces.bluetooth.run_bt_task():
                     bt_server_socket.create_server()
                     connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
-                    assert connected, f"failed to connect to bt dut in iteration: {i+1}"
+                    assert connected, f"failed to connect to bt dut in iteration: {i + 1}"
 
                 time.sleep(3)
                 status = bt_dut.interfaces.bluetooth.bt_get_connectable_status()
                 logger().info(f"connectable state is:{status}")
-                assert status is not None, f"failed to fetch connectable status in iteration: {i+1}"
+                assert status is not None, f"failed to fetch connectable status in iteration: {i + 1}"
 
                 logger().info("enabling power save after bt connection...")
                 if isinstance(bt_dut.interfaces.bluetooth, RSSAPICommands):
@@ -541,13 +541,13 @@ def test_init_deinit_functionality_of_the_dut_c19966(bt_dut, bt_client):
             logger().info("configuring dut in connectable mode...")
             bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-            logger().info(f"Enabling the Wi-Fi powersave")
+            logger().info(f"Enabling the Wi-Fi power save")
             bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            logger().info(f"Enabling the BT powersave")
+            logger().info(f"Enabling the BT power save")
             bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
             time.sleep(10)
-            logger().info(f"disabling powersave")
+            logger().info(f"disabling power save")
             bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveDisabled, timeout=120)
             bt_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled, timeout=120)
 
@@ -590,9 +590,9 @@ def test_stop_discovery_functionality_c19967(bt_dut, bt_client):
         bt_stop_discoverable_status = bt_dut.interfaces.bluetooth.bt_stop_discoverable(timeout=120)
         assert bt_stop_discoverable_status is not "success", "bt_stop_discoverable is not issued successfully"
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         logger().info("scanning for the DUT on the RD side")
@@ -637,9 +637,9 @@ def test_discovery_functionality_c19968(bt_dut, bt_client):
         bt_start_discoverable_status = bt_dut.interfaces.bluetooth.bt_start_discoverable(timeout=120)
         assert bt_start_discoverable_status is not "success", "bt_start_discoverable is not issued success"
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         logger().info("scanning for the DUT on the RD side")
@@ -679,9 +679,9 @@ def test_stop_discovery_after_discovery_functionality_c19970(bt_dut, bt_client):
         logger().info("configuring dut in connectable mode...")
         bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         for i in range(5):
@@ -733,9 +733,9 @@ def test_bt_spp_dut_as_slave_wrong_pin_c19963(wifi_dut, bt_client):
                     assert not connected
                 bt_server_socket.close()
 
-            logger().info(f"Enabling the Wi-Fi powersave")
+            logger().info(f"Enabling the Wi-Fi power save")
             wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            logger().info(f"Enabling the BT powersave")
+            logger().info(f"Enabling the BT power save")
             wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
             received_authentication_failure = False
@@ -779,9 +779,9 @@ def test_limited_discovery_functionality_c19969(bt_dut, bt_client):
         logger().info("configuring dut in connectable mode...")
         bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         for i in range(5):
@@ -837,9 +837,9 @@ def test_get_discoverable_status_after_limited_discovery_c19972(bt_dut, bt_clien
         logger().info("configuring dut in connectable mode...")
         bt_dut.interfaces.bluetooth.bt_set_connectable()
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         logger().info("Starting the dut in limited discoverable mode set to 10sec...")
@@ -898,9 +898,9 @@ def test_get_discoverable_status_after_stop_discovery_functionality_c19973(bt_du
         get_discover_status = bt_dut.interfaces.bluetooth.bt_get_discoverable_status(timeout=120)
         assert get_discover_status is not "success", "issuing bt_get_discoverable_status has failed"
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20)
@@ -941,9 +941,9 @@ def test_get_discoverable_status_after_discovery_c19971(bt_dut, bt_client):
         get_discover_status = bt_dut.interfaces.bluetooth.bt_get_discoverable_status(timeout=120)
         assert get_discover_status is not "success", "issuing bt_get_discoverable_status has failed"
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         logger().info("scanning for the DUT on the RD side")
@@ -997,9 +997,9 @@ def test_connectivity_of_dut_scanned_remote_bt_with_correct_pin_c19961(wifi_dut,
                 logger().info(f"l2ping response {ping_response}")
                 assert ping_response, "dut is in inactive state..."
 
-                logger().info(f"Enabling the Wi-Fi powersave")
+                logger().info(f"Enabling the Wi-Fi power save")
                 wifi_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-                logger().info(f"Enabling the BT powersave")
+                logger().info(f"Enabling the BT power save")
                 wifi_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
         bt_client_socket.close()
         logger().info(f"Scan in {t.duration} seconds")
@@ -1029,9 +1029,9 @@ def test_remote_name_request_functionality_of_dut_on_sd_when_bt_is_on_c19978(bt_
             assert found, "Dut unable to find the bt client device. The test case may fail"
         logger().info(f' bt inquiry successful')
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
         time.sleep(3)
         received_name = False
@@ -1058,6 +1058,7 @@ def test_remote_name_request_functionality_of_dut_on_sd_when_bt_is_on_c19978(bt_
         assert received_name, "Failed to get remote device name"
     finally:
         clean_up_method(bt_dut)
+
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
 def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
@@ -1099,9 +1100,9 @@ def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
             logger().info(f"l2ping response {ping_response}")
             assert ping_response, "dut is in inactive state..."
 
-            logger().info(f"Enabling the Wi-Fi powersave")
+            logger().info(f"Enabling the Wi-Fi power save")
             bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            logger().info(f"Enabling the BT powersave")
+            logger().info(f"Enabling the BT power save")
             bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
             status = bt_dut.interfaces.bluetooth.bt_get_services(bt_client_address)
@@ -1162,9 +1163,9 @@ def test_bt_search_service_async_on_dut_c19988(bt_dut, bt_client):
             logger().info(f"l2ping response {ping_response}")
             assert ping_response, "dut is in inactive state..."
 
-            logger().info(f"Enabling the Wi-Fi powersave")
+            logger().info(f"Enabling the Wi-Fi power save")
             bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-            logger().info(f"Enabling the BT powersave")
+            logger().info(f"Enabling the BT power save")
             bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
             result = bt_dut.interfaces.bluetooth.bt_get_services(bt_client_address)
@@ -1196,15 +1197,15 @@ def test_bt_search_service_async_on_dut_c19988(bt_dut, bt_client):
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-            "bt_features": RS9116BTFeatureBitMap.Default,
-            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "disassociated"])
@@ -1228,7 +1229,7 @@ def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
             assert found, "Dut unable to find the bt client device. The test case may fail"
         logger().info(f' bt inquiry successful')
 
-        logger().info(f"enabling powersave")
+        logger().info(f"enabling power save")
         wifi_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
         wifi_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
@@ -1266,15 +1267,16 @@ def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-            "oper_mode": 0,
-            "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-            "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
-            "bt_features": RS9116BTFeatureBitMap.Default,
-            "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
+        "bt_features": RS9116BTFeatureBitMap.Default,
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.
+        WakeupIndicationUULPGPIO0
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
@@ -1288,9 +1290,9 @@ def test_bt_cancel_inquiry_C19986(bt_dut, bt_client):
         assert bt_client_address, "Unable to get BT client address"
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         logger().info(f' initialize bt inquiry ')
@@ -1317,7 +1319,8 @@ def test_bt_cancel_inquiry_C19986(bt_dut, bt_client):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.
+        WakeupIndicationUULPGPIO0
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
@@ -1332,10 +1335,10 @@ def test_cancel_pairing_request_C19964(bt_dut, bt_client):
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
         found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                               inquiry_type=1,
-                                                               inquiry_duration_ms=20000,
-                                                               timeout=22,
-                                                               retry_counts=5)
+                                                             inquiry_type=1,
+                                                             inquiry_duration_ms=20000,
+                                                             timeout=22,
+                                                             retry_counts=5)
         assert found, f"Dut unable to find the bt client device:{bt_client_address}"
 
         for i in range(3):
@@ -1347,11 +1350,6 @@ def test_cancel_pairing_request_C19964(bt_dut, bt_client):
                     bt_client_socket.create_client()
                     time.sleep(5)
                     bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
-
-        logger().info(f"Enabling the Wi-Fi powersave")
-        bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
-        bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         received_authentication_failure = False
         events = bt_dut.interfaces.bluetooth.get_async_events()
@@ -1379,7 +1377,8 @@ def test_cancel_pairing_request_C19964(bt_dut, bt_client):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.
+        WakeupIndicationUULPGPIO0
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
@@ -1394,10 +1393,10 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
         found = bt_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                               inquiry_type=1,
-                                                               inquiry_duration_ms=20000,
-                                                               timeout=22,
-                                                               retry_counts=5)
+                                                             inquiry_type=1,
+                                                             inquiry_duration_ms=20000,
+                                                             timeout=22,
+                                                             retry_counts=5)
         assert found, f"Dut unable to find the bt client device:{bt_client_address}"
 
         for i in range(3):
@@ -1410,11 +1409,6 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
                     time.sleep(5)
                     connected = bt_dut.interfaces.bluetooth.bt_connect(bt_client_address)
                     assert connected, "failed to connect to bt dut"
-
-        logger().info(f"Enabling the Wi-Fi powersave")
-        bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
-        bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         received_authentication_failure = False
         events = bt_dut.interfaces.bluetooth.get_async_events()
@@ -1447,7 +1441,8 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default,
         "bt_features": RS9116BTFeatureBitMap.Default,
-        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.
+        WakeupIndicationUULPGPIO0
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
@@ -1487,9 +1482,9 @@ def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
             assert found, "Dut unable to find the bt client device. The test case may fail"
         logger().info(f' bt inquiry successful')
 
-        logger().info(f"Enabling the Wi-Fi powersave")
+        logger().info(f"Enabling the Wi-Fi power save")
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-        logger().info(f"Enabling the BT powersave")
+        logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
 
         time.sleep(3)
