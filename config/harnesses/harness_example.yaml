@@ -1193,6 +1193,13 @@ devices:
                 # This is should be as same as ble_advertising_data
                 advertising_data: "HELLO"
 
+    # This represents the sniffer filter configuration
+    sniffer_filter:
+        interfaces:
+            ws_sniffer_filter:
+                type: sniffer_filter
+                src_dir: 'utf_wiseconnect'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1269,6 +1276,8 @@ defaults:
     # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
+
+    sniffer_filter: 'sniffer_filter'
 
     switch: 'switched_ap'
 
