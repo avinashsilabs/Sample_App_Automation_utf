@@ -1,5 +1,7 @@
 import time
 import pytest
+import os
+from utf.utf_config import UtfConfig
 
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.iperf.iperf_utils import print_dict
@@ -101,6 +103,29 @@ class power_number_output():
         assert parsed_result["Output"] is not None
 
 
+class ppk_power_number_output():
+    def __init__(self, power_meter=None):
+        super().__init__()
+        self.power_meter = power_meter
+
+    def __print_throughput(self, throughput: dict):
+        if throughput is not None:
+            print_dict("##     ", throughput)
+
+    def get_power_value(self):
+
+        # Start Capture
+        logger().info("Starting PPK capture")
+        self.power_meter.interfaces.power_meter.start_capture()
+        # Process Output
+        file_size = os.path.getsize(self.power_meter.interfaces.power_meter.capture_file)
+        assert file_size > 0
+        parsed_result = self.power_meter.interfaces.power_meter.process_output()
+        self.__print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        time.sleep(10)
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -122,7 +147,7 @@ class power_number_output():
 )
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv","wifi_powersave_disable", "disassociated"])
-def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(wifi_dut,wifi_access_point, ble_client, power_meter, dtim,rs_helper,
+def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(power_meter, wifi_dut, wifi_access_point, ble_client, dtim, rs_helper,
                                                   utf_constants):
     with BleLogs(
         start_collecting_logs=True,
@@ -156,8 +181,16 @@ def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(wifi_dut,wifi_access_point, bl
         wifi_dut.interfaces.wifi.bt_power_save(2, 0)
 
         time.sleep(20)
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 ######Connection test case#####
 @pytest.mark.config(
@@ -179,7 +212,7 @@ def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(wifi_dut,wifi_access_point, bl
 )
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "disassociated"])
-def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(wifi_dut, wifi_access_point, ble_client, power_meter, dtim,
+def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(power_meter, wifi_dut, wifi_access_point, ble_client, dtim,
                                                        rs_helper, utf_constants):
     with BleLogs(
             start_collecting_logs=True,
@@ -240,8 +273,17 @@ def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(wifi_dut, wifi_access_poi
 
         time.sleep(10)
         logger().info("started power meter process")
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
         logger().info("Initiating disconnection from remote device")
         ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
@@ -269,7 +311,7 @@ def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(wifi_dut, wifi_access_poi
 )
 @pytest.mark.parametrize("dtim", [3])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets","disassociated"])
-def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20566(wifi_dut, wifi_access_point, ssl_server, ble_client,utf_constants, power_meter, rs_helper,dtim):
+def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20566(power_meter, wifi_dut, wifi_access_point, ssl_server, ble_client, utf_constants, rs_helper,dtim):
     with BleLogs(
             start_collecting_logs=True,
             bt_log_path=f"./test_ble_advertise_connectable_power_{int(time.time())}.log",
@@ -345,8 +387,16 @@ def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20566(wifi_dut, wifi_access
 
         time.sleep(10)
         logger().info("started power meter process")
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
         logger().info("Initiating disconnection from remote device")
         ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)

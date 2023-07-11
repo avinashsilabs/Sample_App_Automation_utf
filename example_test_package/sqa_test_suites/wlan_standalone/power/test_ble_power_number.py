@@ -1,5 +1,7 @@
 import time
 import pytest
+import os
+from utf.utf_config import UtfConfig
 
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.iperf.iperf_utils import print_dict
@@ -90,6 +92,29 @@ class power_number_output():
         assert parsed_result["Output"] is not None
 
 
+class ppk_power_number_output():
+    def __init__(self, power_meter=None):
+        super().__init__()
+        self.power_meter = power_meter
+
+    def __print_throughput(self, throughput: dict):
+        if throughput is not None:
+            print_dict("##     ", throughput)
+
+    def get_power_value(self):
+
+        # Start Capture
+        logger().info("Starting PPK capture")
+        self.power_meter.interfaces.power_meter.start_capture()
+        # Process Output
+        file_size = os.path.getsize(self.power_meter.interfaces.power_meter.capture_file)
+        assert file_size > 0
+        parsed_result = self.power_meter.interfaces.power_meter.process_output()
+        self.__print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        time.sleep(10)
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -108,7 +133,7 @@ class power_number_output():
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertise_connectable_power_0dBm_C20571(wifi_dut, ble_client, power_meter):
+def test_ble_advertise_connectable_power_0dBm_C20571(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_advertise_connectable_power_{int(time.time())}.log",
@@ -156,9 +181,16 @@ def test_ble_advertise_connectable_power_0dBm_C20571(wifi_dut, ble_client, power
             "Expected adv type not found in bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
         time.sleep(10)
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
-        time.sleep(3)
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -178,7 +210,7 @@ def test_ble_advertise_connectable_power_0dBm_C20571(wifi_dut, ble_client, power
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertise_non_connectable_power_0dBm_C20572(wifi_dut, ble_client, power_meter):
+def test_ble_advertise_non_connectable_power_0dBm_C20572(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_advertise_non_connectable_power{int(time.time())}.log",
@@ -230,8 +262,16 @@ def test_ble_advertise_non_connectable_power_0dBm_C20572(wifi_dut, ble_client, p
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
         time.sleep(10)
 
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
         time.sleep(3)
 
 
@@ -252,7 +292,7 @@ def test_ble_advertise_non_connectable_power_0dBm_C20572(wifi_dut, ble_client, p
         "ble_features": RS9116BLEFeatureBitMap.Default,
     },
 )
-def test_ble_connect_with_200ms_0dBm_C20574(wifi_dut, ble_client, power_meter):
+def test_ble_connect_with_200ms_0dBm_C20574(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
     # Set up DUT for BLE advertising
@@ -295,8 +335,16 @@ def test_ble_connect_with_200ms_0dBm_C20574(wifi_dut, ble_client, power_meter):
                                                  supervision_timeout=3200)
     time.sleep(10)
     logger().info("started power meter process")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
     logger().info("Initiating disconnection from remote device")
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
@@ -320,7 +368,7 @@ def test_ble_connect_with_200ms_0dBm_C20574(wifi_dut, ble_client, power_meter):
         "ble_features": RS9116BLEFeatureBitMap.Default,
     },
 )
-def test_ble_connect_with_1_28ms_0dBm_C20575(wifi_dut, ble_client, power_meter):
+def test_ble_connect_with_1_28ms_0dBm_C20575(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
 
@@ -363,8 +411,16 @@ def test_ble_connect_with_1_28ms_0dBm_C20575(wifi_dut, ble_client, power_meter):
 
     time.sleep(10)
     logger().info("started power meter process")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
     logger().info("Initiating disconnection from remote device")
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
     time.sleep(5)
@@ -390,7 +446,7 @@ def test_ble_connect_with_1_28ms_0dBm_C20575(wifi_dut, ble_client, power_meter):
         "power_index": 63,
        },
 )
-def test_ble_connect_with_200ms_4dBm_C20576(wifi_dut, ble_client, power_meter):
+def test_ble_connect_with_200ms_4dBm_C20576(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
 
@@ -438,8 +494,17 @@ def test_ble_connect_with_200ms_4dBm_C20576(wifi_dut, ble_client, power_meter):
     logger().info("Initiating disconnection from remote device")
     time.sleep(10)
 
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
+
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
     time.sleep(5)
 @pytest.mark.config(
@@ -460,13 +525,13 @@ def test_ble_connect_with_200ms_4dBm_C20576(wifi_dut, ble_client, power_meter):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertise_non_connectable_power_1065ms_C20569(wifi_dut, ble_client, power_meter):
+def test_ble_advertise_non_connectable_power_1065ms_C20569(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_non_advertise_connectable_power_{int(time.time())}.log",
     ) as bt_logs:
         ble_advertising_data = 'Silabsautomation'
-
+        ble_adv_type = 131
         logger().info("Initializing BLE")
         # Set up DUT for BLE advertising
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -477,7 +542,7 @@ def test_ble_advertise_non_connectable_power_1065ms_C20569(wifi_dut, ble_client,
 
         logger().info("keeping the DUT in undirected_connectable ADV mode")
 
-        wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data=ble_advertising_data,ble_adv_type=128,
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data=ble_advertising_data,ble_adv_type=ble_adv_type,
                                                        ble_adv_int_min=1704, ble_adv_int_max=1704, ble_adv_channel_map=7)
 
         logger().info("Enabling power save")
@@ -513,9 +578,16 @@ def test_ble_advertise_non_connectable_power_1065ms_C20569(wifi_dut, ble_client,
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
 
         time.sleep(10)
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
-        time.sleep(3)
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -535,7 +607,7 @@ def test_ble_advertise_non_connectable_power_1065ms_C20569(wifi_dut, ble_client,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertise_connectable_power_20ms_C20568(wifi_dut, ble_client, power_meter):
+def test_ble_advertise_connectable_power_20ms_C20568(power_meter, wifi_dut, ble_client):
 
     with BleLogs(
         start_collecting_logs=True,
@@ -589,9 +661,16 @@ def test_ble_advertise_connectable_power_20ms_C20568(wifi_dut, ble_client, power
             "Expected adv type not found in bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
         time.sleep(10)
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
-        time.sleep(3)
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 ##############################################
 
@@ -615,7 +694,7 @@ def test_ble_advertise_connectable_power_20ms_C20568(wifi_dut, ble_client, power
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_advertise_connectable_power_4dBm_c20573(wifi_dut, ble_client, power_meter):
+def test_ble_advertise_connectable_power_4dBm_c20573(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
         bt_log_path=f"./test_ble_advertise_connectable_power_{int(time.time())}.log",
@@ -667,9 +746,16 @@ def test_ble_advertise_connectable_power_4dBm_c20573(wifi_dut, ble_client, power
             "Expected adv type not found in bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
         time.sleep(10)
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
-        time.sleep(3)
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 
 @pytest.mark.config(
@@ -691,7 +777,7 @@ def test_ble_advertise_connectable_power_4dBm_c20573(wifi_dut, ble_client, power
         "power_index": 63,
        },
 )
-def test_ble_connect_with_1_28ms_4dBm_C20577(wifi_dut, ble_client, power_meter):
+def test_ble_connect_with_1_28ms_4dBm_C20577(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
 
@@ -740,8 +826,16 @@ def test_ble_connect_with_1_28ms_4dBm_C20577(wifi_dut, ble_client, power_meter):
     logger().info("Initiating disconnection from remote device")
     time.sleep(10)
 
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
     time.sleep(5)
@@ -762,7 +856,7 @@ def test_ble_connect_with_1_28ms_4dBm_C20577(wifi_dut, ble_client, power_meter):
         "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
-def test_ble_per_1mbps_tx_0dBm_C20578(bt_dut, bt_client, power_meter):
+def test_ble_per_1mbps_tx_0dBm_C20578(power_meter, bt_dut, bt_client):
     cmd_ix = 0x13
     access_addr = 1903575337
     pkt_len = 240
@@ -806,8 +900,16 @@ def test_ble_per_1mbps_tx_0dBm_C20578(bt_dut, bt_client, power_meter):
     bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
     time.sleep(10)
     logger().info("power number measurement initiated")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
 
 ##############BLE PER_10dBm##########
@@ -825,7 +927,7 @@ def test_ble_per_1mbps_tx_0dBm_C20578(bt_dut, bt_client, power_meter):
         "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
-def test_ble_per_1mbps_tx_10dBm_C20579(bt_dut, bt_client, power_meter):
+def test_ble_per_1mbps_tx_10dBm_C20579(power_meter, bt_dut, bt_client):
     cmd_ix = 19
     access_addr = 1903575337
     pkt_len = 240
@@ -871,9 +973,16 @@ def test_ble_per_1mbps_tx_10dBm_C20579(bt_dut, bt_client, power_meter):
     bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
     time.sleep(10)
     logger().info("power number measurement initiated")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
-    time.sleep(3)
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
 
 @pytest.mark.config(
@@ -893,7 +1002,7 @@ def test_ble_per_1mbps_tx_10dBm_C20579(bt_dut, bt_client, power_meter):
         "ble_features": RS9116BLEFeatureBitMap.Default,
     },
 )
-def test_ble_connect_with_idlelink_200ms_C20570(wifi_dut, ble_client, power_meter):
+def test_ble_connect_with_idlelink_200ms_C20570(power_meter, wifi_dut, ble_client):
     device_found=None
 
     logger().info("Initializing BLE")
@@ -939,8 +1048,16 @@ def test_ble_connect_with_idlelink_200ms_C20570(wifi_dut, ble_client, power_mete
                                                  supervision_timeout=3200)
     time.sleep(10)
     logger().info("started power meter process")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
     logger().info("Initiating disconnection from remote device")
     ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
