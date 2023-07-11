@@ -1193,6 +1193,15 @@ devices:
                 # This is should be as same as ble_advertising_data
                 advertising_data: "HELLO"
 
+    power_meter_plotter:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            plotter:
+                type: 'power_meter_plotter'
+                src_dir: 'utf_wiseconnect'
+                shell: 'linux_shell'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1382,6 +1391,7 @@ defaults:
         bt_exploit_type: "au_rand_flooding"
         script: ""
     
+    plotter: 'power_meter_plotter'
 
     net_perf:
         server_options:

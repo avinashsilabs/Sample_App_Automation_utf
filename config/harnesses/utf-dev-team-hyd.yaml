@@ -610,6 +610,16 @@ devices:
                 pid: 0x6010
             linux_shell:
                 type: 'shell.shell'
+
+    nrf_ppk2_device:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            power_meter:
+                type: 'power_meter.nrf_ppk2.nrf_power_profiler_mp'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0xC00A
     
     nrf_ble_client:
         interfaces:
@@ -622,6 +632,15 @@ devices:
                 device_type: 'mi'
                 # This is should be as same as ble_advertising_data
                 advertising_data: "HELLO"
+
+    power_meter_plotter:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            plotter:
+                type: 'power_meter_plotter'
+                src_dir: 'utf_wiseconnect'
+                shell: 'linux_shell'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -639,7 +658,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'tp_link_e12ad0_static'
+    wifi_access_point: 'dlink810_ap_static'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
@@ -731,6 +750,9 @@ defaults:
         bt_exploit_type: "au_rand_flooding"
         script: ""
     rf_attenuator: '50pa500_attenuator'
+    power_meters:
+        - 'nrf_ppk2_device'
+    plotter: 'power_meter_plotter'
     net_perf:
         server_options:
             # seconds between periodic bandwidth reports
