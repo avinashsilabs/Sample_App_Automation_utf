@@ -3,6 +3,7 @@ import pytest
 
 from utf.interfaces.bluetooth.bluez import BatteryService
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
+from utf.interfaces.bluetooth.hid_recorder import HidRecorder
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.bluetooth import BLEConnectError
@@ -175,7 +176,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected
 
-    # resolving charecteristic
+    #resolving charecteristic
     servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
     assert len(servs) > 0
     assert len(chars) > 0
@@ -351,3 +352,76 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+def test_ble_gatt_server_slave_with_hid_service(wifi_dut, wifi_access_point, ble_client, logger):
+    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        raise NotImplementedError(
+            "This test case is only currently implemented for SAPI"
+        )
+
+    service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+    char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    data1 = "LzY0"
+    data2 = "K09x"
+    data3 = "Mx3Y"
+    # Join Wi-Fi Access Point
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    # Set up BLE Server on DUT
+    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert bt_dut_address is not None
+
+    wifi_dut.interfaces.wifi.ble_add_hid_service()
+
+    # Start advertising
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+
+    # Begin Scanning for BLE devices
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if bt_dut_address in found_devices and \
+                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+            device_found = True
+            break
+
+    assert device_found
+
+    # connecting to dut
+    ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    ble_client.interfaces.bluetooth.stop_scanning()
+    time.sleep(2)
+
+    # Get the state of the dut
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # TODO
+    # Send keyboard interrupts from DUT
+    # Receive key strokes on Raspi
+
+    test_data = ['0xb', '0x0',
+                 '0x12', '0x0',
+                 '0xa', '0x0',
+                 ]
+    test_data_expected_from_raspi = ["11,00,00,0b,00,00,00,00,00,00,00,00", "11,00,00,00,00,00,00,00,00,00,00,00",
+                                     "11,00,00,12,00,00,00,00,00,00,00,00", "11,00,00,00,00,00,00,00,00,00,00,00",
+                                     "11,00,00,0a,00,00,00,00,00,00,00,00", "11,00,00,00,00,00,00,00,00,00,00,00"]
+
+    with HidRecorder() as hid_recorder:
+        for item in test_data:
+            wifi_dut.interfaces.wifi.ble_hid_send_interrupt(item)
+            time.sleep(0.5)
+        hid_logs = hid_recorder.logs()
+
+    assert len(hid_logs) == len(test_data)
+    for i in range(len(test_data)):
+        assert hid_logs[i] == test_data_expected_from_raspi[i]
+    # disconnecting from dut
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
