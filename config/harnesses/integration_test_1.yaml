@@ -175,6 +175,7 @@ devices:
                 admin_password: 'www.ni.com'
                 ssh_port: 1022
                 ssid: "TESTTEST-ASUS"
+                check_ap_state: True
 
     switched_ap:
         interfaces:
@@ -465,7 +466,7 @@ defaults:
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
-    wifi_access_point: 'dlink810_ap_static'
+    wifi_access_point: 'asus_rt_ax3000_ap'
 
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
@@ -574,4 +575,5 @@ start_state:
 
 end_state:
     wifi_access_point:
-        wifi: 'ap_disabled'
+#        wifi: 'ap_disabled'
+        wifi: None

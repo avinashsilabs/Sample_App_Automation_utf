@@ -107,7 +107,8 @@
                   "ip_address": "10.4.1.189",
                   "admin_password": "www.ni.com",
                   "ssh_port": 1022,
-                  "ssid": "TESTTEST-ASUS"
+                  "ssid": "TESTTEST-ASUS",
+                  "check_ap_state": true
                }
             }
          },
@@ -430,7 +431,7 @@
             "rs9116_sapi",
             "efr32_4180b"
          ],
-         "wifi_access_point": "dlink810_ap_static",
+         "wifi_access_point": "asus_rt_ax3000_ap",
          "wifi_client": "raspi_wifi",
          "wifi_clients": [
             "raspi_wifi",
@@ -529,7 +530,7 @@
       },
       "end_state": {
          "wifi_access_point": {
-            "wifi": "ap_disabled"
+            "wifi": "None"
          }
       }
    }
