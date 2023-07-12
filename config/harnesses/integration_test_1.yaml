@@ -340,11 +340,12 @@ devices:
         interfaces:
             mqtt:
                 type: 'mqtt.server.static'
-                hostname: 'mqtt.savage.zone'
+                hostname: 'mosquitto.dev.silabs.net'
                 port: 1883
-                username: 'utfsilabs'
-                password: 'TESTTESTTEST'
-                tls_enabled: false
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_ca_chain: 'ca-chain.cert.pem'
 
     raspi_lighttpd:
         interfaces:
