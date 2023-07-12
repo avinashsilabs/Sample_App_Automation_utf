@@ -107,7 +107,8 @@
                   "ip_address": "10.4.1.189",
                   "admin_password": "www.ni.com",
                   "ssh_port": 1022,
-                  "ssid": "TESTTEST-ASUS"
+                  "ssid": "TESTTEST-ASUS",
+                  "check_ap_state": true
                }
             }
          },
@@ -292,11 +293,12 @@
             "interfaces": {
                "mqtt": {
                   "type": "mqtt.server.static",
-                  "hostname": "mqtt.savage.zone",
+                  "hostname": "mosquitto.dev.silabs.net",
                   "port": 1883,
-                  "username": "utfsilabs",
-                  "password": "TESTTESTTEST",
-                  "tls_enabled": false
+                  "username": "testuser",
+                  "password": "testpassword",
+                  "tls_enabled": true,
+                  "tls_ca_chain": "ca-chain.cert.pem"
                }
             }
          },
@@ -342,7 +344,7 @@
             "interfaces": {
                "http": {
                   "type": "http.server.static",
-                  "hostname": "reports.savage.zone",
+                  "hostname": "letsencrypt.org",
                   "port": 443,
                   "tls_enabled": true,
                   "tls_ca_chain": "isrg-root.pem"
@@ -429,7 +431,7 @@
             "rs9116_sapi",
             "efr32_4180b"
          ],
-         "wifi_access_point": "dlink810_ap_static",
+         "wifi_access_point": "asus_rt_ax3000_ap",
          "wifi_client": "raspi_wifi",
          "wifi_clients": [
             "raspi_wifi",
@@ -528,7 +530,7 @@
       },
       "end_state": {
          "wifi_access_point": {
-            "wifi": "ap_disabled"
+            "wifi": "None"
          }
       }
    }

@@ -21,7 +21,7 @@ def logger():
     return get_logger(__name__)
 
 
-class BleDeviceState():
+class BleDeviceState:
     advertising = 1
     scanning = 2
     initiating = 4
@@ -815,7 +815,7 @@ def test_gatt_server_conn_stability_HeartRateService_C19879(ble_dut, ble_client,
     # test case to verify GATT connection stability in server role with HeartRateService
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"  # HeartRateService
     char_uuid = "00002a37-0000-1000-8000-00805f9b34fb"  # HeartRateMeasurementCharacteristic
-    data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+    data = "HeartRateMeasurement:74bpm"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x180d,
                         characteristic=0x2A37, ble_dut=ble_dut, ble_client=ble_client,
@@ -827,7 +827,7 @@ def test_gatt_server_conn_stability_BatteryService_C19881(ble_dut, ble_client, r
     # test case to verify GATT connection stability in server role with BatteryService
     service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"  # BatteryService
     char_uuid = "00002a19-0000-1000-8000-00805f9b34fb"  # BatteryLevelCharacteristic
-    data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+    data = "BatteryLevel:20%"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x180f,
                         characteristic=0x2A19, ble_dut=ble_dut, ble_client=ble_client,
@@ -838,7 +838,7 @@ def test_gatt_server_conn_stability_BloodPressureService_C19883(ble_dut, ble_cli
     # test case to verify GATT connection stability in server role with BloodPressureService
     service_uuid = "00001810-0000-1000-8000-00805f9b34fb"  # BloodPressureService
     char_uuid = "00002a35-0000-1000-8000-00805f9b34fb"  # BloodPressureMeasurementCharacteristic
-    data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+    data = "Systolic:83.0mmHg,Diastolic:50.0mmHg,MeanAP:61.0mmHg"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1810,
                         characteristic=0x2A35, ble_dut=ble_dut, ble_client=ble_client,
@@ -849,7 +849,7 @@ def test_gatt_server_conn_stability_health_thermometer_service_C19885(ble_dut, b
     # test case to verify GATT connection stability in server role with health_thermometer_service
     service_uuid = "00001809-0000-1000-8000-00805f9b34fb"  # health_thermometer_service
     char_uuid = "00002a1c-0000-1000-8000-00805f9b34fb"  # HealthThermometerMeasurementCharacteristic
-    data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+    data = "38.010002'C,38.320004'C,38.630005'C,38.940006'C"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1809,
                         characteristic=0x2A1C, ble_dut=ble_dut, ble_client=ble_client,
@@ -860,7 +860,8 @@ def test_gatt_server_conn_stability_glucose_service_C19887(ble_dut, ble_client, 
     # test case to verify GATT connection stability in server role with glucose service
     service_uuid = "00001808-0000-1000-8000-00805f9b34fb"  # glucose_service
     char_uuid = "00002a18-0000-1000-8000-00805f9b34fb"  # GlucoseMeasurementCharacteristic
-    data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+    data = "Sequence_Number:1,Base_Time:28_Sep_2017,02:15:00,Glucose_Concentration:0.00549mol/l,"\
+           "Sample_Type:Capillary_Whole_blood,Sample_Location:Finger,Context_information_follows:false"
 
     gatt_conn_stability(service_uuid=service_uuid, char_uuid=char_uuid, data=data, service=0x1808,
                         characteristic=0x2A18, ble_dut=ble_dut, ble_client=ble_client,
@@ -1076,3 +1077,104 @@ def test_health_thermometer_service_stability_in_client_role_c19886(firmware_loa
 
     # Disconnect
     ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
+                                                                      service_classes=["HeartRateService"])
+    assert bt_client_address is not None, "Failed to start RD advertising"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    time.sleep(2)
+    ble_dut.interfaces.wifi.ble_stop_scanning()
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT and RD are not connected"
+
+    # get all profiles
+    uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+    assert HeartRateService.UUID.lower() in uuids, "failed to fetch heartrate service"
+
+    # resolve battery profile
+    start_handle, end_handle = ble_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
+                                                                             uuid=int(HeartRateService.UUID, 16))
+    assert start_handle is not None, "failed to fetch the RD1 address.."
+    assert end_handle is not None, "failed to fetch the UUID.."
+
+    ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=0x1,
+                                                   end_handle=0xffff)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower |
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.
+        ConfigFeatureBitmapValid,
+        "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp |
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+@pytest.mark.firmware_app("test_multi_gatt_conn")
+def test_to_fetch_descriptors_from_rd1_c19865(firmware_loader, ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
+    assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    assert bt_client_address is not None, "Failed to start RD advertising"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    ble_dut.interfaces.wifi.ble_stop_scanning()
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT and RD are not connected"
+
+    time.sleep(2)
+    ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=0x1,
+                                                   end_handle=0xffff)
