@@ -15,6 +15,8 @@ from utf.interfaces.bluetooth import BTSocketRole
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import print_dict
 import time
+import os
+from utf.utf_config import UtfConfig
 
 def logger():
     return get_logger(__name__)
@@ -52,6 +54,29 @@ class power_number_output():
         assert parsed_result["Output"] is not None
 
 
+class ppk_power_number_output():
+    def __init__(self, power_meter=None):
+        super().__init__()
+        self.power_meter = power_meter
+
+    def __print_throughput(self, throughput: dict):
+        if throughput is not None:
+            print_dict("##     ", throughput)
+
+    def get_power_value(self):
+
+        # Start Capture
+        logger().info("Starting PPK capture")
+        self.power_meter.interfaces.power_meter.start_capture()
+        # Process Output
+        file_size = os.path.getsize(self.power_meter.interfaces.power_meter.capture_file)
+        assert file_size > 0
+        parsed_result = self.power_meter.interfaces.power_meter.process_output()
+        self.__print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        time.sleep(10)
+
+
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -65,7 +90,7 @@ class power_number_output():
             "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         },
 )
-def test_bt_spp_dut_as_master(wifi_dut, bt_client, power_meter):
+def test_bt_spp_dut_as_master(power_meter, wifi_dut, bt_client):
     sniff_max_interval = 800
     sniff_min_interval = 800
     sniff_attempt = 5
@@ -105,8 +130,16 @@ def test_bt_spp_dut_as_master(wifi_dut, bt_client, power_meter):
 
             time.sleep(20)
             logger().info("power numbers measurement initiated")
-            power_obj = power_number_output(power_meter=power_meter)
-            power_obj.get_power_value()
+            power_device = UtfConfig.instance().defaults.get("power_meter", {})
+            if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+                logger().info(f"Power Meter is : {power_meter}")
+                power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+                power_obj.get_power_value()
+            elif power_device == "nrf_ppk2_device":
+                logger().info(f"The Power Meter is {power_meter}")
+                power_obj = ppk_power_number_output(power_meter=power_meter)
+                power_obj.get_power_value()
+            time.sleep(15)
             time.sleep(5)
             logger().info("disconnecting DUT from 3rd party master")
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
@@ -128,7 +161,7 @@ def test_bt_spp_dut_as_master(wifi_dut, bt_client, power_meter):
            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
-def test_bt_per_tx(bt_dut, bt_client, power_meter):
+def test_bt_per_tx(power_meter, bt_dut, bt_client):
     pkt_len = 679
     pkt_type = 14
     br_mode = 2
@@ -176,8 +209,16 @@ def test_bt_per_tx(bt_dut, bt_client, power_meter):
 
     time.sleep(10)
     logger().info("power number measurement initiated")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
 
 @pytest.mark.config(
@@ -194,7 +235,7 @@ def test_bt_per_tx(bt_dut, bt_client, power_meter):
            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
-def test_bt_per_tx_GFSCK_C20583(bt_dut, bt_client, power_meter):
+def test_bt_per_tx_GFSCK_C20583(power_meter, bt_dut, bt_client):
     pkt_len = 339
     pkt_type = 15
     br_mode = 1
@@ -241,8 +282,16 @@ def test_bt_per_tx_GFSCK_C20583(bt_dut, bt_client, power_meter):
 
     time.sleep(10)
     logger().info("power number measurement initiated")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
 
 @pytest.mark.config(
@@ -261,7 +310,7 @@ def test_bt_per_tx_GFSCK_C20583(bt_dut, bt_client, power_meter):
            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
-def test_bt_per_tx_EDR_HP_C20585(bt_dut, bt_client, power_meter):
+def test_bt_per_tx_EDR_HP_C20585(power_meter, bt_dut, bt_client):
     pkt_len = 679
     pkt_type = 14
     br_mode = 2
@@ -308,5 +357,13 @@ def test_bt_per_tx_EDR_HP_C20585(bt_dut, bt_client, power_meter):
 
     time.sleep(10)
     logger().info("power number measurement initiated")
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)

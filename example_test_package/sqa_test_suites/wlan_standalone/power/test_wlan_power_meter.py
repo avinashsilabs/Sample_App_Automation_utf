@@ -10,6 +10,8 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode,RS9116FeatureBitMap, R
 from utf.interfaces.iperf.iperf_constants import IperfConstants,IperfTrafficType
 from random import randint
 from utf.utils.thread_base import ThreadBase
+import os
+from utf.utf_config import UtfConfig
 
 def logger():
     return get_logger(__name__)
@@ -72,6 +74,31 @@ class power_number_output():
         self.__print_throughput(parsed_result)
         assert parsed_result["Output"] is not None
 
+
+class ppk_power_number_output():
+    def __init__(self, power_meter=None):
+        super().__init__()
+        self.power_meter = power_meter
+
+    def __print_throughput(self, throughput: dict):
+        if throughput is not None:
+            print_dict("##     ", throughput)
+
+    def get_power_value(self):
+
+        # Start Capture
+        logger().info("Starting PPK capture")
+        self.power_meter.interfaces.power_meter.start_capture()
+        # Process Output
+        file_size = os.path.getsize(self.power_meter.interfaces.power_meter.capture_file)
+        assert file_size > 0
+        parsed_result = self.power_meter.interfaces.power_meter.process_output()
+        self.__print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        time.sleep(10)
+
+
+
 class WifiSockthread(ThreadBase):
     def __init__(self, remote_socket=None, wifi_dut=None, \
                  wifi_access_point=None, devic_ip=None):
@@ -130,7 +157,7 @@ class WifiSockthread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
+def test_wlan_standby_dtim_2g(power_meter, wifi_access_point, wifi_dut, dtim):
 
     bcast_in_tim_next_cmd = 1
     beacon_drop = 5000
@@ -158,8 +185,16 @@ def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
     logger().info("enabling wifi power save mode in DUT......")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     time.sleep(10)
-    power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter, dim=dtim)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
 @pytest.mark.parametrize("dtim", [1])
 @pytest.mark.config(
@@ -180,7 +215,7 @@ def test_wlan_standby_dtim_2g(wifi_access_point, wifi_dut, power_meter, dtim):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_dtim_5g(utf_constants, wifi_dut, wifi_access_point, power_meter, dtim):
+def test_wlan_standby_dtim_5g(power_meter, utf_constants, wifi_dut, wifi_access_point, dtim):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
     if board_ver == "Q7":
@@ -214,8 +249,16 @@ def test_wlan_standby_dtim_5g(utf_constants, wifi_dut, wifi_access_point, power_
         logger().info("enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         time.sleep(20)
-        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 
 
@@ -235,7 +278,7 @@ def test_wlan_standby_dtim_5g(utf_constants, wifi_dut, wifi_access_point, power_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
+def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(power_meter, wifi_dut, power):
     antenna = 1
     gain_2g = 0
     gain_5g = 0
@@ -253,9 +296,16 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
 
     time.sleep(20)
 
-    power_obj = power_number_output(power_meter=power_meter)
-
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
 ##################################################################
 @pytest.mark.parametrize("power", [10, 20])
@@ -274,7 +324,7 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(wifi_dut, power_meter, power):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_active_tx_10dBm_20dBm_5Ghz(utf_constants,wifi_dut, power_meter, power):
+def test_wlan_active_tx_10dBm_20dBm_5Ghz(power_meter, utf_constants, wifi_dut, power):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
     if board_ver == "Q7":
@@ -298,9 +348,16 @@ def test_wlan_active_tx_10dBm_20dBm_5Ghz(utf_constants,wifi_dut, power_meter, po
         wifi_dut.interfaces.wifi.set_wlan_transmit_start(power=power, rate=rate, length=length, mode=mode,
                                                          channel=channel)
         time.sleep(20)
-        power_obj = power_number_output(power_meter=power_meter)
-
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
 
 
@@ -325,7 +382,7 @@ def test_wlan_active_tx_10dBm_20dBm_5Ghz(utf_constants,wifi_dut, power_meter, po
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1, "dtim":10})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_bgscan_with_periodicity_2_10_30_C20563(wifi_dut, wifi_access_point, power_meter, bg_scan_periodicity):
+def test_bgscan_with_periodicity_2_10_30_C20563(power_meter, wifi_dut, wifi_access_point, bg_scan_periodicity):
     bcast_in_tim_next_cmd = 1
     beacon_drop = 5000
     bcast_in_tim = 1
@@ -362,11 +419,18 @@ def test_bgscan_with_periodicity_2_10_30_C20563(wifi_dut, wifi_access_point, pow
     wifi_dut.interfaces.wifi.power_save(2, 0)
     time.sleep(10)
 
-    power_obj = power_number_output(power_meter=power_meter)
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
-    power_obj.get_power_value()
-
-    bg_scan_enable=0
+    bg_scan_enable = 0
 
     wifi_dut.interfaces.wifi.set_bgscan(bg_scan_enable, instant_bg, bg_scan_threshold, rssi_tolerance_threshold,
                                         bg_scan_periodicity,
@@ -394,8 +458,8 @@ def test_bgscan_with_periodicity_2_10_30_C20563(wifi_dut, wifi_access_point, pow
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_standby_assoc_novus_li10_c20554(wifi_access_point, wifi_dut, remote_socket, net_perf_client,
-                                         protocol, wifi_client, power_meter):
+def test_standby_assoc_novus_li10_c20554(power_meter, wifi_access_point, wifi_dut, remote_socket, net_perf_client,
+                                         protocol, wifi_client):
     with TimeMeasurer() as t:
         bcast_in_tim_next_cmd = 1
         beacon_drop = 5000
@@ -435,11 +499,21 @@ def test_standby_assoc_novus_li10_c20554(wifi_access_point, wifi_dut, remote_soc
         wifi_obj.start()
 
         logger().info("power meter initiated")
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
         logger().info("exited from socket thread")
         wifi_obj.wait_for_exit()
 
+
+@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
 @pytest.mark.firmware_app("generic_test_agent_wt_aws_wt_ram_ret")
 @pytest.mark.config(
         "wifi_dut",
@@ -459,7 +533,7 @@ def test_standby_assoc_novus_li10_c20554(wifi_access_point, wifi_dut, remote_soc
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_power_save_without_ram_ret_C20555(wifi_dut, power_meter):
+def test_wlan_power_save_without_ram_ret_C20555(power_meter, wifi_dut):
 
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -467,9 +541,60 @@ def test_wlan_power_save_without_ram_ret_C20555(wifi_dut, power_meter):
 
     time.sleep(10)
     logger().info("starting power meter capture")
-    power_obj = power_number_output(power_meter=power_meter)
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
-    power_obj.get_power_value()
+    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
+    wifi_dut.interfaces.wifi.reset_soft()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
+@pytest.mark.firmware_app("generic_test_agent_wt_aws_wt_ram_ret")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": 0,
+            "coex_mode": RS9116CoexMode.WLAN,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.OpenMode,
+            "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+            "set_send_feature_frame": True,
+            "band": RS9116Band.FiveGHz,
+            "rf_type":0,
+            "features_enable":49,
+
+        }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wlan_power_save_withou_ram_ret_C20555_5g(power_meter, wifi_dut):
+
+    # Enables the wifi power save in DUT
+    logger().info("Setting DUT in wlan power save...")
+    wifi_dut.interfaces.wifi.power_save(8, 0)
+
+    time.sleep(10)
+    logger().info("starting power meter capture")
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
 
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
@@ -493,7 +618,7 @@ def test_wlan_power_save_without_ram_ret_C20555(wifi_dut, power_meter):
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_meter):
+def test_wlan_standby_sleep_2_4Ghz_C20553(power_meter, wifi_access_point, wifi_dut):
 
     bcast_in_tim_next_cmd = 1
     beacon_drop = 5000
@@ -518,8 +643,16 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_met
     logger().info("enabling wifi power save mode in DUT......")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     time.sleep(25)
-    power_obj = power_number_output(power_meter=power_meter)
-    power_obj.get_power_value()
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+        power_obj = power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)
     logger().info("doing EFR reset instead of device reset till reset issue is fixed")
     wifi_dut.interfaces.wifi.reset_soft()
 
@@ -544,7 +677,7 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(wifi_access_point, wifi_dut, power_met
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_dut, power_meter):
+def test_wlan_standby_sleep_5Ghz_C20633(power_meter, utf_constants, wifi_access_point, wifi_dut):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
     if board_ver == "Q7":
@@ -576,9 +709,16 @@ def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_d
         logger().info("enabling wifi power save mode in DUT......")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         time.sleep(25)
-        power_obj = power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
-        time.sleep(2)
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
         logger().info("doing EFR reset instead of device reset till reset issue is fixed")
         wifi_dut.interfaces.wifi.reset_soft()
 
@@ -606,7 +746,7 @@ def test_wlan_standby_sleep_5Ghz_C20633(utf_constants, wifi_access_point, wifi_d
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim":10})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi_access_point, power_meter, bg_scan_periodicity):
+def test_bgscan_with_periodicity_5g_2_10_30_C20635(power_meter, utf_constants, wifi_dut, wifi_access_point, bg_scan_periodicity):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
     if board_ver == "Q7":
@@ -654,9 +794,16 @@ def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi
         wifi_dut.interfaces.wifi.power_save(2, 0)
         time.sleep(10)
 
-        power_obj = power_number_output(power_meter=power_meter)
-
-        power_obj.get_power_value()
+        power_device = UtfConfig.instance().defaults.get("power_meter", {})
+        if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+            logger().info(f"Power Meter is : {power_meter}")
+            power_obj = power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        elif power_device == "nrf_ppk2_device":
+            logger().info(f"The Power Meter is {power_meter}")
+            power_obj = ppk_power_number_output(power_meter=power_meter)
+            power_obj.get_power_value()
+        time.sleep(15)
 
         bg_scan_enable = 0
 
@@ -688,7 +835,7 @@ def test_bgscan_with_periodicity_5g_2_10_30_C20635(utf_constants, wifi_dut, wifi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_wlan_1mbps_listen_rx_2_4_c20641_c20642(wifi_access_point, wifi_dut, power_meter, dtim):
+def test_wlan_1mbps_listen_rx_2_4_c20641_c20642(power_meter, wifi_access_point, wifi_dut, dtim):
 
     bcast_in_tim_next_cmd = 1
     beacon_drop = 5000
@@ -716,36 +863,27 @@ def test_wlan_1mbps_listen_rx_2_4_c20641_c20642(wifi_access_point, wifi_dut, pow
     logger().info("enabling wifi power save mode in DUT......")
     wifi_dut.interfaces.wifi.power_save(2, 0)
     time.sleep(10)
-    # Init power meter by specifying module name as datalogger or scope
-    power_meter.interfaces.power_meter.init_power_meter()
-    # Init power meter module
-    power_meter.interfaces.power_meter.init_power_meter_module("scope")
-    # set power meter out put channels
-    power_meter.interfaces.power_meter.set_output_channels_settings(
-        [{"channel": "1", "emulation_mode": "Current Measure", "trace_current": True, "trace_power": True},
-         {"channel": "2", "emulation_mode": "Voltage Measure", "trace_voltage": True, "trace_current": False,
-          "trace_power": True}])
-    # start capture power meter datalog/scope
-    power_meter.interfaces.power_meter.start_capture()
-    # Parse result as throughput object
-    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
-        power_meter.interfaces.power_meter.results)
-    __print_throughput(parsed_result)
-    assert parsed_result["Scp File Name"] is not None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    power_device = UtfConfig.instance().defaults.get("power_meter", {})
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        logger().info(f"Power Meter is : {power_meter}")
+          # Init power meter by specifying module name as datalogger or scope
+        power_meter.interfaces.power_meter.init_power_meter()
+        # Init power meter module
+        power_meter.interfaces.power_meter.init_power_meter_module("scope")
+        # set power meter out put channels
+        power_meter.interfaces.power_meter.set_output_channels_settings(
+            [{"channel": "1", "emulation_mode": "Current Measure", "trace_current": True, "trace_power": True},
+            {"channel": "2", "emulation_mode": "Voltage Measure", "trace_voltage": True, "trace_current": False,
+            "trace_power": True}])
+        # start capture power meter datalog/scope
+        power_meter.interfaces.power_meter.start_capture()
+        # Parse result as throughput object
+        parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+            power_meter.interfaces.power_meter.results)
+        __print_throughput(parsed_result)
+        assert parsed_result["Scp File Name"] is not None
+    elif power_device == "nrf_ppk2_device":
+        logger().info(f"The Power Meter is {power_meter}")
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+        power_obj.get_power_value()
+    time.sleep(15)

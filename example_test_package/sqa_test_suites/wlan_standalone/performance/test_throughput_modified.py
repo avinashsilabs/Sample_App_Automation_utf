@@ -962,10 +962,10 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
                                           wifi_dut, net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
-        "min_conn_interval": 36,
-        "max_conn_interval": 36,
+        "min_conn_interval": utf_constants.get("min_conn_interval"),
+        "max_conn_interval": utf_constants.get("max_conn_interval"),
         "conn_latency": 0,
-        "supervision_timeout": 50}
+        "supervision_timeout": utf_constants.get("supervision_timeout")}
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_ble_connected_tcp_rx_c20747')
@@ -1050,10 +1050,10 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
                                           net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
-        "min_conn_interval": 36,
-        "max_conn_interval": 36,
+        "min_conn_interval": utf_constants.get("min_conn_interval"),
+        "max_conn_interval": utf_constants.get("max_conn_interval"),
         "conn_latency": 0,
-        "supervision_timeout": 50}
+        "supervision_timeout": utf_constants.get("supervision_timeout")}
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_ble_connected_tcp_rx_c20747')
@@ -1128,10 +1128,10 @@ def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi
                                           net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
-        "min_conn_interval": 36,
-        "max_conn_interval": 36,
+        "min_conn_interval": utf_constants.get("min_conn_interval"),
+        "max_conn_interval": utf_constants.get("max_conn_interval"),
         "conn_latency": 0,
-        "supervision_timeout": 50}
+        "supervision_timeout": utf_constants.get("supervision_timeout")}
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_ble_connected_tcp_rx_c20747')
@@ -1208,10 +1208,10 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
                                           net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
     conn_params = {
-        "min_conn_interval": 36,
-        "max_conn_interval": 36,
+        "min_conn_interval": utf_constants.get("min_conn_interval"),
+        "max_conn_interval": utf_constants.get("max_conn_interval"),
         "conn_latency": 0,
-        "supervision_timeout": 50}
+        "supervision_timeout": utf_constants.get("supervision_timeout")}
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wlan_ble_connected_tcp_rx_c20747')
