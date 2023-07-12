@@ -1,8 +1,8 @@
 firmware:
-#  rs911x: &firmware_file_anchor RS9116W.2.8.0.13.rps
-#  efx32: generic_test_agent_without_aws.hex
+  rs911x: &firmware_file_anchor RS9116W.2.8.0.13.rps
+  efx32: generic_test_agent_without_aws.hex
 
-#firmware_version_file: *firmware_file_anchor
+firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
 # reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
 reset: [efx32]
