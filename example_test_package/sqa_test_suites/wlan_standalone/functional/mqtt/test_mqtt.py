@@ -1857,3 +1857,35 @@ def test_mqtt_check_error_0X003e_C19281(wifi_sniffer, mqtt_server, mqtt_client, 
     logger.info(f"PS-POLL packets are captured in the sniffer")
     wifi_dut.interfaces.wifi.mqtt_client_close()
     wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable"])
+def test_mqtt_check_error_0X0036_C19279(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger):
+    # The test case checks error 0X0036 as topic length is greater than or less than the topic name given in the command
+    topic1 = "thisismytopicfromautomation"
+    capture_filename = "test_mqtt_check_error_0X0036_C19279"
+    dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
+    wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+    # DUT connects to MQTT server after execution of below api
+    wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt)
+    # mqtt-client connects to MQTT server after execution of below api
+    mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt)
+    time.sleep(5)
+    if wifi_dut.interfaces.mqtt.mqtt_client_is_connected:
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic1, custom_length=True, topic_custom_length=65, fire_forget=False)
+            err_val = exc_info.value.error_code
+            logger().info(f"DUT sent {err_val} code when Topic length is greater than or less than topic name")
+        assert exc_info.value.error_code == 0X36, "DUT sent wrong error code, expected is 0X36"
+    time.sleep(1)
+    logger.info("Stop the sniffer")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
+    wifi_dut.interfaces.wifi.mqtt_client_close()
+    wifi_dut.interfaces.wifi.leave()
