@@ -218,7 +218,7 @@ def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
     }
 )
-@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.http_server("python_http_server")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_https_put_functionality_c19234(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
