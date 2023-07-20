@@ -1,8 +1,6 @@
 import time
 from datetime import datetime, timedelta
-
 import pytest
-
 from utf.interfaces.bluetooth.hid_recorder import HidRecorder
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
@@ -1254,8 +1252,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20030(bt_dut, bt_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
         "features": RS9116FeatureBitMap.OpenMode,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature | RS9116ExtTCPIPFeatureBitMap.
-        ConfigFeatureBitmapValid,
+        "ext_tcpip_features": 0,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection | RS9116BTFeatureBitMap.BTSniff,
         "ble_features": 0,
@@ -1301,6 +1298,9 @@ def test_bt_hid_disabling_sniff_feature_c20036(bt_dut, bt_client):
     for i in range(len(test_data)):
         assert hid_logs[i] == test_data[i], "hid data and test data is not same"
 
+    logger().info("fetching the rssi value of remote bt device ")
+    bt_dut.interfaces.bluetooth.bt_get_rssi(bt_remote_dev_address=bt_client_address)
+
     time.sleep(60)
 
     logger().info("fetching the connection status after 60 secs of sleep")
@@ -1313,6 +1313,7 @@ def test_bt_hid_disabling_sniff_feature_c20036(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
 
+
 @pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
@@ -1324,7 +1325,8 @@ def test_bt_hid_disabling_sniff_feature_c20036(bt_dut, bt_client):
         "features": RS9116FeatureBitMap.OpenMode,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass,
         "ext_tcpip_features": 0,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode | RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         "ble_features": 0,
         "rejoin_enable": False,
