@@ -6279,3 +6279,82 @@ def test_Stored_AP_Powered_OFF_during_boot_C19145(wifi_sniffer, wifi_dut, wifi_a
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLANOnly,
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
+    }
+)
+def test_PowerSaveMode8_in_ULP_Mode_C19180(wifi_sniffer, wifi_access_point, wifi_dut, power_meter, logger):
+    capture_filename = "test_PowerSaveMode8_in_ULP_Mode_C19180"
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel
+    )
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+    logger.info(f"POWER SAVE MODE 8")
+    power_save = False
+    for count in range(3):
+        try:
+            wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode8 ,RS9116PowerSaveProcedureTypes.MaxPowerSave)
+            wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode8 ,RS9116PowerSaveProcedureTypes.MaxPowerSave)
+            power_save = True
+            break
+        except:
+            time.sleep(5)
+            logger.info(f"Retry for power save, retry count->:{count}")
+    assert power_save == True
+
+    power_meter.interfaces.power_meter.init_power_meter(data_log_file_name=f"UTF1_Data_Log")
+    power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
+    power_meter.interfaces.power_meter.set_output_channels_settings(
+        [{"channel": "1", "emulation_mode": "Current Measure", "trace_current": True, "trace_voltage": False,
+          "trace_power": False}])
+    time.sleep(10)
+    power_meter.interfaces.power_meter.start_capture()
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    logger.info(f"##########{parsed_result}")
+
+    scan_retry = False
+    time.sleep(5)
+    for count in range(1, 3):
+        try:
+            wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+            scan_retry = True
+            break
+        except:
+            time.sleep(2)
+            logger.info(f"Scanning to the Wifi Access point is failed. retry count -> {count}")
+    assert scan_retry == True
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    ip_fetch = False
+    for i in range(3):
+        try:
+            ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=30)
+            ip_fetch = True
+            break
+        except:
+            time.sleep(5)
+            logger.info(f"Fetch ip address failed : Retry count->{i}")
+
+    assert ip_fetch == True, "IP FETCH FAILED"
+    #
+    mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+    logger.info(f"DUT MAC_Address: {mac_address}")
+
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+    wifi_dut.interfaces.wifi.leave()
+    validation = True
+    packet_filter1 = f'(wlan.ta == {mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+    snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']
+    assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+    logger.info(f"PS-POLL packets are captured in the sniffer")
