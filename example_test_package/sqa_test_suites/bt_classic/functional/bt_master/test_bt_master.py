@@ -383,7 +383,11 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
     assert bt_dut_address, "failed to initialise bt in dut"
     logger().info(f"BT DUT address is{bt_dut_address}")
 
-    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code, capability="DisplayOnly", ssp=1)
+    # By sending pin_code -9 we will not be registering any agent to handle Pair requests.
+    # So there will not be any agent to respond to pair requests which is what is requried for this test case
+    # Subsequently if we have to register an agent later we can call
+    # bt_client.interfaces.bluetooth.bt_agent.start_agent(pin_code=pin_code, capability="DisplayYesNo") DisplayYesNo is 1
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9, capability="DisplayYesNo", ssp=1)
     assert bt_client_address, f"Failed to initiate master in remote device"
     logger().info(f"BT client device address is {bt_client_address}")
 
