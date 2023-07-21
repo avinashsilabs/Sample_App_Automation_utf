@@ -4855,9 +4855,8 @@ def test_2SSL_tcp_ack_feature_testcaseTC19136(
         for sock_count in range(0, 2):
             # Open ssl client socket in the DUT
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
-            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                       SocketOptions.TCP_MAX_RETRY)
-            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
+            wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET,
+                                                       SocketOptions.SO_TCP_ACK_INDICATION,
                                                        SocketOptions.SSL_ENABLE)
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
                                                        eval("SocketOptions.CERT_INDEX" + str(sock_count)))
@@ -4874,16 +4873,13 @@ def test_2SSL_tcp_ack_feature_testcaseTC19136(
 
         pkt_count = 1000
         buffer_length = 100
-        socket_no = [0, 1]
-        send_list = []
-        for sock_id in socket_no:
-            th_start = Thread(target=ssl_socket_rx, args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
-            send_list.append(th_start)
-            th_start.start()
+        socket_no = [1, 2]
+        # for socket in socket_no:
+        ssl_server.interfaces.ssl.data_receive(socket_no[0], pkt_count, buffer_length)
+        wifi_dut.interfaces.wifi.send_data_pkts(socket_no[0] - 1, buffer_length, pkt_count)
 
-        result = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=3, data_len=buffer_length,
-                                                                     time_interval=600,
-                                                                     number_of_pkts=pkt_count)
+        ssl_server.interfaces.ssl.data_receive(socket_no[1], pkt_count, buffer_length)
+        wifi_dut.interfaces.wifi.send_data_pkts(socket_no[1] - 1, buffer_length, pkt_count)
         wifi_sniffer.interfaces.capture.stop_capture()
 
         validation = True
