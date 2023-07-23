@@ -44,11 +44,13 @@ ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
 ENV TESTS_DIR=example_test_package
 
 # Copy tests, integration tests, config, firmware and startup script
-COPY $TESTS_DIR/ ./$TESTS_DIR/ 
+
+COPY common/ ./common/
+COPY executor/docker_startup.sh .
 COPY integration_test/ ./integration_test/
+COPY $TESTS_DIR/ ./$TESTS_DIR/
 COPY config/ ./config/
 COPY manifest/ ./manifest/
-COPY executor/docker_startup.sh .
 ENV MANIFEST_FILE=/app/manifest/manifest.yaml
 
 CMD ["./docker_startup.sh"]
