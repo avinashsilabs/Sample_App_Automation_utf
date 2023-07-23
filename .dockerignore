@@ -40,4 +40,4 @@ integration_test/base_test_case_definitions.yaml
 
 utf_core/src/utf/interfaces/bluetooth/sniffer/braktooth/docker/
 
-#utf_core/src/utf/interfaces/http/www/*MB.htm
+#common/www/*MB.htm

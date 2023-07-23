@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/utf_wiseconnect" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/utf_wiseconnect_3" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9 (utf_wifi) (4)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
