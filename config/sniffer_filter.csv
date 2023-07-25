@@ -6,6 +6,11 @@ beacon_ap_mode_dtim_period,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_sub
 beacon_ap_mode_dtim_interval,(wlan.addr == {{ wlan_addr }}) and  (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.subtype == 8) and (wlan.fixed.beacon == {{beacon}})
 beacon_HT_capability,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8) and (wlan.tag.number == 45 )
 probe_request,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 4)
+probe_response,(wlan.sa == {{ sa_addr }}) and (wlan.da =={{da_addr}}), and (wlan.fc.type_subtype == 5)
+probe_req_response,(wlan.addr == {{ wlan_addr }} or wlan.addr =={{wlan_addr}}), and ((wlan.fc.type_subtype == 4) or (wlan.fc.type_subtype == 5))
+hidden_ssid,(wlan.sa == {{ sa_addr }} and wlan.ssid == {{hidden_ssid}}), and (wlan.fc.type_subtype == 0x0008)
+rts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 27)
+cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 28)
 disassociation,(wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 10)
 association_request,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0)
 association_response,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 1)
@@ -29,6 +34,7 @@ mgmt_basic_data_rates_assoc_req,(wlan.sa == {{ sa_addr }}) and (wlan_radio.chann
 mgmt_basic_data_rates_probe_res,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0005 and (((wlan.supported_rates == 0x82) and (wlan.supported_rates == 0x84)) and (wlan.supported_rates == 0x30))
 mgmt_basic_data_rates_probe_req,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0005 and (((wlan.supported_rates == 0x82) and (wlan.supported_rates == 0x84)) and (wlan.supported_rates == 0x30))
 eapol_m2_after_deauth,(wlan_radio.channel == {{ radio_ch }}), and radiotap.timestamp.ts >= 12256739 and wlan_rsna_eapol.keydes.msgnr == 2
+assoc_req_resp_eapol_4_way_handshake,(wlan.addr == {{ dut_addr }}) and (wlan.addr == {{ ap_addr }}), and ((wlan.fc.type_subtype == 0 or wlan.fc.type_subtype == 1) or (wlan_rsna_eapol.keydes.key_info.key_type == 1))
 wpa3_confirm_commit_message,(wlan.addr == {{ wlan_addr }}), and (wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2)
 wpa3_4_way_handshake_message,(wlan.addr == {{ wlan_addr }}), and !(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or (wlan.fc.type_subtype == 0x0000) or eapol or (wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2)
 dhcp_renewal,(wlan.addr == {{ wlan_addr }}), and (!(ip.dst == 255.255.255.255) and (dhcp.option.dhcp == 3))) and wlan.fc.retry == 0
@@ -44,4 +50,4 @@ wmm_aggre_action3,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and
 wmm_aggre_action4,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x01)
 wmm_aggre_cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0019))
 dns_id,(wlan.addr == {{ wlan_addr }}), and (dns.id == {{dns_id}})
-,,
+tcp_handshake,(wlan.addr == {{ dut_addr }}) and (wlan.addr == {{ ap_addr }}), and (tcp.flags == 0x002) or (tcp.flags == 0x012) or (tcp.flags == 0x010)
