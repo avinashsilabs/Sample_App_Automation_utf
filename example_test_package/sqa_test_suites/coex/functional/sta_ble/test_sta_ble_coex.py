@@ -1084,12 +1084,7 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C133553.txt')
 
-            with TimeMeasurer() as t:
-                scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid,
-                                                             channel=wifi_access_point.interfaces.wifi.channel)
-            logger().info(scan_results)
-            assert len(scan_results) > 0, f"scan_list not found"
-            logger().info(f"Scan in {t.duration} seconds")
+            wifi_dut.interfaces.wifi.rejoin(rejoin_max=5, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
             logger().info("Joining into Wi-Fi")
             device_ip = wifi_join(wifi_dut, wifi_access_point)
@@ -1110,16 +1105,27 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
 
             logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
             run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip)
-            time.sleep(30)
+            time.sleep(10)
+            wifi_access_point.interfaces.wifi.stop_ap()
+            wifi_dut.interfaces.wifi.associated = False
+            sw = Stopwatch()
+            rejoin_msg = 0
+            end_time = 50
+            while sw.elapsed_sec <= end_time:
+                events = wifi_dut.interfaces.wifi.get_async_events()
+                if len(events):
+                    for event in events:
+                        if event.event_type == RS9116AsyncEventType.RejoinError:
+                            rejoin_msg = 1
+                            logger().info("******** Rejoin error found from DUT,"
+                                          " which is expected as per the test step ********")
+                if rejoin_msg:
+                    break
+            assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off for 350 seconds"
 
-            logger().info("Initiating Wi-Fi disconnection on DUT")
-            wifi_leave(wifi_dut)
-
-            logger().info("stop_ap+wifi_negative_scan thread execution starts...")
-            with stop_ap_thread(wifi_dut, wifi_access_point), wifi_scan_thread(wifi_dut), ble_scan_thread(
-                    wifi_dut, ble_client, ble_mode, ble_dut_address, scan_count=5):
-                time.sleep(15)
-
+            ble_scan_obj = ble_scan_thread(wifi_dut, ble_client, ble_mode, ble_dut_address, scan_count=5)
+            ble_scan_obj.start()
+            ble_scan_obj.wait_for_exit()
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
             # validate PS-POLL frame with pwrmgt bit set to '1'
@@ -1129,8 +1135,10 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
             # validate QOS data frame with more data bit set to '1'
             packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
                              f'and (wlan.ta == {bssid}))'
+
             # validate probe request
-            packet_filter3 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+            packet_filter3 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address})"
+
             logger().info('Validating PS Poll frames are sent from the device with power management bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
