@@ -1395,10 +1395,18 @@ def test_wlan_and_ble_radio_on_off_C133448(wifi_dut, ble_client, wifi_access_poi
         wifi_dut.interfaces.wifi.bt_deinit()
         logger().info("Disabled bt radio of the DUT")
         time.sleep(2)
-        logger().info("Enabling bt radio of the DUT")
-        wifi_dut.interfaces.wifi.bt_init()
-        logger().info("Enabled bt radio of the DUT")
-        logger().info("\n\n")
+
+        if wifi_dut.interfaces.wifi.board_type == "rs9117":
+            logger().info("Enabling ble radio of the DUT")
+            wifi_dut.interfaces.wifi.ble_init()
+            logger().info("Enabled ble radio of the DUT")
+            logger().info("\n\n")
+
+        else:
+            logger().info("Enabling bt radio of the DUT")
+            wifi_dut.interfaces.wifi.bt_init()
+            logger().info("Enabled bt radio of the DUT")
+            logger().info("\n\n")
 
 
 @pytest.mark.config(
