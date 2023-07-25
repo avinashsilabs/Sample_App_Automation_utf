@@ -77,6 +77,7 @@ def clean_up_method(wifi_dut, ble_client, scan_obj=False, ble_obj=False):
         for device_address in wifi_dut.interfaces.wifi.ble_devices_address:
             try:
                 wifi_dut.interfaces.wifi.ble_disconnect(device_address)
+                wifi_dut.interfaces.wifi.ble_advertising = False
             except:
                 pass
         logger().info("Disconnect from AP")
@@ -121,6 +122,7 @@ def ble_master_slave(
 ):
     ble_client_address = None
     if mode == "ble_master":
+        connection = False
         ble_client.interfaces.bluetooth.close()
         if start_needed:
             ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -141,6 +143,7 @@ def ble_master_slave(
                 ble_scan_filter_type=1,
                 timeout=120,
             )
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
             # wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
             timeout = 200
             logger().info(f"DUT initiating BLE connection with ble_client device")
@@ -148,15 +151,18 @@ def ble_master_slave(
                 ble_remote_dev_address=ble_client_address, timeout=timeout
             )
             logger().info("******** BLE master connection successful ********")
+            connection = True
         except Exception as e:
-            logger().info(
-                "*************** Exception block for stop advertising and stop scanning"
-            )
-            ble_client.interfaces.bluetooth.stop_advertising()
-            wifi_dut.interfaces.wifi.ble_stop_scanning()
-            raise e
+            if not connection:
+                logger().info(
+                    "*************** Exception block for stop advertising and stop scanning"
+                )
+                ble_client.interfaces.bluetooth.stop_advertising()
+            if wifi_dut.interfaces.wifi.ble_scanning:
+                wifi_dut.interfaces.wifi.ble_stop_scanning()
 
     if mode == "ble_slave":
+        connection = False
         ble_client.interfaces.bluetooth.close()
         time.sleep(2)
         if start_needed:
@@ -210,13 +216,15 @@ def ble_master_slave(
                 supervision_timeout=conn_params["supervision_timeout"],
             )
             logger().info(f"******** BLE slave connection successful ********")
+            connection = True
         except Exception as e:
-            logger().info(
-                "*************** Exception block for stop advertising and stop scanning"
-            )
-            wifi_dut.interfaces.wifi.ble_stop_advertising()
-            ble_client.interfaces.bluetooth.stop_scanning()
-            raise e
+            if not connection:
+                logger().info(
+                    "*************** Exception block for stop advertising and stop scanning"
+                )
+                wifi_dut.interfaces.wifi.ble_stop_advertising()
+                ble_client.interfaces.bluetooth.stop_scanning()
+
     return ble_client_address, ble_dut_address
 
 
@@ -359,6 +367,7 @@ class Ble_continuous_advertise_and_connection_thread(ThreadBase):
 
     def run(self):
         if self.ble_mode == "ble_master":
+            connection = False
             self.ble_client.interfaces.bluetooth.close()
             ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
             time.sleep(3)
@@ -387,15 +396,19 @@ class Ble_continuous_advertise_and_connection_thread(ThreadBase):
                         ble_remote_dev_address=ble_client_address, timeout=timeout
                     )
                     logger().info("******** BLE master connection successful ********")
+                    connection = True
             except Exception as e:
-                logger().info(
-                    "*************** Exception block for stop advertising and stop scanning"
-                )
-                self.ble_client.interfaces.bluetooth.stop_advertising()
-                self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-                raise e
+
+                if not connection:
+                    logger().info(
+                        "*************** Exception block for stop advertising and stop scanning"
+                    )
+                    self.ble_client.interfaces.bluetooth.stop_advertising()
+                    self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+                #raise e
 
         if self.ble_mode == "ble_slave":
+            connection = False
             self.ble_client.interfaces.bluetooth.close()
             time.sleep(2)
             logger().info(f"Set up DUT for BLE advertising")
@@ -439,14 +452,16 @@ class Ble_continuous_advertise_and_connection_thread(ThreadBase):
                         conn_latency=conn_params["conn_latency"],
                         supervision_timeout=conn_params["supervision_timeout"],
                     )
+                    connection = True
                     logger().info(f"******** BLE slave connection successful ********")
             except Exception as e:
-                logger().info(
-                    "*************** Exception block for stop advertising and stop scanning"
-                )
-                self.wifi_dut.interfaces.wifi.ble_stop_advertising()
-                self.ble_client.interfaces.bluetooth.stop_scanning()
-                raise e
+                if not connection:
+                    logger().info(
+                        "*************** Exception block for stop advertising and stop scanning"
+                    )
+                    self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+                    self.ble_client.interfaces.bluetooth.stop_scanning()
+                    #raise e
         return ble_client_address, ble_dut_address
 
 
@@ -2658,9 +2673,14 @@ def test_threading_sta_deeppowersave_ble_C133514(
             RS9116PowerSaveModes.PowerSaveMode8,
             RS9116PowerSaveProcedureTypes.FastPowerSave,
         )
-        logger().info("Disable DUT in wlan deep Power save....")
+        with TimeMeasurer() as t:
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        logger().info(scan_results)
+        assert len(scan_results) > 0, "scan_list not found"
+        logger().info(f"Scan in {t.duration} seconds")
+        logger().info("Disable wlan deep Power save before going to the connection")
         wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
-        logger().info("Disable DUT in bt deep power save..... ")
+        logger().info("Disable BT deep Power save before going to the connection")
         wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveDisabled)
         validation = True
         for i in range(1, iter_count + 1):
@@ -2722,6 +2742,7 @@ def test_threading_sta_deeppowersave_ble_C133514(
                 f"Issue BLE Disconnection from raspi for repeat count {iter_count}"
             )
             ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+            wifi_dut.interfaces.wifi.ble_advertising = False
             time.sleep(5)
     finally:
         clean_up_method(wifi_dut, ble_client)
