@@ -1,9 +1,10 @@
-﻿beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
-beacon_ap_mode_us_region,(wlan.addr == {{ wlan_addr }}) and  (wlan_radio.channel == {{ radio_ch }})," and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == ""US""))"
-beacon_ap_mode_eu_region,(wlan.addr == {{ wlan_addr }}) and  (wlan_radio.channel == {{ radio_ch }})," and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == ""EU""))"
-beacon_ap_mode_jp_region,(wlan.addr == {{ wlan_addr }}) and  (wlan_radio.channel == {{ radio_ch }})," and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == ""JP""))"
+﻿Column1,Column2,Column3
+beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
+beacon_ap_mode_us_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == US))
+beacon_ap_mode_eu_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == EU))
+beacon_ap_mode_jp_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == JP))
 beacon_ap_mode_dtim_period,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype==0x0008) and (wlan.tim.dtim_period == {{dtim_period}})
-beacon_ap_mode_dtim_interval,(wlan.addr == {{ wlan_addr }}) and  (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.subtype == 8) and (wlan.fixed.beacon == {{beacon}})
+beacon_ap_mode_dtim_interval,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.subtype == 8) and (wlan.fixed.beacon == {{beacon}})
 beacon_HT_capability,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8) and (wlan.tag.number == 45 )
 probe_request,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 4)
 probe_response,(wlan.sa == {{ sa_addr }}) and (wlan.da =={{da_addr}}), and (wlan.fc.type_subtype == 5)
