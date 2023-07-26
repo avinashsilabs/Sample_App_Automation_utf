@@ -36,29 +36,7 @@ subnet = '255.255.255.0'
 gateway = '192.168.100.76'
 
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='smoke_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
 
-]
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_version_testcase_id1',
-                                                       test_case_id='testcase_id1',
-                                                       notes='test notes'))
 @pytest.mark.dut("rs9116")
 @pytest.mark.AT
 @pytest.mark.config(
@@ -82,10 +60,7 @@ def test_version_testcase_id1(wifi_dut):
     logger().info(f"Actual version: {result}")
     assert result == expected_version
 
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_version_testcase_id2',
-                                                       test_case_id='testcase_id2',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -107,10 +82,7 @@ def test_version_testcase_id2(wifi_dut):
     logger().info(f"Actual version: {result}")
     assert result == expected_version
 
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_wifi_connect_testcase_id6',
-                                                       test_case_id='testcase_id6',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -141,10 +113,7 @@ def test_wifi_connect_testcase_id6(wifi_dut, wifi_access_point):
         assert status == 1
     logger().info(f"Associated and ping in {t.duration} seconds")
 
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_ble_connect_testcase_id_19',
-                                                       test_case_id='testcase_id_19',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -189,10 +158,7 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
     time.sleep(5)
     ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_wifi_ble_connect_testcase_id_27',
-                                                       test_case_id='testcase_id_27',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -247,10 +213,7 @@ def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_throughput_tcp_tx_2_4_channel1',
-                                                       test_case_id='tcp_tx_2_4_channel1',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -292,10 +255,7 @@ def test_throughput_tcp_tx_2_4_channel1(net_perf_client, wifi_access_point, wifi
     assert tp is not None
     __print_throughput(tp)
 
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_throughput_udp_rx_2_4_channel1',
-                                                       test_case_id='udp_rx_2_4_channel1',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -343,10 +303,7 @@ def test_throughput_udp_rx_2_4_channel1(net_perf_client, wifi_access_point, wifi
     tp = net_perf_client.interfaces.net_perf.process_output(result)
     assert tp is not None
     __print_throughput(tp)
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_bt_master_ssp_keyboardonly',
-                                                       test_case_id='master_ssp_keyboardonly',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -384,10 +341,7 @@ def test_bt_master_ssp_keyboardonly(wifi_dut, bt_client):
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
     logger().info(f"test completed in {t.duration} seconds")
 
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_bt_standard_inquiry_C19983',
-                                                       test_case_id='C19983',
-                                                       notes='test notes'))
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
