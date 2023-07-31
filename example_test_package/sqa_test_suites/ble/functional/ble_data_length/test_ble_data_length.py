@@ -278,7 +278,7 @@ def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client):
+def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client, utf_constants):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path="./reports/test_ble_slave_data_length_230_bytes_tx_C19923.log"):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
@@ -358,6 +358,11 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client):
             assert len(notifications) > 0, "received data is empty"
             assert notifications[0] == data, "failed to fetch data"
 
+            iter_count = utf_constants.get("iter_count")
+            if i == iter_count:
+                logger().info("ble_remove_service")
+                ble_dut.interfaces.wifi.ble_remove_service()
+
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
@@ -383,7 +388,7 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
+def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client, utf_constants):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path="./reports/test_ble_slave_data_length_20_bytes_duty_cycle_C19926.log"):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
@@ -470,6 +475,11 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
             assert len(notifications) > 0, "received data is empty"
             assert notifications[0] == data, "failed to fetch data"
 
+            iter_count = utf_constants.get("iter_count")
+            if i == iter_count:
+                logger().info("ble_remove_service")
+                ble_dut.interfaces.wifi.ble_remove_service()
+
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
@@ -496,7 +506,7 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client):
+def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client, utf_constants):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path="./reports/test_ble_slave_data_length_230_bytes_duty_cycle_C19929.log"):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
@@ -579,6 +589,11 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client):
             assert len(notifications) > 0, "received data is empty"
             assert notifications[0] == data, "failed to fetch data"
 
+            iter_count = utf_constants.get("iter_count")
+            if i == iter_count:
+                logger().info("ble_remove_service")
+                ble_dut.interfaces.wifi.ble_remove_service()
+
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
             ble_client.interfaces.bluetooth.close()
@@ -604,7 +619,7 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client):
+def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client, utf_constants):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path="./reports/test_ble_slave_data_length_100_bytes_tx_rx_C19928.log"):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
@@ -695,6 +710,11 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client):
             logger().info(notifications)
             assert len(notifications) > 0, "received data is empty"
             assert notifications[0] == data, "failed to fetch data"
+
+            iter_count = utf_constants.get("iter_count")
+            if i == iter_count:
+                logger().info("ble_remove_service")
+                ble_dut.interfaces.wifi.ble_remove_service()
 
             logger().info("======= disconnecting from dut")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
