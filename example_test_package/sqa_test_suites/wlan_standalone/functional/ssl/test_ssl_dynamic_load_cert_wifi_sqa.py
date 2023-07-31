@@ -2555,6 +2555,9 @@ def test_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wi
             time.sleep(5)
             logger.info(f"Retry_count:{count}")
     assert power_save == 0
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+
+    wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveDisabled)
 
     device_ip = join_ap(wifi_dut, wifi_access_point, wait_time=60)
 
