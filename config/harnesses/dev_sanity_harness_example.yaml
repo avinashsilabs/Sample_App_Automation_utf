@@ -464,6 +464,42 @@ devices:
                 standard: 'n'
                 ip_address: '10.207.18.233'
 
+    raspi_wifi_ssh1:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.101
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.101'
+
+    raspi_wifi_ssh2:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.158
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.158'
+
     raspi_ble_client:
         interfaces:
             linux_shell:
@@ -478,8 +514,8 @@ devices:
             multicast:
                 type: 'multicast.multicast_socket'
                 ip_version: 0
-                multicast_ip: '239.255.255.250'
-                multicast_ip2: '239.255.255.250'
+                multicast_ip: '239.0.0.1'
+                multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
                 destination_socket: 5002
                 ttl: 32
@@ -674,6 +710,20 @@ devices:
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled with ipv6
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+                ip_version: 6
+    
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -694,6 +744,21 @@ devices:
                 password: 'testpassword'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
+
+    raspi_mosquitto_auth_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+                ip_version: 6
 
     # this represents an MQTT broker running on the raspberry pi on port 8883 with TLS and authentication enabled
     raspi_mosquitto_tls:
@@ -716,6 +781,24 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -793,6 +876,16 @@ devices:
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
 
+    python_http_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.python_http'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
     raspi_http_client:
         interfaces:
             http:
@@ -816,6 +909,7 @@ devices:
                 username: slwifi       # sniffer NUC username
                 password: Qwertyuiop@12    # sniffer NUC password
                 use_paramiko_expect: false
+                timeout: 30
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
@@ -908,6 +1002,7 @@ devices:
                 port: 3001
                 username: null
                 password: null
+                timeout: 2
 
 
     raspi_ssl_server:
@@ -1154,6 +1249,34 @@ devices:
                 vid: 0x1915
                 pid: 0xC00A
 
+    nrf_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.android.nrf_connect.nrf_connect_mi'
+                # This is should be unique for each ble client
+                port: 4701
+                # This is id of mobile need retrive this manually
+                device_id: '9a60d4ba'
+                device_type: 'mi'
+                # This is should be as same as ble_advertising_data
+                advertising_data: "HELLO"
+
+    power_meter_plotter:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            plotter:
+                type: 'power_meter_plotter'
+                src_dir: 'utf_wiseconnect'
+                shell: 'linux_shell'
+
+    # This represents the sniffer filter configuration
+    sniffer_filter:
+        interfaces:
+            ws_sniffer_filter:
+                type: sniffer_filter
+                src_dir: 'utf_wiseconnect'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1190,6 +1313,8 @@ defaults:
     wifi_clients:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
+        - 'raspi_wifi_ssh1'
+        - 'raspi_wifi_ssh2'
 
     wifi_sniffer: 'airpcap'
 
@@ -1230,6 +1355,8 @@ defaults:
     # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
+
+    sniffer_filter: 'sniffer_filter'
 
     switch: 'switched_ap'
 
@@ -1343,6 +1470,7 @@ defaults:
         bt_exploit_type: "au_rand_flooding"
         script: ""
     
+    plotter: 'power_meter_plotter'
 
     net_perf:
         server_options:
@@ -1436,5 +1564,11 @@ constants:
         value: "/RS9116W.2.8.0.13.rps"
     board_version:
         value: "1.4Q7"
+    min_conn_interval:
+        value: 160
+    max_conn_interval:
+        value: 160
+    supervision_timeout:
+        value: 2000
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
