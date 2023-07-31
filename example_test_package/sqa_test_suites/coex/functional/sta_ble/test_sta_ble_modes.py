@@ -724,10 +724,9 @@ def connect_with_pmk_without_scan(wifi_dut, wifi_access_point, wifi_sniffer, tcp
         except:
             logger().info(f"failed result count : {i}")
 
-def connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=False, security_type=None):
+def connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, tcp_bypass=False, security_type=None):
     validation = True
     time_obj = FilterPacket()
-    # wifi_dut.interfaces.wifi.associated = False
 
     channel = wifi_access_point.interfaces.wifi.channel
     ssid = wifi_access_point.interfaces.wifi.ssid
@@ -738,12 +737,20 @@ def connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info("start capturing with Sniffer by giving the test case name as filename")
     wifi_sniffer.interfaces.capture.start_capture(capture_file="pmk_sniffer")
+    time.sleep(5)
+
     wifi_dut.interfaces.wifi.generate_pmk(wifi_access_point.interfaces.wifi.ssid,
                                           wifi_access_point.interfaces.wifi.passphrase)
-    logger().info(f"This API connects STA to the third party AP with the pmk generated")
-    wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
-                                      wifi_access_point.interfaces.wifi.passphrase, security_type)
-    time.sleep(5)
+    for pmk in range(0, 3):
+        try:
+            logger().info(f"This API connects STA to the third party AP with the pmk generated")
+            wifi_dut.interfaces.wifi.join_pmk(wifi_access_point.interfaces.wifi.ssid,
+                                              wifi_access_point.interfaces.wifi.passphrase, security_type)
+            time.sleep(2)
+            break
+        except Exception as e:
+            logger().info(f"pmk_connect failed with error:\n{e}")
+            time.sleep(5)
     if not tcp_bypass:
         logger().info(f"This API Enables the DHCP in DUT")
         result = wifi_dut.interfaces.wifi.start_ip()
@@ -762,26 +769,32 @@ def connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=
     result = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                     RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert result
+    ping_count = 30
+    if not tcp_bypass:
+        logger().info(f"pinging to dut.....")
+        status = ping(device_ip, ping_count)
+        assert status == 1, "DUT not responding for ping request......"
+        logger().info(f"ping to DUT is successful....")
+
     logger().info(f"Disabling powersave")
     wifi_dut.interfaces.wifi.power_save(0, 0)
     wifi_dut.interfaces.wifi.bt_power_save(0, 0)
-    time.sleep(5)
-    wifi_dut.interfaces.wifi.leave()
-    packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
+    try:
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as err:
+        rs_helper.dut_recovery(wifi_dut, err)
 
+    wifi_sniffer.interfaces.capture.stop_capture()
+    packet_filter2 = 'Type/Subtype: Probe Request (0x0004)'
     # Validate the eapol 4 key
     packet_filter4 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4) or ' \
                      f'(wlan.fc.type_subtype == 0x0004 and wlan.da == {ap_bssid})'
-
-    wifi_sniffer.interfaces.capture.stop_capture()
-
     packet_filter6 = f'(eapol.keydes.replay_counter == 2 and wlan_rsna_eapol.keydes.msgnr == 4 and ' \
                      f'wlan.da == {ap_bssid})'
 
     logger().info("Validating eapol4 packet")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
         'packet_count'], 'Unable to find eapol4 packet in sniffer '
-
     logger().info("Validating time between two packets")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, packet_filter2)
 
@@ -800,7 +813,7 @@ def connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, tcp_bypass=
     time_object1 = datetime.strptime(time_str1, '%H:%M:%S.%f').time()
     logger().info(f'probe req time {time_object1}')
     # Calculating the response time of eapol4
-    time_str2 = time_stamp_list[length-1]
+    time_str2 = time_stamp_list[length - 1]
     time_str2 = time_str2[:-3]
     time_object2 = datetime.strptime(time_str2, '%H:%M:%S.%f').time()
     logger().info(f'eapol key time {time_object2}')
@@ -831,11 +844,13 @@ def ble_continous_advertise(wifi_dut, ble_client):
         assert (found_devices[
                     wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
         logger().info(f"See that we found our device:'{ble_dut_address}'")
+        return ble_dut_address
     except Exception as e:
         logger().info("*************** Exception block for stop advertising and stop scanning")
         wifi_dut.interfaces.wifi.ble_stop_advertising()
         ble_client.interfaces.wifi.stop_scanning()
         raise e
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -898,34 +913,51 @@ def test_threading_sta_ble_aes_psk_c133458(wifi_dut, wifi_access_point, wifi_sni
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
-        EnahanceMaxPsp,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features":  RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
+        "set_send_feature_frame": True,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize", "passphrase": "12345676789zx",
-                                               "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_join_time_in_wpa_tkip_using_pmk_c133459(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants):
-     try:
-          security_type = 7
-          iter_count = utf_constants.get("iter_count")
-          ble_continous_advertise(wifi_dut, ble_client)
-          time.sleep(5)
-          for i in range(1, iter_count+1):
-               connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, security_type=security_type)
-               time.sleep(15)
-               logger().info(f"iteration completed: {i}")
-     finally:
-         wifi_dut.interfaces.wifi.leave()
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": "thisssidisthirteeetwobytesofsize", "passphrase": "12345676789zx",
+                          "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
+def test_join_time_in_wpa_tkip_using_pmk_c133459(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, utf_constants,
+                                                 rs_helper):
+    try:
+        security_type = 7
+        iter_count = utf_constants.get("iter_count")
+        ble_dut_addr = ble_continous_advertise(wifi_dut, ble_client)
+        time.sleep(5)
+        for i in range(1, iter_count + 1):
+            connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, security_type=security_type)
+            time.sleep(5)
+            logger().info(f"iteration completed: {i}")
+
+        ble_client.interfaces.bluetooth.close()
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
+        assert ble_client_address, f"ble client address not found"
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.stop_scanning()
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        logger().info(f"ble_scan_list:\n{found_devices}")
+        assert wifi_dut.interfaces.wifi.ble_address in found_devices
+        assert (found_devices[
+                    wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
+        logger().info(f"See that we found our device:'{ble_dut_addr}'")
+    finally:
+        wifi_dut.interfaces.wifi.leave()
+
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1068,32 +1100,48 @@ def test_threading_sta_ble_modes_aes_psk_c133494(wifi_dut, wifi_access_point, wi
     wifi={
         "oper_mode": 0,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.
-        EnahanceMaxPsp,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | RS9116FeatureBitMap.Aggregation,
+        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": RS9116TCPIPFeatureBitMap.TCPIPBypass | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features":  RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.Default,
+        "set_send_feature_frame": True,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan", "disassociated"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv", "ble_stop_scan",
+                             "disassociated"])
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA", "cipher": 'TKIP', "standard": '11bg'})
-def test_join_time_in_wpa_pmk_using_tkip_in_tcp_bypass_c133495(wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants):
+                    wifi={"ssid": "testingpmk", "passphrase": 'Testing_psk', "security": "WPA", "cipher": 'TKIP',
+                          "standard": '11bg'})
+def test_join_time_in_wpa_pmk_using_tkip_in_tcp_bypass_c133495(wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
+                                                               utf_constants, rs_helper):
     try:
         security_type = 7
         iter_count = utf_constants.get("iter_count")
-        ble_continous_advertise(wifi_dut, ble_client)
+        ble_dut_addr = ble_continous_advertise(wifi_dut, ble_client)
         time.sleep(5)
         for i in range(1, iter_count + 1):
-            connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer,  tcp_bypass=True, security_type=security_type)
-            time.sleep(15)
+            connect_with_tkip_pmk(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, tcp_bypass=True, security_type=security_type)
+            time.sleep(5)
             logger().info(f"iteration completed: {i}")
+
+        ble_client.interfaces.bluetooth.close()
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
+        assert ble_client_address, f"ble client address not found"
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.stop_scanning()
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        logger().info(f"ble_scan_list:\n{found_devices}")
+        assert wifi_dut.interfaces.wifi.ble_address in found_devices
+        assert (found_devices[
+                    wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), "Could not able to find our DUT"
+        logger().info(f"See that we found our device:'{ble_dut_addr}'")
     finally:
         wifi_dut.interfaces.wifi.leave()
 
