@@ -82,11 +82,11 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19711')
 
     logger().info("scan for the ap's.....")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, use_thread=True)
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, thread=True)
 
     logger().info("connecting to access point with pmk.....")
     wifi_dut.interfaces.wifi.get_pairwise_master_key(wifi_access_point.interfaces.wifi.ssid,
-                                                     wifi_access_point.interfaces.wifi.passphrase, use_thread=True)
+                                                     wifi_access_point.interfaces.wifi.passphrase, thread=True)
 
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
                                                                    power_save=True, associated=True)
@@ -142,11 +142,11 @@ def test_wifi_sdk_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sn
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19715')
 
     logger().info("scan for the ap's.....")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, use_thread=True)
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, thread=True)
 
     logger().info("connecting to access point.....")
     wifi_dut.interfaces.wifi.get_pairwise_master_key(wifi_access_point.interfaces.wifi.ssid,
-                                                     wifi_access_point.interfaces.wifi.passphrase, use_thread=True)
+                                                     wifi_access_point.interfaces.wifi.passphrase, thread=True)
 
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
                                                                    power_save=True, associated=True)
@@ -184,16 +184,15 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19716')
 
         logger().info("scan for the ap's.....")
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, use_thread=True)
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, thread=True)
 
         with pytest.raises(WlanError) as exc_info:
             logger().info("connecting to access point with wrong psk.....")
-            wifi_dut.interfaces.wifi.get_pairwise_master_key(wifi_access_point.interfaces.wifi.ssid, "12345678", use_thread=True)
+            wifi_dut.interfaces.wifi.get_pairwise_master_key(wifi_access_point.interfaces.wifi.ssid, "12345678", thread=True)
         assert exc_info.value.error_code == 0x0008
         logger().info(f"Dut Tried to connect to ap with wrong password, observed error code 0x0008 which is expected")
 
         # Validate de-auth packet
-        # packet_filter1 = f'(wlan.fc.type_subtype == 12)'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='deauthenticaion')
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -217,7 +216,7 @@ def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point)
     with TimeMeasurer() as t:
         with pytest.raises(WlanError) as exc_info:
             # This API connects STA to the third party AP with the pmk generated
-            wifi_dut.interfaces.wifi.get_pairwise_master_key("\"\"", wifi_access_point.interfaces.wifi.passphrase, use_thread=True)
+            wifi_dut.interfaces.wifi.get_pairwise_master_key("\"\"", wifi_access_point.interfaces.wifi.passphrase, thread=True)
             assert exc_info.value.error_code == 0x0003
             logger().info(
                 f"Dut Tried to connect to ap with wrong password, observed error code 0x0003 which is expected")
@@ -243,11 +242,11 @@ def test_wifi_sdk_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, 
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19718')
 
     logger().info("scan for the ap's.....")
-    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, use_thread=True)
+    wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, thread=True)
 
     ssid = " redpine"
     logger().info("connecting to access point.....")
-    wifi_dut.interfaces.wifi.get_pairwise_master_key(ssid, "thisisatestnetwork", use_thread=True)
+    wifi_dut.interfaces.wifi.get_pairwise_master_key(ssid, "thisisatestnetwork", thread=True)
 
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
                                                                    power_save=True, associated=True)
@@ -289,11 +288,11 @@ def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19720')
 
         logger().info("scan for the ap's.....")
-        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, use_thread=True)
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=wifi_access_point.interfaces.wifi.channel, thread=True)
 
         logger().info("connecting to access point.....")
         wifi_dut.interfaces.wifi.get_pairwise_master_key(wifi_access_point.interfaces.wifi.ssid,
-                                                         wifi_access_point.interfaces.wifi.passphrase, use_thread=True)
+                                                         wifi_access_point.interfaces.wifi.passphrase, thread=True)
 
         device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
                                                                        power_save=True, associated=True)
