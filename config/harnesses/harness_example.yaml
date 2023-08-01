@@ -430,6 +430,10 @@ devices:
             mqtt:
                 type: 'mqtt.client.paho_client'
                 disable_certificate_verification: false
+            tc:
+                type: 'traffic_controller.tc_cli'
+                shell: 'linux_shell'
+                interface: 'eth0'
             wifi:
                 # The 'wifi.access_points.linux' device type represents a linux-based access point
                 # running hostapd to create a soft AP

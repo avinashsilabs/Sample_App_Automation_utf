@@ -197,6 +197,16 @@ devices:
                 channel: 1
                 cipher: 'AES'
 
+    binatone_dt910w_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'binatonedt910w'
+                passphrase: '19031903'
+                channel: 1
+                cipher: 'AES'
+
     asus_rt_ax3000_ap:
         interfaces:
             wifi:
@@ -222,6 +232,10 @@ devices:
                 type: 'shell.shell'
             mqtt:
                 type: 'mqtt.client.paho_client'
+            tc:
+                type: 'traffic_controller.tc_cli'
+                shell: 'linux_shell'
+                interface: 'wlan0'
             wifi:
                 # The 'wifi.access_points.linux' device type represents a linux-based access point
                 # running hostapd to create a soft AP

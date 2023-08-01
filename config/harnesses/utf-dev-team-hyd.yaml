@@ -217,6 +217,11 @@ devices:
                 type: 'wifi.access_points.linux'
                 shell: 'linux_shell'
                 interface: 'wlan0'
+            tc:
+                type: 'traffic_controller.tc_cli'
+                shell: 'linux_shell'
+                interface: 'eth1'
+
 
     secondary_raspi_client:
         interfaces:
