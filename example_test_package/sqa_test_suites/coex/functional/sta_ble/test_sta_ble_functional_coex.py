@@ -306,8 +306,8 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
             time.sleep(2)
         except Exception as e:
             logger().info("*************** Exception block for stop advertising and stop scanning ***************")
-            wifi_dut.interfaces.bluetooth.ble_stop_advertising()
-            ble_client.interfaces.wifi.stop_scanning()
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
+            ble_client.interfaces.bluetooth.stop_scanning()
             raise e
         if secure_connect:
             ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address)

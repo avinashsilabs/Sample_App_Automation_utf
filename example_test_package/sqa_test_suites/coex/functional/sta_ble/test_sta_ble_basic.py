@@ -1738,9 +1738,7 @@ def test_sta_ble_deep_sleep_msg_power_save_C133516(firmware_loader, wifi_dut, wi
         logger().info("\n******Stop Sniffer finally******")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("\n******Disabling powersave******")
-        wifi_dut.interfaces.wifi.power_save(0, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
+
 
 
 @pytest.mark.config(
