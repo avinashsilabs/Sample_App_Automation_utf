@@ -57,7 +57,7 @@ def reset_wiseconnect_duts(request, harness):
                     f"Calling device reset from module level fixture for device '{dut.name}'"
                 )
                 dut.reset()
-                time.sleep(3)
+                dut.release_resources()
             except Exception as e:
                 logger().error(
                     f"Failed to reset from module level fixture for device '{dut.name}' - {e}"
