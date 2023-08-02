@@ -12,7 +12,7 @@ utf_wifi_dev_9116_a10_devsanity_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.8.0.13"
+        RS9116_FIRMWARE: "RS9116W.2.9.0.1"
         UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a10_devsanity_1_device_group"
         device_group_label: ""
@@ -30,7 +30,7 @@ utf_wifi_dev_9116_a11_devsanity_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.8.0.13"
+        RS9116_FIRMWARE: "RS9116W.2.9.0.1"
         UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity_1_5.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a11_devsanity_1_device_group"
         device_group_label: ""
@@ -48,7 +48,7 @@ utf_wifi_dev_9116_a10_smoke_test_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.8.0.13"
+        RS9116_FIRMWARE: "RS9116W.2.9.0.1"
         UTF_PYTEST_COMMAND: "pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a10_smoke_test_1_device_group"
         device_group_label: ""
@@ -66,7 +66,7 @@ utf_wifi_dev_9116_a11_smoke_test_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.8.0.13"
+        RS9116_FIRMWARE: "RS9116W.2.9.0.1"
         UTF_PYTEST_COMMAND: "pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a11_smoke_test_1_device_group"
         device_group_label: ""
