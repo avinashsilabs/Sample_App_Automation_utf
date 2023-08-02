@@ -24,7 +24,7 @@ from utf.utf_config import UtfConfig
 from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
-from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
+# from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS911X
@@ -165,9 +165,9 @@ def pytest_collection_modifyitems(config, items):
 def rs_helper(request):
     yield RSHelperCommands.create_instance()
 
-@pytest.fixture()
-def sl_collections(request):
-    yield SLCollections.create_instance()
+# @pytest.fixture()
+# def sl_collections(request):
+#     yield SLCollections.create_instance()
 
 
 @pytest.fixture()
