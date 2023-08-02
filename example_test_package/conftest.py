@@ -1,7 +1,8 @@
 import time
 
 from utf import TestResultsModelAttrs, TestUserPropertiesSource
-from utf.apis import extract_test_case_id
+from utf.apis.test_rail import extract_test_case_id
+
 from utf.env_settings import EnvironSettings
 from utf.utils import (
     is_publish_test_results_enabled,
