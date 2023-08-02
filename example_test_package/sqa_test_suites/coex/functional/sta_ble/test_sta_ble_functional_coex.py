@@ -306,8 +306,8 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
             time.sleep(2)
         except Exception as e:
             logger().info("*************** Exception block for stop advertising and stop scanning ***************")
-            wifi_dut.interfaces.bluetooth.ble_stop_advertising()
-            ble_client.interfaces.wifi.stop_scanning()
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
+            ble_client.interfaces.bluetooth.stop_scanning()
             raise e
         if secure_connect:
             ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address)
@@ -338,7 +338,7 @@ def run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip
     time.sleep(2)
     logger().info("Starting server from remote device")
     net_perf_client.interfaces.net_perf.start()
-    time.sleep(5)
+    time.sleep(8)
     # open socket and send traffic
     wifi_dut.interfaces.wifi.send_traffic_from_device(
         host_ip,
@@ -428,13 +428,31 @@ def packet_check(wifi_sniffer, decryption_key, dut_mac_address, ap_bssid, captur
                 tcp_layer = str(layer)
                 logger().info(tcp_layer)
             if layer_name == "tls":
-                tls_layer = str(layer)
-                if re.search(".*Receiver address:", mac_layer) and re.search(".*Transmitter address:", mac_layer):
-                    received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
-                    receiver_address = re.search(received, mac_layer).group()
-                    transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
-                    transmitter_address = re.search(transmit, mac_layer).group()
-                    logger().info(f">>>>>>{receiver_address}>>>>>>{transmitter_address}")
+                filtered_packet = str(packet)
+                filtered_packet = filtered_packet.split("Layer ")
+                tls_layer_pkt = ""
+                ra_address = ""
+                ta_address = ""
+                logger().info(f"DUT_MAC_ADDRESS: {dut_mac_address},AP_BSSID: {ap_bssid}")
+
+                for pt_layer in filtered_packet:
+                    if (re.search(".*Receiver address:", pt_layer) and re.search(".*Transmitter address:", pt_layer)) \
+                            or (re.search(".*TLS:", pt_layer)):
+                        if re.search(".*TLS:", pt_layer):
+                            tls_layer_pkt = pt_layer
+                        if re.search(".*Receiver address:", pt_layer) and re.search(".*Transmitter address:", pt_layer):
+                            received = re.compile(r"Receiver address: (([0-9a-fA-F]:?){12})")
+                            receiver_address = re.search(received, pt_layer).group()
+                            ra_address = (re.search(received, pt_layer).group(1)).lower()
+                            transmit = re.compile(r"Transmitter address: (([0-9a-fA-F]:?){12})")
+                            transmitter_address = re.search(transmit, pt_layer).group()
+                            ta_address = (re.search(transmit, pt_layer).group(1)).lower()
+                            dut_mac_address_mod = dut_mac_address.lower()
+                            ap_bssid_mod = ap_bssid.lower()
+                        if ((ra_address == dut_mac_address_mod or ra_address == ap_bssid_mod) and (
+                                ta_address == dut_mac_address_mod or ta_address == ap_bssid_mod)) and tls_layer_pkt:
+                            logger().info(f"{transmitter_address}>>>>>>{receiver_address}")
+                            logger().info(f"TLS HANDSHAKE PACKET: {tls_layer_pkt}")
 
 
 class wifi_traffic_thread(ThreadBase):
@@ -1377,10 +1395,18 @@ def test_wlan_and_ble_radio_on_off_C133448(wifi_dut, ble_client, wifi_access_poi
         wifi_dut.interfaces.wifi.bt_deinit()
         logger().info("Disabled bt radio of the DUT")
         time.sleep(2)
-        logger().info("Enabling bt radio of the DUT")
-        wifi_dut.interfaces.wifi.bt_init()
-        logger().info("Enabled bt radio of the DUT")
-        logger().info("\n\n")
+
+        if wifi_dut.interfaces.wifi.board_type == "rs9117":
+            logger().info("Enabling ble radio of the DUT")
+            wifi_dut.interfaces.wifi.ble_init()
+            logger().info("Enabled ble radio of the DUT")
+            logger().info("\n\n")
+
+        else:
+            logger().info("Enabling bt radio of the DUT")
+            wifi_dut.interfaces.wifi.bt_init()
+            logger().info("Enabled bt radio of the DUT")
+            logger().info("\n\n")
 
 
 @pytest.mark.config(
@@ -1809,9 +1835,9 @@ def test_otaf_firmware_upgrade_through_wifi_after_ble_connection_C133484(wifi_du
         raise NotImplementedError("This test case is only currently implemented for SAPI")
 
     ble_mode = "ble_slave"
-    logger().info(f"Initiating DUT as Master connection with {ble_client.name} as slave")
+    logger().info(f"Initiating DUT as Slave connection with {ble_client.name} as master")
     ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
-    logger().info(f"DUT as BLE_MASTER CONNECTION SUCCESSFUL with {ble_client.name}")
+    logger().info(f"DUT as ble_slave connection successful with {ble_client.name}")
 
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -2090,7 +2116,7 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
     wlan_scan(wifi_dut, channel=0)
 
     logger().info("Joining into Wi-Fi on DUT")
-    device_ip = wifi_join(wifi_dut, wifi_access_point)
+    device_ip = wifi_join(wifi_dut, wifi_access_point, powersave=False)
 
     traffic_thread = wifi_traffic_thread(net_perf_client, wifi_dut, wifi_client, protocol, device_ip, iperf_time=60)
     logger().info("start ble GATT service in DUT")
@@ -2126,6 +2152,16 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
     time.sleep(15)
     logger().info("BLE SLAVE connection successful")
 
+    logger().info("Initiating wlan power save on DUT")
+    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "failed to enable wifi power save"
+
+    logger().info("Initiating bt power save on DUT")
+    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "failed to enable bt power save"
+
     # resolve ImmediateAlertService profile
     start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=ble_client_address,
                                                                               uuid=int(ImmediateAlertService.UUID, 16),
@@ -2142,7 +2178,6 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
     assert ImmediateAlertLevelCharacteristic.prop_int == int(char_properties[index]), "Invalid character property found"
     write_handle = int(write_handles[index], 16)
     assert write_handle > 0, "Unable to get write handle for configured service"
-    traffic_thread.wait_for_exit(True)
 
     alerts_allowed = {0: 'DEFAULT_ALERT', 1: 'MID_ALERT', 2: 'HIGH_ALERT'}
     logger().info(f"\n\nAlerts Allowed: {alerts_allowed}")
@@ -2155,6 +2190,7 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
         received_alert = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_client_address, write_handle)
         assert int(received_alert) == alert, "Sent alert and received alerts are not matching"
         logger().info(f"Received alert data:'{received_alert}'")
+    traffic_thread.wait_for_exit(True)
 
     logger().info(f"\n\nWaiting for '60' seconds for checking connection stability")
     time.sleep(60)
@@ -2374,7 +2410,7 @@ def test_ble_pxp_link_loss_alert_func_when_tcp_tx_is_in_progress_C133561(firmwar
 @pytest.mark.ble_client("raspi_ble_client")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
 def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_ble_dev_C133574(wifi_dut, wifi_sniffer,
                                                                                                mqtt_client, mqtt_server,
@@ -2475,9 +2511,6 @@ def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_b
     logger().info("\nUnsubscribing from the topic....")
     wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic)
 
-    logger().info("Disconnecting from from the mqtt_server....")
-    wifi_dut.interfaces.mqtt.mqtt_client_close()
-
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -2511,9 +2544,6 @@ def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_b
 
     logger().info("Initiating BLE disconnection from Raspi")
     ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
-
-    logger().info("Initiating WLAN disconnection from DUT")
-    wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(

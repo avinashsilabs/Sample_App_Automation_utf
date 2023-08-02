@@ -66,6 +66,59 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    si917_sl_wifi:
+
+        # The 'type' attribute is optional.  If it is present, the device will be created via a
+        # create_device() function located in the corresponding python module under the 'devices'
+        # folder.
+        # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
+        # In the case of a 9116 device, the type 'rs911x' should be used
+        type: 'rs911x'
+        subtype: 'rs9117'
+        src_dir: 'utf_wiseconnect_3'
+
+        # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+
+            # Like the top level device names, the interface names are also arbitrary, but must be unique for a
+            # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+
+            wifi:
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+
     efr32_4180b_Si917:
         type: 'efx32'
         subtype: 'efr32'

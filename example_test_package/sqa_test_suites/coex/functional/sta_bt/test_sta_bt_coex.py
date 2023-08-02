@@ -2277,7 +2277,7 @@ def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, 
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
         assert bt_dut_address, "Unable to get BT DUT address"
         logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="-9")
         assert bt_client_address, "Unable to get BT client address"
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 

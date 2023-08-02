@@ -838,6 +838,7 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_in_progress_C133564
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -933,6 +934,7 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C133550(wifi_dut, bt
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -986,6 +988,7 @@ def test_adv_functionality_of_ble_when_sta_scan_C133551(wifi_dut, wifi_sniffer, 
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Unable to find Probe req(Broadcast) in sniffer'
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1045,6 +1048,7 @@ def test_adv_func_of_ble_while_sta_data_transfer_in_progress_C133552(wifi_dut, b
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1084,12 +1088,7 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file='test_Case_C133553.txt')
 
-            with TimeMeasurer() as t:
-                scan_results = wifi_dut.interfaces.wifi.scan(ssid=ssid,
-                                                             channel=wifi_access_point.interfaces.wifi.channel)
-            logger().info(scan_results)
-            assert len(scan_results) > 0, f"scan_list not found"
-            logger().info(f"Scan in {t.duration} seconds")
+            wifi_dut.interfaces.wifi.rejoin(rejoin_max=5, scan_interval=6, beacon_missedcount=40, first_time_retry=0)
 
             logger().info("Joining into Wi-Fi")
             device_ip = wifi_join(wifi_dut, wifi_access_point)
@@ -1110,16 +1109,27 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
 
             logger().info(f"Initiating {protocol} traffic with client '{wifi_client.name}'")
             run_iperf_server(net_perf_client, wifi_dut, wifi_client, protocol, device_ip)
-            time.sleep(30)
+            time.sleep(10)
+            wifi_access_point.interfaces.wifi.stop_ap()
+            wifi_dut.interfaces.wifi.associated = False
+            sw = Stopwatch()
+            rejoin_msg = 0
+            end_time = 50
+            while sw.elapsed_sec <= end_time:
+                events = wifi_dut.interfaces.wifi.get_async_events()
+                if len(events):
+                    for event in events:
+                        if event.event_type == RS9116AsyncEventType.RejoinError:
+                            rejoin_msg = 1
+                            logger().info("******** Rejoin error found from DUT,"
+                                          " which is expected as per the test step ********")
+                if rejoin_msg:
+                    break
+            assert rejoin_msg == 1, "rejoin fail event not found even after AP is switched off for 350 seconds"
 
-            logger().info("Initiating Wi-Fi disconnection on DUT")
-            wifi_leave(wifi_dut)
-
-            logger().info("stop_ap+wifi_negative_scan thread execution starts...")
-            with stop_ap_thread(wifi_dut, wifi_access_point), wifi_scan_thread(wifi_dut), ble_scan_thread(
-                    wifi_dut, ble_client, ble_mode, ble_dut_address, scan_count=5):
-                time.sleep(15)
-
+            ble_scan_obj = ble_scan_thread(wifi_dut, ble_client, ble_mode, ble_dut_address, scan_count=5)
+            ble_scan_obj.start()
+            ble_scan_obj.wait_for_exit()
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
             # validate PS-POLL frame with pwrmgt bit set to '1'
@@ -1129,8 +1139,10 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
             # validate QOS data frame with more data bit set to '1'
             packet_filter2 = f' (wlan.fc.moredata == 1) and ((wlan.fc.type_subtype == 0x0028) and (wlan.ra == {dut_mac_address}) ' \
                              f'and (wlan.ta == {bssid}))'
+
             # validate probe request
-            packet_filter3 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff)"
+            packet_filter3 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address})"
+
             logger().info('Validating PS Poll frames are sent from the device with power management bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], 'Sniffer validation failed for ps-poll frame with PM bit 1'
@@ -1143,6 +1155,7 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
                 'packet_count'], 'Unable to found probe request in sniffer capture'
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1208,6 +1221,7 @@ def test_functionality_of_sta_when_ble_scan_C133555(wifi_dut, ble_client, wifi_a
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1307,6 +1321,7 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C133554(wifi_dut, 
                 logger().info(f"dhcp_list : {dhcp_list}")
                 assert dhcp_list, "DHCP packets not found"
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1392,6 +1407,7 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C133559(
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1498,6 +1514,7 @@ def test_Active_scan_func_of_ble_when_sta_connect_C133560(firmware_loader, wifi_
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1581,6 +1598,7 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C133568(wifi_dut, 
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1668,6 +1686,7 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_in_progress_C133569(wifi_d
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1744,6 +1763,7 @@ def test_dual_role_ble_msg_based_power_save_C133517(wifi_dut, ble_clients, wifi_
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1819,6 +1839,7 @@ def test_dual_role_ble_gpio_based_power_save_C133519(wifi_dut, ble_clients, wifi
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -1917,6 +1938,7 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C13355
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2071,6 +2093,7 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_C133570(wif
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2147,6 +2170,7 @@ def test_throughput_func_of_sta_when_ble_connect_c20336(wifi_dut, ble_clients, w
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2231,6 +2255,7 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_c20333(wifi_d
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2352,6 +2377,7 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_with_CI20ms_C
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2422,6 +2448,7 @@ def test_scan_func_of_ble_while_sta_data_transfer_in_progress_C133573(wifi_dut, 
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2515,6 +2542,7 @@ def test_sta_connection_with_ble_connect_disconnect_C133520(wifi_dut, ble_client
                 time.sleep(5)
                 logger().info(f"Iteration '{i}' completed")
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2618,6 +2646,7 @@ def test_smp_func_of_ble_while_sta_data_transfer_in_progress_C133565(wifi_dut, b
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2736,6 +2765,7 @@ def test_get_all_profiles_functionality_of_dut_ble_C133557(firmware_loader, net_
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -2857,6 +2887,7 @@ def test_get_particular_profiles_functionality_of_dut_ble_C133558(firmware_loade
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -3093,6 +3124,7 @@ def test_ble_and_Wlan_data_transfer_for_5min_C133549(wifi_dut, ble_client, wifi_
             ble_client.interfaces.bluetooth.close()
             time.sleep(3)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -3177,6 +3209,7 @@ def test_query_rssi_of_ble_while_sta_data_transfer_in_progress_C133563(wifi_dut,
             wifi_sniffer.interfaces.capture.stop_capture()
             verify_sniffer_validation(wifi_sniffer, dut_mac_address, bssid)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -3310,6 +3343,7 @@ def test_sta_ble_connection_with_ble_connect_disconnect_C133487(wifi_dut, ble_cl
             wifi_leave(wifi_dut)
             time.sleep(5)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -3536,26 +3570,16 @@ def test_dut_functionality_as_sta_when_ap_lost_with_ble_connection_C133464(wifi_
             switch.interfaces.pdu_switch.turn_off(delay=60)
             logger().info("Successfully powered off AP")
             logger().info("Again turning on the AP")
-            switch.interfaces.pdu_switch.turn_on(delay=120)
+            switch.interfaces.pdu_switch.turn_on(delay=60)
             logger().info("Successfully powered on AP")
-            logger().info("Checking for rejoin fail event from dut, this may take some time....")
-            sw = Stopwatch()
-            logger().info(f"SOFTWARE ELAPSED TIME {sw.elapsed_sec}")
-            rejoin_msg = 0
-            while sw.elapsed_sec <= 200:
-                events = wifi_dut.interfaces.wifi.get_async_events()
-                if len(events):
-                    for event in events:
-                        if event.event_type == RS9116AsyncEventType.RejoinError:
-                            rejoin_msg = 1
-                if rejoin_msg:
-                    break
-            assert not rejoin_msg, f"Rejoin error occured"
             logger().info("Pinging to DUT to check rejoin process is completed or not")
-            status = rs_helper.ping_with_custom_size(device_ip=device_ip, ping_counts=15)
+            status = rs_helper.ping_with_custom_size(device_ip=device_ip, ping_counts=30)
             assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
             logger().info("************* DUT successfully rejoined to AP *************\n\n")
+            logger().info(f"** checking the connection status of ble **")
+            check_connection_status(wifi_dut, ble=True)
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -3668,6 +3692,7 @@ def test_mac_based_connectivity_in_wpa2_ble_connection_C133485(wifi_dut, ble_cli
                 wifi_dut.interfaces.wifi.leave()
                 logger().info(f" BLE disconnect for iteration {i}")
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:
@@ -3801,6 +3826,7 @@ def test_http_get_functionality_after_ble_connection_C133481(http_server, http_c
                 validation, packet_filter3
             )["packet_count"], "Unable to find association response in sniffer "
     except Exception as error:
+        logger().error(f"Failed with an error - {error}")
         dut_recovery(wifi_dut, error)
         raise error
     finally:

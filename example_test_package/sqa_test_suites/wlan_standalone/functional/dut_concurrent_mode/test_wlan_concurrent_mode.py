@@ -80,7 +80,7 @@ def clean_up_method(wifi_dut, switch):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -149,8 +149,6 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
 
 
 #######c19315##########
@@ -184,7 +182,7 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset","disassociated"])
 def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -259,8 +257,7 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 ######c19324##########
@@ -294,7 +291,7 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     ping_iterations = 10
     validation = True
@@ -385,8 +382,6 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 
         logger().info(f'connected and disconnected for {count} times')
 
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
 
 
 # #########19313###########
@@ -421,7 +416,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
@@ -512,8 +507,7 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 # ######19322-5Ghz########
@@ -553,7 +547,7 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
@@ -639,8 +633,7 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 # ##############19312###############
@@ -677,7 +670,7 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -760,8 +753,7 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 # ###################19319#########################
@@ -795,7 +787,7 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -861,8 +853,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 # ##############19318###############
@@ -897,7 +888,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -979,8 +970,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 # ##########19320#########
@@ -1015,7 +1005,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1121,8 +1111,7 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 #################################################################################
@@ -1161,7 +1150,7 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config('wifi_access_point',
                     wifi={"dhcp_start": "192.168.50.12", "dhcp_end": "192.168.50.20", "dhcp_lease": "180"})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1224,8 +1213,7 @@ def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_d
     assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
         'packet_count'], 'Unable to find Probe req(Broadcast/Unicast), authentication ,association, eapol packet ' \
                          'in sniffer'
-    logger().info("doing EFR reset instead of device reset till reset issue is fixed")
-    wifi_dut.interfaces.wifi.reset_soft()
+
 
 
 # ###############C19321########################
@@ -1357,7 +1345,7 @@ def join_get_ip(wifi_access_point, utf_constants, wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
-                             "disassociated"])
+                             "disassociated", "reset"])
 def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_constants, wifi_client, wifi_dut,
                                       multicast_client):
     capture_file = 'test_device_as_sta_and_ap_C19321'
@@ -1418,8 +1406,7 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger().info(f"PS-POLL packets are captured in the sniffer")
-    logger().info("device reset")
-    wifi_dut.interfaces.wifi.reset()
+
 
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -1451,6 +1438,7 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
+@pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer, wifi_access_point, utf_constants,
                                                   wifi_client, wifi_dut, switch):
     try:

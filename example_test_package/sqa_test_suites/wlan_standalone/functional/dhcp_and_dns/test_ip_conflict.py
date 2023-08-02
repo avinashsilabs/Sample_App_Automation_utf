@@ -225,9 +225,6 @@ def test_static_ip_assignment_with_existing_ip_C101962(wifi_sniffer, wifi_dut, w
 
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -316,9 +313,6 @@ def test_static_ip_assignment_to_DUT_C101963(wifi_sniffer, wifi_dut, wifi_access
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -402,9 +396,6 @@ def test_Dynamic_ip_assignment_to_DUT_C101964(wifi_sniffer, wifi_dut, wifi_acces
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -502,9 +493,6 @@ def test_static_ip_assignment_with_and_Without_ip_Conflict_to_DUT_C101965(wifi_s
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -616,9 +604,6 @@ def test_Dynamic_ip_assignment_with_and_Without_ip_Conflict_to_DUT_C101966(wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
@@ -699,9 +684,6 @@ def test_Dynamic_IP_Assignment_when_DHCP_Pool_Exhausted_C101969(wifi_sniffer,
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="3600")
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -820,9 +802,6 @@ def test_TCP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101974(wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -835,8 +814,9 @@ def test_TCP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101974(wifi_sniffer
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.DNSClient | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "ext_custom_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode
+                               | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -922,9 +902,7 @@ def test_TCP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101975(wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1035,9 +1013,6 @@ def test_UDP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101976(wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -1137,8 +1112,7 @@ def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -1287,9 +1261,6 @@ def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -1426,9 +1397,6 @@ def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -1521,9 +1489,8 @@ def test_static_ip_ip_conflict_with_multiple_times_in_loop_C101980(wifi_sniffer,
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.leave()
+
 
 
 @pytest.mark.config(
@@ -1604,9 +1571,7 @@ def test_IP_Conflict_Detection_When_DHCP_Fails_C101985(wifi_sniffer,
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
+
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
@@ -1706,9 +1671,6 @@ def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loade
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -1798,9 +1760,6 @@ def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_load
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -1914,9 +1873,6 @@ def test_Dynamic_IP_assignment_when_DHCP_Pool_Exhausted_in_concurrent_Mode_C1019
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="3600")
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
 
 
 
@@ -2031,10 +1987,6 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="3600")
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -2139,8 +2091,6 @@ def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C1019
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -2235,9 +2185,7 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
-
+        wifi_dut.interfaces.wifi.leave()
 
 @pytest.mark.config(
     "wifi_dut",
@@ -2328,9 +2276,6 @@ def test_static_ip_ip_Conflict_in_at_mode_DUT_C101981(wifi_sniffer, wifi_dut, wi
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
 
 
 @pytest.mark.config(
@@ -2434,9 +2379,6 @@ def test_static_ip_assignment_in_at_mode_with_and_Without_ip_Conflict_to_DUT_C10
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
@@ -2550,9 +2492,7 @@ def test_ip_conflict_detection_during_auto_join_C101983(wifi_sniffer, wifi_dut, 
             clean_up.dut_recovery()
         clean_up.disconnect()
     finally:
-        wifi_dut.interfaces.wifi.associated = False
-        time.sleep(10)
-        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.leave()
         dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
         dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,

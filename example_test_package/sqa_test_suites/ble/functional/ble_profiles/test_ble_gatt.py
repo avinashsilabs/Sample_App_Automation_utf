@@ -1098,7 +1098,7 @@ def test_health_thermometer_service_stability_in_client_role_c19886(firmware_loa
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
-def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_client):
+def test_to_fetch_descriptors_from_rd1_c19865(firmware_loader, ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
     assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
 
@@ -1154,7 +1154,7 @@ def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_clie
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
-def test_to_fetch_descriptors_from_rd1_c19865(firmware_loader, ble_dut, ble_client):
+def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
     assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
 

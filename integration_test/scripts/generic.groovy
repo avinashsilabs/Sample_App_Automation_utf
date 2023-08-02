@@ -16,6 +16,10 @@ pipeline {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
                 PYTHON3 = "t:\\python_3_9_2_x64\\python.exe"
                 HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_3_hwmux_group.json"
+                LOKI_URL = "https://loki-distributor.silabs.net/loki/api/v1/push"
+                JENKIN_RUN_NUM = "$BUILD_NUMBER"
+                JENKINS_JOB_NAME = "$JOB_NAME"
+                JENKINS_JOB_STAGE_NAME = "Launch Tests"
             }
             stages {
                 stage('Setup Environment') {
@@ -50,6 +54,12 @@ pipeline {
                                     pushd executor
 
                                     set "PYTEST_COMMAND=%UTF_PYTEST_COMMAND%"
+                                    :: Display Grafana URL for live logs
+                                    set QUERY_EXPR={stack=\\"WIFI\\",job=\\"%JENKINS_JOB_NAME%\\",stage=\\"%JENKINS_JOB_STAGE_NAME%\\",build=\\"%JENKIN_RUN_NUM%\\"}
+                                    set GRAFANA_BASE_URL=https://grafana.silabs.net/explore?orgId=1^&left=
+                                    set GRAFANA_PARAMS={"datasource":"loki-production","queries":[{"expr":"%QUERY_EXPR%","maxLines":10000}],"range":{"from":"now-1d","to":"now"}}
+                                    set CONVERT_URL_CMD=import urllib.parse; import os; print('View live logs for this test run at ' + os.environ['GRAFANA_BASE_URL'] + urllib.parse.quote(os.environ['GRAFANA_PARAMS']))
+                                    python -c "%CONVERT_URL_CMD%"
 
                                     call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
                                     set exitcode=%ERRORLEVEL%

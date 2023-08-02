@@ -383,7 +383,7 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
     assert bt_dut_address, "failed to initialise bt in dut"
     logger().info(f"BT DUT address is{bt_dut_address}")
 
-    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code, capability="DisplayOnly", ssp=1)
+    bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="-1", capability="DisplayYesNo", ssp=1)
     assert bt_client_address, f"Failed to initiate master in remote device"
     logger().info(f"BT client device address is {bt_client_address}")
 
@@ -397,16 +397,15 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
     bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
                                          power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-    bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
-    # SPP Connection
-    with bt_dut.interfaces.wifi.run_bt_task():
-        bt_client_socket.create_client()
-        result = ThreadBase.call_functions_simultaneously(
-            [(bt_dut.interfaces.wifi.bt_connect, bt_client_address),
-             # Remote device not accepting the incoming SPP Connection
-             (bt_client_socket.reject, 20)]
-        )
-    time.sleep(10)
+    with bt_client.interfaces.bluetooth.bt_socket(
+            mode=BTSocketRole.Client
+    ) as bt_client_socket:
+        # SPP Connection
+        with bt_dut.interfaces.wifi.run_bt_task():
+            bt_client_socket.create_client()
+            result = ThreadBase.call_functions_simultaneously(
+                [(bt_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 10)])
+            assert result[1] is None
 
     received_authentication_failure = False
     events = bt_dut.interfaces.bluetooth.get_async_events()
@@ -417,20 +416,3 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
                 break
     assert received_authentication_failure, f"Did not receive authentication failure message"
     logger().info("Received Authentication failure message")
-
-    bt_dut.interfaces.bluetooth.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
-                                                      inquiry_duration_ms=10000,
-                                                      max_device_cnt=10, timeout=22, retry_counts=3)
-
-    logger().info(f"Starting Raspberry PI as BT Server")
-    bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
-    # SPP Connection
-    with bt_dut.interfaces.wifi.run_bt_task():
-        bt_client_socket.create_client()
-        logger().info(f"Connecting Raspberry PI to DUT-BT")
-        bt_dut.interfaces.wifi.bt_connect(bt_client_address)
-        bt_client_socket.accept(timeout=40)
-        logger().info("Unable to find BT client socket connection")
-        # assert addr == bt_dut_address, "Unable to find BT client socket connection"
-    # assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), \
-        # f"Failed to ping BT client to DUT"

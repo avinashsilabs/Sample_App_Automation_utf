@@ -1148,11 +1148,8 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
 
         logger().info('************Disconnect the DUT from AP*******************')
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        wifi_dut.interfaces.wifi.inited = False
         logger().info("******** Turn on the access point ********")
         switch.interfaces.pdu_switch.turn_on(delay=30)
-        wifi_dut.interfaces.wifi.init()
         logger().info("Joining into wifi_access_point")
         wifi_join(wifi_dut, wifi_access_point)
         time.sleep(3)

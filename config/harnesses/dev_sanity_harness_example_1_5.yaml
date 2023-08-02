@@ -319,6 +319,7 @@ devices:
                 # radius server configuration
                 radius_ip: "10.207.17.102"
                 radius_port: "1812"
+                ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
 
     # This represents another access point configuration.
     asus_rt_ac68u_ap:
@@ -458,7 +459,43 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
-                ip_address: '10.207.18.233'
+                ip_address: '10.207.17.103'
+
+    raspi_wifi_ssh1:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.104
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.104'
+
+    raspi_wifi_ssh2:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.131
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.131'
 
     raspi_ble_client:
         interfaces:
@@ -474,8 +511,8 @@ devices:
             multicast:
                 type: 'multicast.multicast_socket'
                 ip_version: 0
-                multicast_ip: '239.255.255.250'
-                multicast_ip2: '239.255.255.250'
+                multicast_ip: '239.0.0.1'
+                multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
                 destination_socket: 5002
                 ttl: 32
@@ -671,6 +708,20 @@ devices:
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled with ipv6
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+                ip_version: 6
+    
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -691,6 +742,21 @@ devices:
                 password: 'testpassword'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
+
+    raspi_mosquitto_auth_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+                ip_version: 6
 
     # this represents an MQTT broker running on the raspberry pi on port 8883 with TLS and authentication enabled
     raspi_mosquitto_tls:
@@ -713,6 +779,24 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -790,6 +874,16 @@ devices:
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
 
+    python_http_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.python_http'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
     raspi_http_client:
         interfaces:
             http:
@@ -813,6 +907,7 @@ devices:
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
+                timeout: 30
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
@@ -860,29 +955,26 @@ devices:
         interfaces:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
+                wsdl: 'http://10.207.19.186:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
                 timeout: 120000
             wcf_file_transfer_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                wsdl: 'http://10.207.19.186:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
                 power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
                 file_transfer_service: 'wcf_file_transfer_service'
-                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
+                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005845::0::INSTR'
                 window_state: 'Show'
 
     python_aws_iot_thing:
         interfaces:
             aws_iot:
                 type: 'aws_iot.python_thing'
-                client_id: 'Python-Thing_Raspi'
-                hostname: 'a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com'
+                client_id: 'test_thing_2_Raspi'
+                hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
                 port: 8883
-                #private_key: 'python-thing-private.pem.key'
-                #root_ca: 'AWS-IoT-root-CA.crt'
-                #client_cert: 'python-thing-certificate.pem.crt'
                 private_key: 'private-key.key'
                 root_ca: 'start_field.pem'
                 client_cert: 'client-certificate.crt'
@@ -908,6 +1000,7 @@ devices:
                 port: 3001
                 username: null
                 password: null
+                timeout: 2
 
 
     raspi_ssl_server:
@@ -1145,19 +1238,43 @@ devices:
             linux_shell:
                 type: 'shell.shell'
 
-    paho_client:
+    nrf_ppk2_device:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
-            mqtt:
-                type: 'mqtt.client.paho_client'
-                disable_certificate_verification: true
-            wifi:
-                # The 'wifi.access_points.linux' device type represents a linux-based access point
-                # running hostapd to create a soft AP
-                type: 'wifi.access_points.linux'
+            power_meter:
+                type: 'power_meter.nrf_ppk2.nrf_power_profiler_mp'
                 shell: 'linux_shell'
-                interface: 'eth0'
+                vid: 0x1915
+                pid: 0xC00A
+
+    nrf_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.android.nrf_connect.nrf_connect_mi'
+                # This is should be unique for each ble client
+                port: 4701
+                # This is id of mobile need retrive this manually
+                device_id: '9a60d4ba'
+                device_type: 'mi'
+                # This is should be as same as ble_advertising_data
+                advertising_data: "HELLO"
+
+    power_meter_plotter:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            plotter:
+                type: 'power_meter_plotter'
+                src_dir: 'utf_wiseconnect'
+                shell: 'linux_shell'
+
+    # This represents the sniffer filter configuration
+    sniffer_filter:
+        interfaces:
+            ws_sniffer_filter:
+                type: sniffer_filter
+                src_dir: 'utf_wiseconnect'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1195,6 +1312,8 @@ defaults:
     wifi_clients:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
+        - 'raspi_wifi_ssh1'
+        - 'raspi_wifi_ssh2'
 
     wifi_sniffer: 'airpcap'
 
@@ -1224,7 +1343,7 @@ defaults:
 
     mqtt_server: 'raspi_mosquitto'
 
-    mqtt_client: 'paho_client'
+    mqtt_client: 'raspi_wifi'
 
     http_server: 'raspi_lighttpd'
 
@@ -1238,6 +1357,8 @@ defaults:
     # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
+
+    sniffer_filter: 'sniffer_filter'
 
     switch: 'switched_ap'
 
@@ -1351,6 +1472,7 @@ defaults:
         bt_exploit_type: "au_rand_flooding"
         script: ""
     
+    plotter: 'power_meter_plotter'
 
     net_perf:
         server_options:
@@ -1426,12 +1548,12 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-#        device: 'reset'
+        device: 'reset'
         wifi: 'init'
 
-#end_state:
-#    wifi_access_point:
-#        wifi: 'ap_disabled'
+end_state:
+    wifi_access_point:
+        wifi: 'ap_disabled'
 
 constants:
     time_duration:
@@ -1444,5 +1566,11 @@ constants:
         value: "/RS916W.2.8.0.0.13.rps"
     board_version:
         value: "1.4Q7"
+    min_conn_interval:
+        value: 160
+    max_conn_interval:
+        value: 160
+    supervision_timeout:
+        value: 2000
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
