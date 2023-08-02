@@ -1330,7 +1330,7 @@ def test_cancel_pairing_request_C19964(bt_dut, bt_client):
         bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
         assert bt_dut_address, "Unable to get BT DUT address"
         logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="-9")
         assert bt_client_address, "Unable to get BT client address"
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
@@ -1388,7 +1388,7 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
         bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
         assert bt_dut_address, "Unable to get BT DUT address"
         logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="-9")
         assert bt_client_address, "Unable to get BT client address"
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
@@ -1422,7 +1422,7 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
         logger().info("Received Authentication failure message")
 
         logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=-9)
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code="-9")
         assert bt_client_address, "Unable to get BT client address"
         logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
     logger().info(f"Scan in {t.duration} seconds")
