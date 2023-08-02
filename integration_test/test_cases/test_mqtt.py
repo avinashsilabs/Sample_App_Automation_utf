@@ -22,7 +22,7 @@ pytestmark = [
         ("raspi_mosquitto", "raspi_wifi"),
         ("raspi_mosquitto_auth", "raspi_wifi"),
         ("raspi_mosquitto_tls", "raspi_wifi"),
-        # ("static_mqtt_broker", "dlink810_ap"),
+        ("static_mqtt_broker", "dlink810_ap"),
     ]
 )
 def parameterize_mqtt_server(harness, request):

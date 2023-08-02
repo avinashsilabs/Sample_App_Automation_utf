@@ -4,7 +4,6 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/utf_core/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/utf_wiseconnect" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/utf_wiseconnect_3" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (utf_wifi) (4)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
