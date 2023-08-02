@@ -165,9 +165,10 @@ def pytest_collection_modifyitems(config, items):
 def rs_helper(request):
     yield RSHelperCommands.create_instance()
 
-# @pytest.fixture()
-# def sl_collections(request):
-#     yield SLCollections.create_instance()
+
+@pytest.fixture()
+def sl_collections(request):
+    yield SLCollections.create_instance()
 
 
 @pytest.fixture()
