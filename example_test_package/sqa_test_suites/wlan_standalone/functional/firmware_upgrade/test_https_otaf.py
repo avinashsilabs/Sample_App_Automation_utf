@@ -1041,7 +1041,7 @@ def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, w
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                        wifi_client):
     """ ******* SERVER CHECKS ******* """
