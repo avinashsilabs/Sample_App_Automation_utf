@@ -3,8 +3,8 @@ import time
 from retry import retry
 import pytest as pytest
 from utf.utils.iperf.iperf_utils import ping
+from utf.utils.thread_base import ThreadBase
 from utf import UtfDatabaseProperties
-from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116AsyncEventType, \

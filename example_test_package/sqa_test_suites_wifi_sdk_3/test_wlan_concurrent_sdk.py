@@ -5,6 +5,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116CoexMode, 
     RS9116TCPIPFeatureBitMap, RS9116CustomFeatureBitMap, RS9116ExtCustomFeatureBitMap, \
     RS9116ExtTCPIPFeatureBitMap, RS9116AsyncEventType, SocketParams, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, \
     RS9116PowerSaveProcedureTypes, DeviceConstants
+from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import time
 from typing import Dict
 from utf.utils.stopwatch import Stopwatch
@@ -277,6 +278,7 @@ def test_wifi_sdk_concurrent_mode_c19316(firmware_loader, wifi_access_point, wif
     sta_obj.sniffer_validation(dut_mac_address=dut_mac_address)
 
 
+@pytest.mark.skip("iperf-dut-support-NA")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -333,6 +335,7 @@ def test_wifi_sdk_concurrent_mode_c19313(firmware_loader, wifi_access_point, wif
     sta_obj.sniffer_validation(dut_mac_address=dut_mac_address)
 
 
+@pytest.mark.skip("iperf-dut-support-NA")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 8})
 @pytest.mark.config(
@@ -388,7 +391,7 @@ def test_wifi_sdk_concurrent_mode_c19312(firmware_loader, wifi_access_point, wif
     sta_obj.sniffer_validation(dut_mac_address=dut_mac_address)
 
 
-
+@pytest.mark.skip("iperf-dut-support-NA")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -492,6 +495,7 @@ def test_wifi_sdk_concurrent_mode_c19319(firmware_loader, wifi_access_point, wif
     sta_obj.sniffer_validation(dut_mac_address=dut_mac_address)
 
 
+@pytest.mark.skip("iperf-dut-support-NA")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
