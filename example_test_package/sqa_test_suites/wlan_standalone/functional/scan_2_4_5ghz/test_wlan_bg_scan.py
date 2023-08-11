@@ -1030,7 +1030,6 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
             'Unable to find the probe request broadcast packets from DUT side'
 
 @pytest.mark.AT
-@pytest.mark.skip(reason="skipping this for CI/CD execution")
 @pytest.mark.dut("rs9116")
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1065,7 +1064,6 @@ def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut, r
     logger().info(f"test executed in {t.duration} seconds")
 
 
-@pytest.mark.skip(reason="skipping this for CI/CD execution")
 @pytest.mark.AT
 @pytest.mark.dut("rs9116")
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
