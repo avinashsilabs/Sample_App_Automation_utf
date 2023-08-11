@@ -847,7 +847,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    if dhcp_list is False:
+    if status is False:
         logger().info(f"\n\n***************Ignoring sniffer packets failure***********")
     else:
         logger().info("dhcp packets found in sniffer")
@@ -967,7 +967,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
     status = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
     logger().info(f'DHCP packet from DUT found: {status}')
-    if dhcp_list is False:
+    if status is False:
         logger().info(f"\n\n***************Ignoring sniffer packets failure***********")
     else:
         logger().info("dhcp packets found in sniffer")
