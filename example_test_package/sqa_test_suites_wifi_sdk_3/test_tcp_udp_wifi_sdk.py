@@ -4,6 +4,7 @@ from threading import Thread
 from utf.utils.thread_base import ThreadBase
 from random import randint
 from utf.utils.subprocess_manager import SubprocessManager
+from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import pytest as pytest
 from utf.utils.iperf.iperf_utils import ping
 from utf import UtfDatabaseProperties
