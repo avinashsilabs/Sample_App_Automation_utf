@@ -111,6 +111,9 @@ pipeline {
 
                         git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect
                         git submodule update --init --recursive utf_wiseconnect
+
+                        git config --file=.gitmodules submodule.utf_wiseconnect_3.url ssh://git@stash.silabs.com/redpine/sl_net.git
+                        git submodule update --init --recursive utf_wiseconnect_3
                     '''
                 }
                 script {

@@ -1319,7 +1319,7 @@ def test_wifi_sdk_tcp_max_limit_c19364(wifi_sniffer, wifi_access_point, wifi_dut
         wifi_sniffer.interfaces.capture.stop_capture()
 
 
-
+@pytest.mark.skip("iperf-dut-support-NA")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1561,6 +1561,7 @@ def test_wifi_sdk_tcp_tx_rx_c19366(wifi_sniffer, wifi_access_point, wifi_dut, re
         wifi_sniffer.interfaces.capture.stop_capture()
 
 
+@pytest.mark.skip("iperf-dut-support-NA")
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])

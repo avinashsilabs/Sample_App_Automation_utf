@@ -52,9 +52,8 @@ pytestmark = [
         wifi={
             "oper_mode": 0,
             "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-            "features": RS9116FeatureBitMap.ULPGPIOHandshake,
-            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.
-            ExtTCPIPFeatureBitmapValid,
+            "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
@@ -375,6 +374,7 @@ def test_bt_master_with_wrong_pin_c20074(bt_dut, bt_client):
     assert received_authentication_failure, f"Received authentication failure"
 
 
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut, bt_client):
     logger().info("Verify the behaviour of DUT(Master) when remote BT device is not responding to SSP connection")
 
@@ -391,21 +391,13 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
                                                       inquiry_duration_ms=10000,
                                                       max_device_cnt=10, timeout=22, retry_counts=3)
 
-    logger().info(f"*****Enable Max PSP in DUT******")
-    bt_dut.interfaces.wifi.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
-                                      power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-    bt_dut.interfaces.wifi.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
-                                         power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-    with bt_client.interfaces.bluetooth.bt_socket(
-            mode=BTSocketRole.Client
-    ) as bt_client_socket:
-        # SPP Connection
-        with bt_dut.interfaces.wifi.run_bt_task():
-            bt_client_socket.create_client()
-            result = ThreadBase.call_functions_simultaneously(
-                [(bt_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 10)])
-            assert result[1] is None
+    bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
+    # SPP Connection
+    with bt_dut.interfaces.wifi.run_bt_task():
+        bt_client_socket.create_client()
+        result = ThreadBase.call_functions_simultaneously(
+            [(bt_dut.interfaces.wifi.bt_connect, bt_client_address), (bt_client_socket.accept, 10)])
+        assert result[1] is None
 
     received_authentication_failure = False
     events = bt_dut.interfaces.bluetooth.get_async_events()
@@ -416,3 +408,17 @@ def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut
                 break
     assert received_authentication_failure, f"Did not receive authentication failure message"
     logger().info("Received Authentication failure message")
+
+    bt_dut.interfaces.bluetooth.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
+                                                      inquiry_duration_ms=10000,
+                                                      max_device_cnt=10, timeout=22, retry_counts=3)
+
+    logger().info(f"Starting Raspberry PI as BT Server")
+    bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
+    # SPP Connection
+    with bt_dut.interfaces.wifi.run_bt_task():
+        bt_client_socket.create_client()
+        logger().info(f"Connecting Raspberry PI to DUT-BT")
+        bt_dut.interfaces.wifi.bt_connect(bt_client_address)
+        bt_client_socket.accept(timeout=40)
+        logger().info("Unable to find BT client socket connection")

@@ -1,5 +1,5 @@
 # Test author: Vinod.G & Achal Raghav
-# Test suite: MQTT_SAPI
+# Test suite: MQTT_AT
 import pytest
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
@@ -12,11 +12,10 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116ExtCustomFeatureBitMap,
     RS9116PowerSaveProcedureTypes,
     RS9116PowerSaveModes
-    )
+)
 from utf import UtfDatabaseProperties
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
-from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.utils.iperf.iperf_utils import ping
 import time
 
@@ -32,7 +31,7 @@ import time
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
 
-Note: The test cases added in the file works only in AT/SAPI mode
+Note: The test cases added in the file works only in AT mode
 """
 
 pytestmark = [
@@ -53,14 +52,14 @@ pytestmark = [
             "beacon_missed_count": 40,
             "first_time_retry": 0,
             "set_send_feature_frame": True,
-            }
-        )
-    ]
-@pytest.mark.AT
+        }
+    )
+]
+
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
-def test_mqtt_feature_not_enabled_TC19244_TC127800(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
-                                          mqtt_dut, logger):
+def test_mqtt_feature_not_enabled_TC19244(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, mqtt_dut, logger):
     capture_filename = "test_mqtt_feature_not_enabled_TC19244_TC127800"
     ping_count = 10
     result = wifi_dut.interfaces.wifi.version()
@@ -68,17 +67,14 @@ def test_mqtt_feature_not_enabled_TC19244_TC127800(wifi_sniffer, mqtt_server, wi
     logger.info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
 
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-    else:
-        mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
+    mac_address = mac_address_to_string(wifi_dut.interfaces.wifi.mac_address)
 
     logger.info(f"DUT MAC_Address: {mac_address}")
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
     for count in range(1, 3):
         try:
             join_fail = 1
@@ -120,12 +116,8 @@ def test_mqtt_feature_not_enabled_TC19244_TC127800(wifi_sniffer, mqtt_server, wi
     # The below api puts DUT to power save
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
-    if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
-        logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-        ping(device_ip, ping_count)
+    logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
+    ping(device_ip, ping_count)
     with pytest.raises(WlanError) as exc_info:
         # DUT connect to MQTT server
         mqtt_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt,

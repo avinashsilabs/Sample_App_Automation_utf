@@ -1,5 +1,5 @@
 call %~dp0..\venv\Scripts\activate
-set PYTHONPATH=%~dp0..\utf_core\src;%~dp0..\utf_wiseconnect;
+set PYTHONPATH=%~dp0..\utf_core\src;%~dp0..\utf_wiseconnect;%~dp0..\;
 pytest --collect-only --disable-pytest-warnings .
 if %ERRORLEVEL% neq 0 goto FILEERROR
 goto EOF
