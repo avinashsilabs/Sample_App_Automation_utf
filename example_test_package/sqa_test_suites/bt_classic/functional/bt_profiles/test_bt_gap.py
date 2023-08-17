@@ -1447,29 +1447,17 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
 def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
-    with TimeMeasurer() as t:
-        bt_local_name = "test_bt_spp_max_leng_remote_device_name_C19980"
-        pin_code = '2345'
+    try:
         logger().info(f"Configuring DUT as SPP Master")
-        logger().info("starting bt module in dut.....")
-        bt_dut.interfaces.bluetooth.bt_start()
-        logger().info("fetching dut bd address....")
-        bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address(timeout=120)
-        logger().info("configuring bt name....")
-        bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name)
-        logger().info("Fetching bt local name....")
-        local_name =bt_dut.interfaces.bluetooth.bt_get_local_name()
-        logger().info(f"Fetching local name: {local_name}")
-        logger().info("configuring eir data....")
-        bt_dut.interfaces.bluetooth.bt_set_eir_data(f"{bt_local_name}")
-        logger().info("configuring dut in slave role...")
-        bt_dut.interfaces.bluetooth.bt_set_slave_role()
-        logger().info("setting ssp mode...")
-        bt_dut.interfaces.bluetooth.bt_set_ssp_mode(0, 3)
+        bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
+        assert bt_dut_address, "Unable to get BT DUT address"
+        logger().info(f"DUT is BT-Master with MAC address {bt_dut_address} ")
+        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address=bt_dut_address,
+                                                                           pin_code=pin_code,
+                                                                           bt_name="max_remote_device_name")
 
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code=pin_code)
         assert bt_client_address, "Unable to get BT client address"
-        logger().info(f"Raspberry PI is BT-Slave with MAC address {bt_client_address} ")
+        logger().info(f"Raspberry PI is BT-Slave  with MAC address {bt_client_address} ")
 
         time.sleep(4)
         logger().info(f' initialize bt inquiry ')
@@ -1486,7 +1474,6 @@ def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
         bt_dut.interfaces.bluetooth.power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
         logger().info(f"Enabling the BT power save")
         bt_dut.interfaces.bluetooth.bt_power_save(power_save_mode=RS9116PowerSaveModes.PowerSaveMode2)
-
         time.sleep(3)
         received_name = False
         logger().info("initiating remote name request")
@@ -1499,7 +1486,7 @@ def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
                     event_data = event_data + str(event.event_data.decode())
                     if "0x4E04" in event_data:
                         continue
-                    elif "RSI_APP_EVENT_REMOTE_NAME_RESP" in event_data and "resp_status: 0x0" in event_data:
+                    elif "RSI_APP_EVENT_REMOTE_NAME_RESP" in event_data and "resp_status: 0x0" in  event_data:
                         logger().info(f"event.event_data: {event_data}")
                         received_name = True
                         break
@@ -1510,4 +1497,5 @@ def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
                 logger().info("Wait for 5 sec")
                 time.sleep(5)
         assert received_name, "Failed to get remote device name"
-    logger().info(f"Scan in {t.duration} seconds")
+    finally:
+        clean_up_method(bt_dut)
