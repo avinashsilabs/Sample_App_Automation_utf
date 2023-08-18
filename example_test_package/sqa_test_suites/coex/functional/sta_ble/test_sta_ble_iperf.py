@@ -169,18 +169,6 @@ class SnifferValidation:
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4)[
                 'packet_count'], 'Sniffer validation failed for QOS data frame'
 
-        logger().info(f"Validating DHCP frames from AP & DUT")
-        logger().info("passing passphrase and ssid to decrypt dhcp packets")
-        decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
-        logger().info(f"decryption_key : {decryption_key}")
-        logger().info("DHCP decryption is in progress...this may take some time")
-        dhcp_list = self.wifi_sniffer.interfaces.capture.get_dhcp_list(self.dut_mac_address, decryption_key, ["dhcp"])
-        logger().info(f"dhcp_list : {dhcp_list}")
-        if dhcp_list is False:
-            logger().info(f"\n\n***************Ignoring dhcp sniffer checks***********\n\n")
-        else:
-            logger().info("dhcp packets found in sniffer")
-
 
 def get_tcp_pkt_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layers: list, capture_filename,
                      ) -> Dict[str, int]:
@@ -319,16 +307,6 @@ def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C133475(wifi_dut, ble_clien
         ble_obj.disconnect()
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        tcp_capture_list, tcp_layer = get_tcp_pkt_list(wifi_sniffer, dut_mac_address, decryption_key, ["tcp"],
-                                                       capture_filename)
-        if not len(tcp_capture_list):
-            logger().info(f"TCP packets are not captured ")
-        check_port = "Source Port: " + str(device_port - 1)
-        for count in tcp_capture_list:
-            if check_port in count[0]:
-                logger().info(f"tcp port found")
-                break
         sniffer_obj.verify_sniffer_validation()
 
     finally:
@@ -406,22 +384,10 @@ def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C133476(wifi_dut, wifi_acce
         logger().info(f"Disonnection from AP")
         wifi_dut.interfaces.wifi.leave(timeout=10)
         logger().info(f"Initiating BLE disconnection")
-        logger().info(f"Initiating BLE disconnection")
         ble_obj.disconnect()
         time.sleep(5)
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        tcp_pkt_list, tcp_layer = get_tcp_pkt_list(wifi_sniffer, dut_mac_address, decryption_key, ["tcp"],
-                                                   capture_filename)
-        if not len(tcp_layer):
-            logger().info(f"TCP packets are not captured or one of the 4-way handshake pkts are not captured in the "
-                          f"sniffer file")
-        check_port = "Source Port: " + str(device_port - 1)
-        for count in tcp_layer:
-            if check_port in count[0]:
-                logger().info(f"tcp port found")
-                break
         sniffer_obj.verify_sniffer_validation()
 
     finally:
@@ -677,19 +643,6 @@ def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C133450(wifi
         )
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], 'Unable to find association, eapol sent from AP in sniffer '
-        logger().info(
-            f"Validating DHCP frames from AP & DUT"
-        )
-        logger().info("passing passphrase and ssid to decrypt dhcp packets")
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        logger().info(f"decryption_key : {decryption_key}")
-        logger().info("DHCP decryption is in progress...this may take some time")
-        dhcp_list = wifi_sniffer.interfaces.capture.get_dhcp_list(dut_mac_address, decryption_key, ["dhcp"])
-        logger().info(f"dhcp_list : {dhcp_list}")
-        if dhcp_list is False:
-            logger().info(f"\n\n***************Ignoring sniffer packets failure***********")
-        else:
-            logger().info("dhcp packets found in sniffer")
     finally:
         logger().info(f"Disabling powersave")
         wifi_dut.interfaces.wifi.power_save(0, 0)
