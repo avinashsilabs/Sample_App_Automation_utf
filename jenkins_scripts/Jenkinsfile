@@ -14,10 +14,22 @@ pipeline {
         JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
         JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
         LOKI_URL = "https://loki-distributor.silabs.net/loki/api/v1/push"
+        BASE_ARTIFACTORY_URL= "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/testagent"
         STACK = "WIFI"
         JENKIN_RUN_NUM = "${BUILD_NUMBER}"
         JENKINS_JOB_NAME = "${JOB_NAME}"
         JENKINS_JOB_STAGE_NAME = "Run Tests"
+        
+        // Add other environment variables here
+        RELEASE_NAME = null
+        BRANCH_NAME = null
+        SDK_BUILD_NUM = null
+        SDK_URL = null
+        JENKINS_SERVER_NAME = null
+        JENKIN_RUN_NUM_VAR = null
+        JENKINS_TEST_RESULTS_URL = null
+        TESTBED_NAME = null
+        JOB_TYPE = null
     }
     options {
         globalLock(credentialsId: 'utf-sqa-hwmux-token', deviceGroup: env.device_group_name, label: env.device_group_label, variable: 'data')
@@ -42,62 +54,39 @@ pipeline {
                     echo JsonOutput.toJson(responseJson)
                     env.tests_url= env.JENKINS_URL + 'view/UTF/job/'+env.JOB_NAME+ '/'+env.BUILD_NUMBER + '/testReport/'
 
-                    try {
-                        sh '''
-                        pwd && ls -alh
-                        cd config
-                        cat settings_defaults.env
-
-                        sed_param=s,RELEASE_NAME=.*,RELEASE_NAME=${Release_Name},
-                        sed -i "$sed_param" settings_defaults.env
-
-                        sed_param=s,BRANCH_NAME=.*,BRANCH_NAME=${UTF_WIFI_BRANCH},
-                        sed -i "$sed_param" settings_defaults.env
-
-                        build=$( echo "$RS9116_FIRMWARE" |cut -d '.' -f5)
-                        sed_param=s,SDK_BUILD_NUM=.*,SDK_BUILD_NUM=${build},
-                        sed -i "$sed_param" settings_defaults.env
-
-                        url_link='https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'$RS9116_FIRMWARE
-                        sed_param=s,SDK_URL=.*,SDK_URL=${url_link},
-                        sed -i "$sed_param" settings_defaults.env
-
-
-                        sed_param=s,JENKINS_SERVER_NAME=.*,JENKINS_SERVER_NAME=${JENKINS_URL},
-                        sed -i "$sed_param" settings_defaults.env
-
-
-                        sed_param=s,JENKIN_RUN_NUM=.*,JENKIN_RUN_NUM=${BUILD_NUMBER},
-                        sed -i "$sed_param" settings_defaults.env
-
-                        sed_param=s,JENKINS_JOB_NAME=.*,JENKINS_JOB_NAME=${JOB_NAME},
-                        sed -i "$sed_param" settings_defaults.env
-
-
-                        sed_param=s,JENKINS_TEST_RESULTS_URL=.*,JENKINS_TEST_RESULTS_URL=${tests_url},
-                        sed -i "$sed_param" settings_defaults.env
-
-                        sed_param=s,TESTBED_NAME=.*,TESTBED_NAME=${SSH_TARGET},
-                        sed -i "$sed_param" settings_defaults.env
-
-                        if [ ${device_group_name} = "utf_sqa_smoke_test_device_group" ]; then
-                            sed_param=s,JOB_TYPE=.*,JOB_TYPE='smoke',
-                            sed -i "$sed_param" settings_defaults.env
-                        else
-                            sed_param=s,JOB_TYPE=.*,JOB_TYPE='regression',
-                            sed -i "$sed_param" settings_defaults.env
-                        fi
-
-                        echo "updated settings_defaults.env file data"
-                        cat settings_defaults.env
-                        '''
-
-                    } catch(err) {
-                        echo err.toString()
-                        // Below stages in pipeline won't execute
-                        sh ''' exit 1'''
+                    RELEASE_NAME = "${Release_Name}"
+                    UTF_WIFI_BRANCH = "${UTF_WIFI_BRANCH}"
+                    build = sh(script: "echo '$RS9116_FIRMWARE' | cut -d '.' -f5", returnStdout: true).trim()
+                    SDK_BUILD_NUM = build
+                    SDK_URL = "https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F$RS9116_FIRMWARE"
+                    JENKINS_SERVER_NAME = "${JENKINS_URL}"
+                    JENKIN_RUN_NUM_VAR = "${BUILD_NUMBER}"
+                    JENKINS_TEST_RESULTS_URL = "${tests_url}"
+                    TESTBED_NAME = "${SSH_TARGET}"
+                    
+                    if (device_group_name == "utf_sqa_smoke_test_device_group") {
+                        JOB_TYPE = "smoke"
+                    } else {
+                        JOB_TYPE = "regression"
                     }
-                }
+                    
+                    dir('jenkins_scripts'){
+                        env.yamlContent = readFile 'testagent_references.yaml'
+                    }    
+                     
+                    def repos = extractRepositories(yamlContent)
+                    println(repos)   
+                    def commitIds = [:]
+
+                    for (def repo in repos) {
+                        def commitId = sh(script: "git submodule status ${repo} | awk '{print \$1}'", returnStdout: true).trim()
+                        commitIds[repo] = commitId
+                        echo commitIds[repo]
+                    }
+                    def url = "${BASE_ARTIFACTORY_URL}/${commitIds.values().join('/')}"
+                    echo "Constructed URL: ${url}"
+                    env.ARTIFACTORY_URL = url 
+                }   
                 withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
                                                     keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                     passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
@@ -184,16 +173,41 @@ pipeline {
                                                     keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
                                                     passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
                                                     usernameVariable: 'SSH_KEY_USERNAME')]) {
-                            sh '''
-                                    mkdir -p reports
-                                    ./build_test_agent_docker.sh ${SQA_TEST_AGENT} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID} > reports/build-test-agent.log 2>&1
-                                    if [ $? -ne 0 ]; then
-                                    echo building test agent failed!
-                                    exit 1
-                                    fi
-                            '''
+                            PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
+                            withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){            
+                                def statusCode = sh(script: "curl --fail-early -s -o /dev/null -w '%{http_code}' ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip", returnStdout: true).trim()
+                                println(statusCode)
+                                lock('testagent_lock'){
+                                    if (statusCode == 0) {
+                                        sh '''
+                                        echo "Artifact is available. Proceeding with the main pipeline."
+                                        curl -k -L ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip -o ./build_test.zip
+                                        ls -l
+                                        unzip -o ./build_test.zip -d ./manifest
+                                        ''' 
+                                    } else {
+                                        echo "Artifact is not available. Triggering the main pipeline."
+                                        // Trigger the main pipeline job with propagate=false
+                                        build job: 'testing_agent', parameters: [ string(name: 'RS9116_FIRMWARE', value: params.RS9116_FIRMWARE),
+                                                                                string(name: 'UTF_WIFI_BRANCH', value: params.UTF_WIFI_BRANCH),                                                           
+                                                                                string(name: 'ARTIFACTORY_URL', value: "${ARTIFACTORY_URL}/${PACKAGE_TYPE}/") ], propagate: true
+                                                                                
+                                                                            
+                                        sh '''
+                                        curl -k -L ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip -o ./build_test.zip
+                                        ls -l
+                                        unzip -o ./build_test.zip -d ./manifest
+                                        ''' 
+                                    }
+                                }
+                                sh '''
+                                   ls -l
+                                   rm -f  ./build_test.zip
+                                '''
+                            }
                         }
                     }
+
                 }
             }
         }
@@ -281,11 +295,11 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                             //archiveArtifacts 'example_test_package/**'
                             //archiveArtifacts 'manifest/**'
-                            archiveArtifacts 'reports/junit_report.xml'
+                            archiveArtifacts 'reports/**'
                             // archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
                             junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
                             sh '''
-                            zip -r reports.zip reports
+                            zip -r reports.zip reports -x "*.pcap"
                             curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/reports/" -T reports.zip
                             curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/config/harnesses/${HARNESS_NAME}" -T config/harnesses/${HARNESS_NAME}
                             '''
@@ -294,17 +308,40 @@ pipeline {
                                 body: """
                                     Dear all, <br>
                                     <br>
-                                    Build ${BUILD_NUMBER} of ${JOB_NAME} is ${BUILD_STATUS}, with firmware version ${RS9116_FIRMWARE}. Please check the detailed test result in the URL below.<br>
+                                    Build ${BUILD_NUMBER} of ${JOB_NAME} is ${currentBuild.currentResult}, with firmware version ${RS9116_FIRMWARE}. Please check the detailed test result in the URL below.<br>
                                     <br>
                                     ${BUILD_URL}
                                     <br>
                                     Thank you!
                                     """,
-                                subject: "[${JOB_NAME}] ${BUILD_NUMBER} ${BUILD_STATUS}",
+                                subject: "[${JOB_NAME}] ${BUILD_NUMBER} ${currentBuild.currentResult}",
                                 to: "DL.Wifi.Build.Reports@silabs.com,DL.Hyd-Connectivity-Regression-Team@silabs.com")
                     }
                 }
             }
         }
     }
+}
+
+
+def extractRepositories(yamlContent) {
+    def repos = []
+    def lines = yamlContent.readLines()
+    def reposFound = false
+
+    lines.each { line ->
+        if (line.trim() == 'repos_to_check:') {
+            reposFound = true
+        } else if (reposFound && line.trim().startsWith('- ')) {
+            def repoName = line.trim().substring(2)
+            // Ensure that the line is not just a dash and add the repository
+            if (!repoName.isEmpty()) {
+                repos.add(repoName)
+            }
+        } else if (line.trim() && line.trim().startsWith('-') && !line.trim().startsWith('- ')) {
+            reposFound = false
+        }
+    }
+
+    return repos
 }
