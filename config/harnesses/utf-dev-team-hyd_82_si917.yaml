@@ -54,6 +54,32 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    si917_thread:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--device Si917 --serialno 000440257562'
+
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+        interfaces:
+            uart:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+                serial_number: 'A50285BI'
+            wifi:
+                type: 'sl_wifi_test_agent_cli'
+                thread_config:
+                    wifi: 
+                        count: 2
+                        stack_len: 2048
+                    ble:
+                        count: 2
+                        stack_len: 2048
+                src_dir: 'utf_wiseconnect_3.tests'
+
     si917:
         type: 'efx32'
         subtype: 'efr32'
@@ -586,16 +612,16 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'si917'
+    dut: 'si917_thread'
 #    dut: 'rs9116_sapi'
 #
-    efx32: 'si917'
+    efx32: 'si917_thread'
 #    efx32: 'efr32_4180b'
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
 #        - 'rs9116_sapi'
-        - 'si917'
+        - 'si917_thread'
 #        - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
