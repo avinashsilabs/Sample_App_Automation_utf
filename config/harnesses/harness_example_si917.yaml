@@ -742,6 +742,12 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
+    sniffer_filter:
+        interfaces:
+            ws_sniffer_filter:
+                type: sniffer_filter
+                src_dir: 'utf_wiseconnect'
+
     
     secondary_raspi_iperf:
         interfaces:
@@ -947,6 +953,8 @@ defaults:
 
     wifi_sniffer: 'airpcap'
 
+    sniffer_filter: 'sniffer_filter'
+
     openssl: 'openssl_socket'
 
     ble_sniffer: 'nrf_52840_sniffer'
@@ -1057,6 +1065,10 @@ defaults:
         att_channel: 1
         db_value: 2
         att_enable: true
+        domain: 'AF_INET'
+        protocol: 'IPPROTO_TCP'
+        stream_type: 'SOCK_STREAM'
+        ip_len: 4
 
     sntp_server:
         server_ip: '10.8.4.11'
@@ -1179,5 +1191,9 @@ constants:
         value: 10
     iter_count:
         value: 5
+    retry_count:
+        value: 2
+    time_period:
+        value: 30
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
