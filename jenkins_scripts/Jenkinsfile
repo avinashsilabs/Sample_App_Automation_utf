@@ -83,6 +83,8 @@ pipeline {
                         commitIds[repo] = commitId
                         echo commitIds[repo]
                     }
+                    def commithash = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                    commitIds["utf_wifi"] = commithash
                     def url = "${BASE_ARTIFACTORY_URL}/${commitIds.values().join('/')}"
                     echo "Constructed URL: ${url}"
                     env.ARTIFACTORY_URL = url 
@@ -178,7 +180,7 @@ pipeline {
                                 def statusCode = sh(script: "curl --fail-early -s -o /dev/null -w '%{http_code}' ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip", returnStdout: true).trim()
                                 println(statusCode)
                                 lock('testagent_lock'){
-                                    if (statusCode == 0) {
+                                    if (statusCode == '200') {
                                         sh '''
                                         echo "Artifact is available. Proceeding with the main pipeline."
                                         curl -k -L ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip -o ./build_test.zip
