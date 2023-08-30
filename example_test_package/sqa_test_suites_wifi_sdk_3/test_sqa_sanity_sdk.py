@@ -58,7 +58,7 @@ class WifiJoinThread(ThreadBase):
     def __init__(self, wifi_sniffer=None, wifi_dut=None, \
                  wifi_access_point=None, testcase=None, wifi_client=None, \
                  net_perf_client=None, protocol=None, test_type=None, sl_collections=None, ping_count=None,
-                 sniffer_filter=None, region=None):
+                 sniffer_filter=None, region=None, switch=None):
 
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -73,22 +73,25 @@ class WifiJoinThread(ThreadBase):
         self.ping_count = ping_count
         self.sniffer_filter = sniffer_filter
         self.region = region
+        self.switch = switch
+        self.device_ip = None
+        self.dut_mac_address = None
+        self.ap_mac_address = None
 
-
-    def run_traffic(self, device_ip):
+    def run_traffic(self):
 
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
 
         logger().info("starting the server from Remote device")
         # starting iperf
-        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip,
+        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=self.device_ip,
                                                              protocol=self.protocol)
         self.net_perf_client.interfaces.net_perf.start()
         logger().info("sending data from DUT")
         self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
                                             local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                            local_ip=device_ip, remote_ip=host_ip,
+                                            local_ip=self.device_ip, remote_ip=host_ip,
                                             remote_port=self.net_perf_client.interfaces.net_perf.server_port,
                                             size=1000, ttl=60)
         # # get and print throughput
@@ -112,26 +115,40 @@ class WifiJoinThread(ThreadBase):
                                                                  associated=self.wifi_dut.interfaces.wifi.associated,
                                                                  retry_count=3, ping_after_power_save=True,
                                                                  ping_count=self.ping_count)
-        device_ip = self.dut_addr['device_ip']
-        dut_mac_address = self.dut_addr['dut_mac_address']
-        logger().info(f"*****************DUT_MAC_ADDR : {dut_mac_address}*********************")
-        ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"ap_bssid : {ap_mac_address}")
+        self.device_ip = self.dut_addr['device_ip']
+        self.dut_mac_address = self.dut_addr['dut_mac_address']
+        logger().info(f"*****************DUT_MAC_ADDR : {self.dut_mac_address}*********************")
+        self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap_bssid : {self.ap_mac_address}")
         if self.test_type == "iperf":
             logger().info("Running data transfer")
-            self.run_traffic(device_ip)
+            self.run_traffic()
+
         logger().info("disconnecting to ap.....")
         self.wifi_dut.interfaces.wifi.leave()
         logger().info("stopping the sniffer capture")
         self.wifi_sniffer.interfaces.capture.stop_capture()
-        self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer, dut_mac_address,
-                                                    ap_mac_address, self.sniffer_filter)
+        self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer, self.dut_mac_address,
+                                                    self.ap_mac_address, self.sniffer_filter)
         logger().info("sniffer validation is successful")
 
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    },
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_firmware_version_C34753(wifi_dut, sl_collections):
-
     try:
         expected_version = parse_version()
         if expected_version is None:
@@ -184,7 +201,6 @@ def test_wifi_sdk_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_cl
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -221,7 +237,6 @@ def test_wifi_sdk_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_clien
             wifi_thread.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
 
 
 @pytest.mark.config(
