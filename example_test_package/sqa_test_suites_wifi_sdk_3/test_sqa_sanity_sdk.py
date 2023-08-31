@@ -1,6 +1,5 @@
 import time
 import pytest
-import re
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,
@@ -17,17 +16,11 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xRegionCode,
     Si91xModuleType
 )
-from utf.interfaces.wifi import WlanError
-from utf.utils.iperf.iperf_utils import get_host_ip
+from utf.utf_config import UtfConfig
 from utf.interfaces.iperf.iperf_constants import IperfConstants
-from threading import Thread
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect.utils.rs911x_version import parse_version
-from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.stopwatch import Stopwatch
 from utf.utils.logger import get_logger
-import string
-import random
 from utf.utils.iperf.iperf_utils import ping
 
 
@@ -77,6 +70,8 @@ class WifiJoinThread(ThreadBase):
         self.device_ip = None
         self.dut_mac_address = None
         self.ap_mac_address = None
+        self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
     def run_traffic(self):
 
@@ -112,6 +107,7 @@ class WifiJoinThread(ThreadBase):
                                                      module_type=Si91xModuleType.WithOnboardAntenna)
         self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                  wifi_access_point=self.wifi_access_point,
+                                                                 power_save=self.power_save,
                                                                  associated=self.wifi_dut.interfaces.wifi.associated,
                                                                  retry_count=3, ping_after_power_save=True,
                                                                  ping_count=self.ping_count)
@@ -129,7 +125,8 @@ class WifiJoinThread(ThreadBase):
         logger().info("stopping the sniffer capture")
         self.wifi_sniffer.interfaces.capture.stop_capture()
         self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer, self.dut_mac_address,
-                                                    self.ap_mac_address, self.sniffer_filter)
+                                                    self.ap_mac_address, self.sniffer_filter,
+                                                    power_save=self.power_save)
         logger().info("sniffer validation is successful")
 
 
