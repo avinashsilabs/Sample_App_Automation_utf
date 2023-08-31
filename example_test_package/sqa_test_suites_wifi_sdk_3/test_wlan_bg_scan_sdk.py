@@ -171,58 +171,6 @@ def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_c
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "band": 2,
-        "bt_features": 0,
-        "ble_features": 0,
-        "ble_custom_ext_features": 0,
-    },
-)
-@pytest.mark.wifi_dualband
-def test_wifi_sdk_bgscan_dual_mode_c19036(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                          sl_collections, sniffer_filter):
-    data = 'Thisisfromclient'
-    test_name = request.node.name
-    time_period = utf_constants.get("time_period")
-
-    '''Verify RSI_STA connectivity by enabling BG scan in Dual band'''
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, test_name=test_name,
-                          test_case_no=19035, sl_collections=sl_collections)
-    try:
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-            filter_name="probe_request")
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find probe request broadcast packet'
-
-        '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
-        wlan_obj_retry = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                    time_period=time_period, data=data, sl_collections=sl_collections)
-        wlan_obj_retry.start()
-        wlan_obj_retry.wait_for_exit()
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
-
-
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.config(
-    "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
