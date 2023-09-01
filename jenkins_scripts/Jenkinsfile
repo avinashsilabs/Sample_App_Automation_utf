@@ -85,7 +85,7 @@ pipeline {
                     }
                     def commithash = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
                     commitIds["utf_wifi"] = commithash
-                    def url = "${BASE_ARTIFACTORY_URL}/${commitIds.values().join('/')}"
+                    def url = "${BASE_ARTIFACTORY_URL}/${RS9116_FIRMWARE}/${commitIds.values().join('/')}"
                     echo "Constructed URL: ${url}"
                     env.ARTIFACTORY_URL = url 
                 }   
