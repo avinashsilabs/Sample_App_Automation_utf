@@ -1,5 +1,8 @@
 ﻿Column1,Column2,Column3
 Column1,Column2,Column3
+Column1,Column2,Column3
+Column1,Column2,Column3
+Column1,Column2,Column3
 beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
 beacon_ap_mode_us_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == US))
 beacon_ap_mode_eu_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == EU))
@@ -53,15 +56,19 @@ wpa3_4_way_handshake_message,(wlan.addr == {{ wlan_addr }}), and !(wlan.fc.type_
 dhcp_renewal,(wlan.addr == {{ wlan_addr }}), and (!(ip.dst == 255.255.255.255) and (dhcp.option.dhcp == 3))) and wlan.fc.retry == 0
 eap_tls_handshake_aes256_sha256,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x006b and tls.handshake.cipher_suites_length == 2
 eap_tls_handshake_aes128_sha128,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0067 and tls.handshake.cipher_suites_length == 2
-qos_best_effort,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 0)
-qos_back_ground,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 1)
-qos_video,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 4)
-qos_voice,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 6)
+qos_best_effort_tx,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 0)
+qos_back_ground_tx,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 1)
+qos_video_tx,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 4)
+qos_voice_tx,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 6)
+qos_best_effort_rx,(wlan.da == {{ sa_addr }}), and (wlan.qos.priority == 0)
+qos_back_ground_rx,(wlan.da == {{ sa_addr }}), and (wlan.qos.priority == 1)
+qos_video_rx,(wlan.da == {{ sa_addr }}), and (wlan.qos.priority == 4)
+qos_voice_rx,(wlan.da == {{ sa_addr }}), and (wlan.qos.priority == 6)
 wmm_aggre_action1,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x00)
 wmm_aggre_action2,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x01)
 wmm_aggre_action3,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x00)
 wmm_aggre_action4,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x01)
-wmm_aggre_cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0019))
+wmm_aggre_cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0019)
 dns_id,(wlan.addr == {{ wlan_addr }}), and (dns.id == {{dns_id}})
 tcp_handshake,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and (tcp.flags == 0x002) or (tcp.flags == 0x012) or (tcp.flags == 0x010)
 arp_power_mgmt_bit,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (arp.proto.type == 0x0800) and (wlan.fc.pwrmgt == 1)
@@ -73,3 +80,4 @@ eap_tls_cert_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_a
 eap_tls_cert_verification_1_0,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and eap and tls.record.version == 0x0301
 beacon_wpa2_entr_wfa_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.wfa.ie.wpa.type == 1) 
 beacon_wpa2_entr_akms_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.rsn.akms.type == 1)
+apmode_eapol,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0x0020) or !(wlan.fc.type_subtype == 0x0008)
