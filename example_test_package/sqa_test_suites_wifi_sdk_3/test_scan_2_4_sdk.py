@@ -1,10 +1,13 @@
 import time
 import pytest
 from utf.utils.logger import get_logger
-from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap
+from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
+    Si91xRegion, Si91xRegionCode, Si91xModuleType
+
 
 def logger():
     return get_logger(__name__)
+
 
 """ Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -18,22 +21,24 @@ def logger():
         3. Raspberry PI4
         4. Access Point(Third Party AP's)
         5. NUC
-        
-    Author: Abdul Azeez
+
+    Author: Shaik Abdul Azeez
 """
+
 
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
 )
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+def test_wifi_sdk_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                           sl_collections):
     try:
         test_name = request.node.name
         logger().info("Setting DUT in wlan power save...")
@@ -67,11 +72,11 @@ def test_wifi_sdk_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan Response Based on RSSI
@@ -97,14 +102,15 @@ def test_wifi_sdk_scan_check_rssi_c19060(wifi_dut, wifi_access_point, sl_collect
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+def test_wifi_sdk_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                           sl_collections):
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -114,7 +120,7 @@ def test_wifi_sdk_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_p
         logger().info("Setting DUT in wlan power save...")
         wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         ssid_list = ['test123test123test123test123test', 'test1*@test1*#test1*@test1*$test',
-                     'test12.test12.test12.test12.test',  '了是不了是不了是不了']
+                     'test12.test12.test12.test12.test', '了是不了是不了是不了']
 
         for ssid in ssid_list:
             logger().info(f"configuring the Sniffer with the channel : {wifi_access_point.interfaces.wifi.channel}")
@@ -139,17 +145,18 @@ def test_wifi_sdk_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_ssid', "broadcast_ssid": False})
 # This case verifies the scan in hidden mode of AP for all channels
-def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                                  sl_collections):
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -185,15 +192,15 @@ def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_a
 
 @pytest.mark.config(
     "wifi_dut",
-
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-    },
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+def test_wifi_sdk_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                            sl_collections):
     try:
         logger().info("Configured DUT in US region")
         test_name = request.node.name
@@ -217,11 +224,369 @@ def test_wifi_sdk_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_
             logger().info(scan_results)
             wifi_sniffer.interfaces.capture.stop_capture()
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                                                        sa_addr=sa_addr, da_addr=da_addr, filter_name="probe_request")
+                sa_addr=sa_addr, da_addr=da_addr, filter_name="probe_request")
             logger().info(f"Validate Probe req(Broadcast)")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 f'Unable to find probe request broadcast packet in channel:{channel}'
             logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
-            logger().info("DUT scan success in all channels in US region")
+        logger().info("DUT scan success in all channels in US region")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+# This test case verifies the scan functionality with max scan of dut
+def test_wifi_sdk_scan_max_aps_c19061(wifi_dut, wifi_access_point, sl_collections):
+    try:
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+
+        channel_bitmap_2_4 = 0
+        # enables the scan in DUT with the given channel bitmap value
+        logger().info("Initiating selective channel scan from dut...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
+        logger().info(scan_results)
+        logger().info(len(scan_results))
+        if len(scan_results) == 11:
+            assert True, f"Dut has scanned {len(scan_results)} Aps"
+        else:
+            assert False, f"To scan more number of APs, Need to keep setup in open air environment"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp}
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+# This test case verifies the scan functionality for channles 1-11
+def test_wifi_sdk_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi_dut, wifi_access_point, request,
+                                                           sl_collections, sniffer_filter):
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+        channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        channel_bitmap_2_4 = 0
+        scan_expected_time = 0
+        for count in channel_list:
+            channel_bitmap_2_4 += 1 << (count - 1)
+            scan_expected_time += 100
+
+        for channel in channel_list:
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_sel_ch_{channel}")
+            time.sleep(3)
+
+            logger().info("Initiating the scan in DUT with the given channel bitmap value...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
+            time.sleep(10)
+            logger().info(scan_results)
+            assert len(scan_results) >= 1, "Scan results not found"
+            channel_selected = 0
+            for count in scan_results:
+                assert (count.rf_channel in channel_list), "Scan should happen only in selected channels"
+
+            logger().info("Stop sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+
+            logger().info(f"Validate Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                f'Unable to find probe request broadcast packet in channel:{channel}'
+            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+        logger().info("DUT scan success in selected channels")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp}
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+# Verifies the scan functionality with the channel 1,6,8
+def test_wifi_sdk_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                                sl_collections):
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        channel_list = [1, 6, 8]
+        channel_bitmap_2_4 = 0
+        scan_expected_time = 0
+        for count in channel_list:
+            channel_bitmap_2_4 += 1 << (count - 1)
+            scan_expected_time += 100
+
+        for channel in channel_list:
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_sel_ch_{channel}")
+            time.sleep(3)
+            logger().info("Initiating the scan in DUT with the given channel bitmap value...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4, )
+            time.sleep(10)
+            logger().info(scan_results)
+            assert len(scan_results) >= 1, "scan results not found"
+            for count in scan_results:
+                assert (count.rf_channel in channel_list), f"Scan should happen only in selected channels"
+
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+
+            logger().info(f"Validate Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                f'Unable to find probe request broadcast packet in channel:{channel}'
+            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+        logger().info("DUT scan success in selected channels")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp}
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+# Verifies the scan functionality with the channel 1,3,6,11
+def test_wifi_sdk_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                                sl_collections):
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+        channel_list = [1, 3, 6, 11]
+        channel_bitmap_2_4 = 0
+        scan_expected_time = 0
+        for count in channel_list:
+            channel_bitmap_2_4 += 1 << (count - 1)
+            scan_expected_time += 100
+
+        for channel in channel_list:
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_sel_ch_{channel}")
+            time.sleep(5)
+
+            logger().info("Initiating the scan in DUT with the given channel bitmap value...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
+            time.sleep(10)
+            logger().info(scan_results)
+            assert len(scan_results) >= 1, "Scan results not found"
+            for count in scan_results:
+                assert (count.rf_channel in channel_list), "Scan should happen only in selected channels"
+
+            logger().info("Stop sniffer capture")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+
+            logger().info(f"Validate Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                f'Unable to find probe request broadcast packet in channel:{channel}'
+            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+        logger().info("DUT scan success in selected channels")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity}
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+def test_wifi_sdk_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_client, request, sl_collections,
+                                                        sniffer_filter):
+    try:
+        test_name = request.node.name
+        logger().info("DUT region is set to Europe")
+        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser, region_code=Si91xRegionCode.Europe,
+                                            module_type=Si91xModuleType.WithOnboardAntenna)
+        channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        for channel in channels_list_2g:
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+            time.sleep(2)
+            logger().info("enable the scan in dut on channel 0...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            time.sleep(10)
+            assert (len(scan_results) >= 1), "scan failed"
+            logger().info(scan_results)
+
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+            logger().info(f"Validate Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                f'Unable to find probe request broadcast packet in channel:{channel}'
+
+            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+            logger().info("DUT scan success in all channels")
+        logger().info("Dut is able to scan success in Europe region")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity}
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_client, request, sniffer_filter,
+                                                           sl_collections):
+    try:
+        test_name = request.node.name
+        logger().info("DUT region is set to Japan")
+        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser, region_code=Si91xRegionCode.Japan,
+                                            module_type=Si91xModuleType.WithOnboardAntenna)
+        channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        for channel in channels_list_2g:
+            if channel == 14:
+                logger().info(f"channel : {channel} not supported by NUC,skipping the channel")
+                continue
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+            time.sleep(2)
+
+            logger().info("enable the scan in dut on channel 0...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            time.sleep(10)
+            assert (len(scan_results) >= 1), "Scan Failed"
+            logger().info(scan_results)
+
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+            logger().info(f"Validate Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                f'Unable to find probe request broadcast packet in channel:{channel}'
+            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
+            logger().info("DUT scan success in all channels")
+        logger().info("Dut is able to scan success in Japan region")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+     "oper_mode": 0,
+     "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+     "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
+     "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0}
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "hidden_ssid", "broadcast_ssid": False})
+# Verifies the scan in selected channels with the ap set in hidden mode
+def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                              sl_collections):
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+
+        channel_list = [1, 5, 9]
+        channel_bitmap_2_4 = 0
+        scan_expected_time = 0
+        for count in channel_list:
+            channel_bitmap_2_4 += 1 << (count - 1)
+            scan_expected_time += 100
+
+        for channel in channel_list:
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+
+            logger().info("Starting the access point with custom channel...")
+            wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+            time.sleep(5)
+            logger().info("Initiating the scan in DUT with the given channel bitmap value...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                         scan_bitmap_2_4=channel_bitmap_2_4)
+            time.sleep(10)
+            logger().info(scan_results)
+            assert len(scan_results) >= 1
+            for count in scan_results:
+                assert count.ssid == wifi_access_point.interfaces.wifi.ssid
+            for count1 in scan_results:
+                assert (count1.rf_channel in channel_list), "Scan should happen only in selected channels"
+
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+            logger().info(f"Validate Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                f'Unable to find probe request broadcast packet in channel:{wifi_access_point.interfaces.wifi.channel}'
+            logger().info(f"found Probe req(Broadcast) in channel:{channel}'")
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
