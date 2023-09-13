@@ -106,7 +106,7 @@ pipeline {
                                 script {
                                     UTF_WISECONNECT_COMMIT = sh(script: "git submodule status utf_wiseconnect | awk '{print \$1}'", returnStdout: true).trim()
                                     UTF_WIFI_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
-                                    url = "${BASE_ARTIFACTORY_URL}/${RS9116_FIRMWARE}/${UTF_WISECONNECT_COMMIT}"
+                                    url = "${BASE_ARTIFACTORY_URL}/${RS9116_FIRMWARE}/${UTF_WISECONNECT_COMMIT}/${UTF_WIFI_COMMIT}"
                                     echo "Constructed URL: ${url}"
                                     ARTIFACTORY_URL = url 
                                     variables_set = true
