@@ -1068,7 +1068,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                firmware_file_path: '/app/manifest/RS9116W.2.9.0.1.rps'
+                firmware_file_path: '/app/manifest/RS9116W.2.8.0.22.rps'
 
     raspi_iperf:
         interfaces:
@@ -1561,7 +1561,7 @@ constants:
     iter_count:
         value: 5
     upgrade_fw:
-        value: "/RS9116W.2.9.0.1.rps"
+        value: "/RS9116W.2.8.0.22.rps"
     board_version:
         value: "1.4Q7"
     min_conn_interval:
