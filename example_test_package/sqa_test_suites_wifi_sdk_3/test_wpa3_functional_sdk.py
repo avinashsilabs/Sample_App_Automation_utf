@@ -16,6 +16,7 @@ from utf_wiseconnect3.tests.devices.si91x import (
     Si91xExtTCPIPFeatureBitMap, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, Si91xCustomFeatureBitMap,
     Si91xPowerSaveProcedureTypes,
 )
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
@@ -27,11 +28,11 @@ def logger():
 
 
 """This function runs below test steps for DUT-RS9117
-        1. Configuration of DUT in 2G : BGN
+        1. Configuration of DUT in 2G : B/G/N/AX
         2. Start the sniffer before connection
         3. Association of Third party AP's
         4. Get the valid IP address
-        5. Enable the power save mode in DUT & BT
+        5. Enable the power save mode in DUT & BLE
         6. Stop the sniffer  
         7. Analyizing all sniffer capture packets for wpa3 functionality
     setup requirement:
@@ -46,15 +47,20 @@ def logger():
 
 class WifiConnectionThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
-                 data=None, ping_count=None, data_transfer=True, test_name=None, sl_collections=None, dut_leave=True):
+                 data=None, ping_count=None, data_transfer=True, test_name=None, sl_collections=None,
+                 traffic_type=None, dut_leave=True, protocol=None, net_perf_client=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
+        self.net_perf_client = net_perf_client
         self.time_period = time_period
         self.data = data
         self.ping_count = ping_count
+        self.protocol = protocol
         self.dut_addr = None
         self.device_ip = None
+        self.data_transfer = data_transfer
+        self.traffic_type = traffic_type
         self.wifi_sniffer = wifi_sniffer
         self.test_case_no = test_case_no
         self.data_transfer = data_transfer
@@ -62,9 +68,32 @@ class WifiConnectionThread(ThreadBase):
         self.dut_leave = dut_leave
         self.test_name = test_name
 
-
     def run(self):
         try:
+            if self.test_case_no == 34513:
+                transfer_type = 1
+                protocol = 6
+                throughput_type = 3
+                size = 1460
+
+            if self.test_case_no == 34515:
+                transfer_type = 2
+                protocol = 17
+                throughput_type = 4
+                size = 1470
+
+            if self.test_case_no == 34512:
+                transfer_type = 1
+                protocol = 6
+                throughput_type = 1
+                size = 1460
+
+            if self.test_case_no == 34514:
+                transfer_type = 2
+                protocol = 17
+                throughput_type = 2
+                size = 1470
+
             if self.test_case_no == 34503:
                 """ scanning for wpa3 configured Access Point """
                 scan_dict = [{"ssid": None, "channel": 0},
@@ -94,9 +123,71 @@ class WifiConnectionThread(ThreadBase):
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
             logger().info("DUT successfully connected with AP")
 
+            host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            logger().info(f"Remote device ip :{host_ip}")
+
+            if self.data_transfer:
+                if self.traffic_type == "TX":
+                        # starting iperf
+                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=
+                    self.dut_addr['device_ip'], protocol=self.protocol)
+                    self.net_perf_client.interfaces.net_perf.start()
+                    logger().info("sending data from DUT")
+                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
+                                                        local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                                        local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                        remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                    # # get and print throughput
+                    tp = self.net_perf_client.interfaces.net_perf.process_output()
+                    assert tp is not None, "Throughput not found"
+                    logger().info("data transfer successful")
+                    time.sleep(3)
+                if self.traffic_type == "RX":
+                     #Iperf Client Started
+                    if self.protocol == "UDP":
+                        bandwidth = "68M"
+                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                        self.dut_addr['device_ip'], protocol=self.protocol, bandwidth=bandwidth)
+                    else:
+                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                        self.dut_addr['device_ip'], protocol=self.protocol)
+
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                    logger().info("receiving data from Host")
+                    # open socket and listen for data
+                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
+                                                        local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                        local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                        remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                    logger().info("data received is successful")
+                    time.sleep(3)
+
             time.sleep(2)
             if self.dut_leave:
                 self.wifi_dut.interfaces.wifi.leave(thread=True)
+
+            if self.test_case_no == 34509:
+                logger().info("This is rejoin")
+            if self.test_case_no == 34511:
+                logger().info("This is BG-Scan Probe Request check")
+            else:
+                packet_filter1 = self.wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_addr=self.wlan_obj.dut_addr['dut_mac_address'],
+                                                                                filter_name="wpa3_confirm_commit_message")
+                logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+
+                packet_filter3 = self.wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_addr=self.wlan_obj.dut_addr['dut_mac_address'],
+                                                                                filter_name="wpa3_4_way_handshake_message")
+                logger().info(f"\n\n\n Sniffer Filter = {packet_filter3}\n\n")
+
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                logger().info("Stop Sniffer finally")
+                time.sleep(2)
+                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter3=packet_filter3)['packet_count'], \
+                    'Unable to find the commit & confirm packets.'
+
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
@@ -158,19 +249,6 @@ def test_wifi_sdk_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wif
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="wpa3_confirm_commit_message")
-        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
-
-        packet_filter3 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="wpa3_4_way_handshake_message")
-        logger().info(f"\n\n\n Sniffer Filter = {packet_filter3}\n\n")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        time.sleep(2)
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter3=packet_filter3)['packet_count'], \
-            'Unable to find the commit & confirm packets.'
-
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
         logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
@@ -209,20 +287,6 @@ def test_wifi_sdk_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point
             wlan_obj.start()
             wlan_obj.wait_for_exit()
 
-            packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                                filter_name="wpa3_confirm_commit_message")
-            logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
-
-            packet_filter3 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                                filter_name="wpa3_4_way_handshake_message")
-            logger().info(f"\n\n\n Sniffer Filter = {packet_filter3}\n\n")
-
-            wifi_sniffer.interfaces.capture.stop_capture()
-            logger().info("Stop Sniffer finally")
-            time.sleep(2)
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter3=packet_filter3)['packet_count'], \
-                'Unable to find the commit & confirm packets.'
-
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
         logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
@@ -255,7 +319,7 @@ def test_wifi_sdk_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, wifi_access_poi
         '''Verifying the scan results with-in the configure time interval of 100 Milli-Seconds '''
         wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                         ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
-                                        test_case_no="19748")
+                                        test_case_no="34511")
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -353,3 +417,159 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
             logger().info(
                 f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds ........")
             time.sleep(60)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+
+    }
+)
+def test_wifi_sdk_2_4_tcp_rx_wpa3_C34513(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                         sniffer_filter, sl_collections, net_perf_client, protocol):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        '''Verifying connection and TCP RX traffic with WPA3 configured Access Point'''
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        net_perf_client=net_perf_client, protocol=protocol, data_transfer=True,
+                                        traffic_type="RX", test_case_no=34513
+                                        )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
+        assert False, "Failed"
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+
+    }
+)
+def test_wifi_sdk_2_4_udp_rx_wpa3_C34515(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                         sniffer_filter, sl_collections, net_perf_client, protocol):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        '''Verifying connection and UDP RX traffic with WPA3 configured Access Point'''
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        net_perf_client=net_perf_client, protocol=protocol, data_transfer=True,
+                                        traffic_type="RX", test_case_no=34515
+                                        )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
+        assert False, "Failed"
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+
+    }
+)
+def test_wifi_sdk_2_4_tcp_tx_wpa3_C34512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                         sniffer_filter, sl_collections, net_perf_client, protocol):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        '''Verifying connection and TCP TX traffic with WPA3 configured Access Point'''
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        net_perf_client=net_perf_client, protocol=protocol, data_transfer=True,
+                                        traffic_type="RX", test_case_no=34512
+                                        )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
+        assert False, "Failed"
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+
+    }
+)
+def test_wifi_sdk_2_4_udp_tx_wpa3_C34514(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                         sniffer_filter, sl_collections, net_perf_client, protocol):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        '''Verifying connection and UDP TX traffic with WPA3 configured Access Point'''
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        net_perf_client=net_perf_client, protocol=protocol, data_transfer=True,
+                                        traffic_type="RX", test_case_no=34514
+                                        )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
+        assert False, "Failed"
