@@ -140,7 +140,7 @@ pipeline {
                                                             if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then 
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip 
                                                                     python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"         
-                                                            elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS916W.${major}.${minor}.${patch}.0.${build_num}.rps" 2>/dev/null; then
+                                                            elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS916W.${major}.${minor}.${patch}.0.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${RS9116_FIRMWARE}
                                                                     cd  ${RS9116_FIRMWARE}
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS9116W.${major}.${minor}.${patch}.0.${build_num}.rps   
