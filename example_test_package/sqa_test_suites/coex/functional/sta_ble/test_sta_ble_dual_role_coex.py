@@ -680,7 +680,7 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C133507(wif
         time_minutes = round((time_duration / 60), 2)
         logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
         time.sleep(time_duration)
-        check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
+        check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=[ble_client2, ble_client1], ble_dut_address=ble_dut_address)
 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"Device mac address: {dut_mac_address}")
@@ -801,7 +801,7 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C133508(wif
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=[ble_client2, ble_client1], ble_dut_address=ble_dut_address)
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -925,7 +925,7 @@ def test_dual_role_wlan_udp_rx_data_transfer_C133511(wifi_dut, wifi_sniffer, wif
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=[ble_client2, ble_client1], ble_dut_address=ble_dut_address)
 
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger().info(f"Device mac address: {dut_mac_address}")
@@ -1049,13 +1049,13 @@ def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_w
     time.sleep(10)
 
     logger().info(f"Checking connection status, when data transfer is in progress")
-    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=[ble_client2, ble_client1], ble_dut_address=ble_dut_address)
     t1.wait_for_exit(True)
 
     time_minutes = round((time_duration / 60), 2)
     logger().info(f"Waiting for '{time_minutes}' minutes for checking connection stability")
     time.sleep(time_duration)
-    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=[ble_client2, ble_client1], ble_dut_address=ble_dut_address)
 
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -1144,7 +1144,7 @@ def test_sta_ble_datatransfer_in_dualrole_C20332(wifi_dut, wifi_access_point, wi
     ble_mode = "ble_slave"
     logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
     ble_client_address2, _ = ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address, start_needed=False)
-    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=ble_clients, ble_dut_address=ble_dut_address)
+    check_connection_status(wifi_dut, ble=True, wlan=True, ble_clients=[ble_client2, ble_client1], ble_dut_address=ble_dut_address)
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
     # Validate probe request from DUT
