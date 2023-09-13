@@ -14,11 +14,12 @@ pipeline {
         JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
         JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
         JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
-        BASE_ARTIFACTORY_URL= "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/testagent"
+        
     }
     stages{
         stage('Toolchain Setup'){
             steps {
+                cleanWs()
                 script {
                     env.SQA_TEST_AGENT = env.RS9116_FIRMWARE
                     echo env.SSH_TARGET
@@ -31,15 +32,19 @@ pipeline {
                     sh '''
                         export GIT_SSH=ssh
                         export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
-
+                       
+                        git clone --single-branch --branch ${UTF_WIFI_BRANCH} --no-tags ssh://git@stash.silabs.com/iot_infra_sw/utf_wifi.git .
+                        git checkout ${UTF_WIFI_COMMIT}
                         git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect
                         git submodule update --init --recursive utf_wiseconnect
+                       
+                        cd utf_wiseconnect
+                        git checkout ${UTF_WISECONNECT_COMMIT}
                     '''
                 }
-        
+      
             }
         }
-    
         stage('Build sqa test agent binary') {
             steps{
                 script{
@@ -49,6 +54,7 @@ pipeline {
                                 PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
                                 withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){
                                     sh '''
+                                     
                                         mkdir -p reports
                                         ./build_test_agent_docker.sh ${RS9116_FIRMWARE} ${JENKINS_SSH_KEY_PATH} ${BUILD_LOCATION} ${JENKINS_USER_NAME} ${JENKINS_USER_ID} ${JENKINS_GROUP_ID} ${PACKAGE_TYPE}  ${ARTIFACTORY_URL}/  ${ARTIFACTORY_USERNAME} ${ARTIFACTORY_PASSWORD} 
                                         if [ $? -ne 0 ]; then
