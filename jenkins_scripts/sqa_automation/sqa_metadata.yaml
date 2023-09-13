@@ -109,7 +109,7 @@ utf_wifi_sqa_regression_label:
         PUBLISH_TEST_RESULTS: true
 utf_wifi_sqa_code_sanity_label:
   metadata:
-    RS9116_FIRMWARE: "RS9116W.2.8.0.22"
+    RS9116_FIRMWARE: "RS9116W.2.9.0.22"
   device_groups: 
     utf_wifi_sqa_code_sanity_1_device_group:
       metadata:
