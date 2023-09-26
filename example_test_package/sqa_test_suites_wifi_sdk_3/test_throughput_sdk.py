@@ -101,6 +101,41 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.configure_interface(
             channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+
+        if self.ble_conn:
+            conn_params = {
+                "min_conn_interval": self.utf_constants.get("min_conn_interval"),
+                "max_conn_interval": self.utf_constants.get("max_conn_interval"),
+                "conn_latency": 0,
+                "supervision_timeout": self.utf_constants.get("supervision_timeout")}
+            logger().info("Initiate ble service in DUT")
+            bt_dut_address = self.bt_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "unable to fetch dut bd address...."
+
+            logger().info("Set DUT in advertise mode")
+            self.bt_dut.interfaces.bluetooth.ble_start_advertising()
+
+            logger().info("Start smp scan from the remote device")
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert bt_client_address is not None
+            time.sleep(5)
+            logger().info("stop scanning ....")
+            self.ble_client.interfaces.bluetooth.stop_scanning()
+
+            # See that we found our device
+            logger().info("Check the dut is listed...")
+            found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+            assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices
+
+            self.ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                         min_conn_interval=conn_params["min_conn_interval"],
+                                                         max_conn_interval=conn_params["max_conn_interval"],
+                                                         conn_latency=conn_params["conn_latency"],
+                                                         supervision_timeout=conn_params["supervision_timeout"])
+
+            assert bt_dut_address, "unable to connect to the given address"
+            time.sleep(12)
+
         self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                  wifi_access_point=self.wifi_access_point,
                                                                  associated=self.wifi_dut.interfaces.wifi.associated,
@@ -145,8 +180,15 @@ class WifiJoinThread(ThreadBase):
                                                         size=size, ttl=30, throughput_type=throughput_type, qos=0)
                     logger().info("data received is successful")
                     time.sleep(3)
+
+        if self.ble_conn:
+            self.bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+            time.sleep(2)
+
         self.wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
         self.wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
 
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -164,6 +206,7 @@ class WifiJoinThread(ThreadBase):
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}}
     }
 )
 def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -184,7 +227,6 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -200,6 +242,7 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}}
     }
 )
 def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -235,6 +278,7 @@ def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_cli
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}}
     }
 )
 def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -270,6 +314,7 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}}
     }
 )
 def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -302,7 +347,7 @@ def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_cli
             OpenMode | Si91xFeatureBitMap.PSKSecurity,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -336,7 +381,7 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, wifi_access_point, wifi_
             OpenMode | Si91xFeatureBitMap.PSKSecurity,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -370,7 +415,7 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, wifi_access_point, wifi_
             OpenMode | Si91xFeatureBitMap.PSKSecurity,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -404,7 +449,7 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, wifi_access_point, wifi_
             OpenMode | Si91xFeatureBitMap.PSKSecurity,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
