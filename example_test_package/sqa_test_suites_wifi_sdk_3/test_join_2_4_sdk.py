@@ -210,6 +210,7 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
             wlan_obj.wait_for_exit()
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Unable to find hidden in sniffer'
+            time.sleep(2)
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
@@ -236,6 +237,7 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
     """ This test case verifies joining time in WPA2 Mode by providing PSK"""
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    rerun = False
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -245,18 +247,18 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-            da_addr=ap_mac_address,
-            filter_name='probe_req_response')
-        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
-            get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
-                               filter_name='assoc_req_resp_eapol_4_way_handshake')
-
         for count in range(0, iteration):
             wlan_obj.start()
             wlan_obj.wait_for_exit()
-
+            if not rerun:
+                packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+                    da_addr=ap_mac_address,
+                    filter_name='probe_req_response')
+                packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
+                    get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
+                                       filter_name='assoc_req_resp_eapol_4_way_handshake')
+                rerun = True
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Sniffer: Unable to find probe_req_response packet in sniffer'
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
@@ -266,9 +268,11 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
             time_taken = wlan_obj.time_diff()
             assert time_taken <= 0.4
             logger().info(f"time taken to connect is: {time_taken}")
+            time.sleep(2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
 
 @pytest.mark.config('wifi_access_point', wifi={"passphrase": 'test123@random'})
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -300,6 +304,7 @@ def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point,
         for count in range(0, iteration):
             wlan_obj.start()
             wlan_obj.wait_for_exit()
+            time.sleep(2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
