@@ -6,7 +6,7 @@ from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap
+    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
@@ -34,7 +34,7 @@ def logger():
 class ApModeClientConnections(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients,  wifi_sniffer, wifi_access_point,
                  sl_collections, utf_constants, testcase_no=None, capture_filename=None,
-                 dtim_count=None, beacon=None, leave=True):
+                 dtim_period=None, beacon=None, leave=True):
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.wifi_sniffer = wifi_sniffer
@@ -43,26 +43,25 @@ class ApModeClientConnections(ThreadBase):
         self.utf_constants = utf_constants
         self.capture_filename = capture_filename
         self.testcase_no = testcase_no
-        self.dtim_count = dtim_count
+        self.dtim_period = dtim_period
         self.beacon = beacon
         self.leave = leave
 
     def run(self):
-        dtim_interval = self.dtim_count
         if self.testcase_no == 19454 or 19432:
             self.ssid = "SILABS_AP_MODE"
             self.security = "WPA2"
             self.password = "Automation@123"
-            self.dtim_count = "1"
             self.channel = "11"
+            self.dtim_count = "1"
             self.beacon_interval = "100"
             self.no_of_clients = 4
         if self.testcase_no == 19465:
             self.ssid = "SILABS_AP_MODE"
             self.security = "WPA2"
             self.password = "Automation@123"
-            self.dtim_count = "1"
             self.channel = "11"
+            self.dtim_count = "1"
             self.beacon_interval = "100"
             self.no_of_clients = 1
         if self.testcase_no == 19444:
@@ -71,6 +70,7 @@ class ApModeClientConnections(ThreadBase):
             self.password = "Automation@123"
             self.beacon_interval = "100"
             self.channel = "11"
+            self.dtim_count = self.dtim_period
             self.no_of_clients = 1
         if self.testcase_no == 19443:
             self.ssid = "SILABS_AP_C19443"
@@ -93,7 +93,7 @@ class ApModeClientConnections(ThreadBase):
         self.dut_addr_dict = self.sl_collections.ap_mode_clients_connection(self.wifi_dut, self.wifi_clients,
                                                                        channel=self.channel, ssid=self.ssid,
                                                                        security=self.security, password=self.password,
-                                                                       dtim_count=dtim_interval,
+                                                                       dtim_count=self.dtim_count,
                                                                        beacon_interval=self.beacon_interval,
                                                                        ping_count=ping_count,
                                                                        no_of_clients=self.no_of_clients,
@@ -108,14 +108,13 @@ class ApModeClientConnections(ThreadBase):
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "region_config": 0,  "channel": 11,
-        "region_code_ap": "US",
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11,
     }
 )
 @pytest.mark.config(
@@ -161,8 +160,11 @@ def test_wifi_sdk_ap_mode_tx_rules_usregion_c19454(wifi_dut, wifi_clients, wifi_
         parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
+        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
+                                            region_code=Si91xRegionCode.US,
+                                            module_type=Si91xModuleType.WithOnboardAntenna)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename="test_C19454", dtim_count=None,
+                                             utf_constants, capture_filename="test_C19454",
                                              testcase_no=19454)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
@@ -185,12 +187,12 @@ def test_wifi_sdk_ap_mode_tx_rules_usregion_c19454(wifi_dut, wifi_clients, wifi_
     wifi={
          "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
          "oper_mode": Si91xOperatingMode.AccessPoint,
-         "coex_mode": Si91xCoexMode.WLANOnly,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
          "features": Si91xFeatureBitMap.PSKSecurity,
          "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
          "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
          "custom_features": Si91xCustomFeatureBitMap.Default,
-         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
          "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": "11",
     }
 )
@@ -235,7 +237,7 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
         rasp_mac_address = {}
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename="test_C19432", dtim_count=None,
+                                             utf_constants, capture_filename="test_C19432",
                                              testcase_no=19432)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
@@ -257,12 +259,12 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "security": "WPA2", "ssid": "SILABS_AP_C19444", "passphrase": "Automation@123", "beacon": 100,"channel": 11
     }
 )
@@ -286,7 +288,7 @@ def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_cli
     try:
         file_name = f'test_DTIM_{dtim_count}_C19444'
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename=file_name, dtim_count=dtim_count,
+                                             utf_constants, capture_filename=file_name, dtim_period=dtim_count,
                                              testcase_no=19444)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
@@ -312,12 +314,12 @@ def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_cli
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "security": "WPA2", "ssid": "SILABS_AP_C19443", "passphrase": "12345678", "channel": 11
     },
 )
@@ -344,7 +346,7 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_access_p
 
         file_name = f'test_beacon_interval_{beacon}_C19443'
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename=file_name, dtim_count=None, beacon=beacon,
+                                             utf_constants, capture_filename=file_name, beacon=beacon,
                                              testcase_no=19443)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
@@ -369,16 +371,17 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_access_p
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "region_config": 0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123",
         "beacon": 100,
-        "region_code_ap": "US", "channel": "11"
+        "channel": "11"
     }
 )
 @pytest.mark.config(
@@ -420,8 +423,11 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_cli
     try:
         rasp_mac_address = {}
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
+        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
+                                            region_code=Si91xRegionCode.US,
+                                            module_type=Si91xModuleType.WithOnboardAntenna)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename="test_C19442", dtim_count=None,
+                                             utf_constants, capture_filename="test_C19442",
                                              testcase_no=19432)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
@@ -451,16 +457,16 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_cli
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "security": "WPA2",
         "ssid": "RS9116_AP",
-        "passphrase": "12345678", "region_config": 0, "beacon": 100,
-        "region_code_ap": "US ", "channel": 14,
+        "passphrase": "12345678", "beacon": 100,
+        "channel": 14,
 
     },
 )
@@ -480,20 +486,22 @@ def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniff
     except:
         logger().info(f"Expected error code -->0x1000A")
 
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "region_config": 0, "beacon": 100,
-        "region_code_ap": "US ",
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100, "channel": 11
     }
 )
 @pytest.mark.config(
@@ -511,8 +519,11 @@ def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniff
 def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter, wifi_access_point,
                                                                 utf_constants, wifi_dut, wifi_clients, sl_collections):
     try:
+        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
+                                            region_code=Si91xRegionCode.US,
+                                            module_type=Si91xModuleType.WithOnboardAntenna)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, dtim_count=None, beacon=None,
+                                             utf_constants,
                                              testcase_no=19465)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
