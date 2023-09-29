@@ -32,8 +32,8 @@ pipeline {
                 stage('Setup Environment') {
                     steps {
                         sh '''
-
-                        SCRIPT_DIR=$(dirname "$0")
+                        . $PYTHON3_VENV_DIR/bin/activate
+                        python3 -m pip install --upgrade pip
 
                         ./workspace_setup.sh
 
@@ -60,8 +60,6 @@ pipeline {
                                     ./yq eval '.metadata.harness' $HWMUX_GROUP_JSON_FILE_NAME  -P > config/harnesses/$HARNESS_NAME
 
                                     rm -rf reports
-
-                                    . $PYTHON3_VENV_DIR/bin/activate
 
                                     cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
