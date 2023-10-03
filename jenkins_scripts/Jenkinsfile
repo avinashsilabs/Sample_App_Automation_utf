@@ -152,7 +152,7 @@ pipeline {
                                                                         elif [ -d venv/Scripts ]; then
                                                                         . venv/Scripts/activate
                                                                     fi
-                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip                                                                  python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip                                                              
                                                                     python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
                                                             fi 
                                                         '''
