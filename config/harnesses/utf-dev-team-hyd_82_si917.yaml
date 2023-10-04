@@ -54,6 +54,7 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
+    # This configuration is used for A0 boards while implementing demux algo
     si917_thread:
         type: 'efx32'
         subtype: 'efr32'
@@ -80,6 +81,7 @@ devices:
                         stack_len: 2048
                 src_dir: 'utf_wiseconnect_3.tests'
 
+    # This configuration is used for A0 boards while implementing demux algo
     si917:
         type: 'efx32'
         subtype: 'efr32'
@@ -99,6 +101,83 @@ devices:
                 type: 'sl_wifi_test_agent_cli'
                 src_dir: 'utf_wiseconnect_3.tests'
 
+    si917_sl_wifi:
+
+        # The 'type' attribute is optional.  If it is present, the device will be created via a
+        # create_device() function located in the corresponding python module under the 'devices'
+        # folder.
+        # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
+        # In the case of a 9116 device, the type 'rs911x' should be used
+        type: 'rs911x'
+        subtype: 'rs9117'
+        src_dir: 'utf_wiseconnect'
+
+        # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+
+            # Like the top level device names, the interface names are also arbitrary, but must be unique for a
+            # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440311248'
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440311248'
+
+            wifi:
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                thread_config:
+                    wifi:
+                        count: 2
+                        stack_len: 2048
+                    ble:
+                        count: 0
+                        stack_len: 2048
+                commander_options: "--device Si917 --serialno 000440311248"
+
+    efr32_4180b_Si917:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: "--device Si917 --serialno 000440311248"
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440311248'
+
+    # This configuration is used for A0 boards while implementing demux algo.
+    # This will applicable for old efr types
     efr32_4180b:
         type: 'efx32'
         subtype: 'efr32'
@@ -612,16 +691,17 @@ devices:
 defaults:
     # The dut entry is required and should be set to the name of the device representing the
     # device under test in the "devices" section
-    dut: 'si917_thread'
+    dut: 'si917_sl_wifi'
 #    dut: 'rs9116_sapi'
 #
-    efx32: 'si917_thread'
+    efx32: 'efr32_4180b_Si917'
 #    efx32: 'efr32_4180b'
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
 #        - 'rs9116_sapi'
-        - 'si917_thread'
+        - 'si917_sl_wifi'
+        - 'efr32_4180b_Si917'
 #        - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
