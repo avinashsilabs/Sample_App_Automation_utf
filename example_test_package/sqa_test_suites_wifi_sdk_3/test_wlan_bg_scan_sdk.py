@@ -54,13 +54,13 @@ def logger():
 
 
 class WLanThread(ThreadBase):
-    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
-                 data=None, ping_count=None, data_transfer=True, test_name=None, sl_collections=None):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None, 
+                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.time_period = time_period
-        self.data = data
+        self.data = 'Thisisfromclient'
         self.ping_count = ping_count
         self.wifi_sniffer = wifi_sniffer
         self.test_case_no = test_case_no
@@ -135,13 +135,12 @@ class WLanThread(ThreadBase):
 )
 def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, sniffer_filter,
                                 sl_collections):
-    data = 'Thisisfromclient'
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
     '''Verify RSI_STA connectivity by enabling BG scan in 2.4Ghz band'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, test_name=test_name,
+                          time_period=time_period, test_name=test_name,
                           test_case_no=19035,
                           sl_collections=sl_collections)
     try:
@@ -163,7 +162,7 @@ def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_c
         wlan_obj_retry.start()
         wlan_obj_retry.wait_for_exit()
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -185,13 +184,12 @@ def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_c
 )
 def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                         sl_collections, sniffer_filter):
-    data = 'Thisisfromclient'
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
     '''Verify RSI_STA connectivity by enabling instant BG scan'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, test_name=test_name,
+                          time_period=time_period, test_name=test_name,
                           test_case_no=19037, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -212,7 +210,7 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
         wlan_obj_retry.start()
         wlan_obj_retry.wait_for_exit()
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -235,14 +233,13 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
 )
 def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, sniffer_filter):
-    data = 'Thisisfromclient'
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
     '''Re-join with infinite retry when bgscan enable. Module should rejoin. If not module should attempt infinitely.
        If it successfully rejoin to AP bgscan should happen. '''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, test_name=test_name,
+                          time_period=time_period, test_name=test_name,
                           test_case_no=19038,
                           sl_collections=sl_collections)
     try:
@@ -256,7 +253,7 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find probe request broadcast packet'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -277,12 +274,10 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
 )
 def test_wifi_sdk_bgscan_primary_channel_2g_c19039(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                    sl_collections, sniffer_filter, request):
-    data = 'Thisisfromclient'
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     channel_bitmap_2_4 = 0
-    data_transfer = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, time_period=time_period,
-                               data=data)
+    data_transfer = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, time_period=time_period)
 
     '''configure the channels 1,6,11 in channel_bitmap field and verify whether the BG scan is happening in those 
        particular channels only or not'''
@@ -323,4 +318,4 @@ def test_wifi_sdk_bgscan_primary_channel_2g_c19039(wifi_sniffer, wifi_access_poi
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Unable to find probe request broadcast packet'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

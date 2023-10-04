@@ -61,10 +61,9 @@ class Ip_Conflict(ThreadBase):
         ap_ip = self.wifi_access_point.interfaces.wifi.ap_test_ip
         assert ap_ip, "Please Add the AP test ip in the ap section of harness"
         logger().info(f"AP ip is {ap_ip}")
-        dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
-        dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
-        self.wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
-                                                     dhcp_lease="3600")
+        dhcp_start = self.wifi_access_point.interfaces.wifi.dhcp_start_addr
+        dhcp_end = self.wifi_access_point.interfaces.wifi.end_addr
+        self.wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end, dhcp_lease="3600")
         logger().info(f" dhcp_start {dhcp_start} and dhcp_end value {dhcp_end}")
 
     def wifi_client_join(self, dhcp_start=None, dhcp_end=None):
@@ -72,8 +71,8 @@ class Ip_Conflict(ThreadBase):
             ap_ip = self.wifi_access_point.interfaces.wifi.ap_test_ip
             assert ap_ip, "Please Add the AP test ip in the ap section of harness"
             logger().info(f"AP Ip {ap_ip}")
-            dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
-            dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
+            dhcp_start = self.wifi_access_point.interfaces.wifi.dhcp_start_addr
+            dhcp_end = self.wifi_access_point.interfaces.wifi.end_addr
         logger().info("**** Associating raspi to wifi AP *****")
         self.wifi_client.interfaces.wifi.join(security="WPA2", ssid="IPConflict_Sil_916", passphrase="test1234", channel='8')
         wifi_client_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -197,8 +196,8 @@ class Ip_Conflict(ThreadBase):
                     logger().info(f"result : {result}")
                 assert exc_info.value.error_code == 0xFF9C, "The 0xFF9C Error is expected for this test"
                 ap_ip = self.wifi_access_point.interfaces.wifi.ap_test_ip
-                dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
-                dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
+                dhcp_start = self.wifi_access_point.interfaces.wifi.dhcp_start_addr
+                dhcp_end = self.wifi_access_point.interfaces.wifi.end_addr
                 self.wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end, dhcp_lease="3600")
                 time.sleep(60)  # waiting for 60 seconds to rejoin
                 for ip_count in range(4):
@@ -512,8 +511,8 @@ def test_wifi_sdk_ip_conflict_c101966(wifi_sniffer, wifi_access_point, wifi_dut,
                                wifi_client=wifi_client)
         ap_ip =wlan_obj.start()
         wlan_obj.wait_for_exit()
-        dhcp_start = re.sub("\d{1,3}$", str(2), ap_ip)
-        dhcp_end = re.sub("\d{1,3}$", str(254), ap_ip)
+        dhcp_start = wifi_access_point.interfaces.wifi.dhcp_start_addr
+        dhcp_end = wifi_access_point.interfaces.wifi.end_addr
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                         dhcp_lease="3600")
         time.sleep(10)
@@ -1102,7 +1101,7 @@ def test_wifi_sdk_ip_conflict_c101978(self, wifi_sniffer, wifi_dut, wifi_access_
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         self.wifi_client.interfaces.wifi.config["interface"] = "Wlan0"
-        sock = self.ssl_tx_rx()
+        sock = Ip_Conflict.ssl_tx_rx()
         logger().info(f"****API returns 100 bytes of random data*****")
         data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
         data_length = len(data_sent)
@@ -1188,7 +1187,7 @@ def test_wifi_sdk_ip_conflict_c101979(wifi_sniffer, wifi_dut, wifi_access_point,
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_client.interfaces.wifi.config["interface"] = "Wlan0"
-        sock = self.ssl_tx_rx()
+        sock = Ip_Conflict.ssl_tx_rx()
         server_socket_no = 1
         pkt_count = 50000
         duration = 60

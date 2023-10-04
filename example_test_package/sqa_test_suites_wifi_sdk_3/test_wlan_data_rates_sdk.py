@@ -109,13 +109,13 @@ class SocketDataTransfer:
 
 
 class WLanThread(ThreadBase):
-    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
-                 data=None, ping_count=None, data_transfer=True, test_name=None, sl_collections=None):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None
+                 , ping_count=None, data_transfer=True, test_name=None, sl_collections=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.time_period = time_period
-        self.data = data
+        self.data = 'Thisisfromclient'
         self.ping_count = ping_count
         self.dut_addr = None
         self.wifi_sniffer = wifi_sniffer
@@ -200,7 +200,6 @@ class WLanThread(ThreadBase):
 )
 def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                          sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -209,7 +208,7 @@ def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_d
     req,Re assoc resp,Probe req,Prob res'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -252,7 +251,6 @@ def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_d
 )
 def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                  sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -263,7 +261,7 @@ def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point
     logger().info(f'AP BSSID = {ap_mac_address}')
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -319,14 +317,13 @@ def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point
 )
 def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                     sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
 
     '''Data rates used for Data packets, Verify for following Data packets,Data.Null Data and Qos Null data.Qos Data'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -366,7 +363,6 @@ def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_po
 )
 def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -377,7 +373,7 @@ def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, 
     logger().info(f'AP BSSID = {ap_mac_address}')
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           test_case_no=19625, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -424,7 +420,6 @@ def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, 
 )
 def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -432,7 +427,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
     '''Set data rate to 11g rates, and verify all following packets with all data ratesAssoc Req,Assoc Resp.ReAssoc
        Req,Re Assoc RespProbe Req,Probe Resp'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           test_case_no=19626, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -481,7 +476,6 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
 )
 def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -489,7 +483,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
     '''Set data rate to 11n rates,and verify all following packets with all data ratesAssoc Req,Assoc RespReAssoc
        Req,Re Assoc RespProbe Req,Probe RespBeaconDisAssoc'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           test_case_no=19627, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -534,7 +528,6 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
 )
 def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                             request, sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -542,7 +535,7 @@ def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_a
     '''Set Fixed data rate to 12Mbps and verify which data rate is using for 4GHz .DataNull Data and Qos Null dataQos
        Data'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           test_case_no=19628, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -581,7 +574,6 @@ def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_a
 )
 def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -592,7 +584,7 @@ def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           test_case_no=19628, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -631,14 +623,13 @@ def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access
 )
 def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                           sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
 
     '''Data rates used for EAPOL key exchanges and GTK key renewal exchanges with auto rate'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           test_case_no=19628, sl_collections=sl_collections)
     try:
         wlan_obj.start()
@@ -676,7 +667,6 @@ def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_
 )
 def test_wifi_sdk_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                           sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -686,7 +676,7 @@ def test_wifi_sdk_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_
     logger().info(f'AP BSSID = {ap_bssid}')
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, data=data, ping_count=ping_count, test_name=test_name,
+                          time_period=time_period, ping_count=ping_count, test_name=test_name,
                           sl_collections=sl_collections, test_case_no=19634)
     try:
         wlan_obj.start()
@@ -753,7 +743,6 @@ def test_wifi_sdk_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_
 )
 def test_wifi_sdk_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_access_point, wifi_dut, rf_attenuator,
                                                           utf_constants, request, sniffer_filter, sl_collections):
-    data = "Thisisfromclient"
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -779,7 +768,7 @@ def test_wifi_sdk_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_acc
 
     logger().info(f'SET RSSI value = {set_rssi}')
 
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, time_period=time_period, data=data,
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, time_period=time_period,
                           ping_count=ping_count, test_name=test_name, test_case_no=19622)
     try:
         wlan_obj.start()
