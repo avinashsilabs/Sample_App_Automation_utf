@@ -109,6 +109,22 @@ class WifiJoinThread(ThreadBase):
                                                self.ap_mac_address, self.sniffer_filter,
                                                power_save=self.power_save)
 
+        if self.test_type == "iperf":
+            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter. \
+                get_sniffer_filter(sa_addr=self.dut_mac_address, filter_name='ps_poll')
+            logger().info(f"Validating PS-POLL frames ")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=
+                                                                           packet_filter1)['packet_count'], \
+                'Sniffer: Unable to find ps poll packets in sniffer'
+            packet_filter2 = self.sniffer_filter.interfaces.ws_sniffer_filter. \
+                get_sniffer_filter(sa_addr=self.dut_mac_address, da_addr=self.ap_mac_address,
+                                   filter_name='qos_data_more_data')
+            logger().info(f"Validating QOS data frames with more data bit set")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=
+                                                                           packet_filter2)['packet_count'], \
+                'Sniffer: Unable to find QOS data frames with more data bit set in sniffer'
+
+
     def sniffer_validation_scan(self):
             self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
             packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.\
@@ -117,6 +133,11 @@ class WifiJoinThread(ThreadBase):
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=
                                                                            packet_filter1)['packet_count'],\
                 'Sniffer: Unable to find probe_request packets in sniffer'
+
+    def disconnect(self):
+        if self.wifi_dut.interfaces.wifi.associated:
+            logger().info("disconnecting to ap.....")
+            self.wifi_dut.interfaces.wifi.leave()
 
     def run(self):
 
@@ -129,15 +150,15 @@ class WifiJoinThread(ThreadBase):
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
         if self.test_type == "iperf":
+            status = ping(self.device_ip, 10)
+            assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
             logger().info("Running data transfer")
             self.run_traffic()
 
         if self.test_type == "http":
             logger().info("http download")
 
-        if self.wifi_dut.interfaces.wifi.associated:
-            logger().info("disconnecting to ap.....")
-            self.wifi_dut.interfaces.wifi.leave()
+
 
 
 # this thread used for sta+ble as a slave
@@ -264,7 +285,7 @@ def test_Wifi_sdk_scan_BLE_AI_20ms_C20164(wifi_sniffer, wifi_access_point, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"])
 def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
                                                 utf_constants, sl_collections, wifi_client, sniffer_filter):
     """
@@ -298,8 +319,8 @@ def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point,
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_adv_scan()
+        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
-
         logger().info("sniffer validation is successful")
         wifi_obj.sniffer_validation_join()
 
@@ -325,7 +346,7 @@ def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"])
 def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       net_perf_client, ble_client, protocol, request, utf_constants, sl_collections,
                                       sniffer_filter):
@@ -358,6 +379,7 @@ def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_adv_scan()
+        wifi_obj.disconnect()
         logger().info("stopping capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
@@ -438,7 +460,7 @@ def test_Wifi_sdk_scan_BLE_AI_10240ms_C20167(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"])
 def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
                                                 utf_constants, sl_collections, wifi_client, sniffer_filter):
     """
@@ -473,6 +495,7 @@ def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point,
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_adv_scan()
+        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info("sniffer validation is successful")
@@ -501,7 +524,7 @@ def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"])
 def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       net_perf_client, ble_client, protocol, request, utf_constants, sl_collections,
                                       sniffer_filter):
@@ -534,6 +557,7 @@ def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(wifi_sniffer, wifi_access_point, wi
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_adv_scan()
+        wifi_obj.disconnect()
         logger().info("stopping capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
@@ -559,7 +583,7 @@ def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, wifi_client,
                                                    request, utf_constants, sl_collections, sniffer_filter):
     """
@@ -611,7 +635,7 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(wifi_sniffer, wifi_access
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                           request, utf_constants, sl_collections, wifi_client, sniffer_filter):
     """
@@ -646,6 +670,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(wifi_sniffer, wifi_acc
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info("sniffer validation is successful")
@@ -674,7 +699,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(wifi_sniffer, wifi_acc
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                                    net_perf_client, ble_client, protocol, request, utf_constants,
                                                    sl_collections, sniffer_filter):
@@ -708,6 +733,7 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(wifi_sniffer, wifi_access_poi
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
         logger().info("stopping capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
@@ -735,7 +761,7 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(wifi_sniffer, wifi_access_poi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, wifi_client,
                                                    request, utf_constants, sl_collections, sniffer_filter):
     """
@@ -787,7 +813,7 @@ def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(wifi_sniffer, wifi_access_po
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                        request, utf_constants, sl_collections, wifi_client,
                                                        sniffer_filter):
@@ -823,6 +849,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(wifi_sniffer, wifi_access
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info("sniffer validation is successful")
@@ -851,7 +878,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(wifi_sniffer, wifi_access
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"])
 def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                                     net_perf_client, ble_client, protocol, request, utf_constants,
                                                     sl_collections, sniffer_filter):
@@ -885,6 +912,7 @@ def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(wifi_sniffer, wifi_access_po
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
         logger().info("stopping capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
