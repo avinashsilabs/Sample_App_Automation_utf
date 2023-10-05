@@ -58,43 +58,20 @@ class WLanJoinThread(ThreadBase):
 
             if '19716' in self.test_case:
 
-                logger().info(" ====== configuring the Sniffer with access point channel ====== ")
-                self.wifi_sniffer.interfaces.capture.configure_interface(
-                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
-                logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
-
-                self.wifi_access_point.interfaces.wifi.passphrase = '12345678'
-
-                self.sl_collections.join_to_wifi_network(self.wifi_dut,
-                                                         wifi_access_point=self.wifi_access_point,
-                                                         power_save=self.power_save,
-                                                         ping_after_power_save=True, retry_count=3,
-                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                         pmk_enable=self.pmk_enable,
-                                                         expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
+                                                      pmk_enable=self.pmk_enable,
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
-                logger().info("disconnecting to ap.....")
-                self.wifi_dut.interfaces.wifi.leave()
-
-                logger().info("Stop Sniffer finally")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-
-                self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
-                                                            self.dut_addr['dut_mac_address'], self.ap_mac_address,
-                                                            self.sniffer_filter, power_save=self.power_save)
-
             elif '19717' in self.test_case:
-                self.sl_collections.join_to_wifi_network(self.wifi_dut,
-                                                         wifi_access_point=self.wifi_access_point,
-                                                         power_save=self.power_save,
-                                                         ping_after_power_save=True, retry_count=3,
-                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                         pmk_enable=self.pmk_enable,
-                                                         expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
+                                                      pmk_enable=self.pmk_enable,
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
@@ -112,12 +89,13 @@ class WLanJoinThread(ThreadBase):
                                                                          ping_after_power_save=True, retry_count=3,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          pmk_enable=self.pmk_enable)
+                time.sleep(2)
                 logger().info("disconnecting to ap.....")
                 self.wifi_dut.interfaces.wifi.leave()
-
+                time.sleep(2)
                 logger().info("Stop Sniffer finally")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-
+                time.sleep(2)
                 self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
                                                             self.dut_addr['dut_mac_address'], self.ap_mac_address,
                                                             self.sniffer_filter, power_save=self.power_save)
@@ -481,7 +459,7 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Verify error code by validating PMK
+        5. Verify error SI91X_DEAUTHENTICATION
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -491,6 +469,7 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
+        wifi_access_point.interfaces.wifi.passphrase = '12345678'
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
@@ -542,7 +521,7 @@ def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi
 
 
 @pytest.mark.skip()
-@pytest.mark.config('wifi_access_point', wifi={"ssid": " redpine", "passphrase": 'Testing_pmk', "security": "WPA2"})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": ' redpine', "passphrase": '12345678', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
@@ -632,17 +611,27 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
 
 
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": "testwithnossid", "passphrase": 'Testing_pmk', "security": "WPA2"})
+                    wifi={"ssid": "''", "passphrase": 'Testing_pmk', "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point, sl_collections, request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Join with PMK without SSID
+        6. Verify error SI91X_NO_AP_FOUND
+    """
 
     try:
         with TimeMeasurer() as t:
             test_case = request.node.name
-            wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_case=test_case,
-                                      sl_collections=sl_collections)
+
+            wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                      sl_collections=sl_collections, test_case=test_case)
 
             wlan_obj.start()
             wlan_obj.wait_for_exit()
