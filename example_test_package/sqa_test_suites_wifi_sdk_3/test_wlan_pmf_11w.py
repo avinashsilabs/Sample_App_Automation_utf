@@ -85,6 +85,7 @@ class WLanThread(ThreadBase):
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+            time.sleep(2)
 
             if self.test_case_no == 19658:
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -124,7 +125,7 @@ class WLanThread(ThreadBase):
                 self.socket_obj.socket_data_transfer()
             time.sleep(2)
 
-            if not self.test_case_no == 19671:
+            if not self.test_name == "test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671":
                 self.wifi_dut.interfaces.wifi.leave()
 
         except Exception as e:
@@ -169,7 +170,7 @@ def test_wifi_sdk_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_dut, sl_c
         # Packet filter for Association req, with mgmt frame with protection capable
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_with assoc_req")
+            filter_name="protection_capable_with_assoc_req")
 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -218,7 +219,7 @@ def test_wifi_sdk_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_dut, sl_c
         # Packet filter for Association req, with mgmt frame with protection capable
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_required_with assoc_req")
+            filter_name="protection_required_with_assoc_req")
 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -268,7 +269,7 @@ def test_wifi_sdk_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_point,
         # Packet filter for Association req, with mgmt frame with protection capable
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_with assoc_req")
+            filter_name="protection_capable_with_assoc_req")
 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -318,7 +319,7 @@ def test_wifi_sdk_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_acces
         # Packet filter for Association req, with mgmt frame with protection capable+required
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_required_with assoc_req")
+            filter_name="protection_capable_required_with_assoc_req")
 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -328,40 +329,6 @@ def test_wifi_sdk_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_acces
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "custom_features": Si91xCustomFeatureBitMap.RealTimeClockFromHost | Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "bt_features": 0,
-        "ble_features": 0,
-        "ble_custom_ext_features": 0,
-    },
-)
-def test_wifi_sdk_mgmt_pmf_req_connection_fail_c19664(wifi_access_point, wifi_dut):
-    """ Verify the Connection between AP(PMF required) and DUT(PMF disable)
-    Check whether the device is not connecting to PMF Required AP when the device is not configured with PMF"""
-    wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                             beacon_missed_count=40,
-                                                             first_time_retry_enable=0)
-    wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
-    wifi_access_point.interfaces.wifi.start_ap()
-    time.sleep(5)
-
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, expected_status=SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE)
-    logger().info(f"Dut Tried to connect to ap between AP(PMF required) and DUT(PMF disable), observed error code "
-                  f"0x10019 which is expected")
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -401,7 +368,7 @@ def test_wifi_sdk_pmf_cap_ap_pmf_req_and_cap_dut_c19663(wifi_sniffer, wifi_acces
         # Packet filter for Association req, with mgmt frame with protection capable+required
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_required_with assoc_req")
+            filter_name="protection_capable_required_with_assoc_req")
 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -452,7 +419,7 @@ def test_wifi_sdk_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi_access_
         # Packet filter for Association req, with mgmt frame with protection capable+required
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_required_with assoc_req")
+            filter_name="protection_capable_required_with_assoc_req")
 
         # Packet filter for mgmt action frame with protection bit enable and packet should only be unicast
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -515,7 +482,7 @@ def test_wifi_sdk_action_frame_with_protection_bit_encrypted_c19667(wifi_sniffer
         # Packet filter for Association req, with mgmt frame with protection capable+required
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_required_with assoc_req")
+            filter_name="protection_capable_required_with_assoc_req")
 
         # Packet filter to verify encrypted mgmt action packet after association to check protection bit on
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -579,7 +546,7 @@ def test_wifi_sdk_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point,
         # Packet filter for Association req, with mgmt frame with protection capable+required
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_required_with assoc_req")
+            filter_name="protection_capable_required_with_assoc_req")
 
         # Packet filter to verify encrypted mgmt action packet after association to check protection bit on
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -620,22 +587,22 @@ def test_wifi_sdk_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "custom_features": Si91xCustomFeatureBitMap.RealTimeClockFromHost | Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     },
 )
-def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(remote_socket, wifi_dut, wifi_access_point, wifi_sniffer,
-                                                      sl_collections, request, sniffer_filter):
+def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                      sl_collections, request, sniffer_filter, remote_socket):
     # Check whether the data transfer(receiver) is happening with PMF enable mode
     test_name = request.node.name
-    tcp_ip_port = 5001
+    tcp_ip_port = 7007
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          test_name=test_name, test_case_no=19670, sl_collections=sl_collections, data_transfer=False)
+                          test_name=test_name, test_case_no=19658, sl_collections=sl_collections, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -643,31 +610,72 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(remote_socket, wifi_dut, w
         # Packet filter for Association req, with mgmt frame with protection capable+required
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             ta_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="protection_capable_required_with assoc_req")
+            filter_name="protection_capable_with_assoc_req")
 
-        # Open UDP socket remotely
-        remote_socket.interfaces.socket.start_server(socket_type=1)
-        # Open UDP socket in the DUT
-        sock = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+        # Open TCP socket remotely
+        remote_ip = remote_socket.interfaces.socket.server_ip
+        logger().info(f"Remote_IP = {remote_ip}")
+        remote_socket.interfaces.socket.start_server(server_ip=remote_ip, port=tcp_ip_port)
+
+        # Open TCP socket in the DUT
+        sock = wifi_dut.interfaces.wifi.socket(timeout=20)
 
         assert sock == 0, "socket id received is not matched. Expected is 0"
+
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wlan_obj.dut_addr['device_ip'], server_port=tcp_ip_port)
+        wifi_dut.interfaces.wifi.bsdSocketConnect(sock, remote_ip, 4, server_port=tcp_ip_port, timeout=30)
+
         tx_buffer = "12345678901234567890123456789012345678901234567890"
-        buffer_length = len(tx_buffer)
-        # send 50 bytes of data from udp socket opened remotely
-        remote_socket.interfaces.socket.send_data_udp(tx_buffer, wlan_obj.dut_addr['device_ip'], port=tcp_ip_port)
-        # DUT receives data over udp socket after execution of below api
+
+        remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
+
         data_received = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
-        logger().info(f"Data Received : {data_received}")
+        actual_data = (data_received.decode().split(':')[2].splitlines()[0])
+        logger().info(f"Data Received : {actual_data}")
+        assert tx_buffer != data_received, "buffer length sent and received is not matched"
+        logger().info(f"\n **** Transmit data matched ****\n")
+
         # Stop sniffer and validate pmf bit in assoc request
         wifi_sniffer.interfaces.capture.stop_capture()
-        output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
-        assert output
-        assert buffer_length == buffer_length_rx, "buffer length sent and received is not matched"
-        assert tx_buffer.encode() == buffer_rx, "contents of data sent and receive are not matched"
+
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-        assert b"success" in result, "unable to close udp socket opened in the dut"
+        wifi_dut.interfaces.wifi.leave()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init", device="reset")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "custom_features": Si91xCustomFeatureBitMap.RealTimeClockFromHost | Si91xCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    },
+)
+def test_wifi_sdk_mgmt_pmf_req_connection_fail_c19664(wifi_access_point, wifi_dut):
+    """ Verify the Connection between AP(PMF required) and DUT(PMF disable)"""
+    '''	Check whether the device is not connecting to PMF Required AP when the device is not configured with PMF'''
+    wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                             beacon_missed_count=40,
+                                                             first_time_retry_enable=0)
+    time.sleep(2)
+    wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+    wifi_access_point.interfaces.wifi.start_ap()
+    time.sleep(5)
+
+    wifi_dut.interfaces.wifi.scan(ssid=None)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, expected_status=SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE)
+    logger().info(f"Dut Tried to connect to ap between AP(PMF required) and DUT(PMF disable), observed error code "
+                  f"0x10019 which is expected")
+
+

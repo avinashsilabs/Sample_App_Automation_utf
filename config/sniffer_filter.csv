@@ -88,9 +88,9 @@ beacon_assoc_id_ps_poll_with_pm_bit_enable,(wlan.ta == {{ da_addr }} and wlan.fc
 beacon_assoc_id_dtim_count_ps_poll_with_pm_bit_enable,(wlan.addr == {{ sa_addr }} and wlan.fc.type_subtype == 0x001a), or (wlan.addr == {{ da_addr }} and (wlan.fc.type_subtype ==8) or (wlan.fc.type_subtype==0x0028) or (wlan.fc.type_subtype==0x002c))
 beacon_assoc_id_ps_poll_with_pm_bit_enable_qos,(wlan.fc.type_subtype == 0x001a or wlan.fc.type_subtype == 0x0028), or (wlan.tim.dtim_count == 0 and wlan.tim.dtim_period == 3 and wlan.tim.aid == 0x01)
 PMF(11w),,
-protection_capable_with assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1)
-protection_required_with assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpr == 1)
-protection_capable_required_with assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 )
+protection_capable_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1)
+protection_required_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpr == 1)
+protection_capable_required_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 )
 mgmt_action_frame_protection_bit_enable_unicast,(wlan.ta == {{ ta_addr }}), and !(wlan.fixed.action_code == 0x00) and (wlan.fc.protected == 1 and wlan.fc.type_subtype == 0x000d)
 mgmt_action_frame_protection_bit_enable,(wlan.sa == {{ sa_addr }}), and !(wlan.fixed.action_code == 0x00) and (wlan.fc.protected == 1 and wlan.fc.type_subtype == 0x000d)
 pmf_enabled_with_disassociation,(wlan.ta == {{ ta_addr }}), and (wlan.fc.type_subtype == 0x000c) and (wlan.fc.protected == 1)
